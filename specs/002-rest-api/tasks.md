@@ -41,7 +41,7 @@
 
 - [x] T004 Extend `api/openapi/openapi.yaml` with all CRUD endpoints from `specs/002-rest-api/contracts/openapi-endpoints.yaml` (merge paths, components, security schemes)
 - [x] T005 Update `/workouts` GET response in `api/openapi/openapi.yaml` from array to paginated response shape (data/next_cursor/has_more)
-- [ ] T006 Run `make generate` in `api/` to generate OpenAPI server code in `api/pkg/openapi/server.gen.go`
+- [x] T006 Run `make generate` in `api/` to generate OpenAPI server code in `api/pkg/openapi/server.gen.go`
 - [x] T007 [P] Create `api/internal/middleware/auth.go` with AuthProvider interface and stub provider implementation
 - [x] T008 [P] Create `api/internal/middleware/error.go` for error response formatting (Error struct with code/message/details)
 - [x] T009 [P] Create `api/internal/repository/exercise.go` with ExerciseRepository interface (Create, GetByID, Update, Delete, List)
