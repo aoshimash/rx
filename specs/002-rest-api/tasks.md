@@ -66,16 +66,16 @@
 
 ### Implementation for User Story 1
 
-- [ ] T018 [P] [US1] Create `api/internal/handler/exercise.go` with CreateExercise and GetExercise handlers (convert OpenAPI types to domain models, call repository, return responses)
-- [ ] T019 [P] [US1] Create `api/internal/handler/workout.go` with CreateWorkout and GetWorkout handlers (handle nested WorkoutEntry creation, convert types)
-- [ ] T020 [P] [US1] Create `api/internal/handler/program.go` with CreateProgram and GetProgram handlers (handle nested ProgramNode tree creation, convert types)
-- [ ] T021 [P] [US1] Create `api/internal/handler/telemetry.go` with CreateTelemetryPoint and GetTelemetryPoint handlers (convert types, validate workout_id reference)
-- [ ] T022 [US1] Register Exercise handlers in `api/cmd/server/main.go` (POST /exercises, GET /exercises/{id})
-- [ ] T023 [US1] Register Workout handlers in `api/cmd/server/main.go` (POST /workouts, GET /workouts/{id})
-- [ ] T024 [US1] Register Program handlers in `api/cmd/server/main.go` (POST /programs, GET /programs/{id})
-- [ ] T025 [US1] Register TelemetryPoint handlers in `api/cmd/server/main.go` (POST /telemetry, GET /telemetry/{id})
-- [ ] T026 [US1] Implement validation in handlers: check required fields, validate Exercise exists when creating WorkoutEntry, validate Program exists when creating ProgramNode
-- [ ] T027 [US1] Implement error handling in handlers: return 400 for validation errors, 404 for not found, 401 for unauthenticated (via middleware)
+- [x] T018 [P] [US1] Create `api/internal/handler/exercise.go` with CreateExercise and GetExercise handlers (convert OpenAPI types to domain models, call repository, return responses)
+- [x] T019 [P] [US1] Create `api/internal/handler/workout.go` with CreateWorkout and GetWorkout handlers (handle nested WorkoutEntry creation, convert types)
+- [x] T020 [P] [US1] Create `api/internal/handler/program.go` with CreateProgram and GetProgram handlers (handle nested ProgramNode tree creation, convert types)
+- [x] T021 [P] [US1] Create `api/internal/handler/telemetry.go` with CreateTelemetryPoint and GetTelemetryPoint handlers (convert types, validate workout_id reference)
+- [x] T022 [US1] Register Exercise handlers in `api/cmd/server/main.go` (POST /exercises, GET /exercises/{id})
+- [x] T023 [US1] Register Workout handlers in `api/cmd/server/main.go` (POST /workouts, GET /workouts/{id})
+- [x] T024 [US1] Register Program handlers in `api/cmd/server/main.go` (POST /programs, GET /programs/{id})
+- [x] T025 [US1] Register TelemetryPoint handlers in `api/cmd/server/main.go` (POST /telemetry, GET /telemetry/{id})
+- [x] T026 [US1] Implement validation in handlers: check required fields, validate Exercise exists when creating WorkoutEntry, validate Program exists when creating ProgramNode
+- [x] T027 [US1] Implement error handling in handlers: return 400 for validation errors, 404 for not found, 401 for unauthenticated (via middleware)
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently. Can create and retrieve all entity types.
 
