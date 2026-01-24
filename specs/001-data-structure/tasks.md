@@ -19,9 +19,9 @@
 
 **Purpose**: Initialize Go project structure and dependencies
 
-- [ ] T001 Create `api/internal/domain/` directory structure per plan.md
-- [ ] T002 [P] Update `api/go.mod` with required dependencies: `github.com/google/uuid`, `github.com/oapi-codegen/runtime`
-- [ ] T003 [P] Verify `api/Makefile` has `generate` target for oapi-codegen
+- [x] T001 Create `api/internal/domain/` directory structure per plan.md
+- [x] T002 [P] Update `api/go.mod` with required dependencies: `github.com/google/uuid`, `github.com/oapi-codegen/runtime`
+- [x] T003 [P] Verify `api/Makefile` has `generate` target for oapi-codegen
 
 ---
 
