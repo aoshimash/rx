@@ -12,8 +12,12 @@ generate:
 lint:
 	$(DOCKER_RUN) golangci-lint run ./...
 
-test:
+test: deps
 	$(DOCKER_RUN) go test -v -race ./...
+
+deps:
+	$(DOCKER_RUN) go mod download
+	$(DOCKER_RUN) go mod tidy
 
 run:
 	$(DOCKER_RUN) go run cmd/server/main.go
