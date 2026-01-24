@@ -24,7 +24,8 @@
 
 	// Environment variables
 	"remoteEnv": {
-		"PATH": "${containerEnv:PATH}:$(go env GOPATH)/bin"
+		"PATH": "${containerEnv:PATH}:$(go env GOPATH)/bin",
+		"GOTOOLCHAIN": "auto"
 	},
 
 	// Customizations
