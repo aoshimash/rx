@@ -96,7 +96,9 @@ func TestProgramHandler_GetByID(t *testing.T) {
 	}
 
 	var created map[string]interface{}
-	json.Unmarshal(createW.Body.Bytes(), &created)
+	if err := json.Unmarshal(createW.Body.Bytes(), &created); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 	programID := created["id"].(string)
 
 	// Get the program

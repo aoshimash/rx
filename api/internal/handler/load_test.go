@@ -33,7 +33,9 @@ func TestLoadTest_100ConcurrentClients(t *testing.T) {
 	exerciseW := httptest.NewRecorder()
 	router.ServeHTTP(exerciseW, exerciseReq)
 	var exercise map[string]interface{}
-	json.Unmarshal(exerciseW.Body.Bytes(), &exercise)
+	if err := json.Unmarshal(exerciseW.Body.Bytes(), &exercise); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 	exerciseID := exercise["id"].(string)
 
 	startTime := time.Now()

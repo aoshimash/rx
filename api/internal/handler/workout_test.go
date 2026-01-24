@@ -52,7 +52,9 @@ func TestWorkoutHandler_Create(t *testing.T) {
 	router.ServeHTTP(exerciseW, exerciseReq)
 
 	var exercise map[string]interface{}
-	json.Unmarshal(exerciseW.Body.Bytes(), &exercise)
+	if err := json.Unmarshal(exerciseW.Body.Bytes(), &exercise); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 	exerciseID := exercise["id"].(string)
 
 	body := map[string]interface{}{
@@ -112,7 +114,9 @@ func TestWorkoutHandler_GetByID(t *testing.T) {
 	router.ServeHTTP(exerciseW, exerciseReq)
 
 	var exercise map[string]interface{}
-	json.Unmarshal(exerciseW.Body.Bytes(), &exercise)
+	if err := json.Unmarshal(exerciseW.Body.Bytes(), &exercise); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 	exerciseID := exercise["id"].(string)
 
 	// Create a workout with valid entry (workout must have at least one entry per validation)
@@ -141,7 +145,9 @@ func TestWorkoutHandler_GetByID(t *testing.T) {
 	}
 
 	var created map[string]interface{}
-	json.Unmarshal(createW.Body.Bytes(), &created)
+	if err := json.Unmarshal(createW.Body.Bytes(), &created); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 	workoutID := created["id"].(string)
 
 	// Get the workout
