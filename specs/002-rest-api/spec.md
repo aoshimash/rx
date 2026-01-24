@@ -3,7 +3,7 @@
 **Feature Branch**: `002-rest-api`  
 **Created**: 2026-01-24  
 **Status**: Draft  
-**Input**: User description: "Expose the domain models (Workout, WorkoutEntry, Exercise, Program, ProgramNode, TelemetryPoint) as a REST API so that clients can create, read, update, and delete training data records."
+**Input**: `specs/002-rest-api/spec.md`
 
 ## Clarifications
 

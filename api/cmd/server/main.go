@@ -56,8 +56,7 @@ func main() {
 	r := chi.NewRouter()
 
 	// Add middleware
-	r.Use(chiMiddleware.RequestID)
-	r.Use(middleware.RequestID) // Custom request ID middleware
+	r.Use(middleware.RequestID) // Custom request ID middleware (replaces chi's RequestID to add X-Request-ID header)
 	r.Use(chiMiddleware.RealIP)
 	r.Use(chiMiddleware.Logger)
 	r.Use(chiMiddleware.Recoverer)
