@@ -9,11 +9,11 @@
 
 ### Session 2026-01-24
 
-- Q: APIの認証要否（アクセス制御）は？ → A: 全操作で認証必須（Create/Read/Update/Delete/Listすべて）
-- Q: 参照されているエンティティの削除時の振る舞いは？ → A: 削除拒否（参照が存在する場合は409 Conflictエラーを返す）
-- Q: リスト取得時のページネーション方式は？ → A: カーソルベース（limit + cursor/after パラメータ）
-- Q: WorkoutEntryのAPI公開方式は？ → A: ネストリソースのみ（/workouts/{id}/entries で管理）
-- Q: ProgramNodeのAPI公開方式は？ → A: ネストリソースのみ（/programs/{id}/nodes で管理）
+- Q: Is authentication required for the API (access control)? → A: Authentication is required for all operations (Create/Read/Update/Delete/List)
+- Q: What is the behavior when deleting an entity that is referenced? → A: Deletion is rejected (returns 409 Conflict error if references exist)
+- Q: What pagination method is used for list operations? → A: Cursor-based (limit + cursor/after parameters)
+- Q: How is WorkoutEntry exposed via the API? → A: Nested resources only (managed via /workouts/{id}/entries)
+- Q: How is ProgramNode exposed via the API? → A: Nested resources only (managed via /programs/{id}/nodes)
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -91,18 +91,18 @@ A client needs to retrieve multiple records at once, potentially filtered by cri
 
 ### Edge Cases
 
-| シナリオ | 期待される振る舞い | 関連FR |
-|----------|-------------------|--------|
-| 無効または必須フィールド欠落でレコード作成 | バリデーションエラーを返す | FR-017, FR-018 |
-| 存在しないレコードを取得 | 404 Not Found を返す | FR-019 |
-| 存在しないレコードを更新 | 404 Not Found を返す | FR-019 |
-| 存在しないレコードを削除 | 404 Not Found を返す | FR-019 |
-| 存在しないExerciseを参照するWorkoutEntryを作成 | バリデーションエラーを返す | FR-017, FR-018 |
-| 存在しないProgramを参照するProgramNodeを作成 | バリデーションエラーを返す | FR-017, FR-018 |
-| WorkoutEntryに参照されているExerciseを削除 | 409 Conflict を返す | FR-026 |
-| Workoutに参照されているProgramを削除 | 409 Conflict を返す | FR-026 |
-| 同一レコードへの同時更新 | 計画フェーズで詳細化（楽観的ロック等） | - |
-| 非常に大きなペイロード（数百エントリのWorkout等） | 計画フェーズで詳細化（上限設定等） | - |
+| Scenario | Expected Behavior | Related FR |
+|----------|-------------------|-----------|
+| Creating a record with invalid or missing required fields | Returns validation error | FR-017, FR-018 |
+| Retrieving a non-existent record | Returns 404 Not Found | FR-019 |
+| Updating a non-existent record | Returns 404 Not Found | FR-019 |
+| Deleting a non-existent record | Returns 404 Not Found | FR-019 |
+| Creating a WorkoutEntry that references a non-existent Exercise | Returns validation error | FR-017, FR-018 |
+| Creating a ProgramNode that references a non-existent Program | Returns validation error | FR-017, FR-018 |
+| Deleting an Exercise that is referenced by WorkoutEntry | Returns 409 Conflict | FR-026 |
+| Deleting a Program that is referenced by Workout | Returns 409 Conflict | FR-026 |
+| Concurrent updates to the same record | Last-write-wins (no optimistic locking for MVP; latest PUT overwrites previous state) | FR-003, FR-007, FR-011, FR-015 |
+| Very large payload (e.g., Workout with hundreds of entries) | Validation sets limits: Workout max 500 entries, Program max 1000 nodes (entire tree), request body max 10MB | FR-017, FR-018 |
 
 ## Requirements *(mandatory)*
 
@@ -125,10 +125,10 @@ A client needs to retrieve multiple records at once, potentially filtered by cri
 - **FR-015**: System MUST allow clients to update existing TelemetryPoint records
 - **FR-016**: System MUST allow clients to delete TelemetryPoint records by unique identifier
 - **FR-017**: System MUST validate all input data according to domain model validation rules before storing
-- **FR-018**: System MUST return appropriate error responses when validation fails, including clear error messages
-- **FR-019**: System MUST return appropriate error responses when requested records do not exist (404 Not Found)
-- **FR-020**: System MUST allow clients to list all records of a given entity type
-- **FR-021**: System MUST allow clients to filter records by common criteria (e.g., date ranges, identifiers)
+- **FR-018**: System MUST return error responses in the format defined by the OpenAPI Error schema (`{code, message, details}`) when validation fails. HTTP status codes MUST be: 400 Bad Request for validation errors, 401 Unauthorized for authentication failures, 404 Not Found for missing resources, 409 Conflict for referential integrity violations, 500 Internal Server Error for server errors. Error messages MUST be clear and actionable.
+- **FR-019**: System MUST return a 404 Not Found error response (following FR-018 format) when requested records do not exist
+- **FR-020**: System MUST allow clients to list records of a given entity type using pagination (as specified in FR-022). List endpoints MUST NOT return all records in a single response; pagination is mandatory.
+- **FR-021**: System MUST allow clients to filter records by criteria where applicable. Filtering support varies by entity type: Exercise and Program list endpoints support pagination only (no filters); Workout and TelemetryPoint list endpoints support filtering as specified in FR-030. Common filter criteria include date ranges and identifiers where applicable.
 - **FR-022**: System MUST support cursor-based pagination for list endpoints using limit and cursor/after parameters, with a default and maximum limit of 100 records per request, and MUST allow clients to paginate through at least 1000 records for a given entity type
 - **FR-023**: System MUST handle relationships between entities (e.g., WorkoutEntry references Exercise, Workout contains WorkoutEntry, Program contains ProgramNode)
 - **FR-024**: WorkoutEntry records MUST be managed exclusively as nested resources under Workout (e.g., /workouts/{id}/entries); no independent WorkoutEntry endpoints shall be provided
@@ -137,7 +137,7 @@ A client needs to retrieve multiple records at once, potentially filtered by cri
 - **FR-027**: System MUST return records in a consistent format that matches the domain model structure
 - **FR-028**: System MUST require authentication for all API operations (Create, Read, Update, Delete, List); unauthenticated requests MUST be rejected with a 401 Unauthorized error response regardless of whether the target resource exists (to prevent information disclosure about resource existence)
 - **FR-029**: List operations for nested entities MUST be exposed only under their parent resources (e.g., WorkoutEntry under Workout, ProgramNode under Program)
-- **FR-030**: The system MUST support the following minimum filters: Workouts by timestamp range; TelemetryPoints by metric_name and timestamp range
+- **FR-030**: The system MUST support the following minimum filters: Workouts by timestamp range (timestamp_from, timestamp_to); TelemetryPoints by metric_name and timestamp range (metric_name, timestamp_from, timestamp_to). Exercise and Program list endpoints do not support filtering (pagination only).
 
 ### Key Entities *(include if feature involves data)*
 
