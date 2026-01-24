@@ -646,19 +646,19 @@ All tests must be table-driven. See `.claude/skills/optel-go-standards/reference
 
 ### Development vs Production Containers
 
-**Important:** Development and production containers are **completely separate**.
+**Important:** Development uses **DevContainer** (for iterative development) and **Docker Compose** (for smoke-testing). Production uses a single **`api/Dockerfile`** (for distribution).
 
-| Aspect | Development (`Dockerfile`) | Production (`Dockerfile.prod`) |
+| Aspect | DevContainer (Development) | Production (`api/Dockerfile`) |
 |--------|---------------------------|-------------------------------|
-| Purpose | Local development | Production deployment |
-| Base Image | `golang:1.25` (Ubuntu-based) | `gcr.io/distroless/static-debian11:nonroot` |
+| Purpose | Iterative local development | Production deployment |
+| Base Image | `mcr.microsoft.com/devcontainers/go:1.25` | `gcr.io/distroless/static-debian11:nonroot` |
 | Size | Larger (includes Go compiler, tools) | Minimal (binary only, no shell, no package manager) |
 | Tools | oapi-codegen, golangci-lint, make | None (distroless has no shell) |
 | User | root (for development) | nonroot (65532:65532, provided by distroless) |
 | Security | Standard (development tools) | High (minimal attack surface, no shell) |
-| Volumes | Code mounted for live editing | No volumes |
-| Build | Single stage | Multi-stage build (Ubuntu builder + distroless runtime) |
-| Use Case | `make docker-up`, `make generate` | CI/CD, Kubernetes, production |
+| Volumes | Workspace mounted for live editing | No volumes |
+| Build | DevContainer image (managed by VS Code/Cursor) | Multi-stage build (Ubuntu builder + distroless runtime) |
+| Use Case | VS Code/Cursor DevContainer workflow | CI/CD, Kubernetes, production, Docker Compose smoke-testing |
 
 ### Development Environment
 
@@ -778,26 +778,19 @@ docker rm optel-test
 
 ### Common Issues
 
-**Container not running:**
-```bash
-# Check if container is running
-docker-compose -f ../docker-compose.yml ps
-
-# Start container if not running
-make docker-up
-
-# Rebuild container if needed
-docker-compose -f ../docker-compose.yml build --no-cache dev
-```
+**DevContainer not starting:**
+- Check Docker Desktop/Engine is running
+- Ensure Dev Containers extension is installed in VS Code/Cursor
+- Rebuild DevContainer from Command Palette: `Dev Containers: Rebuild Container`
 
 **Permission errors:**
 - Ensure Docker has proper permissions
 - On Linux, you may need to add your user to the docker group
 
-**oapi-codegen or golangci-lint not found:**
-- These tools are installed in the Docker container
-- If you see "command not found", ensure the container is running: `make docker-up`
-- Rebuild the container if tools are missing: `docker-compose -f ../docker-compose.yml build dev`
+**oapi-codegen or golangci-lint not found (in DevContainer):**
+- These tools are installed via post-create hook in DevContainer
+- If you see "command not found", restart the terminal or run: `source ~/.bashrc`
+- Rebuild DevContainer if tools are missing: `Dev Containers: Rebuild Container`
 
 **golangci-lint errors:**
 - Review `.golangci.yml` for enabled linters

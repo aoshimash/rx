@@ -41,4 +41,4 @@ docker-shell:
 
 # Production build (builds outside container, requires local Docker)
 docker-build-prod:
-	docker build -t optel-training:latest -f Dockerfile .
+	docker build -t optel-training:latest -f Dockerfile api

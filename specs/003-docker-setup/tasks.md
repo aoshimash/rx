@@ -97,13 +97,13 @@
 
 **Purpose**: Consistency, cleanup, and verification across all stories.
 
-- [ ] T023 [P] Remove/adjust any stale references to `Dockerfile.prod` across docs (`README.md`, `docs/DEVELOPMENT.md`, `api/README.md`)
-- [ ] T024 [P] Remove/adjust any stale references to a Compose-based dev tool container in docs and make targets
-- [ ] T025 Run a full verification pass:
+- [x] T023 [P] Remove/adjust any stale references to `Dockerfile.prod` across docs (`README.md`, `docs/DEVELOPMENT.md`, `api/README.md`)
+- [x] T024 [P] Remove/adjust any stale references to a Compose-based dev tool container in docs and make targets
+- [x] T025 Run a full verification pass:
   - DevContainer: reopen and run generate/lint/test
   - Production image: build and run, verify HTTP response
   - Docker Compose: up/logs/down, verify HTTP response
-- [ ] T026 [P] Update `specs/003-docker-setup/quickstart.md` if the implementation details diverged from the planned steps
+- [x] T026 [P] Update `specs/003-docker-setup/quickstart.md` if the implementation details diverged from the planned steps
 
 ---
 
