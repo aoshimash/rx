@@ -1,23 +1,14 @@
+# OpenAPI Schema Components for OPTel Training
+# Feature: 001-data-structure
+# Date: 2026-01-24
+#
+# These components should be merged into api/openapi/openapi.yaml
+
 openapi: 3.0.3
 info:
-  title: OPTel Workout API
-  version: 0.1.0
-servers:
-  - url: http://localhost:8080/api/v1
-paths:
-  /workouts:
-    get:
-      summary: List workouts
-      operationId: listWorkouts
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Workout'
+  title: OPTel Training API - Entity Schemas
+  version: 1.0.0
+  description: Core entity schemas for training data
 
 components:
   schemas:
@@ -223,7 +214,6 @@ components:
       type: object
       required:
         - id
-        - workout_id
         - order
         - exercise_id
         - entry_type
@@ -233,9 +223,6 @@ components:
         - rpe
       properties:
         id:
-          type: string
-          format: uuid
-        workout_id:
           type: string
           format: uuid
         order:
@@ -452,15 +439,11 @@ components:
       type: object
       required:
         - id
-        - program_id
         - name
         - node_type
         - order
       properties:
         id:
-          type: string
-          format: uuid
-        program_id:
           type: string
           format: uuid
         parent_id:
@@ -484,6 +467,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProgramNode'
+        # Prescription fields (for leaf nodes)
         exercise_id:
           type: string
           format: uuid

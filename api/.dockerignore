@@ -1,0 +1,40 @@
+# Git
+.git/
+.gitignore
+
+# Build artifacts
+bin/
+dist/
+build/
+*.o
+*.a
+*.exe
+*.test
+*.out
+
+# Dependencies
+vendor/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+
+# Coverage
+coverage/
+*.coverprofile
+
+# Generated code (will be generated in container)
+pkg/openapi/*.gen.go
