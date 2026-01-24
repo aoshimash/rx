@@ -223,6 +223,7 @@ components:
       type: object
       required:
         - id
+        - workout_id
         - order
         - exercise_id
         - entry_type
