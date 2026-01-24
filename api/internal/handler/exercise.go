@@ -3,10 +3,8 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/http"
-	"time"
 
 	"github.com/aoshimash/optel-training/api/internal/domain"
 	"github.com/aoshimash/optel-training/api/internal/middleware"
