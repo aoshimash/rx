@@ -238,6 +238,25 @@ func TestValidateWorkout(t *testing.T) {
 - Add new components to `components.schemas` section
 - Update Makefile `generate` target if needed
 
+## Future Considerations
+
+### Data Structure Versioning (FR-017)
+
+For preserving interpretability of previously recorded data:
+- **Initial implementation**: Domain models are stable; all changes will be additive only (no breaking changes)
+- **Future versioning strategy**: Semantic versioning will be used when schema evolution is needed
+  - **MAJOR**: Breaking changes to data structures (field removals, type changes)
+  - **MINOR**: Additive changes (new optional fields, new entities)
+  - **PATCH**: Documentation updates, validation rule clarifications
+- **Migration approach**: Breaking changes will require explicit migration scripts and version fields on entities
+
+### Exercise Name Uniqueness Validation
+
+The `Exercise.name` uniqueness constraint (case-insensitive) is defined in data-model.md but will be enforced at the repository layer, not in domain validation. This is because:
+- Uniqueness requires database-level checks or repository queries
+- Domain validation focuses on single-entity integrity
+- Repository implementation (future PR) will handle uniqueness validation
+
 ## Definition of Done
 
 This PR is complete when:
