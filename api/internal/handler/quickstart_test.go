@@ -293,7 +293,8 @@ func TestQuickstartExample4_FilterWorkoutsByDateRange(t *testing.T) {
 	exerciseID := exercise["id"].(string)
 
 	// Create workouts at different times with entries
-	baseTime := time.Date(2026, 1, 15, 12, 0, 0, 0, time.UTC)
+	// Use past dates to avoid validation errors
+	baseTime := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
 	for i := 0; i < 5; i++ {
 		body := map[string]interface{}{
 			"timestamp": baseTime.AddDate(0, 0, i*5).Format(time.RFC3339),
