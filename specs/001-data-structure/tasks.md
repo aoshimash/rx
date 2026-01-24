@@ -51,16 +51,16 @@
 
 ### Implementation for User Story 1
 
-- [ ] T009 [P] [US1] Create Exercise struct in `api/internal/domain/exercise.go` with all fields from data-model.md
-- [ ] T010 [P] [US1] Create PlanSnapshot struct in `api/internal/domain/workout.go` (embedded in WorkoutEntry)
-- [ ] T011 [P] [US1] Create WorkoutEntry struct in `api/internal/domain/workout.go` with all fields from data-model.md
-- [ ] T012 [US1] Create Workout struct in `api/internal/domain/workout.go` with all fields from data-model.md (depends on T011 for WorkoutEntry)
-- [ ] T013 [US1] Implement `ValidateExercise(e *Exercise) error` in `api/internal/domain/validation.go` (depends on T009)
-- [ ] T014 [US1] Implement `ValidateWorkoutEntry(e *WorkoutEntry) error` in `api/internal/domain/validation.go` (depends on T011, T010)
-- [ ] T015 [US1] Implement `ValidateWorkout(w *Workout) error` in `api/internal/domain/validation.go` (depends on T012, T014)
-- [ ] T016 [P] [US1] Write table-driven tests for `ValidateExercise` in `api/internal/domain/exercise_test.go` covering all validation rules
-- [ ] T017 [P] [US1] Write table-driven tests for `ValidateWorkoutEntry` in `api/internal/domain/workout_test.go` covering all validation rules and edge cases
-- [ ] T018 [US1] Write table-driven tests for `ValidateWorkout` in `api/internal/domain/workout_test.go` covering all validation rules and edge cases (depends on T015)
+- [x] T009 [P] [US1] Create Exercise struct in `api/internal/domain/exercise.go` with all fields from data-model.md
+- [x] T010 [P] [US1] Create PlanSnapshot struct in `api/internal/domain/workout.go` (embedded in WorkoutEntry)
+- [x] T011 [P] [US1] Create WorkoutEntry struct in `api/internal/domain/workout.go` with all fields from data-model.md
+- [x] T012 [US1] Create Workout struct in `api/internal/domain/workout.go` with all fields from data-model.md (depends on T011 for WorkoutEntry)
+- [x] T013 [US1] Implement `ValidateExercise(e *Exercise) error` in `api/internal/domain/validation.go` (depends on T009)
+- [x] T014 [US1] Implement `ValidateWorkoutEntry(e *WorkoutEntry) error` in `api/internal/domain/validation.go` (depends on T011, T010)
+- [x] T015 [US1] Implement `ValidateWorkout(w *Workout) error` in `api/internal/domain/validation.go` (depends on T012, T014)
+- [x] T016 [P] [US1] Write table-driven tests for `ValidateExercise` in `api/internal/domain/exercise_test.go` covering all validation rules
+- [x] T017 [P] [US1] Write table-driven tests for `ValidateWorkoutEntry` in `api/internal/domain/workout_test.go` covering all validation rules and edge cases
+- [x] T018 [US1] Write table-driven tests for `ValidateWorkout` in `api/internal/domain/workout_test.go` covering all validation rules and edge cases (depends on T015)
 
 **Checkpoint**: User Story 1 entities are fully defined, validated, and tested. A workout with entries can be created and validated.
 

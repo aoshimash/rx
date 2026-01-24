@@ -102,3 +102,215 @@ func ValidateStringLength(field, value string, min, max int) error {
 	}
 	return nil
 }
+
+// ValidateExercise validates an Exercise entity.
+func ValidateExercise(e *Exercise) error {
+	if e == nil {
+		return &ValidationError{
+			Field:   "exercise",
+			Message: "exercise cannot be nil",
+		}
+	}
+
+	// Validate required fields
+	if err := ValidateRequiredString("name", e.Name); err != nil {
+		return err
+	}
+
+	// Validate name length
+	if err := ValidateStringLength("name", e.Name, 1, 200); err != nil {
+		return err
+	}
+
+	// Validate description length if provided
+	if e.Description != nil {
+		if err := ValidateStringLength("description", *e.Description, 0, 2000); err != nil {
+			return err
+		}
+	}
+
+	// Validate load_increment if provided
+	if e.LoadIncrement != nil {
+		if *e.LoadIncrement <= 0 {
+			return &ValidationError{
+				Field:   "load_increment",
+				Message: "load_increment must be greater than 0",
+			}
+		}
+	}
+
+	return nil
+}
+
+// ValidateWorkoutEntry validates a WorkoutEntry entity.
+func ValidateWorkoutEntry(e *WorkoutEntry) error {
+	if e == nil {
+		return &ValidationError{
+			Field:   "workout_entry",
+			Message: "workout_entry cannot be nil",
+		}
+	}
+
+	// Validate required fields
+	if err := ValidateRequiredString("entry_type", e.EntryType); err != nil {
+		return err
+	}
+
+	// Validate entry_type enum
+	if err := ValidateEntryType(e.EntryType); err != nil {
+		return err
+	}
+
+	// Validate sets
+	if e.Sets <= 0 {
+		return &ValidationError{
+			Field:   "sets",
+			Message: "sets must be greater than 0",
+		}
+	}
+
+	// Validate reps
+	if e.Reps <= 0 {
+		return &ValidationError{
+			Field:   "reps",
+			Message: "reps must be greater than 0",
+		}
+	}
+
+	// Validate load_kg (≥ 0, rounded to 0.1kg)
+	if e.LoadKg < 0 {
+		return &ValidationError{
+			Field:   "load_kg",
+			Message: "load_kg must be greater than or equal to 0",
+		}
+	}
+	e.LoadKg = RoundLoad(e.LoadKg)
+
+	// Validate RPE
+	if err := ValidateRPE(e.RPE); err != nil {
+		return err
+	}
+
+	// Validate order
+	if e.Order < 0 {
+		return &ValidationError{
+			Field:   "order",
+			Message: "order must be greater than or equal to 0",
+		}
+	}
+
+	// Validate display_name length if provided
+	if e.DisplayName != nil {
+		if err := ValidateStringLength("display_name", *e.DisplayName, 0, 200); err != nil {
+			return err
+		}
+	}
+
+	// Validate notes length if provided
+	if e.Notes != nil {
+		if err := ValidateStringLength("notes", *e.Notes, 0, 2000); err != nil {
+			return err
+		}
+	}
+
+	// Validate rest seconds if provided
+	if e.PlannedRestSeconds != nil && *e.PlannedRestSeconds < 0 {
+		return &ValidationError{
+			Field:   "planned_rest_seconds",
+			Message: "planned_rest_seconds must be greater than or equal to 0",
+		}
+	}
+	if e.PerformedRestSeconds != nil && *e.PerformedRestSeconds < 0 {
+		return &ValidationError{
+			Field:   "performed_rest_seconds",
+			Message: "performed_rest_seconds must be greater than or equal to 0",
+		}
+	}
+
+	return nil
+}
+
+// ValidateWorkout validates a Workout entity.
+func ValidateWorkout(w *Workout) error {
+	if w == nil {
+		return &ValidationError{
+			Field:   "workout",
+			Message: "workout cannot be nil",
+		}
+	}
+
+	// Validate timestamp (not in future)
+	if err := ValidateTimestamp(w.Timestamp); err != nil {
+		return err
+	}
+
+	// Validate entries (must have at least one)
+	if len(w.Entries) == 0 {
+		return &ValidationError{
+			Field:   "entries",
+			Message: "workout must have at least one entry",
+		}
+	}
+
+	// Validate each entry
+	for i, entry := range w.Entries {
+		if err := ValidateWorkoutEntry(&entry); err != nil {
+			return &ValidationError{
+				Field:   fmt.Sprintf("entries[%d]", i),
+				Message: err.Error(),
+			}
+		}
+	}
+
+	// Validate session times
+	if w.SessionStart != nil && w.SessionEnd != nil {
+		if w.SessionStart.After(*w.SessionEnd) {
+			return &ValidationError{
+				Field:   "session_start",
+				Message: "session_start must be before or equal to session_end",
+			}
+		}
+	}
+
+	// Validate fatigue_level if provided
+	if w.FatigueLevel != nil {
+		if err := ValidateFatigueLevel(*w.FatigueLevel); err != nil {
+			return err
+		}
+	}
+
+	// Validate body_weight_kg if provided
+	if w.BodyWeightKg != nil {
+		if *w.BodyWeightKg <= 0 {
+			return &ValidationError{
+				Field:   "body_weight_kg",
+				Message: "body_weight_kg must be greater than 0",
+			}
+		}
+		*w.BodyWeightKg = RoundLoad(*w.BodyWeightKg)
+	}
+
+	// Validate sleep_hours if provided
+	if w.SleepHours != nil {
+		if *w.SleepHours < 0 || *w.SleepHours > 24 {
+			return &ValidationError{
+				Field:   "sleep_hours",
+				Message: "sleep_hours must be between 0 and 24",
+			}
+		}
+	}
+
+	// Validate string lengths
+	if w.ConditionNotes != nil {
+		if err := ValidateStringLength("condition_notes", *w.ConditionNotes, 0, 2000); err != nil {
+			return err
+		}
+	}
+	if w.Notes != nil {
+		if err := ValidateStringLength("notes", *w.Notes, 0, 5000); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
