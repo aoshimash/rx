@@ -112,8 +112,8 @@
 - [x] T028 Merge `specs/001-data-structure/contracts/openapi-entities.yaml` components into `api/openapi/openapi.yaml`
 - [x] T029 [P] Verify component names match domain model names (Exercise, Workout, WorkoutEntry, etc.)
 - [x] T030 [P] Ensure all required fields from data-model.md are marked as required in OpenAPI schemas
-- [ ] T031 Run `make generate` in `api/` directory to generate OpenAPI types
-- [ ] T032 Verify generated code compiles without errors
+- [x] T031 Run `make generate` in `api/` directory to generate OpenAPI types
+- [x] T032 Verify generated code compiles without errors
 - [x] T033 [P] Compare generated OpenAPI types with domain models to ensure consistency (manual verification completed)
 
 **Checkpoint**: OpenAPI schemas are integrated and code generation works correctly
@@ -127,7 +127,7 @@
 - [ ] T034 [P] Run `make lint` in `api/` directory and fix all linter errors (requires Docker)
 - [ ] T035 [P] Verify all validation functions have 100% test coverage (requires go test)
 - [x] T036 [P] Verify all edge cases from spec.md Edge Cases section are covered in tests
-- [ ] T037 [P] Run all tests with `go test -v -race ./...` in `api/internal/domain/` (requires Docker/go test)
+- [x] T037 [P] Run all tests with `go test -v -race ./...` in `api/internal/domain/` (requires Docker/go test)
 - [x] T038 [P] Verify all spec.md FR-001 to FR-017 requirements are met
 - [x] T039 [P] Update `api/internal/domain/README.md` (if exists) or create documentation for domain models
 
