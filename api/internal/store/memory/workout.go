@@ -159,10 +159,10 @@ func (s *workoutStore) listWithFilter(ctx context.Context, timestampFrom, timest
 	// Return copies to prevent external modifications
 	copies := make([]*domain.Workout, len(result))
 	for i, w := range result {
-		copy := *w
-		copy.Entries = make([]domain.WorkoutEntry, len(w.Entries))
-		copy(copy.Entries, w.Entries)
-		copies[i] = &copy
+		wCopy := *w
+		wCopy.Entries = make([]domain.WorkoutEntry, len(w.Entries))
+		copy(wCopy.Entries, w.Entries)
+		copies[i] = &wCopy
 	}
 
 	return copies, nextCursor, hasMore, nil
@@ -177,10 +177,10 @@ func (s *workoutStore) ListByExerciseID(ctx context.Context, exerciseID uuid.UUI
 		for _, entry := range w.Entries {
 			if entry.ExerciseID == exerciseID {
 				// Return a copy
-				copy := *w
-				copy.Entries = make([]domain.WorkoutEntry, len(w.Entries))
-				copy(copy.Entries, w.Entries)
-				result = append(result, &copy)
+				wCopy := *w
+				wCopy.Entries = make([]domain.WorkoutEntry, len(w.Entries))
+				copy(wCopy.Entries, w.Entries)
+				result = append(result, &wCopy)
 				break // Found at least one entry, no need to check more
 			}
 		}
@@ -197,10 +197,10 @@ func (s *workoutStore) ListByProgramNodeID(ctx context.Context, programNodeID uu
 	for _, w := range s.workouts {
 		if w.ProgramNodeID != nil && *w.ProgramNodeID == programNodeID {
 			// Return a copy
-			copy := *w
-			copy.Entries = make([]domain.WorkoutEntry, len(w.Entries))
-			copy(copy.Entries, w.Entries)
-			result = append(result, &copy)
+			wCopy := *w
+			wCopy.Entries = make([]domain.WorkoutEntry, len(w.Entries))
+			copy(wCopy.Entries, w.Entries)
+			result = append(result, &wCopy)
 		}
 	}
 
