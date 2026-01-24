@@ -39,19 +39,19 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 Extend `api/openapi/openapi.yaml` with all CRUD endpoints from `specs/002-rest-api/contracts/openapi-endpoints.yaml` (merge paths, components, security schemes)
-- [ ] T005 Update `/workouts` GET response in `api/openapi/openapi.yaml` from array to paginated response shape (data/next_cursor/has_more)
+- [x] T004 Extend `api/openapi/openapi.yaml` with all CRUD endpoints from `specs/002-rest-api/contracts/openapi-endpoints.yaml` (merge paths, components, security schemes)
+- [x] T005 Update `/workouts` GET response in `api/openapi/openapi.yaml` from array to paginated response shape (data/next_cursor/has_more)
 - [ ] T006 Run `make generate` in `api/` to generate OpenAPI server code in `api/pkg/openapi/server.gen.go`
-- [ ] T007 [P] Create `api/internal/middleware/auth.go` with AuthProvider interface and stub provider implementation
-- [ ] T008 [P] Create `api/internal/middleware/error.go` for error response formatting (Error struct with code/message/details)
-- [ ] T009 [P] Create `api/internal/repository/exercise.go` with ExerciseRepository interface (Create, GetByID, Update, Delete, List)
-- [ ] T010 [P] Create `api/internal/repository/workout.go` with WorkoutRepository interface (Create, GetByID, Update, Delete, List, ListByTimestampRange)
-- [ ] T011 [P] Create `api/internal/repository/program.go` with ProgramRepository interface (Create, GetByID, Update, Delete, List)
-- [ ] T012 [P] Create `api/internal/repository/telemetry.go` with TelemetryPointRepository interface (Create, GetByID, Update, Delete, List, ListByMetricAndTimeRange)
-- [ ] T013 [P] Create `api/internal/store/memory/exercise.go` implementing ExerciseRepository with in-memory map storage
-- [ ] T014 [P] Create `api/internal/store/memory/workout.go` implementing WorkoutRepository with in-memory map storage
-- [ ] T015 [P] Create `api/internal/store/memory/program.go` implementing ProgramRepository with in-memory map storage
-- [ ] T016 [P] Create `api/internal/store/memory/telemetry.go` implementing TelemetryPointRepository with in-memory map storage
+- [x] T007 [P] Create `api/internal/middleware/auth.go` with AuthProvider interface and stub provider implementation
+- [x] T008 [P] Create `api/internal/middleware/error.go` for error response formatting (Error struct with code/message/details)
+- [x] T009 [P] Create `api/internal/repository/exercise.go` with ExerciseRepository interface (Create, GetByID, Update, Delete, List)
+- [x] T010 [P] Create `api/internal/repository/workout.go` with WorkoutRepository interface (Create, GetByID, Update, Delete, List, ListByTimestampRange)
+- [x] T011 [P] Create `api/internal/repository/program.go` with ProgramRepository interface (Create, GetByID, Update, Delete, List)
+- [x] T012 [P] Create `api/internal/repository/telemetry.go` with TelemetryPointRepository interface (Create, GetByID, Update, Delete, List, ListByMetricAndTimeRange)
+- [x] T013 [P] Create `api/internal/store/memory/exercise.go` implementing ExerciseRepository with in-memory map storage
+- [x] T014 [P] Create `api/internal/store/memory/workout.go` implementing WorkoutRepository with in-memory map storage
+- [x] T015 [P] Create `api/internal/store/memory/program.go` implementing ProgramRepository with in-memory map storage
+- [x] T016 [P] Create `api/internal/store/memory/telemetry.go` implementing TelemetryPointRepository with in-memory map storage
 - [ ] T017 Update `api/cmd/server/main.go` to initialize chi router, register authentication middleware, and wire up generated OpenAPI handlers
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
