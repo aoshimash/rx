@@ -3,7 +3,9 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/aoshimash/optel-training/api/internal/domain"
 	"github.com/aoshimash/optel-training/api/internal/middleware"
@@ -246,4 +248,34 @@ func (h *ExerciseHandler) DeleteExercise(w http.ResponseWriter, r *http.Request)
 
 	// Return 204 No Content
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// ListExercises handles GET /exercises
+func (h *ExerciseHandler) ListExercises(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Parse pagination parameters
+	limit := 100 // default
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if parsedLimit, err := parseInt(limitStr, 1, 100); err == nil {
+			limit = parsedLimit
+		}
+	}
+	after := r.URL.Query().Get("after")
+
+	// List from repository
+	exercises, nextCursor, hasMore, err := h.repo.List(ctx, limit, after)
+	if err != nil {
+		middleware.WriteInternalError(w, "Failed to list exercises")
+		return
+	}
+
+	// Return paginated response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"data":       exercises,
+		"next_cursor": nextCursor,
+		"has_more":   hasMore,
+	})
 }

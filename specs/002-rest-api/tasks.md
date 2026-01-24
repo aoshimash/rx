@@ -128,14 +128,14 @@
 
 ### Implementation for User Story 4
 
-- [ ] T041 [P] [US4] Implement ListExercises handler in `api/internal/handler/exercise.go` (GET /exercises with limit/after pagination parameters)
-- [ ] T042 [P] [US4] Implement ListWorkouts handler in `api/internal/handler/workout.go` (GET /workouts with limit/after pagination and timestamp_from/timestamp_to filters)
-- [ ] T043 [P] [US4] Implement ListPrograms handler in `api/internal/handler/program.go` (GET /programs with limit/after pagination parameters)
-- [ ] T044 [P] [US4] Implement ListTelemetryPoints handler in `api/internal/handler/telemetry.go` (GET /telemetry with limit/after pagination and metric_name/timestamp_from/timestamp_to filters)
-- [ ] T045 [US4] Implement cursor-based pagination logic in handlers: encode last record ID as base64 cursor, calculate has_more, return PaginatedResponse structure
-- [ ] T046 [US4] Implement filtering logic in repository methods: WorkoutRepository.ListByTimestampRange, TelemetryPointRepository.ListByMetricAndTimeRange
-- [ ] T047 [US4] Add pagination parameter validation: limit 1-100 (default 100), validate cursor format
-- [ ] T048 [US4] Register list endpoints in `api/cmd/server/main.go` (GET routes with query parameters)
+- [x] T041 [P] [US4] Implement ListExercises handler in `api/internal/handler/exercise.go` (GET /exercises with limit/after pagination parameters)
+- [x] T042 [P] [US4] Implement ListWorkouts handler in `api/internal/handler/workout.go` (GET /workouts with limit/after pagination and timestamp_from/timestamp_to filters)
+- [x] T043 [P] [US4] Implement ListPrograms handler in `api/internal/handler/program.go` (GET /programs with limit/after pagination parameters)
+- [x] T044 [P] [US4] Implement ListTelemetryPoints handler in `api/internal/handler/telemetry.go` (GET /telemetry with limit/after pagination and metric_name/timestamp_from/timestamp_to filters)
+- [x] T045 [US4] Implement cursor-based pagination logic in handlers: encode last record ID as base64 cursor, calculate has_more, return PaginatedResponse structure
+- [x] T046 [US4] Implement filtering logic in repository methods: WorkoutRepository.ListByTimestampRange, TelemetryPointRepository.ListByMetricAndTimeRange
+- [x] T047 [US4] Add pagination parameter validation: limit 1-100 (default 100), validate cursor format
+- [x] T048 [US4] Register list endpoints in `api/cmd/server/main.go` (GET routes with query parameters)
 
 **Checkpoint**: At this point, all user stories should be complete. Can create, retrieve, update, delete, and list all entity types with pagination and filtering.
 

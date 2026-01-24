@@ -60,24 +60,28 @@ func main() {
 	r.Route("/api/v1", func(r chi.Router) {
 		// Exercise routes
 		r.Post("/exercises", exerciseHandler.CreateExercise)
+		r.Get("/exercises", exerciseHandler.ListExercises)
 		r.Get("/exercises/{id}", exerciseHandler.GetExercise)
 		r.Put("/exercises/{id}", exerciseHandler.UpdateExercise)
 		r.Delete("/exercises/{id}", exerciseHandler.DeleteExercise)
 
 		// Workout routes
 		r.Post("/workouts", workoutHandler.CreateWorkout)
+		r.Get("/workouts", workoutHandler.ListWorkouts)
 		r.Get("/workouts/{id}", workoutHandler.GetWorkout)
 		r.Put("/workouts/{id}", workoutHandler.UpdateWorkout)
 		r.Delete("/workouts/{id}", workoutHandler.DeleteWorkout)
 
 		// Program routes
 		r.Post("/programs", programHandler.CreateProgram)
+		r.Get("/programs", programHandler.ListPrograms)
 		r.Get("/programs/{id}", programHandler.GetProgram)
 		r.Put("/programs/{id}", programHandler.UpdateProgram)
 		r.Delete("/programs/{id}", programHandler.DeleteProgram)
 
 		// Telemetry routes
 		r.Post("/telemetry", telemetryHandler.CreateTelemetryPoint)
+		r.Get("/telemetry", telemetryHandler.ListTelemetryPoints)
 		r.Get("/telemetry/{id}", telemetryHandler.GetTelemetryPoint)
 		r.Put("/telemetry/{id}", telemetryHandler.UpdateTelemetryPoint)
 		r.Delete("/telemetry/{id}", telemetryHandler.DeleteTelemetryPoint)

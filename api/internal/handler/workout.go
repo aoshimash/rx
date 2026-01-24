@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -521,4 +522,57 @@ func (h *WorkoutHandler) DeleteWorkout(w http.ResponseWriter, r *http.Request) {
 
 	// Return 204 No Content
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// ListWorkouts handles GET /workouts
+func (h *WorkoutHandler) ListWorkouts(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Parse pagination parameters
+	limit := 100 // default
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if parsedLimit, err := parseInt(limitStr, 1, 100); err == nil {
+			limit = parsedLimit
+		}
+	}
+	after := r.URL.Query().Get("after")
+
+	// Parse filter parameters (FR-030)
+	var timestampFrom, timestampTo *time.Time
+	if fromStr := r.URL.Query().Get("timestamp_from"); fromStr != "" {
+		if t, err := time.Parse(time.RFC3339, fromStr); err == nil {
+			timestampFrom = &t
+		}
+	}
+	if toStr := r.URL.Query().Get("timestamp_to"); toStr != "" {
+		if t, err := time.Parse(time.RFC3339, toStr); err == nil {
+			timestampTo = &t
+		}
+	}
+
+	// List from repository (with filters if provided)
+	var workouts []*domain.Workout
+	var nextCursor string
+	var hasMore bool
+	var err error
+
+	if timestampFrom != nil || timestampTo != nil {
+		workouts, nextCursor, hasMore, err = h.repo.ListByTimestampRange(ctx, timestampFrom, timestampTo, limit, after)
+	} else {
+		workouts, nextCursor, hasMore, err = h.repo.List(ctx, limit, after)
+	}
+
+	if err != nil {
+		middleware.WriteInternalError(w, "Failed to list workouts")
+		return
+	}
+
+	// Return paginated response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"data":       workouts,
+		"next_cursor": nextCursor,
+		"has_more":   hasMore,
+	})
 }
