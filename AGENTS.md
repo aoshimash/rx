@@ -1,0 +1,51 @@
+# AGENTS.md
+
+This file provides guidance for AI coding agents working on this repository.
+
+## Project Overview
+
+**OPTel (Open Physical Telemetry)** - An observability stack for the human physical layer.
+
+This repository (`optel-workload`) is the **Output/Training Management** component. It manages "Workloads" (physical exertion records) as an agent-native telemetry backend.
+
+## Key Principles
+
+1. **"Dumb Backend"** - No business logic for "health." Strictly stores and retrieves telemetry data.
+2. **Schema-First** - Development starts from OpenAPI definitions.
+3. **Infrastructure Metaphors** - Use infrastructure terminology, not fitness terminology.
+
+For details, see `.claude/skills/optel-philosophy/`.
+
+## Project Structure
+
+```
+optel-workload/
+├── api/                  # REST API (Go)
+├── mcp/                  # MCP Server (runs on user's local machine)
+├── frontend/             # Frontend (future)
+├── infra/                # Terraform/Helm (future)
+├── docs/                 # Documentation
+└── .claude/skills/       # AI agent skills
+```
+
+## Skills Reference
+
+| Skill | Description |
+|-------|-------------|
+| [optel-philosophy](.claude/skills/optel-philosophy/) | Core philosophy and constraints |
+| [optel-domain](.claude/skills/optel-domain/) | Domain models (Workload, Program, Telemetry) |
+| [optel-go-standards](.claude/skills/optel-go-standards/) | Go coding standards |
+
+## Quick Reference
+
+- **Language**: Go 1.25+
+- **HTTP Server**: chi
+- **OpenAPI**: oapi-codegen (Schema-First)
+- **Linter**: golangci-lint (strict)
+- **Logging**: log/slog
+- **Testing**: standard testing package
+
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Development Guide](docs/DEVELOPMENT.md)
