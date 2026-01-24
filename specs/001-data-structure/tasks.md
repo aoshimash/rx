@@ -94,12 +94,12 @@
 
 ### Implementation for User Story 3
 
-- [ ] T022 [P] [US3] Create ProgramNode struct in `api/internal/domain/program.go` with all fields from data-model.md (including prescription fields)
-- [ ] T023 [US3] Create Program struct in `api/internal/domain/program.go` with all fields from data-model.md (depends on T022 for ProgramNode)
-- [ ] T024 [US3] Implement `ValidateProgramNode(n *ProgramNode) error` in `api/internal/domain/validation.go` (depends on T022)
-- [ ] T025 [US3] Implement `ValidateProgram(p *Program) error` in `api/internal/domain/validation.go` (depends on T023, T024)
-- [ ] T026 [P] [US3] Write table-driven tests for `ValidateProgramNode` in `api/internal/domain/program_test.go` covering all validation rules
-- [ ] T027 [US3] Write table-driven tests for `ValidateProgram` in `api/internal/domain/program_test.go` covering all validation rules and recursive structure (depends on T025)
+- [x] T022 [P] [US3] Create ProgramNode struct in `api/internal/domain/program.go` with all fields from data-model.md (including prescription fields)
+- [x] T023 [US3] Create Program struct in `api/internal/domain/program.go` with all fields from data-model.md (depends on T022 for ProgramNode)
+- [x] T024 [US3] Implement `ValidateProgramNode(n *ProgramNode) error` in `api/internal/domain/validation.go` (depends on T022)
+- [x] T025 [US3] Implement `ValidateProgram(p *Program) error` in `api/internal/domain/validation.go` (depends on T023, T024)
+- [x] T026 [P] [US3] Write table-driven tests for `ValidateProgramNode` in `api/internal/domain/program_test.go` covering all validation rules
+- [x] T027 [US3] Write table-driven tests for `ValidateProgram` in `api/internal/domain/program_test.go` covering all validation rules and recursive structure (depends on T025)
 
 **Checkpoint**: User Story 3 entities are fully defined, validated, and tested. Programs with recursive node trees can be created and validated.
 

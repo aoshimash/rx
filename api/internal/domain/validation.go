@@ -351,3 +351,131 @@ func ValidateTelemetryPoint(t *TelemetryPoint) error {
 
 	return nil
 }
+
+// ValidateProgramNode validates a ProgramNode entity.
+func ValidateProgramNode(n *ProgramNode) error {
+	if n == nil {
+		return &ValidationError{
+			Field:   "program_node",
+			Message: "program_node cannot be nil",
+		}
+	}
+
+	// Validate required fields
+	if err := ValidateRequiredString("name", n.Name); err != nil {
+		return err
+	}
+
+	// Validate name length
+	if err := ValidateStringLength("name", n.Name, 1, 200); err != nil {
+		return err
+	}
+
+	// Validate node_type
+	if err := ValidateRequiredString("node_type", n.NodeType); err != nil {
+		return err
+	}
+
+	// Validate order
+	if n.Order < 0 {
+		return &ValidationError{
+			Field:   "order",
+			Message: "order must be greater than or equal to 0",
+		}
+	}
+
+	// Validate prescription fields if provided
+	if n.TargetSets != nil && *n.TargetSets <= 0 {
+		return &ValidationError{
+			Field:   "target_sets",
+			Message: "target_sets must be greater than 0",
+		}
+	}
+
+	if n.TargetReps != nil && *n.TargetReps <= 0 {
+		return &ValidationError{
+			Field:   "target_reps",
+			Message: "target_reps must be greater than 0",
+		}
+	}
+
+	if n.TargetRPE != nil {
+		if err := ValidateRPE(*n.TargetRPE); err != nil {
+			return err
+		}
+	}
+
+	if n.Percent1RM != nil {
+		if *n.Percent1RM < 0 || *n.Percent1RM > 1 {
+			return &ValidationError{
+				Field:   "percent_1rm",
+				Message: "percent_1rm must be between 0.0 and 1.0",
+			}
+		}
+	}
+
+	if n.PlannedRestSeconds != nil && *n.PlannedRestSeconds < 0 {
+		return &ValidationError{
+			Field:   "planned_rest_seconds",
+			Message: "planned_rest_seconds must be greater than or equal to 0",
+		}
+	}
+
+	// Validate notes length if provided
+	if n.Notes != nil {
+		if err := ValidateStringLength("notes", *n.Notes, 0, 2000); err != nil {
+			return err
+		}
+	}
+
+	// Recursively validate children
+	for i, child := range n.Children {
+		if err := ValidateProgramNode(&child); err != nil {
+			return &ValidationError{
+				Field:   fmt.Sprintf("children[%d]", i),
+				Message: err.Error(),
+			}
+		}
+	}
+
+	return nil
+}
+
+// ValidateProgram validates a Program entity.
+func ValidateProgram(p *Program) error {
+	if p == nil {
+		return &ValidationError{
+			Field:   "program",
+			Message: "program cannot be nil",
+		}
+	}
+
+	// Validate required fields
+	if err := ValidateRequiredString("name", p.Name); err != nil {
+		return err
+	}
+
+	// Validate name length
+	if err := ValidateStringLength("name", p.Name, 1, 200); err != nil {
+		return err
+	}
+
+	// Validate description length if provided
+	if p.Description != nil {
+		if err := ValidateStringLength("description", *p.Description, 0, 2000); err != nil {
+			return err
+		}
+	}
+
+	// Validate root nodes recursively
+	for i, node := range p.RootNodes {
+		if err := ValidateProgramNode(&node); err != nil {
+			return &ValidationError{
+				Field:   fmt.Sprintf("root_nodes[%d]", i),
+				Message: err.Error(),
+			}
+		}
+	}
+
+	return nil
+}
