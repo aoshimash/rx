@@ -202,18 +202,18 @@ paths:
 
 **Action:**
 ```bash
-# Start Docker development container (if not already running)
+# Open repository in VS Code/Cursor and reopen in DevContainer
+# Inside DevContainer, navigate to api directory
 cd api
-make docker-up
 
-# Generate code (runs inside container)
+# Generate code (runs natively in DevContainer)
 make generate
 
 # Create minimal handler that returns empty array
-# Start server (runs inside container, in background or another terminal)
+# Start server (runs natively in DevContainer, in background or another terminal)
 make run
 
-# Test it works (from local machine)
+# Test it works (from local machine or DevContainer terminal)
 curl http://localhost:8080/api/v1/workouts
 # Should return: []
 

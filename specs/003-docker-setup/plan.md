@@ -66,11 +66,12 @@ specs/003-docker-setup/
 
 ```text
 optel-training/
-├── .devcontainer/             # DevContainer configuration (to be added)
-│   └── devcontainer.json
+├── .devcontainer/             # DevContainer configuration (added)
+│   ├── devcontainer.json
+│   ├── README.md
+│   └── extensions.json
 ├── api/
-│   ├── Dockerfile             # Single production Dockerfile (target)
-│   └── Dockerfile.prod        # Legacy: to be removed/replaced
+│   └── Dockerfile             # Single production Dockerfile (replaced legacy Dockerfile.prod)
 └── docker-compose.yml         # Smoke-testing (builds from ./api/Dockerfile)
 ```
 
