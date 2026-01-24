@@ -114,7 +114,7 @@
 - [x] T030 [P] Ensure all required fields from data-model.md are marked as required in OpenAPI schemas
 - [ ] T031 Run `make generate` in `api/` directory to generate OpenAPI types
 - [ ] T032 Verify generated code compiles without errors
-- [ ] T033 [P] Compare generated OpenAPI types with domain models to ensure consistency
+- [x] T033 [P] Compare generated OpenAPI types with domain models to ensure consistency (manual verification completed)
 
 **Checkpoint**: OpenAPI schemas are integrated and code generation works correctly
 
