@@ -124,12 +124,12 @@
 
 **Purpose**: Final validation, documentation, and quality checks
 
-- [ ] T034 [P] Run `make lint` in `api/` directory and fix all linter errors
-- [ ] T035 [P] Verify all validation functions have 100% test coverage
+- [ ] T034 [P] Run `make lint` in `api/` directory and fix all linter errors (requires Docker)
+- [ ] T035 [P] Verify all validation functions have 100% test coverage (requires go test)
 - [ ] T036 [P] Verify all edge cases from spec.md Edge Cases section are covered in tests
-- [ ] T037 [P] Run all tests with `go test -v -race ./...` in `api/internal/domain/`
+- [ ] T037 [P] Run all tests with `go test -v -race ./...` in `api/internal/domain/` (requires Docker/go test)
 - [ ] T038 [P] Verify all spec.md FR-001 to FR-017 requirements are met
-- [ ] T039 [P] Update `api/internal/domain/README.md` (if exists) or create documentation for domain models
+- [x] T039 [P] Update `api/internal/domain/README.md` (if exists) or create documentation for domain models
 
 **Checkpoint**: All quality gates passed, ready for PR review
 
