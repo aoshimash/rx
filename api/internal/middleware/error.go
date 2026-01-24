@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 )
 
@@ -23,7 +24,9 @@ func WriteError(w http.ResponseWriter, code string, message string, statusCode i
 		Details: details,
 	}
 	
-	json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		slog.Error("Failed to encode error response", "error", err)
+	}
 }
 
 // WriteValidationError writes a 400 Bad Request error for validation failures

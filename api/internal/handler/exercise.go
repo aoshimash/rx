@@ -82,7 +82,9 @@ func (h *ExerciseHandler) CreateExercise(w http.ResponseWriter, r *http.Request)
 	// Return response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(exercise)
+	if err := json.NewEncoder(w).Encode(exercise); err != nil {
+		slog.Error("Failed to encode exercise response", "error", err)
+	}
 }
 
 // GetExercise handles GET /exercises/{id}
@@ -113,7 +115,9 @@ func (h *ExerciseHandler) GetExercise(w http.ResponseWriter, r *http.Request) {
 	// Return response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(exercise)
+	if err := json.NewEncoder(w).Encode(exercise); err != nil {
+		slog.Error("Failed to encode exercise response", "error", err)
+	}
 }
 
 // UpdateExercise handles PUT /exercises/{id}
@@ -192,7 +196,9 @@ func (h *ExerciseHandler) UpdateExercise(w http.ResponseWriter, r *http.Request)
 	// Return response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(existing)
+	if err := json.NewEncoder(w).Encode(existing); err != nil {
+		slog.Error("Failed to encode exercise response", "error", err)
+	}
 }
 
 // DeleteExercise handles DELETE /exercises/{id}
@@ -274,9 +280,11 @@ func (h *ExerciseHandler) ListExercises(w http.ResponseWriter, r *http.Request) 
 	// Return paginated response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"data":       exercises,
 		"next_cursor": nextCursor,
 		"has_more":   hasMore,
-	})
+	}); err != nil {
+		slog.Error("Failed to encode exercise list response", "error", err)
+	}
 }

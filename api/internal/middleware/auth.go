@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"log/slog"
 	"net/http"
 )
 
@@ -18,7 +19,9 @@ func AuthMiddleware(provider AuthProvider) func(http.Handler) http.Handler {
 				// Return 401 Unauthorized regardless of resource existence (FR-028)
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte(`{"code":"UNAUTHORIZED","message":"Authentication required"}`))
+				if _, writeErr := w.Write([]byte(`{"code":"UNAUTHORIZED","message":"Authentication required"}`)); writeErr != nil {
+					slog.Error("Failed to write auth error response", "error", writeErr)
+				}
 				return
 			}
 			next.ServeHTTP(w, r)

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -223,7 +224,9 @@ func (h *WorkoutHandler) CreateWorkout(w http.ResponseWriter, r *http.Request) {
 	// Return response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(workout)
+	if err := json.NewEncoder(w).Encode(workout); err != nil {
+		slog.Error("Failed to encode workout response", "error", err)
+	}
 }
 
 // GetWorkout handles GET /workouts/{id}
@@ -254,7 +257,9 @@ func (h *WorkoutHandler) GetWorkout(w http.ResponseWriter, r *http.Request) {
 	// Return response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(workout)
+	if err := json.NewEncoder(w).Encode(workout); err != nil {
+		slog.Error("Failed to encode workout response", "error", err)
+	}
 }
 
 // UpdateWorkout handles PUT /workouts/{id}
@@ -481,7 +486,9 @@ func (h *WorkoutHandler) UpdateWorkout(w http.ResponseWriter, r *http.Request) {
 	// Return response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(existing)
+	if err := json.NewEncoder(w).Encode(existing); err != nil {
+		slog.Error("Failed to encode workout response", "error", err)
+	}
 }
 
 // DeleteWorkout handles DELETE /workouts/{id}

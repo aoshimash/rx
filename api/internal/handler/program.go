@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/aoshimash/optel-training/api/internal/domain"
@@ -104,7 +105,9 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 	// Return response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(program)
+	if err := json.NewEncoder(w).Encode(program); err != nil {
+		slog.Error("Failed to encode program response", "error", err)
+	}
 }
 
 // convertNode converts a JSON node request to a domain ProgramNode recursively
@@ -209,7 +212,9 @@ func (h *ProgramHandler) GetProgram(w http.ResponseWriter, r *http.Request) {
 	// Return response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(program)
+	if err := json.NewEncoder(w).Encode(program); err != nil {
+		slog.Error("Failed to encode program response", "error", err)
+	}
 }
 
 // UpdateProgram handles PUT /programs/{id}
@@ -311,7 +316,9 @@ func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
 	// Return response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(existing)
+	if err := json.NewEncoder(w).Encode(existing); err != nil {
+		slog.Error("Failed to encode program response", "error", err)
+	}
 }
 
 // DeleteProgram handles DELETE /programs/{id}

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -112,7 +113,9 @@ func (h *TelemetryHandler) CreateTelemetryPoint(w http.ResponseWriter, r *http.R
 	// Return response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(point)
+	if err := json.NewEncoder(w).Encode(point); err != nil {
+		slog.Error("Failed to encode telemetry point response", "error", err)
+	}
 }
 
 // GetTelemetryPoint handles GET /telemetry/{id}
@@ -143,7 +146,9 @@ func (h *TelemetryHandler) GetTelemetryPoint(w http.ResponseWriter, r *http.Requ
 	// Return response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(point)
+	if err := json.NewEncoder(w).Encode(point); err != nil {
+		slog.Error("Failed to encode telemetry point response", "error", err)
+	}
 }
 
 // UpdateTelemetryPoint handles PUT /telemetry/{id}
@@ -257,7 +262,9 @@ func (h *TelemetryHandler) UpdateTelemetryPoint(w http.ResponseWriter, r *http.R
 	// Return response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(existing)
+	if err := json.NewEncoder(w).Encode(existing); err != nil {
+		slog.Error("Failed to encode telemetry point response", "error", err)
+	}
 }
 
 // DeleteTelemetryPoint handles DELETE /telemetry/{id}
