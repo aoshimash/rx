@@ -20,10 +20,9 @@ type Workout struct {
 
 ### Business Rules
 
-1. **Immutability** - Once created, a Workout cannot be modified. Create a new record with corrections if needed.
-2. **Intensity Range** - RPE must be 1-10. Values outside this range are invalid.
-3. **Volume** - Must be non-negative. Zero is valid (e.g., mobility work).
-4. **Timestamp** - Must not be in the future.
+1. **Intensity Range** - RPE must be 1-10. Values outside this range are invalid.
+2. **Volume** - Must be non-negative. Zero is valid (e.g., mobility work).
+3. **Timestamp** - Must not be in the future.
 
 ### API Operations
 
@@ -33,8 +32,8 @@ type Workout struct {
 | GET | /api/v1/workouts | List workouts (with filters) |
 | GET | /api/v1/workouts/{id} | Get a specific workout |
 | DELETE | /api/v1/workouts/{id} | Soft-delete a workout |
-
-Note: No PUT/PATCH operations due to immutability principle.
+| PUT | /api/v1/workouts/{id} | Update a workout |
+| PATCH | /api/v1/workouts/{id} | Partially update a workout |
 
 ## Program Entity
 

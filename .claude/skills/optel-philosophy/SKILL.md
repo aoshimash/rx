@@ -27,11 +27,6 @@ description: Core philosophy and constraints for OPTel project. Use when writing
 3. Generate code from OpenAPI spec
 4. Implement handlers that convert between types
 
-### 3. Data Integrity
-
-- **Immutable Logs** - Past workout logs are "committed transactions." Never mutable.
-- All changes create new records, not updates to existing ones
-
 ## Terminology
 
 Use intuitive, commonly understood physical and fitness terminology. The system records workouts, exercises, and physical exertion data.

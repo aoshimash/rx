@@ -1,18 +1,18 @@
 <!--
 Sync Impact Report:
-Version change: 1.0.0 (initial creation)
-Modified principles: N/A (initial creation)
-Added sections: Core Principles, Development Standards, Technology Constraints, Governance
-Removed sections: N/A
+Version change: 2.0.0 (removed immutable logs principle)
+Modified principles: Removed IV. Data Integrity - Immutable Logs
+Added sections: N/A
+Removed sections: IV. Data Integrity - Immutable Logs
 Templates requiring updates:
-  ✅ plan-template.md - Constitution Check section aligns with principles
+  ✅ plan-template.md - Constitution Check section updated (removed immutable records)
   ✅ spec-template.md - Schema-First principle aligns with requirements
   ✅ tasks-template.md - Task organization aligns with principles (includes monorepo path conventions)
   ⚠ pending - checklist-template.md (no constitution references found)
   ⚠ pending - agent-file-template.md (no constitution references found)
 Skills integration:
-  ✅ optel-philosophy - Referenced in Principles I, III, Compliance Review
-  ✅ optel-domain - Referenced in Principle II, Compliance Review
+  ✅ optel-philosophy - Updated (removed immutable logs)
+  ✅ optel-domain - Updated (removed immutable constraint)
   ✅ optel-go-standards - Referenced in Testing, Code Quality, Error Handling, Compliance Review
 Follow-up TODOs: None
 -->
@@ -58,19 +58,13 @@ Use intuitive, commonly understood physical and fitness terminology. The system 
 
 **Implementation Details**: See `.claude/skills/optel-philosophy/reference.md` for terminology glossary and API design guidelines (resource naming, response structure).
 
-### IV. Data Integrity - Immutable Logs
-
-Past workout records are immutable "committed transactions." All changes create new records, never updates to existing ones. This supports audit trails and data integrity.
-
-**Rationale**: Immutability ensures data cannot be accidentally or maliciously modified, providing a reliable audit trail. It simplifies reasoning about data state and supports time-series analysis.
-
-### V. Clean Architecture & Repository Pattern
+### IV. Clean Architecture & Repository Pattern
 
 Domain entities and business rules reside in the domain layer. Repository interfaces (ports) are defined in the domain layer. Implementations (adapters) are in the infrastructure layer. Handlers map HTTP requests/responses and delegate to domain logic.
 
 **Rationale**: This separation of concerns enables testability, maintainability, and the ability to swap implementations (e.g., memory store → PostgreSQL) without changing domain logic.
 
-### VI. Monorepo Structure & Component Independence
+### V. Monorepo Structure & Component Independence
 
 This repository is a monorepo containing multiple components (api, mcp, frontend, mobile, infra). Each component MUST be independently deployable, testable, and maintainable. Components communicate via well-defined contracts (OpenAPI for API, MCP protocol for MCP server). Shared resources (OpenAPI specifications, documentation) are managed at the repository root level.
 
@@ -175,4 +169,4 @@ Each component in the monorepo MAY use different technologies appropriate to its
 
 This constitution supersedes all other practices and guidelines. When conflicts arise, constitution principles take precedence. Development decisions MUST align with these principles or provide explicit justification for exceptions.
 
-**Version**: 1.0.0 | **Ratified**: 2026-01-24 | **Last Amended**: 2026-01-24
+**Version**: 2.0.0 | **Ratified**: 2026-01-24 | **Last Amended**: 2026-01-24

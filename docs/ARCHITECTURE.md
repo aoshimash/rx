@@ -121,13 +121,7 @@ optel-training/
 - Code is generated from the spec using oapi-codegen
 - Changes to API always start with spec changes
 
-### 2. Immutable Workouts
-
-- Workouts cannot be modified after creation
-- Corrections require creating new records
-- Supports audit trail and data integrity
-
-### 3. Repository Pattern
+### 2. Repository Pattern
 
 - Domain defines interfaces (ports)
 - Implementations are in the store package (adapters)
