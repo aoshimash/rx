@@ -2,12 +2,18 @@
 
 ## Prerequisites
 
-- Go 1.25+
+**Local Requirements (minimal):**
 - Docker & Docker Compose
-- oapi-codegen (`go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest`)
-- golangci-lint (`go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest`)
+- Make
+- curl (for testing API endpoints)
+
+**Note:** All Go development tools (Go compiler, oapi-codegen, golangci-lint) are bundled in the Docker container. You don't need to install them locally.
 
 ## Project Setup
+
+### Docker-Based Development Environment
+
+All development tools are containerized. You only need Docker, Make, and curl installed locally.
 
 ```bash
 # Clone the repository
@@ -17,20 +23,38 @@ cd optel-workload
 # Navigate to API directory
 cd api
 
-# Install dependencies
-go mod download
+# Start Docker development container
+make docker-up
 
-# Generate OpenAPI code
+# Generate OpenAPI code (runs inside container)
 make generate
 
-# Run linter
+# Run linter (runs inside container)
 make lint
 
-# Run tests
+# Run tests (runs inside container)
 make test
 
-# Start development server
+# Start development server (runs inside container)
 make run
+
+# In another terminal, test the API
+curl http://localhost:8080/api/v1/workloads
+```
+
+### Docker Commands
+
+```bash
+# Start development container
+make docker-up
+
+# Stop development container
+make docker-down
+
+# Open shell in container
+make docker-shell
+
+# All make commands (generate, lint, test, run, build) run inside the container
 ```
 
 ## Development Phases
@@ -157,11 +181,18 @@ paths:
 
 **Action:**
 ```bash
-# Generate code
+# Start Docker development container (if not already running)
+cd api
+make docker-up
+
+# Generate code (runs inside container)
 make generate
 
 # Create minimal handler that returns empty array
-# Test it works
+# Start server (runs inside container, in background or another terminal)
+make run
+
+# Test it works (from local machine)
 curl http://localhost:8080/api/v1/workloads
 # Should return: []
 
@@ -547,36 +578,132 @@ All tests must be table-driven. See `.claude/skills/optel-go-standards/reference
 
 ## Docker
 
-### Local Development (Phase 2+)
+### Development vs Production Containers
+
+**Important:** Development and production containers are **completely separate**.
+
+| Aspect | Development (`Dockerfile`) | Production (`Dockerfile.prod`) |
+|--------|---------------------------|-------------------------------|
+| Purpose | Local development | Production deployment |
+| Base Image | `golang:1.25` (Ubuntu-based) | `gcr.io/distroless/static-debian11:nonroot` |
+| Size | Larger (includes Go compiler, tools) | Minimal (binary only, no shell, no package manager) |
+| Tools | oapi-codegen, golangci-lint, make | None (distroless has no shell) |
+| User | root (for development) | nonroot (65532:65532, provided by distroless) |
+| Security | Standard (development tools) | High (minimal attack surface, no shell) |
+| Volumes | Code mounted for live editing | No volumes |
+| Build | Single stage | Multi-stage build (Ubuntu builder + distroless runtime) |
+| Use Case | `make docker-up`, `make generate` | CI/CD, Kubernetes, production |
+
+### Development Environment
+
+The development environment is fully containerized. All Go tools (Go compiler, oapi-codegen, golangci-lint) run inside a Docker container.
+
+**Benefits:**
+- No local Go installation required
+- Consistent development environment across machines
+- Isolated from system dependencies
+- Easy to reset or recreate
+
+**Workflow:**
+1. Start container: `make docker-up`
+2. Run commands: `make generate`, `make lint`, `make test`, `make run`
+3. All commands execute inside the container
+4. Code changes are reflected immediately (volume mount)
+
+**Files:**
+- `api/Dockerfile` - Development container (includes all tools)
+- `docker-compose.yml` - Development container orchestration
+
+### Container Management
 
 ```bash
-# Start PostgreSQL
-docker-compose up -d postgres
+# Start development container (runs in background)
+make docker-up
 
-# Start API with hot reload (using air or similar)
-docker-compose up api
+# Stop development container
+make docker-down
+
+# Open interactive shell in container
+make docker-shell
+
+# View container logs
+docker-compose -f ../docker-compose.yml logs -f dev
+```
+
+### Local Development with PostgreSQL (Phase 2+)
+
+When PostgreSQL is needed, it will be added to `docker-compose.yml`:
+
+```bash
+# Start PostgreSQL and development container
+docker-compose -f ../docker-compose.yml up -d postgres dev
 ```
 
 ### Building Production Image
 
+**Production images are built separately from development containers.**
+
 ```bash
-docker build -t optel-workload:latest -f Dockerfile .
+# Build production image (from api/ directory)
+docker build -t optel-workload:latest -f Dockerfile.prod .
+
+# Run production container
+docker run -p 8080:8080 \
+  -e PORT=8080 \
+  -e LOG_LEVEL=info \
+  optel-workload:latest
+
+# Test production container
+curl http://localhost:8080/api/v1/workloads
 ```
+
+**Production Image Features:**
+- Multi-stage build (Ubuntu-based builder + distroless runtime)
+- Distroless base image (minimal attack surface, no shell, no package manager)
+- Non-root user (nonroot:nonroot, 65532:65532) for security
+- Static binary (CGO_ENABLED=0) for compatibility with distroless
+- Minimal image size (only binary and CA certificates)
+- No shell access (enhanced security)
+- Health check support (when endpoint is implemented)
+
+**Files:**
+- `api/Dockerfile.prod` - Production container (optimized, minimal)
 
 ## Troubleshooting
 
 ### Common Issues
 
-**oapi-codegen not found:**
+**Container not running:**
 ```bash
-go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
-export PATH=$PATH:$(go env GOPATH)/bin
+# Check if container is running
+docker-compose -f ../docker-compose.yml ps
+
+# Start container if not running
+make docker-up
+
+# Rebuild container if needed
+docker-compose -f ../docker-compose.yml build --no-cache dev
 ```
+
+**Permission errors:**
+- Ensure Docker has proper permissions
+- On Linux, you may need to add your user to the docker group
+
+**oapi-codegen or golangci-lint not found:**
+- These tools are installed in the Docker container
+- If you see "command not found", ensure the container is running: `make docker-up`
+- Rebuild the container if tools are missing: `docker-compose -f ../docker-compose.yml build dev`
 
 **golangci-lint errors:**
 - Review `.golangci.yml` for enabled linters
 - Fix issues or add exclusions if false positives
+- Run linter inside container: `make lint`
 
 **Generated code conflicts:**
 - Always run `make generate` after changing OpenAPI spec
 - Commit generated code with spec changes
+- If generation fails, check OpenAPI spec syntax
+
+**Port 8080 already in use:**
+- Change port in `docker-compose.yml` or stop the conflicting service
+- Update `ports` mapping: `"8080:8080"` → `"8081:8080"`

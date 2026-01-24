@@ -16,12 +16,18 @@ Think of it as Prometheus for the body: no fitness tracking, no motivation score
 
 ## Quick Start
 
+**Prerequisites:** Docker, Docker Compose, Make, curl
+
 ```bash
 cd api
-go mod download
-make generate
-make run
+make docker-up      # Start development container
+make generate       # Generate code from OpenAPI spec
+make run            # Start server (runs in container)
+# In another terminal:
+curl http://localhost:8080/api/v1/workloads
 ```
+
+All Go development tools run inside Docker. See [Development Guide](docs/DEVELOPMENT.md) for details.
 
 ## Documentation
 
