@@ -108,3 +108,82 @@ func (h *ExerciseHandler) GetExercise(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(exercise)
 }
+
+// UpdateExercise handles PUT /exercises/{id}
+func (h *ExerciseHandler) UpdateExercise(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Extract ID from path
+	idStr := chi.URLParam(r, "id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		middleware.WriteValidationError(w, "Invalid exercise ID format", map[string]interface{}{
+			"id": idStr,
+		})
+		return
+	}
+
+	// Check if exercise exists
+	existing, err := h.repo.GetByID(ctx, id)
+	if err != nil {
+		if err == domain.ErrNotFound {
+			middleware.WriteNotFoundError(w, "Exercise not found")
+			return
+		}
+		middleware.WriteInternalError(w, "Failed to retrieve exercise")
+		return
+	}
+
+	// Decode request body (full replacement)
+	var req struct {
+		Name          string   `json:"name"`
+		Description   *string  `json:"description,omitempty"`
+		Aliases       []string `json:"aliases,omitempty"`
+		MuscleGroups  []string `json:"muscle_groups,omitempty"`
+		LoadIncrement *float64 `json:"load_increment,omitempty"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		middleware.WriteValidationError(w, "Invalid request body", map[string]interface{}{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Update existing exercise (full replacement)
+	existing.Name = req.Name
+	existing.Description = req.Description
+	existing.Aliases = req.Aliases
+	existing.MuscleGroups = req.MuscleGroups
+	existing.LoadIncrement = req.LoadIncrement
+
+	// Validate
+	if err := domain.ValidateExercise(existing); err != nil {
+		if ve, ok := err.(*domain.ValidationError); ok {
+			middleware.WriteValidationError(w, "Validation failed", map[string]interface{}{
+				"field":   ve.Field,
+				"message": ve.Message,
+			})
+			return
+		}
+		middleware.WriteValidationError(w, "Validation failed", map[string]interface{}{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Update
+	if err := h.repo.Update(ctx, existing); err != nil {
+		if err == domain.ErrNotFound {
+			middleware.WriteNotFoundError(w, "Exercise not found")
+			return
+		}
+		middleware.WriteInternalError(w, "Failed to update exercise")
+		return
+	}
+
+	// Return response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(existing)
+}

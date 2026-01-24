@@ -89,12 +89,12 @@
 
 ### Implementation for User Story 2
 
-- [ ] T028 [P] [US2] Implement UpdateExercise handler in `api/internal/handler/exercise.go` (PUT /exercises/{id}, full replacement)
-- [ ] T029 [P] [US2] Implement UpdateWorkout handler in `api/internal/handler/workout.go` (PUT /workouts/{id}, replace workout including entries)
-- [ ] T030 [P] [US2] Implement UpdateProgram handler in `api/internal/handler/program.go` (PUT /programs/{id}, replace program including node tree)
-- [ ] T031 [P] [US2] Implement UpdateTelemetryPoint handler in `api/internal/handler/telemetry.go` (PUT /telemetry/{id}, full replacement)
-- [ ] T032 [US2] Register update endpoints in `api/cmd/server/main.go` (PUT routes for all entities)
-- [ ] T033 [US2] Add validation in update handlers: check record exists (404 if not), validate input data, validate references (exercise_id, workout_id, etc.)
+- [x] T028 [P] [US2] Implement UpdateExercise handler in `api/internal/handler/exercise.go` (PUT /exercises/{id}, full replacement)
+- [x] T029 [P] [US2] Implement UpdateWorkout handler in `api/internal/handler/workout.go` (PUT /workouts/{id}, replace workout including entries)
+- [x] T030 [P] [US2] Implement UpdateProgram handler in `api/internal/handler/program.go` (PUT /programs/{id}, replace program including node tree)
+- [x] T031 [P] [US2] Implement UpdateTelemetryPoint handler in `api/internal/handler/telemetry.go` (PUT /telemetry/{id}, full replacement)
+- [x] T032 [US2] Register update endpoints in `api/cmd/server/main.go` (PUT routes for all entities)
+- [x] T033 [US2] Add validation in update handlers: check record exists (404 if not), validate input data, validate references (exercise_id, workout_id, etc.)
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently. Can create, retrieve, and update all entity types.
 

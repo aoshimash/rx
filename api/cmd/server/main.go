@@ -61,18 +61,22 @@ func main() {
 		// Exercise routes
 		r.Post("/exercises", exerciseHandler.CreateExercise)
 		r.Get("/exercises/{id}", exerciseHandler.GetExercise)
+		r.Put("/exercises/{id}", exerciseHandler.UpdateExercise)
 
 		// Workout routes
 		r.Post("/workouts", workoutHandler.CreateWorkout)
 		r.Get("/workouts/{id}", workoutHandler.GetWorkout)
+		r.Put("/workouts/{id}", workoutHandler.UpdateWorkout)
 
 		// Program routes
 		r.Post("/programs", programHandler.CreateProgram)
 		r.Get("/programs/{id}", programHandler.GetProgram)
+		r.Put("/programs/{id}", programHandler.UpdateProgram)
 
 		// Telemetry routes
 		r.Post("/telemetry", telemetryHandler.CreateTelemetryPoint)
 		r.Get("/telemetry/{id}", telemetryHandler.GetTelemetryPoint)
+		r.Put("/telemetry/{id}", telemetryHandler.UpdateTelemetryPoint)
 	})
 
 	log.Println("Server starting on :8080")
