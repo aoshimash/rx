@@ -7,55 +7,43 @@
 - Make
 - curl (for testing API endpoints)
 
-**Note:** All Go development tools (Go compiler, oapi-codegen, golangci-lint) are bundled in the Docker container. You don't need to install them locally.
+**Note:** All Go development tools (Go compiler, oapi-codegen, golangci-lint) are provided by the DevContainer. You don't need to install them locally.
 
 ## Project Setup
 
-### Docker-Based Development Environment
+### DevContainer Development Environment (Recommended)
 
-All development tools are containerized. You only need Docker, Make, and curl installed locally.
+The primary development workflow uses VS Code/Cursor DevContainer for a consistent, containerized development environment.
+
+1. **Open the repository** in VS Code or Cursor
+2. **Reopen in DevContainer** when prompted (or use Command Palette: "Dev Containers: Reopen in Container")
+3. **All development tools are automatically available** in the integrated terminal
 
 ```bash
-# Clone the repository
-git clone https://github.com/aoshimash/optel-training.git
-cd optel-training
-
-# Navigate to API directory
+# Inside DevContainer (integrated terminal):
 cd api
 
-# Start Docker development container
-make docker-up
-
-# Generate OpenAPI code (runs inside container)
+# Generate OpenAPI code
 make generate
 
-# Run linter (runs inside container)
+# Run linter
 make lint
 
-# Run tests (runs inside container)
+# Run tests
 make test
 
-# Start development server (runs inside container)
+# Start development server
 make run
 
 # In another terminal, test the API
 curl http://localhost:8080/api/v1/workouts
 ```
 
-### Docker Commands
+All `make` commands (generate, lint, test, run, build) work natively inside the DevContainer since all tools are on PATH.
 
-```bash
-# Start development container
-make docker-up
+### Docker Compose (Smoke-Testing)
 
-# Stop development container
-make docker-down
-
-# Open shell in container
-make docker-shell
-
-# All make commands (generate, lint, test, run, build) run inside the container
-```
+Docker Compose is used for **production-like local smoke-testing**, not for iterative development. See the "Docker Compose" section below for details.
 
 ## Development Phases
 
@@ -674,23 +662,25 @@ All tests must be table-driven. See `.claude/skills/optel-go-standards/reference
 
 ### Development Environment
 
-The development environment is fully containerized. All Go tools (Go compiler, oapi-codegen, golangci-lint) run inside a Docker container.
+The development environment uses **DevContainer** for iterative development. All Go tools (Go compiler, oapi-codegen, golangci-lint) are automatically available inside the DevContainer.
 
 **Benefits:**
 - No local Go installation required
 - Consistent development environment across machines
+- Integrated with VS Code/Cursor (IntelliSense, debugging, terminal)
 - Isolated from system dependencies
 - Easy to reset or recreate
 
 **Workflow:**
-1. Start container: `make docker-up`
-2. Run commands: `make generate`, `make lint`, `make test`, `make run`
-3. All commands execute inside the container
-4. Code changes are reflected immediately (volume mount)
+1. Open repository in VS Code/Cursor
+2. Reopen in DevContainer when prompted
+3. Run commands natively: `make generate`, `make lint`, `make test`, `make run`
+4. All commands execute inside the DevContainer with tools on PATH
+5. Code changes are reflected immediately (workspace is mounted)
 
 **Files:**
-- `api/Dockerfile` - Development container (includes all tools)
-- `docker-compose.yml` - Development container orchestration
+- `.devcontainer/devcontainer.json` - DevContainer configuration
+- `docker-compose.yml` - Production-like smoke-testing (not for iterative development)
 
 ### Container Management
 

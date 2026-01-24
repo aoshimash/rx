@@ -18,9 +18,9 @@
 
 **Purpose**: Establish the target Docker layout and remove legacy dev-container assumptions from docs/tooling.
 
-- [ ] T004 Update `docs/DEVELOPMENT.md` to describe DevContainer as the primary development workflow (remove guidance implying Docker Compose is the only dev toolchain)
-- [ ] T005 [P] Update `api/README.md` to align with the new DevContainer-first workflow and the single `api/Dockerfile`
-- [ ] T006 Update `api/Makefile` to run generate/lint/test/run natively (tools must be on PATH; DevContainer provides them automatically). Remove hard dependency on `docker compose exec dev` and ensure commands work when tools are installed locally or via DevContainer.
+- [x] T004 Update `docs/DEVELOPMENT.md` to describe DevContainer as the primary development workflow (remove guidance implying Docker Compose is the only dev toolchain)
+- [x] T005 [P] Update `api/README.md` to align with the new DevContainer-first workflow and the single `api/Dockerfile`
+- [x] T006 Update `api/Makefile` to run generate/lint/test/run natively (tools must be on PATH; DevContainer provides them automatically). Remove hard dependency on `docker compose exec dev` and ensure commands work when tools are installed locally or via DevContainer.
 
 **Checkpoint**: Documentation and tooling no longer assume a Docker Compose “dev tool container”.
 

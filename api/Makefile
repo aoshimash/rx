@@ -1,31 +1,35 @@
 .PHONY: generate lint test run build clean docker-up docker-down docker-shell docker-build-prod deps
 
-# Docker-based commands (run inside container)
-# Use 'docker compose' (space) instead of 'docker-compose' (hyphen) for compatibility
-DOCKER_COMPOSE = docker compose -f ../docker-compose.yml
-DOCKER_RUN = $(DOCKER_COMPOSE) exec dev
+# Native commands (tools must be on PATH; DevContainer provides them automatically)
+# These commands work when tools are installed locally or via DevContainer
 
 generate: deps
-	$(DOCKER_RUN) oapi-codegen -generate types,chi-server -package openapi \
+	oapi-codegen -generate types,chi-server -package openapi \
 		-o pkg/openapi/server.gen.go openapi/openapi.yaml
 
 lint:
-	$(DOCKER_RUN) golangci-lint run ./...
+	golangci-lint run ./...
 
 test: deps
-	$(DOCKER_RUN) go test -v -race ./...
+	go test -v -race ./...
 
 deps:
-	$(DOCKER_RUN) go mod download
-	$(DOCKER_RUN) go mod tidy
+	go mod download
+	go mod tidy
 
 run:
-	$(DOCKER_RUN) go run cmd/server/main.go
+	go run cmd/server/main.go
 
 build:
-	$(DOCKER_RUN) go build -o bin/server cmd/server/main.go
+	go build -o bin/server cmd/server/main.go
 
-# Docker management
+clean:
+	rm -rf bin/
+
+# Docker Compose management (for smoke-testing, not iterative development)
+# Use 'docker compose' (space) instead of 'docker-compose' (hyphen) for compatibility
+DOCKER_COMPOSE = docker compose -f ../docker-compose.yml
+
 docker-up:
 	$(DOCKER_COMPOSE) up -d
 
@@ -33,11 +37,8 @@ docker-down:
 	$(DOCKER_COMPOSE) down
 
 docker-shell:
-	$(DOCKER_RUN) /bin/sh
-
-clean:
-	$(DOCKER_RUN) rm -rf bin/
+	$(DOCKER_COMPOSE) exec api /bin/sh
 
 # Production build (builds outside container, requires local Docker)
 docker-build-prod:
-	docker build -t optel-training:latest -f Dockerfile.prod .
+	docker build -t optel-training:latest -f Dockerfile .
