@@ -52,7 +52,7 @@
 - [x] T014 [P] Create `api/internal/store/memory/workout.go` implementing WorkoutRepository with in-memory map storage
 - [x] T015 [P] Create `api/internal/store/memory/program.go` implementing ProgramRepository with in-memory map storage
 - [x] T016 [P] Create `api/internal/store/memory/telemetry.go` implementing TelemetryPointRepository with in-memory map storage
-- [ ] T017 Update `api/cmd/server/main.go` to initialize chi router, register authentication middleware, and wire up generated OpenAPI handlers
+- [x] T017 Update `api/cmd/server/main.go` to initialize chi router, register authentication middleware, and wire up generated OpenAPI handlers
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
