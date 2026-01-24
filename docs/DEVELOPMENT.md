@@ -599,6 +599,33 @@ check-sync:
 	@go run scripts/check-sync.go || echo "WARNING: Sync check script not implemented yet"
 ```
 
+## Versioning Strategy
+
+This project follows [Semantic Versioning](https://semver.org/) (SemVer):
+
+- **MAJOR** version: Breaking changes
+  - Incompatible API changes (e.g., removing endpoints, changing request/response formats)
+  - Breaking changes to data structures (field removals, type changes)
+  - Principle removals or redefinitions
+- **MINOR** version: New features (backward compatible)
+  - New endpoints or optional parameters
+  - Additive changes to data structures (new optional fields, new entities)
+  - New principles or materially expanded guidance
+- **PATCH** version: Bug fixes (backward compatible)
+  - Bug fixes that don't change API contracts
+  - Documentation updates
+  - Validation rule clarifications
+  - Non-semantic refinements
+
+**API Versioning:**
+- API versioning uses URL path pattern `/api/v1/` for the current API version
+- When breaking changes are introduced, increment the API version (e.g., `/api/v2/`)
+- Breaking changes require explicit migration scripts and version fields on entities
+
+**Data Structure Versioning:**
+- Initial implementation: Domain models are stable; all changes will be additive only
+- Future breaking changes will require explicit migration scripts and version fields on entities
+
 ## Environment Variables
 
 | Variable | Description | Default |

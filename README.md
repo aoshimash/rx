@@ -57,6 +57,16 @@ optel-training/
 └── .claude/skills/   # AI agent skills
 ```
 
+## Versioning
+
+This project follows [Semantic Versioning](https://semver.org/) (SemVer):
+
+- **MAJOR** version: Breaking changes (incompatible API changes, data structure changes)
+- **MINOR** version: New features (backward compatible)
+- **PATCH** version: Bug fixes (backward compatible)
+
+API versioning uses URL path pattern `/api/v1/` for the current API version.
+
 ## License
 
 MIT License - see [LICENSE](LICENSE)
