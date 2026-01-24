@@ -352,9 +352,11 @@ func (h *TelemetryHandler) ListTelemetryPoints(w http.ResponseWriter, r *http.Re
 	// Return paginated response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"data":       points,
 		"next_cursor": nextCursor,
 		"has_more":   hasMore,
-	})
+	}); err != nil {
+		slog.Error("Failed to encode telemetry point list response", "error", err)
+	}
 }
