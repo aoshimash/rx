@@ -31,11 +31,11 @@
 
 **⚠️ CRITICAL**: No entity implementation can begin until this phase is complete
 
-- [ ] T004 Create `api/internal/domain/errors.go` with ValidationError and DomainError types
-- [ ] T005 [P] Implement `RoundLoad(kg float64) float64` helper in `api/internal/domain/validation.go`
-- [ ] T006 [P] Implement `ValidateRPE(rpe int) error` helper in `api/internal/domain/validation.go`
-- [ ] T007 [P] Implement `ValidateFatigueLevel(level int) error` helper in `api/internal/domain/validation.go`
-- [ ] T008 [P] Implement `ValidateTimestamp(t time.Time) error` helper in `api/internal/domain/validation.go`
+- [x] T004 Create `api/internal/domain/errors.go` with ValidationError and DomainError types
+- [x] T005 [P] Implement `RoundLoad(kg float64) float64` helper in `api/internal/domain/validation.go`
+- [x] T006 [P] Implement `ValidateRPE(rpe int) error` helper in `api/internal/domain/validation.go`
+- [x] T007 [P] Implement `ValidateFatigueLevel(level int) error` helper in `api/internal/domain/validation.go`
+- [x] T008 [P] Implement `ValidateTimestamp(t time.Time) error` helper in `api/internal/domain/validation.go`
 
 **Checkpoint**: Foundation ready - entity implementation can now begin
 
