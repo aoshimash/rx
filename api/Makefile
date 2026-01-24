@@ -1,7 +1,8 @@
 .PHONY: generate lint test run build clean docker-up docker-down docker-shell docker-build-prod
 
 # Docker-based commands (run inside container)
-DOCKER_COMPOSE = docker-compose -f ../docker-compose.yml
+# Use 'docker compose' (space) instead of 'docker-compose' (hyphen) for compatibility
+DOCKER_COMPOSE = docker compose -f ../docker-compose.yml
 DOCKER_RUN = $(DOCKER_COMPOSE) exec dev
 
 generate:
