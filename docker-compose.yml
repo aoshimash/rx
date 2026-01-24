@@ -1,21 +1,12 @@
 services:
-  dev:
+  api:
     build:
       context: ./api
       dockerfile: Dockerfile
-    container_name: optel-training-dev
-    volumes:
-      - ./api:/workspace
-      - go-mod-cache:/go/pkg/mod
-    working_dir: /workspace
+    container_name: optel-training-api
     environment:
-      - PORT=8080
-      - LOG_LEVEL=info
+      - PORT=${PORT:-8080}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
     ports:
-      - "8080:8080"
-    stdin_open: true
-    tty: true
-    command: tail -f /dev/null  # Keep container running
-
-volumes:
-  go-mod-cache:
+      - "${HOST_PORT:-8080}:8080"
+    restart: unless-stopped

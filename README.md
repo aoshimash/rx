@@ -36,11 +36,20 @@ make run           # Start server
 For production-like local testing:
 
 ```bash
+# Start the API service
 docker compose up -d
+
+# Test the API
 curl http://localhost:8080/api/v1/workouts
+
+# View logs
 docker compose logs -f
+
+# Stop the service
 docker compose down
 ```
+
+**Configuration:** Default port is 8080. Set `HOST_PORT` environment variable to use a different port (e.g., `HOST_PORT=8081 docker compose up -d`).
 
 ### Building Production Image
 

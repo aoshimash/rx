@@ -682,30 +682,39 @@ The development environment uses **DevContainer** for iterative development. All
 - `.devcontainer/devcontainer.json` - DevContainer configuration
 - `docker-compose.yml` - Production-like smoke-testing (not for iterative development)
 
-### Container Management
+### Docker Compose (Smoke-Testing)
+
+Docker Compose is used for **production-like local smoke-testing**, not for iterative development.
+
+**Configuration:**
+- Service name: `api`
+- Build context: `./api`
+- Dockerfile: `Dockerfile` (production build)
+- Default port: `8080` (configurable via `HOST_PORT` environment variable)
+- Environment variables:
+  - `PORT` (default: `8080`) - Container port
+  - `LOG_LEVEL` (default: `info`) - Logging level
+
+**Usage:**
 
 ```bash
-# Start development container (runs in background)
-make docker-up
+# Start the API service
+docker compose up -d
 
-# Stop development container
-make docker-down
+# View logs
+docker compose logs -f
 
-# Open interactive shell in container
-make docker-shell
+# Test the API
+curl http://localhost:8080/api/v1/workouts
 
-# View container logs
-docker-compose -f ../docker-compose.yml logs -f dev
+# Stop the service
+docker compose down
+
+# Custom port (if 8080 is in use)
+HOST_PORT=8081 docker compose up -d
 ```
 
-### Local Development with PostgreSQL (Phase 2+)
-
-When PostgreSQL is needed, it will be added to `docker-compose.yml`:
-
-```bash
-# Start PostgreSQL and development container
-docker-compose -f ../docker-compose.yml up -d postgres dev
-```
+**Note:** This is for smoke-testing the production container build. For iterative development, use DevContainer instead.
 
 ### Building Production Image
 
