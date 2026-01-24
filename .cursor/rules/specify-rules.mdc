@@ -3,6 +3,7 @@
 Auto-generated from all feature plans. Last updated: 2026-01-24
 
 ## Active Technologies
+- In-memory store initially (repository pattern enables future PostgreSQL migration) (002-rest-api)
 
 - Go 1.25+ + chi (HTTP router), oapi-codegen (OpenAPI code generation) (001-data-structure)
 
@@ -22,6 +23,7 @@ tests/
 Go 1.25+: Follow standard conventions
 
 ## Recent Changes
+- 002-rest-api: Added Go 1.25+ + chi (HTTP router), oapi-codegen (OpenAPI code generation)
 
 - 001-data-structure: Added Go 1.25+ + chi (HTTP router), oapi-codegen (OpenAPI code generation)
 
