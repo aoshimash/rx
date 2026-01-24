@@ -253,8 +253,9 @@ func ValidateWorkout(w *Workout) error {
 	}
 
 	// Validate each entry
-	for i, entry := range w.Entries {
-		if err := ValidateWorkoutEntry(&entry); err != nil {
+	// Use index-based loop to allow RoundLoad to modify original entries
+	for i := range w.Entries {
+		if err := ValidateWorkoutEntry(&w.Entries[i]); err != nil {
 			return &ValidationError{
 				Field:   fmt.Sprintf("entries[%d]", i),
 				Message: err.Error(),
@@ -429,8 +430,9 @@ func ValidateProgramNode(n *ProgramNode) error {
 	}
 
 	// Recursively validate children
-	for i, child := range n.Children {
-		if err := ValidateProgramNode(&child); err != nil {
+	// Use index-based loop to allow validation to modify original children
+	for i := range n.Children {
+		if err := ValidateProgramNode(&n.Children[i]); err != nil {
 			return &ValidationError{
 				Field:   fmt.Sprintf("children[%d]", i),
 				Message: err.Error(),
@@ -468,8 +470,9 @@ func ValidateProgram(p *Program) error {
 	}
 
 	// Validate root nodes recursively
-	for i, node := range p.RootNodes {
-		if err := ValidateProgramNode(&node); err != nil {
+	// Use index-based loop to allow validation to modify original nodes
+	for i := range p.RootNodes {
+		if err := ValidateProgramNode(&p.RootNodes[i]); err != nil {
 			return &ValidationError{
 				Field:   fmt.Sprintf("root_nodes[%d]", i),
 				Message: err.Error(),
