@@ -36,12 +36,12 @@
 
 ### Implementation for User Story 1
 
-- [ ] T007 [US1] Add `.devcontainer/devcontainer.json` for a Go 1.25+ toolchain and repo workspace mounting
-- [ ] T008 [P] [US1] Add `.devcontainer/README.md` describing how to use DevContainer in VS Code/Cursor
-- [ ] T009 [P] [US1] Add `.devcontainer/extensions.json` with recommended extensions (Go, Docker, YAML, etc.)
-- [ ] T010 [US1] Ensure required dev tools are installed in DevContainer (Go 1.25+, oapi-codegen, golangci-lint) via devcontainer features and/or post-create hook, and verify they are available on PATH
-- [ ] T011 [US1] Add port forwarding configuration in `.devcontainer/devcontainer.json` (API port) for local runs
-- [ ] T012 [US1] Validate DevContainer workflow by running generate/lint/test and documenting any required environment variables in `.devcontainer/README.md`
+- [x] T007 [US1] Add `.devcontainer/devcontainer.json` for a Go 1.25+ toolchain and repo workspace mounting
+- [x] T008 [P] [US1] Add `.devcontainer/README.md` describing how to use DevContainer in VS Code/Cursor
+- [x] T009 [P] [US1] Add `.devcontainer/extensions.json` with recommended extensions (Go, Docker, YAML, etc.)
+- [x] T010 [US1] Ensure required dev tools are installed in DevContainer (Go 1.25+, oapi-codegen, golangci-lint) via devcontainer features and/or post-create hook, and verify they are available on PATH
+- [x] T011 [US1] Add port forwarding configuration in `.devcontainer/devcontainer.json` (API port) for local runs
+- [x] T012 [US1] Validate DevContainer workflow by running generate/lint/test and documenting any required environment variables in `.devcontainer/README.md`
 
 **Checkpoint**: User Story 1 is independently usable for local development.
 
