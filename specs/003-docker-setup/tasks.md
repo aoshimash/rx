@@ -8,9 +8,9 @@
 
 **Purpose**: Prepare repository structure and baseline documentation updates for this feature.
 
-- [ ] T001 Create `.devcontainer/` directory at repo root
-- [ ] T002 Create `specs/003-docker-setup/tasks.md` (this file) and keep task IDs stable as work progresses
-- [ ] T003 [P] Add a short note to `README.md` clarifying: devcontainer for development, docker compose for smoke-testing
+- [x] T001 Create `.devcontainer/` directory at repo root
+- [x] T002 Create `specs/003-docker-setup/tasks.md` (this file) and keep task IDs stable as work progresses
+- [x] T003 [P] Add a short note to `README.md` clarifying: devcontainer for development, docker compose for smoke-testing
 
 ---
 

@@ -16,18 +16,33 @@ No fitness tracking, no motivation scores - just data.
 
 ## Quick Start
 
-**Prerequisites:** Docker, Docker Compose, Make, curl
+**Prerequisites:** Docker, Docker Compose (for smoke-testing), VS Code/Cursor with Dev Containers extension (for development)
+
+### Development (Recommended)
+
+Open this repository in VS Code/Cursor and reopen in DevContainer when prompted. All development tools (Go, oapi-codegen, golangci-lint) are automatically available.
 
 ```bash
+# Inside DevContainer:
 cd api
-make docker-up      # Start development container
-make generate       # Generate code from OpenAPI spec
-make run            # Start server (runs in container)
-# In another terminal:
-curl http://localhost:8080/api/v1/workouts
+make generate      # Generate code from OpenAPI spec
+make lint          # Run linter
+make test          # Run tests
+make run           # Start server
 ```
 
-All Go development tools run inside Docker. See [Development Guide](docs/DEVELOPMENT.md) for details.
+### Smoke-Testing with Docker Compose
+
+For production-like local testing:
+
+```bash
+docker compose up -d
+curl http://localhost:8080/api/v1/workouts
+docker compose logs -f
+docker compose down
+```
+
+See [Development Guide](docs/DEVELOPMENT.md) for details.
 
 ## Documentation
 
