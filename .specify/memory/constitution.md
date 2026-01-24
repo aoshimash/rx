@@ -1,50 +1,165 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report:
+Version change: 1.0.0 (initial creation)
+Modified principles: N/A (initial creation)
+Added sections: Core Principles, Development Standards, Technology Constraints, Governance
+Removed sections: N/A
+Templates requiring updates:
+  ✅ plan-template.md - Constitution Check section aligns with principles
+  ✅ spec-template.md - Schema-First principle aligns with requirements
+  ✅ tasks-template.md - Task organization aligns with principles (includes monorepo path conventions)
+  ⚠ pending - checklist-template.md (no constitution references found)
+  ⚠ pending - agent-file-template.md (no constitution references found)
+Skills integration:
+  ✅ optel-philosophy - Referenced in Principles I, III, Compliance Review
+  ✅ optel-domain - Referenced in Principle II, Compliance Review
+  ✅ optel-go-standards - Referenced in Testing, Code Quality, Error Handling, Compliance Review
+Follow-up TODOs: None
+-->
+
+# OPTel Workload Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Dumb Backend Principle (NON-NEGOTIABLE)
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+The backend MUST store and retrieve telemetry data only. No business logic for "health" calculations, motivation scores, or wellness metrics. The system is stateless, headless, and agent-native - primary consumers are AI Agents (via MCP) or analysis tools, not human UIs.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+**Rationale**: This ensures the system remains a pure telemetry backend, allowing analysis and interpretation to happen at the consumer level. It prevents coupling between data storage and business logic, maintaining flexibility for future analysis tools.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+**Implementation Details**: For prohibited/permitted features list and detailed examples, see `.claude/skills/optel-philosophy/reference.md`.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### II. Schema-First Development (NON-NEGOTIABLE)
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+Development MUST start from OpenAPI definitions. Code is generated from schemas using oapi-codegen, not schemas from code. All API changes begin with OpenAPI specification updates.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+**Rationale**: Schema-first ensures API contracts are explicit, versioned, and serve as the single source of truth. It enables code generation, reduces inconsistencies, and provides clear API documentation.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+**Implementation Details**: API versioning uses URL path pattern `/api/v1/`. For domain model details (Workload, Program, Telemetry), see `.claude/skills/optel-domain/`. For Go code generation patterns, see `.claude/skills/optel-go-standards/`.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### III. Infrastructure Metaphors (NON-NEGOTIABLE)
+
+Use infrastructure and physics terminology exclusively. Never use fitness terminology. Workloads are system telemetry, not exercises. Tasks are system operations, not workouts.
+
+**Rationale**: This maintains the conceptual model of treating the human body as a production system. It ensures consistency across code, documentation, and API responses, preventing confusion between telemetry data and fitness tracking.
+
+**Implementation Details**: See `.claude/skills/optel-philosophy/reference.md` for complete terminology dictionary and API design guidelines (resource naming, response structure).
+
+### IV. Data Integrity - Immutable Logs
+
+Past workload records are immutable "committed transactions." All changes create new records, never updates to existing ones. This supports audit trails and data integrity.
+
+**Rationale**: Immutability ensures data cannot be accidentally or maliciously modified, providing a reliable audit trail. It simplifies reasoning about data state and supports time-series analysis.
+
+### V. Clean Architecture & Repository Pattern
+
+Domain entities and business rules reside in the domain layer. Repository interfaces (ports) are defined in the domain layer. Implementations (adapters) are in the infrastructure layer. Handlers map HTTP requests/responses and delegate to domain logic.
+
+**Rationale**: This separation of concerns enables testability, maintainability, and the ability to swap implementations (e.g., memory store → PostgreSQL) without changing domain logic.
+
+### VI. Monorepo Structure & Component Independence
+
+This repository is a monorepo containing multiple components (api, mcp, frontend, mobile, infra). Each component MUST be independently deployable, testable, and maintainable. Components communicate via well-defined contracts (OpenAPI for API, MCP protocol for MCP server). Shared resources (OpenAPI specifications, documentation) are managed at the repository root level.
+
+**Component Structure:**
+- `api/` - REST API (Go) - Backend service
+- `mcp/` - MCP Server (Python/Docker) - Runs on user's local machine
+- `frontend/` - Web frontend (future)
+- `mobile/` - Mobile applications (future)
+- `infra/` - Infrastructure as Code (Terraform/Helm) (future)
+- `docs/` - Shared documentation
+- `.claude/skills/` - AI agent skills (shared)
+
+**Rationale**: Monorepo structure enables coordinated development across components while maintaining clear boundaries. Component independence ensures that changes to one component don't break others, and each can evolve at its own pace with appropriate technology choices.
+
+## Development Standards
+
+### Code Generation
+
+- OpenAPI specifications MUST be defined before implementation
+- Generated code MUST NOT be manually edited (regenerate after spec changes)
+- All API endpoints MUST be defined in `api/openapi/openapi.yaml`
+- Components consuming the API (frontend, mobile, mcp) SHOULD generate client code from the same OpenAPI spec
+
+### Testing Requirements
+
+- Each component MUST have its own test suite
+- API component: Unit tests for domain logic, integration tests for repositories, contract tests for endpoints
+  - Table-driven tests are mandatory for API component (see `.claude/skills/optel-go-standards/`)
+- Other components: Component-appropriate testing (e.g., unit tests, integration tests, E2E tests)
+- Tests MUST be runnable in containerized environments where applicable
+- Cross-component integration tests SHOULD be defined when components interact
+
+### Code Quality
+
+- Each component MUST have appropriate linting/formatting tools configured
+- API component: golangci-lint with strict configuration (see `.claude/skills/optel-go-standards/` for details)
+- Other components: Component-appropriate linting tools (e.g., ESLint for frontend, pylint for Python)
+- All code MUST pass linting before commit
+- Structured logging preferred across all components
+
+### Error Handling
+
+- Domain errors MUST be defined in the domain layer
+- HTTP handlers translate domain errors to appropriate HTTP status codes
+- Errors MUST be logged with structured logging
+- For detailed error handling patterns, see `.claude/skills/optel-go-standards/`
+
+## Technology Constraints
+
+### Component-Specific Technologies
+
+Each component in the monorepo MAY use different technologies appropriate to its purpose:
+
+- **api/**: Go 1.25+, chi, oapi-codegen, golangci-lint, log/slog
+- **mcp/**: Python (or Docker), MCP protocol
+- **frontend/**: Technology TBD (React, Vue, etc.)
+- **mobile/**: Technology TBD (React Native, Flutter, native, etc.)
+- **infra/**: Terraform, Helm, Kubernetes manifests
+
+### Shared Resources
+
+- **OpenAPI Specification**: Defined in `api/openapi/openapi.yaml`, serves as contract for API consumers (frontend, mobile, mcp)
+- **Documentation**: Shared in `docs/` directory
+- **AI Agent Skills**: Shared in `.claude/skills/` directory
+
+### Development Environment
+
+- Component-specific development tools run in Docker containers where applicable
+- Each component SHOULD have its own Makefile or build scripts
+- Docker Compose for local development across components
+- No requirement for local language installations (containerized development)
+
+### Future Technologies (Planned)
+
+- **Database**: PostgreSQL with TimescaleDB extension (for api/)
+- **Infrastructure**: Kubernetes, Helm charts (in infra/)
+- **Observability**: OpenTelemetry, Prometheus metrics (shared across components)
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+### Amendment Process
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+1. Proposed amendments MUST be documented with rationale
+2. Amendments affecting core principles (I-III) require explicit approval
+3. Version MUST be incremented per semantic versioning:
+   - **MAJOR**: Backward incompatible changes, principle removals/redefinitions
+   - **MINOR**: New principles, materially expanded guidance
+   - **PATCH**: Clarifications, wording fixes, non-semantic refinements
+4. Constitution changes MUST be reflected in dependent templates and documentation
+
+### Compliance Review
+
+- All PRs/reviews MUST verify compliance with constitution principles
+- Constitution Check section in implementation plans MUST be validated
+- Complexity violations MUST be justified in plan.md Complexity Tracking section
+- For detailed implementation guidelines, refer to AGENTS.md and `.claude/skills/`:
+  - **optel-philosophy**: Dumb Backend principle details, infrastructure metaphors dictionary, API design guidelines
+  - **optel-domain**: Domain models (Workload, Program, Telemetry), validation rules, entity relationships
+  - **optel-go-standards**: Go project structure, error handling patterns, testing standards, linting configuration
+
+### Supremacy
+
+This constitution supersedes all other practices and guidelines. When conflicts arise, constitution principles take precedence. Development decisions MUST align with these principles or provide explicit justification for exceptions.
+
+**Version**: 1.0.0 | **Ratified**: 2026-01-24 | **Last Amended**: 2026-01-24

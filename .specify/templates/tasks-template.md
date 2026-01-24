@@ -23,7 +23,13 @@ description: "Task list template for feature implementation"
 - **Single project**: `src/`, `tests/` at repository root
 - **Web app**: `backend/src/`, `frontend/src/`
 - **Mobile**: `api/src/`, `ios/src/` or `android/src/`
-- Paths shown below assume single project - adjust based on plan.md structure
+- **Monorepo (OPTel)**: Component-specific paths:
+  - API: `api/internal/`, `api/pkg/`, `api/cmd/`
+  - MCP: `mcp/`
+  - Frontend: `frontend/src/`
+  - Mobile: `mobile/` (platform-specific subdirs)
+  - Infrastructure: `infra/terraform/`, `infra/helm/`
+- Paths shown below assume single project - adjust based on plan.md structure and monorepo component
 
 <!-- 
   ============================================================================

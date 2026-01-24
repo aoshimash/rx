@@ -31,7 +31,16 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+Verify compliance with OPTel Workload Constitution principles:
+
+- **Dumb Backend**: No health calculations or business logic in backend - only data storage/retrieval
+- **Schema-First**: OpenAPI specification defined before implementation
+- **Infrastructure Metaphors**: Using infrastructure terminology (workload, task, telemetry), not fitness terminology
+- **Data Integrity**: Immutable records - changes create new records, never updates
+- **Clean Architecture**: Domain logic separated from infrastructure, repository pattern used
+- **Monorepo Structure**: Component independence maintained, shared resources properly managed
+
+If any principle is violated, document justification in Complexity Tracking section below.
 
 ## Project Structure
 
