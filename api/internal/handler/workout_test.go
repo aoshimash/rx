@@ -11,7 +11,6 @@ import (
 	"github.com/aoshimash/optel-training/api/internal/middleware"
 	"github.com/aoshimash/optel-training/api/internal/store/memory"
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 )
 
 func setupWorkoutTestRouter() chi.Router {
@@ -37,27 +36,26 @@ func setupWorkoutTestRouter() chi.Router {
 func TestWorkoutHandler_Create(t *testing.T) {
 	router := setupWorkoutTestRouter()
 
-	// First create an exercise for the workout entry
-	exerciseRepo := memory.NewExerciseRepository()
-	exercise := &struct {
-		Name string `json:"name"`
-	}{Name: "Bench Press"}
-	exerciseBytes, _ := json.Marshal(exercise)
+	// First create an exercise for the workout entry via API
+	exerciseBody := map[string]interface{}{
+		"name": "Bench Press",
+	}
+	exerciseBytes, _ := json.Marshal(exerciseBody)
 	exerciseReq := httptest.NewRequest(http.MethodPost, "/api/v1/exercises", bytes.NewReader(exerciseBytes))
 	exerciseReq.Header.Set("Content-Type", "application/json")
 	exerciseReq.Header.Set("Authorization", "Bearer test-token")
-	// We need to create exercise via repository directly for test
-	exerciseID := uuid.New()
-	exerciseRepo.Create(exerciseReq.Context(), &struct {
-		ID   uuid.UUID
-		Name string
-	}{ID: exerciseID, Name: "Bench Press"})
+	exerciseW := httptest.NewRecorder()
+	router.ServeHTTP(exerciseW, exerciseReq)
+
+	var exercise map[string]interface{}
+	json.Unmarshal(exerciseW.Body.Bytes(), &exercise)
+	exerciseID := exercise["id"].(string)
 
 	body := map[string]interface{}{
 		"timestamp": time.Now().Format(time.RFC3339),
 		"entries": []map[string]interface{}{
 			{
-				"exercise_id": exerciseID.String(),
+				"exercise_id": exerciseID,
 				"entry_type":  "work",
 				"sets":        3,
 				"reps":        10,
