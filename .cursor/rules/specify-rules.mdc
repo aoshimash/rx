@@ -1,0 +1,29 @@
+# optel-training Development Guidelines
+
+Auto-generated from all feature plans. Last updated: 2026-01-24
+
+## Active Technologies
+
+- Go 1.25+ + chi (HTTP router), oapi-codegen (OpenAPI code generation) (001-data-structure)
+
+## Project Structure
+
+```text
+src/
+tests/
+```
+
+## Commands
+
+# Add commands for Go 1.25+
+
+## Code Style
+
+Go 1.25+: Follow standard conventions
+
+## Recent Changes
+
+- 001-data-structure: Added Go 1.25+ + chi (HTTP router), oapi-codegen (OpenAPI code generation)
+
+<!-- MANUAL ADDITIONS START -->
+<!-- MANUAL ADDITIONS END -->
