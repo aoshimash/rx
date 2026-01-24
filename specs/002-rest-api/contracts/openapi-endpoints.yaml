@@ -1,0 +1,711 @@
+# OpenAPI Endpoint Definitions for REST API (Draft / Design Artifact)
+# This file drafts the CRUD endpoints intended to be merged into `api/openapi/openapi.yaml`.
+# `api/openapi/openapi.yaml` is the single source of truth for code generation (oapi-codegen).
+#
+# NOTE:
+# - Do not run oapi-codegen against this file directly.
+# - References below point to the repository's main OpenAPI file to keep the draft consistent.
+
+openapi: 3.0.3
+info:
+  title: OPTel Workout API - REST Endpoints
+  version: 0.2.0
+  description: |
+    REST API endpoints for domain models.
+    All endpoints require authentication (401 if missing).
+
+servers:
+  - url: http://localhost:8080/api/v1
+
+# ============================================
+# Security (applies to all endpoints)
+# ============================================
+security:
+  - bearerAuth: []
+
+# ============================================
+# Paths
+# ============================================
+paths:
+  # ----------------------------------------
+  # Exercise Endpoints
+  # ----------------------------------------
+  /exercises:
+    get:
+      summary: List exercises
+      operationId: listExercises
+      tags: [Exercise]
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/After'
+      responses:
+        '200':
+          description: Paginated list of exercises
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExerciseListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: Create exercise
+      operationId: createExercise
+      tags: [Exercise]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExerciseCreate'
+      responses:
+        '201':
+          description: Exercise created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exercise'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /exercises/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ExerciseId'
+
+    get:
+      summary: Get exercise by ID
+      operationId: getExercise
+      tags: [Exercise]
+      responses:
+        '200':
+          description: Exercise found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exercise'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Update exercise
+      operationId: updateExercise
+      tags: [Exercise]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExerciseCreate'
+      responses:
+        '200':
+          description: Exercise updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exercise'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete exercise
+      operationId: deleteExercise
+      tags: [Exercise]
+      responses:
+        '204':
+          description: Exercise deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  # ----------------------------------------
+  # Workout Endpoints
+  # ----------------------------------------
+  /workouts:
+    get:
+      summary: List workouts
+      operationId: listWorkouts
+      tags: [Workout]
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/After'
+        - name: timestamp_from
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Filter workouts at or after this timestamp
+        - name: timestamp_to
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Filter workouts before this timestamp
+      responses:
+        '200':
+          description: Paginated list of workouts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkoutListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: Create workout
+      operationId: createWorkout
+      tags: [Workout]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkoutCreate'
+      responses:
+        '201':
+          description: Workout created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workout'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /workouts/{id}:
+    parameters:
+      - $ref: '#/components/parameters/WorkoutId'
+
+    get:
+      summary: Get workout by ID
+      operationId: getWorkout
+      tags: [Workout]
+      responses:
+        '200':
+          description: Workout found (includes all entries)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workout'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Update workout
+      operationId: updateWorkout
+      tags: [Workout]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkoutCreate'
+      responses:
+        '200':
+          description: Workout updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workout'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete workout
+      operationId: deleteWorkout
+      tags: [Workout]
+      responses:
+        '204':
+          description: Workout deleted (entries cascade deleted)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ----------------------------------------
+  # Program Endpoints
+  # ----------------------------------------
+  /programs:
+    get:
+      summary: List programs
+      operationId: listPrograms
+      tags: [Program]
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/After'
+      responses:
+        '200':
+          description: Paginated list of programs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: Create program
+      operationId: createProgram
+      tags: [Program]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramCreate'
+      responses:
+        '201':
+          description: Program created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Program'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /programs/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ProgramId'
+
+    get:
+      summary: Get program by ID
+      operationId: getProgram
+      tags: [Program]
+      responses:
+        '200':
+          description: Program found (includes full node tree)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Program'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Update program
+      operationId: updateProgram
+      tags: [Program]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramCreate'
+      responses:
+        '200':
+          description: Program updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Program'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete program
+      operationId: deleteProgram
+      tags: [Program]
+      responses:
+        '204':
+          description: Program deleted (nodes cascade deleted)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  # ----------------------------------------
+  # TelemetryPoint Endpoints
+  # ----------------------------------------
+  /telemetry:
+    get:
+      summary: List telemetry points
+      operationId: listTelemetryPoints
+      tags: [Telemetry]
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/After'
+        - name: metric_name
+          in: query
+          schema:
+            type: string
+          description: Filter by metric name
+        - name: timestamp_from
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Filter points at or after this timestamp
+        - name: timestamp_to
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Filter points before this timestamp
+      responses:
+        '200':
+          description: Paginated list of telemetry points
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelemetryPointListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: Create telemetry point
+      operationId: createTelemetryPoint
+      tags: [Telemetry]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelemetryPointCreate'
+      responses:
+        '201':
+          description: Telemetry point created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelemetryPoint'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /telemetry/{id}:
+    parameters:
+      - $ref: '#/components/parameters/TelemetryPointId'
+
+    get:
+      summary: Get telemetry point by ID
+      operationId: getTelemetryPoint
+      tags: [Telemetry]
+      responses:
+        '200':
+          description: Telemetry point found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelemetryPoint'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Update telemetry point
+      operationId: updateTelemetryPoint
+      tags: [Telemetry]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelemetryPointCreate'
+      responses:
+        '200':
+          description: Telemetry point updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelemetryPoint'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete telemetry point
+      operationId: deleteTelemetryPoint
+      tags: [Telemetry]
+      responses:
+        '204':
+          description: Telemetry point deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+# ============================================
+# Components
+# ============================================
+components:
+  # ----------------------------------------
+  # Security Schemes
+  # ----------------------------------------
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: |
+        Authentication required for all endpoints.
+        Implementation details (JWT, API key) to be defined.
+
+  # ----------------------------------------
+  # Parameters
+  # ----------------------------------------
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 100
+      description: Maximum number of items to return
+
+    After:
+      name: after
+      in: query
+      schema:
+        type: string
+      description: Cursor for pagination (from previous response)
+
+    ExerciseId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Exercise ID
+
+    WorkoutId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Workout ID
+
+    ProgramId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Program ID
+
+    TelemetryPointId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Telemetry point ID
+
+  # ----------------------------------------
+  # Responses
+  # ----------------------------------------
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: UNAUTHORIZED
+            message: Authentication required
+
+    ValidationError:
+      description: Invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: VALIDATION_ERROR
+            message: Invalid request body
+            details:
+              field: name
+              reason: required field missing
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: NOT_FOUND
+            message: Resource not found
+
+    Conflict:
+      description: Cannot perform action due to existing references
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: CONFLICT
+            message: Cannot delete exercise - referenced by workout entries
+            details:
+              blocking_references:
+                - type: workout_entry
+                  count: 5
+
+  # ----------------------------------------
+  # Schemas (Pagination wrappers)
+  # ----------------------------------------
+  schemas:
+    # Note: Entity schemas (Exercise, Workout, etc.) are in main openapi.yaml
+
+    PaginatedMeta:
+      type: object
+      properties:
+        next_cursor:
+          type: string
+          nullable: true
+          description: Cursor for next page (null if no more)
+        has_more:
+          type: boolean
+          description: Whether more pages exist
+
+    ExerciseListResponse:
+      type: object
+      required:
+        - data
+        - has_more
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Exercise'
+        next_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+
+    WorkoutListResponse:
+      type: object
+      required:
+        - data
+        - has_more
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Workout'
+        next_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+
+    ProgramListResponse:
+      type: object
+      required:
+        - data
+        - has_more
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Program'
+        next_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+
+    TelemetryPointListResponse:
+      type: object
+      required:
+        - data
+        - has_more
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TelemetryPoint'
+        next_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+
+    # Error schema (should match existing in main openapi.yaml)
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          additionalProperties: true
+          description: Additional error details
+
+    # Reference to existing schemas from the repository's main OpenAPI contract.
+    # Relative path from this file: specs/002-rest-api/contracts/ -> repo root -> api/openapi/openapi.yaml
+    Exercise:
+      $ref: '../../../api/openapi/openapi.yaml#/components/schemas/Exercise'
+    ExerciseCreate:
+      $ref: '../../../api/openapi/openapi.yaml#/components/schemas/ExerciseCreate'
+    Workout:
+      $ref: '../../../api/openapi/openapi.yaml#/components/schemas/Workout'
+    WorkoutCreate:
+      $ref: '../../../api/openapi/openapi.yaml#/components/schemas/WorkoutCreate'
+    Program:
+      $ref: '../../../api/openapi/openapi.yaml#/components/schemas/Program'
+    ProgramCreate:
+      $ref: '../../../api/openapi/openapi.yaml#/components/schemas/ProgramCreate'
+    TelemetryPoint:
+      $ref: '../../../api/openapi/openapi.yaml#/components/schemas/TelemetryPoint'
+    TelemetryPointCreate:
+      $ref: '../../../api/openapi/openapi.yaml#/components/schemas/TelemetryPointCreate'
+
+# ============================================
+# Tags
+# ============================================
+tags:
+  - name: Exercise
+    description: Exercise catalog management
+  - name: Workout
+    description: Workout session management
+  - name: Program
+    description: Training program management
+  - name: Telemetry
+    description: Telemetry data points
