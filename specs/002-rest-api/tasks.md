@@ -154,7 +154,7 @@
 - [x] T055 [P] Add unit tests for repository implementations in `api/internal/store/memory/*_test.go` (table-driven tests per optel-go-standards)
 - [x] T056 [P] Add integration tests for handlers in `api/internal/handler/*_test.go` (test full request/response cycle)
 - [x] T057 Run `make lint` in `api/` and fix any golangci-lint issues
-- [ ] T058 Run `make test` in `api/` and ensure all tests pass
+- [x] T058 Run `make test` in `api/` and ensure all tests pass
 - [ ] T059 Validate quickstart.md examples: test all API endpoints manually or with integration tests
 - [ ] T060 Update `api/README.md` or create `api/docs/API.md` with API usage documentation
 - [ ] T061 [P] Add load testing to validate 100 concurrent clients requirement (SC-006): create load test script or integration test that simulates 100 concurrent clients performing CRUD operations and verify response times remain within acceptable limits
