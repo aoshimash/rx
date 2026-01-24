@@ -244,11 +244,17 @@ func ValidateWorkout(w *Workout) error {
 		return err
 	}
 
-	// Validate entries (must have at least one)
+	// Validate entries (must have at least one, max 500 per FR-017, FR-018)
 	if len(w.Entries) == 0 {
 		return &ValidationError{
 			Field:   "entries",
 			Message: "workout must have at least one entry",
+		}
+	}
+	if len(w.Entries) > 500 {
+		return &ValidationError{
+			Field:   "entries",
+			Message: "workout cannot have more than 500 entries",
 		}
 	}
 
