@@ -57,7 +57,7 @@ Build a production-ready container image:
 
 ```bash
 # From repository root
-docker build -t optel-training:latest -f Dockerfile api
+docker build -t optel-training:latest -f api/Dockerfile api
 
 # Run the image
 docker run -p 8080:8080 \

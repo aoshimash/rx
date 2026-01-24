@@ -36,9 +36,14 @@ docker-up:
 docker-down:
 	$(DOCKER_COMPOSE) down
 
+# Note: docker-shell is not usable with distroless production images (no shell available)
+# Use `docker compose logs -f` for debugging instead
 docker-shell:
-	$(DOCKER_COMPOSE) exec api /bin/sh
+	@echo "Error: Production container uses distroless image with no shell"
+	@echo "Use 'docker compose logs -f' to view logs instead"
+	@exit 1
 
 # Production build (builds outside container, requires local Docker)
+# Note: Run from api/ directory, so build context is current directory (.)
 docker-build-prod:
-	docker build -t optel-training:latest -f Dockerfile api
+	docker build -t optel-training:latest -f Dockerfile .
