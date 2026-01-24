@@ -147,8 +147,8 @@
 
 - [x] T049 [P] Add structured logging (log/slog) to all handlers in `api/internal/handler/`
 - [x] T050 [P] Add request ID middleware in `api/internal/middleware/request_id.go` for tracing
-- [ ] T051 [P] Add CORS middleware in `api/internal/middleware/cors.go` if needed for frontend integration
-- [ ] T052 [P] Add request validation middleware in `api/internal/middleware/validate.go` for common validations (UUID format, etc.)
+- [x] T051 [P] Add CORS middleware in `api/internal/middleware/cors.go` if needed for frontend integration
+- [x] T052 [P] Add request validation middleware in `api/internal/middleware/validate.go` for common validations (UUID format, etc.)
 - [x] T053 [P] Update `api/internal/domain/errors.go` to include all error codes (UNAUTHORIZED, VALIDATION_ERROR, NOT_FOUND, CONFLICT, INTERNAL_ERROR)
 - [x] T054 [P] Add payload size limits validation: max 500 entries per Workout, max 1000 nodes per Program, 10MB request body limit
 - [x] T055 [P] Add unit tests for repository implementations in `api/internal/store/memory/*_test.go` (table-driven tests per optel-go-standards)
