@@ -83,11 +83,11 @@
 
 ### Implementation for User Story 3
 
-- [ ] T018 [US3] Update `docker-compose.yml` to build the API service with `context: ./api` and `dockerfile: Dockerfile` (single production Dockerfile, per FR-012)
-- [ ] T019 [US3] Rename the service from `dev` to `api` (or similar) in `docker-compose.yml` to reflect smoke-testing purpose
-- [ ] T020 [US3] Remove development-only volume mounts and “keep-alive” commands from `docker-compose.yml` (production-like runtime)
-- [ ] T021 [US3] Ensure `docker-compose.yml` supports configurable host port and environment variables (document defaults in `docs/DEVELOPMENT.md`)
-- [ ] T022 [US3] Add a short smoke-test walkthrough to `README.md` (compose up/logs/down)
+- [x] T018 [US3] Update `docker-compose.yml` to build the API service with `context: ./api` and `dockerfile: Dockerfile` (single production Dockerfile, per FR-012)
+- [x] T019 [US3] Rename the service from `dev` to `api` (or similar) in `docker-compose.yml` to reflect smoke-testing purpose
+- [x] T020 [US3] Remove development-only volume mounts and “keep-alive” commands from `docker-compose.yml` (production-like runtime)
+- [x] T021 [US3] Ensure `docker-compose.yml` supports configurable host port and environment variables (document defaults in `docs/DEVELOPMENT.md`)
+- [x] T022 [US3] Add a short smoke-test walkthrough to `README.md` (compose up/logs/down)
 
 **Checkpoint**: User Story 3 is independently usable for local smoke-testing.
 
