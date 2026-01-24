@@ -18,11 +18,15 @@ func setupWorkoutTestRouter() chi.Router {
 	exerciseRepo := memory.NewExerciseRepository()
 	programRepo := memory.NewProgramRepository()
 	workoutHandler := NewWorkoutHandler(workoutRepo, exerciseRepo, programRepo)
+	exerciseHandler := NewExerciseHandler(exerciseRepo, workoutRepo)
 	authProvider := middleware.NewStubProvider()
 
 	r := chi.NewRouter()
 	r.Use(middleware.AuthMiddleware(authProvider))
 	r.Route("/api/v1", func(r chi.Router) {
+		// Exercise routes needed for TestWorkoutHandler_Create
+		r.Post("/exercises", exerciseHandler.CreateExercise)
+		// Workout routes
 		r.Post("/workouts", workoutHandler.CreateWorkout)
 		r.Get("/workouts", workoutHandler.ListWorkouts)
 		r.Get("/workouts/{id}", workoutHandler.GetWorkout)
@@ -56,7 +60,7 @@ func TestWorkoutHandler_Create(t *testing.T) {
 		"entries": []map[string]interface{}{
 			{
 				"exercise_id": exerciseID,
-				"entry_type":  "work",
+				"entry_type":  "main",
 				"sets":        3,
 				"reps":        10,
 				"load_kg":     100.0,
@@ -96,10 +100,34 @@ func TestWorkoutHandler_Create(t *testing.T) {
 func TestWorkoutHandler_GetByID(t *testing.T) {
 	router := setupWorkoutTestRouter()
 
-	// Create a workout first (simplified - using repository directly would be better)
+	// First create an exercise for the workout entry
+	exerciseBody := map[string]interface{}{
+		"name": "Squat",
+	}
+	exerciseBytes, _ := json.Marshal(exerciseBody)
+	exerciseReq := httptest.NewRequest(http.MethodPost, "/api/v1/exercises", bytes.NewReader(exerciseBytes))
+	exerciseReq.Header.Set("Content-Type", "application/json")
+	exerciseReq.Header.Set("Authorization", "Bearer test-token")
+	exerciseW := httptest.NewRecorder()
+	router.ServeHTTP(exerciseW, exerciseReq)
+
+	var exercise map[string]interface{}
+	json.Unmarshal(exerciseW.Body.Bytes(), &exercise)
+	exerciseID := exercise["id"].(string)
+
+	// Create a workout with valid entry (workout must have at least one entry per validation)
 	body := map[string]interface{}{
 		"timestamp": time.Now().Format(time.RFC3339),
-		"entries":   []map[string]interface{}{},
+		"entries": []map[string]interface{}{
+			{
+				"exercise_id": exerciseID,
+				"entry_type":  "main",
+				"sets":        3,
+				"reps":        10,
+				"load_kg":     100.0,
+				"rpe":         8,
+			},
+		},
 	}
 	bodyBytes, _ := json.Marshal(body)
 	createReq := httptest.NewRequest(http.MethodPost, "/api/v1/workouts", bytes.NewReader(bodyBytes))
@@ -109,7 +137,7 @@ func TestWorkoutHandler_GetByID(t *testing.T) {
 	router.ServeHTTP(createW, createReq)
 
 	if createW.Code != http.StatusCreated {
-		t.Fatalf("Failed to create workout: %v", createW.Code)
+		t.Fatalf("Failed to create workout: %v. Body: %s", createW.Code, createW.Body.String())
 	}
 
 	var created map[string]interface{}

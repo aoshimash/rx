@@ -153,6 +153,8 @@ func (h *ProgramHandler) convertNode(ctx context.Context, nodeReq struct {
 	}
 
 	// Convert children recursively
+	// Note: ParentID is set here but will be reassigned by repository.assignNodeIDs.
+	// The repository is responsible for all ID assignment to ensure consistency.
 	if len(nodeReq.Children) > 0 {
 		node.Children = make([]domain.ProgramNode, len(nodeReq.Children))
 		for i, childJSON := range nodeReq.Children {
@@ -173,6 +175,7 @@ func (h *ProgramHandler) convertNode(ctx context.Context, nodeReq struct {
 			if err := json.Unmarshal(childJSON, &childReq); err != nil {
 				return nil, err
 			}
+			// Pass &node.ID as parentID (will be zero UUID at this point, but repository will reassign)
 			child, err := h.convertNode(ctx, childReq, &node.ID)
 			if err != nil {
 				return nil, err
