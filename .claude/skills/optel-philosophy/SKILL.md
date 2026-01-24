@@ -13,10 +13,19 @@ description: Core philosophy and constraints for OPTel project. Use when writing
 - **Stateless & Headless** - No UI components. Pure API.
 - **Agent-Native** - Primary consumers are AI Agents (via MCP) or analysis tools, not human UIs
 
-### 2. Schema-First Development
+### 2. Domain-Driven Schema-First Development
 
-- Development MUST start from OpenAPI definitions
-- Generate code from schemas, not schemas from code
+- **Domain models define business logic** - Domain entities (`internal/domain/`) contain business rules, validation, and invariants
+- **OpenAPI spec defines API contract** - OpenAPI specification defines the HTTP API contract for clients
+- **Code generation from OpenAPI** - Go types and server stubs are generated from the OpenAPI spec
+- **Handlers bridge the gap** - HTTP handlers convert between OpenAPI types and domain models
+- **Keep them synchronized** - Domain models and OpenAPI specs must stay in sync
+
+**Workflow:**
+1. Define domain model with business rules
+2. Create OpenAPI spec referencing domain model
+3. Generate code from OpenAPI spec
+4. Implement handlers that convert between types
 
 ### 3. Data Integrity
 

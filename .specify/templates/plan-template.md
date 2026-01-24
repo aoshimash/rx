@@ -34,7 +34,7 @@
 Verify compliance with OPTel Workload Constitution principles:
 
 - **Dumb Backend**: No health calculations or business logic in backend - only data storage/retrieval
-- **Schema-First**: OpenAPI specification defined before implementation
+- **Domain-Driven Schema-First**: Domain models define business logic, OpenAPI spec defines API contract. Code generated from OpenAPI spec.
 - **Infrastructure Metaphors**: Using infrastructure terminology (workload, task, telemetry), not fitness terminology
 - **Data Integrity**: Immutable records - changes create new records, never updates
 - **Clean Architecture**: Domain logic separated from infrastructure, repository pattern used

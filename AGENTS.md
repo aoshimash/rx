@@ -11,7 +11,7 @@ This repository (`optel-workload`) is the **Output/Training Management** compone
 ## Key Principles
 
 1. **"Dumb Backend"** - No business logic for "health." Strictly stores and retrieves telemetry data.
-2. **Schema-First** - Development starts from OpenAPI definitions.
+2. **Domain-Driven Schema-First** - Domain models define business logic, OpenAPI spec defines API contract. Code is generated from OpenAPI spec.
 3. **Infrastructure Metaphors** - Use infrastructure terminology, not fitness terminology.
 
 For details, see `.claude/skills/optel-philosophy/`.
@@ -40,7 +40,7 @@ optel-workload/
 
 - **Language**: Go 1.25+
 - **HTTP Server**: chi
-- **OpenAPI**: oapi-codegen (Schema-First)
+- **OpenAPI**: oapi-codegen (Domain-Driven Schema-First)
 - **Linter**: golangci-lint (strict)
 - **Logging**: log/slog
 - **Testing**: standard testing package

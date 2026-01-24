@@ -29,13 +29,26 @@ The backend MUST store and retrieve telemetry data only. No business logic for "
 
 **Implementation Details**: For prohibited/permitted features list and detailed examples, see `.claude/skills/optel-philosophy/reference.md`.
 
-### II. Schema-First Development (NON-NEGOTIABLE)
+### II. Domain-Driven Schema-First Development (NON-NEGOTIABLE)
 
-Development MUST start from OpenAPI definitions. Code is generated from schemas using oapi-codegen, not schemas from code. All API changes begin with OpenAPI specification updates.
+Development follows a **Domain-Driven Schema-First** approach:
+- **Domain models define business logic** - Domain entities (`internal/domain/`) contain business rules, validation, and invariants
+- **OpenAPI spec defines API contract** - OpenAPI specification defines the HTTP API contract for clients
+- **Code generation from OpenAPI** - Go types and server stubs are generated from the OpenAPI spec using oapi-codegen
+- **Handlers bridge the gap** - HTTP handlers convert between OpenAPI types and domain models
+- **Synchronization required** - Domain models and OpenAPI specs must be kept in sync
 
-**Rationale**: Schema-first ensures API contracts are explicit, versioned, and serve as the single source of truth. It enables code generation, reduces inconsistencies, and provides clear API documentation.
+**Rationale**: This approach combines the benefits of domain modeling (clear business logic, testability) with schema-first API development (explicit contracts, code generation, documentation). It enables code generation while maintaining domain-driven design principles.
 
-**Implementation Details**: API versioning uses URL path pattern `/api/v1/`. For domain model details (Workload, Program, Telemetry), see `.claude/skills/optel-domain/`. For Go code generation patterns, see `.claude/skills/optel-go-standards/`.
+**Implementation Details**: 
+- Domain models are defined in `internal/domain/` with business rules and validation
+- OpenAPI spec is defined in `api/openapi/openapi.yaml` referencing domain models
+- Code is generated from OpenAPI spec using `oapi-codegen`
+- Handlers convert between OpenAPI types and domain models
+- API versioning uses URL path pattern `/api/v1/`
+- For domain model details (Workload, Program, Telemetry), see `.claude/skills/optel-domain/`
+- For Go code generation patterns, see `.claude/skills/optel-go-standards/`
+- For development workflow, see `docs/DEVELOPMENT.md`
 
 ### III. Infrastructure Metaphors (NON-NEGOTIABLE)
 

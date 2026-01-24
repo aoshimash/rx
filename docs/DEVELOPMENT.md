@@ -100,36 +100,66 @@ make docker-shell
 
 ## Workflow
 
-### Schema-First Development
+### Domain-Driven Schema-First Development
 
-In Schema-First development, **the OpenAPI specification is the source of truth**. Data structures, API contracts, and domain models all derive from the spec, not the other way around.
+We use a **Domain-Driven Schema-First** approach that combines the benefits of domain modeling with schema-first API development.
+
+**Key Principles:**
+
+1. **Domain models define business logic** - Domain entities (`internal/domain/`) contain business rules, validation, and invariants
+2. **OpenAPI spec defines API contract** - OpenAPI specification (`openapi/openapi.yaml`) defines the HTTP API contract for clients
+3. **Code generation from OpenAPI** - Go types and server stubs are generated from the OpenAPI spec using `oapi-codegen`
+4. **Handlers bridge the gap** - HTTP handlers convert between OpenAPI types and domain models
 
 **Workflow:**
 
-1. **Edit OpenAPI spec** - Start by modifying `openapi/openapi.yaml`
+1. **Define domain model** - Start by defining domain entities in `internal/domain/`
+   - Include business rules and validation logic
+   - Define repository interfaces (ports)
+   - Keep domain models focused on business logic, not HTTP concerns
+2. **Create OpenAPI spec** - Define API contract in `openapi/openapi.yaml`
+   - Reference domain models when designing schemas
    - Define minimal schemas first (only required fields)
    - Add fields incrementally as needed
-   - Data structures emerge from the spec, not predefined
-2. **Generate code** - Run `make generate`
-   - This generates Go types and server stubs from the spec
-3. **Implement handlers** - Write handler logic
-   - Use generated types from `pkg/openapi/`
-4. **Add tests** - Write table-driven tests
-5. **Run linter** - Run `make lint`
-6. **Test** - Run `make test`
+   - Document domain model references in schema descriptions
+3. **Generate code** - Run `make generate`
+   - This generates Go types and server stubs from the OpenAPI spec
+4. **Implement handlers** - Write handler logic
+   - Convert OpenAPI types to domain models
+   - Use domain models for business logic
+   - Convert domain models back to OpenAPI types for responses
+5. **Add tests** - Write table-driven tests
+   - Test domain logic separately
+   - Test conversion between OpenAPI and domain types
+   - Test handlers with integration tests
+6. **Run linter** - Run `make lint`
+7. **Test** - Run `make test`
 
 ## Incremental Development Guide
 
 This guide shows how to build the API incrementally, starting with a minimal working specification and gradually adding features. Each step should result in a working, testable system.
 
-### Important: Data Structures Are Defined During Development
+### Domain Model and OpenAPI Spec Synchronization
 
-**Key Principle:** In Schema-First development, data structures are **not** predefined. They emerge from the OpenAPI specification as you build it incrementally.
+**Key Principle:** Domain models and OpenAPI specs are maintained separately but must stay in sync.
 
-- **Start minimal** - Begin with the smallest possible schema that works
-- **Expand gradually** - Add fields and relationships as needed
-- **OpenAPI is the source of truth** - The spec defines the data structure, not the other way around
-- **Domain models follow the spec** - Go domain entities are derived from OpenAPI schemas
+- **Domain models first** - Define domain entities with business rules first
+- **OpenAPI spec follows** - Create OpenAPI spec referencing domain models
+- **Keep them synchronized** - When modifying one, update the other
+- **Use conversion layer** - Handlers convert between OpenAPI types and domain models
+
+**Synchronization Checklist:**
+
+When modifying domain models or OpenAPI specs:
+- [ ] Update domain model (`internal/domain/`)
+- [ ] Update OpenAPI spec (`openapi/openapi.yaml`)
+  - [ ] Required fields match
+  - [ ] Validation rules match
+  - [ ] Types match (int, string, etc.)
+- [ ] Run code generation (`make generate`)
+- [ ] Update conversion layer in handlers
+- [ ] Update tests
+- [ ] Run validation (`make validate-openapi`)
 
 **Note:** The domain reference (`.claude/skills/optel-domain/reference.md`) shows the **target state** or **reference implementation**, not a requirement to implement everything upfront. Use it as inspiration, but feel free to start simpler and build up.
 
@@ -137,12 +167,15 @@ This guide shows how to build the API incrementally, starting with a minimal wor
 
 For each feature addition, follow this cycle:
 
-1. **Define minimal spec** - Add only what's needed for the current step
-2. **Generate code** - Run `make generate`
-3. **Implement minimal handler** - Get it working with basic logic
-4. **Test manually** - Use `curl` or similar to verify it works
-5. **Add tests** - Write table-driven tests
-6. **Commit** - Save working state before next step
+1. **Define domain model** - Add domain entity with business rules
+2. **Create/update OpenAPI spec** - Define API contract referencing domain model
+3. **Generate code** - Run `make generate`
+4. **Implement repository** - Create repository implementation (memory/postgres)
+5. **Implement handler** - Convert between OpenAPI types and domain models
+6. **Test manually** - Use `curl` or similar to verify it works
+7. **Add tests** - Write table-driven tests for domain logic and handlers
+8. **Validate sync** - Ensure domain model and OpenAPI spec are synchronized
+9. **Commit** - Save working state before next step
 
 ### Step-by-Step: Building Workload API
 
@@ -499,8 +532,10 @@ After each step, verify:
 1. **One feature per commit** - Each step should be a single, focused commit
 2. **Test before moving on** - Don't proceed to the next step until current one works
 3. **Keep specs minimal** - Only add what's needed for current functionality
-4. **Validate frequently** - Run `make generate` and `make test` after each spec change
-5. **Document decisions** - Add comments in spec for non-obvious choices
+4. **Validate frequently** - Run `make validate-openapi`, `make generate`, and `make test` after each change
+5. **Maintain sync** - When modifying domain models, update OpenAPI spec and vice versa
+6. **Document decisions** - Add comments in spec and domain models for non-obvious choices
+7. **Reference domain models** - Include domain model references in OpenAPI schema descriptions
 
 ### Making Changes
 
@@ -508,14 +543,18 @@ After each step, verify:
 # 1. Create a feature branch
 git checkout -b feature/add-workload-filtering
 
-# 2. Make changes following Schema-First approach
+# 2. Make changes following Domain-Driven Schema-First approach
+#    - Update domain model (internal/domain/)
+#    - Update OpenAPI spec (openapi/openapi.yaml)
 
-# 3. Generate code
+# 3. Validate and generate code
+make validate-openapi
 make generate
 
 # 4. Run checks
 make lint
 make test
+make check-sync  # Ensure domain model and OpenAPI spec are in sync
 
 # 5. Commit with conventional commit message
 git commit -m "feat(api): add workload filtering by date range"
@@ -526,7 +565,7 @@ git commit -m "feat(api): add workload filtering by date range"
 ```makefile
 # api/Makefile
 
-.PHONY: generate lint test run build clean
+.PHONY: generate lint test run build clean validate-openapi check-sync
 
 generate:
 	oapi-codegen -generate types,chi-server -package openapi \
@@ -546,6 +585,18 @@ build:
 
 clean:
 	rm -rf bin/
+
+# Validate OpenAPI spec
+validate-openapi:
+	@echo "Validating OpenAPI spec..."
+	@npx @apidevtools/swagger-cli validate openapi/openapi.yaml || \
+		(echo "ERROR: OpenAPI spec validation failed. Install swagger-cli: npm install -g @apidevtools/swagger-cli" && exit 1)
+
+# Check domain model and OpenAPI spec synchronization
+# Note: This requires a custom script (scripts/check-sync.go) to be implemented
+check-sync:
+	@echo "Checking domain model and OpenAPI spec sync..."
+	@go run scripts/check-sync.go || echo "WARNING: Sync check script not implemented yet"
 ```
 
 ## Environment Variables
