@@ -27,9 +27,9 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create directory structure for handlers, repositories, and stores in `api/internal/`
-- [ ] T002 [P] Verify chi and oapi-codegen dependencies in `api/go.mod`
-- [ ] T003 [P] Create `api/internal/config/config.go` for application configuration (auth provider, etc.)
+- [x] T001 Create directory structure for handlers, repositories, and stores in `api/internal/`
+- [x] T002 [P] Verify chi and oapi-codegen dependencies in `api/go.mod`
+- [x] T003 [P] Create `api/internal/config/config.go` for application configuration (auth provider, etc.)
 
 ---
 
