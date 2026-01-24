@@ -35,4 +35,4 @@ clean:
 
 # Production build (builds outside container, requires local Docker)
 docker-build-prod:
-	docker build -t optel-workload:latest -f Dockerfile.prod .
+	docker build -t optel-training:latest -f Dockerfile.prod .

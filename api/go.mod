@@ -1,4 +1,4 @@
-module github.com/aoshimash/optel-workload/api
+module github.com/aoshimash/optel-training/api
 
 go 1.25.6
 

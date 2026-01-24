@@ -63,7 +63,7 @@ OPTel Workout is an agent-native telemetry backend for physical exertion data. I
 ## Directory Structure
 
 ```
-optel-workload/
+optel-training/
 ├── api/                          # REST API (Go)
 │   ├── cmd/
 │   │   └── server/

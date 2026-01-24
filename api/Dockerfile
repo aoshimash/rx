@@ -1,4 +1,4 @@
-# Development Dockerfile for OPTel Workload API
+# Development Dockerfile for OPTel Workout API
 # This is for LOCAL DEVELOPMENT ONLY - includes all development tools
 # For production, use Dockerfile.prod instead
 # Uses Ubuntu-based golang image for better compatibility

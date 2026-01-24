@@ -17,8 +17,8 @@ All development tools are containerized. You only need Docker, Make, and curl in
 
 ```bash
 # Clone the repository
-git clone https://github.com/aoshimash/optel-workload.git
-cd optel-workload
+git clone https://github.com/aoshimash/optel-training.git
+cd optel-training
 
 # Navigate to API directory
 cd api
@@ -696,13 +696,13 @@ docker-compose -f ../docker-compose.yml up -d postgres dev
 
 ```bash
 # Build production image (from api/ directory)
-docker build -t optel-workload:latest -f Dockerfile.prod .
+docker build -t optel-training:latest -f Dockerfile.prod .
 
 # Run production container
 docker run -p 8080:8080 \
   -e PORT=8080 \
   -e LOG_LEVEL=info \
-  optel-workload:latest
+  optel-training:latest
 
 # Test production container
 curl http://localhost:8080/api/v1/workouts

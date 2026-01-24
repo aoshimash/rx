@@ -1,4 +1,4 @@
-# optel-workload
+# optel-training
 
 An agent-native telemetry backend to monitor physical exertion. Part of Open Physical Telemetry (OPTel).
 
@@ -48,7 +48,7 @@ All Go development tools run inside Docker. See [Development Guide](docs/DEVELOP
 ## Project Structure
 
 ```
-optel-workload/
+optel-training/
 ├── api/              # REST API (Go)
 ├── mcp/              # MCP Server (runs on user's local machine)
 ├── frontend/         # Frontend (future)
