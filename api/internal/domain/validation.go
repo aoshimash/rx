@@ -244,11 +244,17 @@ func ValidateWorkout(w *Workout) error {
 		return err
 	}
 
-	// Validate entries (must have at least one)
+	// Validate entries (must have at least one, max 500 per FR-017, FR-018)
 	if len(w.Entries) == 0 {
 		return &ValidationError{
 			Field:   "entries",
 			Message: "workout must have at least one entry",
+		}
+	}
+	if len(w.Entries) > 500 {
+		return &ValidationError{
+			Field:   "entries",
+			Message: "workout cannot have more than 500 entries",
 		}
 	}
 
@@ -471,6 +477,28 @@ func ValidateProgram(p *Program) error {
 
 	// Validate root nodes recursively
 	// Use index-based loop to allow validation to modify original nodes
+	// Count total nodes (max 1000 per FR-017, FR-018)
+	var totalNodeCount int
+	var countNodes func(nodes []ProgramNode)
+	countNodes = func(nodes []ProgramNode) {
+		for i := range nodes {
+			totalNodeCount++
+			if totalNodeCount > 1000 {
+				return
+			}
+			if len(nodes[i].Children) > 0 {
+				countNodes(nodes[i].Children)
+			}
+		}
+	}
+	countNodes(p.RootNodes)
+	if totalNodeCount > 1000 {
+		return &ValidationError{
+			Field:   "root_nodes",
+			Message: "program cannot have more than 1000 nodes (entire tree)",
+		}
+	}
+
 	for i := range p.RootNodes {
 		if err := ValidateProgramNode(&p.RootNodes[i]); err != nil {
 			return &ValidationError{

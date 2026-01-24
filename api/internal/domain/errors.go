@@ -29,3 +29,20 @@ const (
 	ErrCodeMissingRequiredField = "MISSING_REQUIRED_FIELD"
 	ErrCodeInvalidEntryType     = "INVALID_ENTRY_TYPE"
 )
+
+// Predefined domain errors
+var (
+	ErrNotFound = &DomainError{
+		Code:    "NOT_FOUND",
+		Message: "Resource not found",
+	}
+)
+
+// Error codes for HTTP responses (FR-018)
+const (
+	ErrorCodeUnauthorized    = "UNAUTHORIZED"
+	ErrorCodeValidationError = "VALIDATION_ERROR"
+	ErrorCodeNotFound        = "NOT_FOUND"
+	ErrorCodeConflict        = "CONFLICT"
+	ErrorCodeInternalError   = "INTERNAL_ERROR"
+)
