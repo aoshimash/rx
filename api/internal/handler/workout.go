@@ -575,9 +575,11 @@ func (h *WorkoutHandler) ListWorkouts(w http.ResponseWriter, r *http.Request) {
 	// Return paginated response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"data":       workouts,
 		"next_cursor": nextCursor,
 		"has_more":   hasMore,
-	})
+	}); err != nil {
+		slog.Error("Failed to encode workout list response", "error", err)
+	}
 }

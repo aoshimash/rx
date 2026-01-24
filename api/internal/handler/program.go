@@ -417,9 +417,11 @@ func (h *ProgramHandler) ListPrograms(w http.ResponseWriter, r *http.Request) {
 	// Return paginated response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"data":       programs,
 		"next_cursor": nextCursor,
 		"has_more":   hasMore,
-	})
+	}); err != nil {
+		slog.Error("Failed to encode program list response", "error", err)
+	}
 }
