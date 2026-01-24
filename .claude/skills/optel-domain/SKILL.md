@@ -9,7 +9,7 @@ description: Domain models for OPTel project. Covers Workout, Program, and Telem
 
 ### 1. Workout (The Log)
 
-A completed unit of physical exertion. Immutable once created.
+A completed unit of physical exertion.
 
 **Required Fields:**
 - `id` - Unique identifier
