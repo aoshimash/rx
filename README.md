@@ -51,6 +51,8 @@ docker compose down
 
 **Configuration:** Default port is 8080. Set `HOST_PORT` environment variable to use a different port (e.g., `HOST_PORT=8081 docker compose up -d`).
 
+**Note:** Docker Compose is for smoke-testing only. Do not run development commands (generate, lint, test, etc.) inside the docker-compose container. Use DevContainer for development tasks.
+
 ### Building Production Image
 
 Build a production-ready container image:

@@ -1,4 +1,4 @@
-.PHONY: generate lint test run build clean docker-up docker-down docker-shell docker-build-prod deps
+.PHONY: generate lint test run build clean docker-up docker-down docker-build-prod deps
 
 # Native commands (tools must be on PATH; DevContainer provides them automatically)
 # These commands work when tools are installed locally or via DevContainer
@@ -35,13 +35,6 @@ docker-up:
 
 docker-down:
 	$(DOCKER_COMPOSE) down
-
-# Note: docker-shell is not usable with distroless production images (no shell available)
-# Use `docker compose logs -f` for debugging instead
-docker-shell:
-	@echo "Error: Production container uses distroless image with no shell"
-	@echo "Use 'docker compose logs -f' to view logs instead"
-	@exit 1
 
 # Production build (builds outside container, requires local Docker)
 # Note: Run from api/ directory, so build context is current directory (.)

@@ -714,7 +714,10 @@ docker compose down
 HOST_PORT=8081 docker compose up -d
 ```
 
-**Note:** This is for smoke-testing the production container build. For iterative development, use DevContainer instead.
+**Important Notes:**
+- This is for smoke-testing the production container build. For iterative development, use DevContainer instead.
+- **Do not run development commands** (generate, lint, test, etc.) inside the docker-compose container. These commands should be run in DevContainer or locally with tools installed.
+- The production container uses a distroless image with no shell, so interactive debugging is not possible. Use `docker compose logs -f` to view logs.
 
 ### Building Production Image
 
