@@ -1,11 +1,11 @@
-.PHONY: generate lint test run build clean docker-up docker-down docker-shell docker-build-prod
+.PHONY: generate lint test run build clean docker-up docker-down docker-shell docker-build-prod deps
 
 # Docker-based commands (run inside container)
 # Use 'docker compose' (space) instead of 'docker-compose' (hyphen) for compatibility
 DOCKER_COMPOSE = docker compose -f ../docker-compose.yml
 DOCKER_RUN = $(DOCKER_COMPOSE) exec dev
 
-generate:
+generate: deps
 	$(DOCKER_RUN) oapi-codegen -generate types,chi-server -package openapi \
 		-o pkg/openapi/server.gen.go openapi/openapi.yaml
 
