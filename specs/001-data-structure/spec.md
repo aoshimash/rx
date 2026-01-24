@@ -35,7 +35,7 @@ As an agent or client integrating with OPTel Training, I can represent a complet
 
 **Acceptance Scenarios**:
 
-1. **Given** a workout session timestamp and one or more performed entries (exercise, role, sets, reps, load, RPE), **When** the client records the workout, **Then** the record is accepted and can be retrieved with the same values in the same entry order.
+1. **Given** a workout session timestamp and one or more performed entries (exercise, entry_type, sets, reps, load, RPE), **When** the client records the workout, **Then** the record is accepted and can be retrieved with the same values in the same entry order.
 2. **Given** a workout entry that is associated with a planned prescription, **When** the performed values differ from the plan (e.g., load/reps/RPE/rest), **Then** both planned and performed values can be captured in structured fields (not only in freeform notes).
 3. **Given** session start/end times and per-entry start/end times are available, **When** the client records the workout, **Then** those times are persisted as optional attributes; **And given** times are not available, **Then** the workout remains valid without them.
 
