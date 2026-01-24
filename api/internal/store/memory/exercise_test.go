@@ -195,12 +195,25 @@ func TestExerciseRepository_Update(t *testing.T) {
 			}
 
 			if !tt.wantErr {
+				// Get original UpdatedAt before update
+				original, _ := repo.GetByID(ctx, id)
+				originalUpdatedAt := original.UpdatedAt
+
+				// Wait a bit to ensure timestamp difference
+				time.Sleep(10 * time.Millisecond)
+
+				// Update again to trigger UpdatedAt change
+				err = repo.Update(ctx, exercise)
+				if err != nil {
+					t.Fatalf("Update() failed on second call: %v", err)
+				}
+
 				updated, _ := repo.GetByID(ctx, id)
 				if updated.Name != exercise.Name {
 					t.Errorf("Update() did not update exercise, got Name = %v, want %v", updated.Name, exercise.Name)
 				}
-				if updated.UpdatedAt.Equal(exercise.UpdatedAt) || updated.UpdatedAt.Before(exercise.UpdatedAt) {
-					t.Error("Update() did not update UpdatedAt timestamp")
+				if !updated.UpdatedAt.After(originalUpdatedAt) {
+					t.Errorf("Update() did not update UpdatedAt timestamp: got %v, want after %v", updated.UpdatedAt, originalUpdatedAt)
 				}
 			}
 		})
