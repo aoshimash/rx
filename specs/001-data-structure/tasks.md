@@ -76,9 +76,9 @@
 
 ### Implementation for User Story 2
 
-- [ ] T019 [P] [US2] Create TelemetryPoint struct in `api/internal/domain/telemetry.go` with all fields from data-model.md
-- [ ] T020 [US2] Implement `ValidateTelemetryPoint(t *TelemetryPoint) error` in `api/internal/domain/validation.go` (depends on T019)
-- [ ] T021 [P] [US2] Write table-driven tests for `ValidateTelemetryPoint` in `api/internal/domain/telemetry_test.go` covering all validation rules and edge cases
+- [x] T019 [P] [US2] Create TelemetryPoint struct in `api/internal/domain/telemetry.go` with all fields from data-model.md
+- [x] T020 [US2] Implement `ValidateTelemetryPoint(t *TelemetryPoint) error` in `api/internal/domain/validation.go` (depends on T019)
+- [x] T021 [P] [US2] Write table-driven tests for `ValidateTelemetryPoint` in `api/internal/domain/telemetry_test.go` covering all validation rules and edge cases
 
 **Checkpoint**: User Story 2 entity is fully defined, validated, and tested. Telemetry points can be created with or without workout linkage.
 

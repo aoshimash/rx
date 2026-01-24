@@ -314,3 +314,40 @@ func ValidateWorkout(w *Workout) error {
 
 	return nil
 }
+
+// ValidateTelemetryPoint validates a TelemetryPoint entity.
+func ValidateTelemetryPoint(t *TelemetryPoint) error {
+	if t == nil {
+		return &ValidationError{
+			Field:   "telemetry_point",
+			Message: "telemetry_point cannot be nil",
+		}
+	}
+
+	// Validate required fields
+	if err := ValidateRequiredString("metric_name", t.MetricName); err != nil {
+		return err
+	}
+
+	// Validate metric_name length
+	if err := ValidateStringLength("metric_name", t.MetricName, 1, 100); err != nil {
+		return err
+	}
+
+	// Validate unit
+	if err := ValidateRequiredString("unit", t.Unit); err != nil {
+		return err
+	}
+
+	// Validate unit length
+	if err := ValidateStringLength("unit", t.Unit, 1, 50); err != nil {
+		return err
+	}
+
+	// Validate timestamp (not in future)
+	if err := ValidateTimestamp(t.Timestamp); err != nil {
+		return err
+	}
+
+	return nil
+}
