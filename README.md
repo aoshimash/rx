@@ -16,18 +16,62 @@ No fitness tracking, no motivation scores - just data.
 
 ## Quick Start
 
-**Prerequisites:** Docker, Docker Compose, Make, curl
+**Prerequisites:** Docker, Docker Compose (for smoke-testing), VS Code/Cursor with Dev Containers extension (for development)
+
+### Development (Recommended)
+
+Open this repository in VS Code/Cursor and reopen in DevContainer when prompted. All development tools (Go, oapi-codegen, golangci-lint) are automatically available.
 
 ```bash
+# Inside DevContainer:
 cd api
-make docker-up      # Start development container
-make generate       # Generate code from OpenAPI spec
-make run            # Start server (runs in container)
-# In another terminal:
+make generate      # Generate code from OpenAPI spec
+make lint          # Run linter
+make test          # Run tests
+make run           # Start server
+```
+
+### Smoke-Testing with Docker Compose
+
+For production-like local testing:
+
+```bash
+# Start the API service
+docker compose up -d
+
+# Test the API
+curl http://localhost:8080/api/v1/workouts
+
+# View logs
+docker compose logs -f
+
+# Stop the service
+docker compose down
+```
+
+**Configuration:** Default port is 8080. Set `HOST_PORT` environment variable to use a different port (e.g., `HOST_PORT=8081 docker compose up -d`).
+
+**Note:** Docker Compose is for smoke-testing only. Do not run development commands (generate, lint, test, etc.) inside the docker-compose container. Use DevContainer for development tasks.
+
+### Building Production Image
+
+Build a production-ready container image:
+
+```bash
+# From repository root
+docker build -t optel-training:latest -f api/Dockerfile api
+
+# Run the image
+docker run -p 8080:8080 \
+  -e PORT=8080 \
+  -e LOG_LEVEL=info \
+  optel-training:latest
+
+# Test
 curl http://localhost:8080/api/v1/workouts
 ```
 
-All Go development tools run inside Docker. See [Development Guide](docs/DEVELOPMENT.md) for details.
+See [Development Guide](docs/DEVELOPMENT.md) for details.
 
 ## Documentation
 

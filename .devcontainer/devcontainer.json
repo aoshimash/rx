@@ -1,0 +1,46 @@
+{
+	"name": "OPTel Training API",
+	"image": "mcr.microsoft.com/devcontainers/go:1.25",
+	
+	"features": {
+		"ghcr.io/devcontainers/features/git:1": {}
+	},
+
+	// Mount the workspace
+	"workspaceFolder": "/workspace",
+	"workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+
+	// Install required development tools
+	"postCreateCommand": "go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest && go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest && echo 'export PATH=\"$PATH:$(go env GOPATH)/bin\"' >> ~/.bashrc && echo 'export PATH=\"$PATH:$(go env GOPATH)/bin\"' >> ~/.zshrc || true",
+
+	// Port forwarding for API server
+	"forwardPorts": [8080],
+	"portsAttributes": {
+		"8080": {
+			"label": "API Server",
+			"onAutoForward": "notify"
+		}
+	},
+
+	// Environment variables
+	"remoteEnv": {
+		"PATH": "${containerEnv:PATH}:$(go env GOPATH)/bin",
+		"GOTOOLCHAIN": "auto"
+	},
+
+	// Customizations
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"golang.go",
+				"ms-azuretools.vscode-docker",
+				"redhat.vscode-yaml"
+			],
+			"settings": {
+				"go.useLanguageServer": true,
+				"go.lintTool": "golangci-lint",
+				"go.lintOnSave": "workspace"
+			}
+		}
+	}
+}

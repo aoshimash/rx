@@ -127,7 +127,9 @@ func TestExerciseHandler_GetByID(t *testing.T) {
 	}
 
 	var created map[string]interface{}
-	json.Unmarshal(createW.Body.Bytes(), &created)
+	if err := json.Unmarshal(createW.Body.Bytes(), &created); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 	exerciseID := created["id"].(string)
 
 	tests := []struct {
@@ -186,7 +188,9 @@ func TestExerciseHandler_Update(t *testing.T) {
 	router.ServeHTTP(createW, createReq)
 
 	var created map[string]interface{}
-	json.Unmarshal(createW.Body.Bytes(), &created)
+	if err := json.Unmarshal(createW.Body.Bytes(), &created); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 	exerciseID := created["id"].(string)
 
 	// Update the exercise
@@ -204,7 +208,9 @@ func TestExerciseHandler_Update(t *testing.T) {
 	}
 
 	var updated map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &updated)
+	if err := json.Unmarshal(w.Body.Bytes(), &updated); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 	if updated["name"] != "Updated" {
 		t.Errorf("UpdateExercise() name = %v, want Updated", updated["name"])
 	}
@@ -223,7 +229,9 @@ func TestExerciseHandler_Delete(t *testing.T) {
 	router.ServeHTTP(createW, createReq)
 
 	var created map[string]interface{}
-	json.Unmarshal(createW.Body.Bytes(), &created)
+	if err := json.Unmarshal(createW.Body.Bytes(), &created); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 	exerciseID := created["id"].(string)
 
 	// Delete the exercise
@@ -274,7 +282,9 @@ func TestExerciseHandler_List(t *testing.T) {
 	}
 
 	var response map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &response)
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 
 	data, ok := response["data"].([]interface{})
 	if !ok {

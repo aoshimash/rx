@@ -91,7 +91,9 @@ func TestTelemetryHandler_GetByID(t *testing.T) {
 	}
 
 	var created map[string]interface{}
-	json.Unmarshal(createW.Body.Bytes(), &created)
+	if err := json.Unmarshal(createW.Body.Bytes(), &created); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 	pointID := created["id"].(string)
 
 	// Get the telemetry point

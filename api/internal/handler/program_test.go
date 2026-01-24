@@ -39,10 +39,20 @@ func TestProgramHandler_Create(t *testing.T) {
 		"name": "Test Program",
 		"root_nodes": []map[string]interface{}{
 			{
-				"name": "Week 1",
+				"name":      "Week 1",
+				"node_type": "week",
+				"order":     0,
 				"children": []map[string]interface{}{
-					{"name": "Day 1"},
-					{"name": "Day 2"},
+					{
+						"name":      "Day 1",
+						"node_type": "day",
+						"order":     0,
+					},
+					{
+						"name":      "Day 2",
+						"node_type": "day",
+						"order":     1,
+					},
 				},
 			},
 		},
@@ -96,7 +106,9 @@ func TestProgramHandler_GetByID(t *testing.T) {
 	}
 
 	var created map[string]interface{}
-	json.Unmarshal(createW.Body.Bytes(), &created)
+	if err := json.Unmarshal(createW.Body.Bytes(), &created); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 	programID := created["id"].(string)
 
 	// Get the program

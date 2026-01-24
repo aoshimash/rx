@@ -128,7 +128,9 @@ func TestQuickstartExample2_CreateWorkout(t *testing.T) {
 	router.ServeHTTP(exerciseW, exerciseReq)
 
 	var exercise map[string]interface{}
-	json.Unmarshal(exerciseW.Body.Bytes(), &exercise)
+	if err := json.Unmarshal(exerciseW.Body.Bytes(), &exercise); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 	exerciseID := exercise["id"].(string)
 
 	// Create workout with entry
@@ -190,7 +192,9 @@ func TestQuickstartExample3_ListWorkoutsWithPagination(t *testing.T) {
 	exerciseW := httptest.NewRecorder()
 	router.ServeHTTP(exerciseW, exerciseReq)
 	var exercise map[string]interface{}
-	json.Unmarshal(exerciseW.Body.Bytes(), &exercise)
+	if err := json.Unmarshal(exerciseW.Body.Bytes(), &exercise); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 	exerciseID := exercise["id"].(string)
 
 	// Create multiple workouts with entries
@@ -230,7 +234,9 @@ func TestQuickstartExample3_ListWorkoutsWithPagination(t *testing.T) {
 	}
 
 	var response1 map[string]interface{}
-	json.Unmarshal(w1.Body.Bytes(), &response1)
+	if err := json.Unmarshal(w1.Body.Bytes(), &response1); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 
 	data1, ok := response1["data"].([]interface{})
 	if !ok || len(data1) != 10 {
@@ -258,7 +264,9 @@ func TestQuickstartExample3_ListWorkoutsWithPagination(t *testing.T) {
 	}
 
 	var response2 map[string]interface{}
-	json.Unmarshal(w2.Body.Bytes(), &response2)
+	if err := json.Unmarshal(w2.Body.Bytes(), &response2); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 
 	data2, ok := response2["data"].([]interface{})
 	if !ok || len(data2) < 1 {
@@ -279,11 +287,14 @@ func TestQuickstartExample4_FilterWorkoutsByDateRange(t *testing.T) {
 	exerciseW := httptest.NewRecorder()
 	router.ServeHTTP(exerciseW, exerciseReq)
 	var exercise map[string]interface{}
-	json.Unmarshal(exerciseW.Body.Bytes(), &exercise)
+	if err := json.Unmarshal(exerciseW.Body.Bytes(), &exercise); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 	exerciseID := exercise["id"].(string)
 
 	// Create workouts at different times with entries
-	baseTime := time.Date(2026, 1, 15, 12, 0, 0, 0, time.UTC)
+	// Use past dates to avoid validation errors
+	baseTime := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
 	for i := 0; i < 5; i++ {
 		body := map[string]interface{}{
 			"timestamp": baseTime.AddDate(0, 0, i*5).Format(time.RFC3339),
@@ -323,7 +334,9 @@ func TestQuickstartExample4_FilterWorkoutsByDateRange(t *testing.T) {
 	}
 
 	var response map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &response)
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 
 	data, ok := response["data"].([]interface{})
 	if !ok {
@@ -352,7 +365,9 @@ func TestQuickstartExample5_CreateProgram(t *testing.T) {
 	router.ServeHTTP(exerciseW, exerciseReq)
 
 	var exercise map[string]interface{}
-	json.Unmarshal(exerciseW.Body.Bytes(), &exercise)
+	if err := json.Unmarshal(exerciseW.Body.Bytes(), &exercise); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 	exerciseID := exercise["id"].(string)
 
 	// Create program with nested nodes

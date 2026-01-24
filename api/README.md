@@ -14,17 +14,34 @@ This API provides CRUD operations for the following domain models:
 
 ### Prerequisites
 
-- Docker and Docker Compose installed
-- Go 1.25+ (for local development)
+- **For Development**: VS Code/Cursor with Dev Containers extension
+- **For Smoke-Testing**: Docker and Docker Compose installed
 
-### Start the Server
+### Development (Recommended)
+
+1. Open the repository in VS Code/Cursor
+2. Reopen in DevContainer when prompted
+3. Inside DevContainer, run:
 
 ```bash
-# From repository root
-docker compose up api
+cd api
+make generate  # Generate code from OpenAPI spec
+make run        # Start server
 ```
 
 The API will be available at `http://localhost:8080/api/v1`.
+
+### Smoke-Testing with Docker Compose
+
+For production-like local testing:
+
+```bash
+# From repository root
+docker compose up -d
+curl http://localhost:8080/api/v1/workouts
+docker compose logs -f
+docker compose down
+```
 
 ### Authentication
 
@@ -229,11 +246,14 @@ make run
 
 ### Development Workflow
 
-1. Modify OpenAPI spec in `api/openapi/openapi.yaml`
-2. Regenerate code: `make generate`
-3. Implement handlers in `api/internal/handler/`
-4. Run tests: `make test`
-5. Start server: `make run` or `docker compose up api`
+1. Open repository in VS Code/Cursor and reopen in DevContainer
+2. Modify OpenAPI spec in `api/openapi/openapi.yaml`
+3. Regenerate code: `make generate` (runs natively in DevContainer)
+4. Implement handlers in `api/internal/handler/`
+5. Run tests: `make test` (runs natively in DevContainer)
+6. Start server: `make run` (runs natively in DevContainer)
+
+For production-like smoke-testing, use `docker compose up` from the repository root.
 
 ### Testing
 
