@@ -109,9 +109,9 @@
 
 **Purpose**: Integrate entity schemas into OpenAPI spec and verify code generation works
 
-- [ ] T028 Merge `specs/001-data-structure/contracts/openapi-entities.yaml` components into `api/openapi/openapi.yaml`
-- [ ] T029 [P] Verify component names match domain model names (Exercise, Workout, WorkoutEntry, etc.)
-- [ ] T030 [P] Ensure all required fields from data-model.md are marked as required in OpenAPI schemas
+- [x] T028 Merge `specs/001-data-structure/contracts/openapi-entities.yaml` components into `api/openapi/openapi.yaml`
+- [x] T029 [P] Verify component names match domain model names (Exercise, Workout, WorkoutEntry, etc.)
+- [x] T030 [P] Ensure all required fields from data-model.md are marked as required in OpenAPI schemas
 - [ ] T031 Run `make generate` in `api/` directory to generate OpenAPI types
 - [ ] T032 Verify generated code compiles without errors
 - [ ] T033 [P] Compare generated OpenAPI types with domain models to ensure consistency
