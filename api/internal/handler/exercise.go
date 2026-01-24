@@ -14,12 +14,16 @@ import (
 
 // ExerciseHandler handles Exercise-related HTTP requests
 type ExerciseHandler struct {
-	repo repository.ExerciseRepository
+	repo         repository.ExerciseRepository
+	workoutRepo  repository.WorkoutRepository
 }
 
 // NewExerciseHandler creates a new ExerciseHandler
-func NewExerciseHandler(repo repository.ExerciseRepository) *ExerciseHandler {
-	return &ExerciseHandler{repo: repo}
+func NewExerciseHandler(repo repository.ExerciseRepository, workoutRepo repository.WorkoutRepository) *ExerciseHandler {
+	return &ExerciseHandler{
+		repo:        repo,
+		workoutRepo: workoutRepo,
+	}
 }
 
 // CreateExercise handles POST /exercises
@@ -186,4 +190,60 @@ func (h *ExerciseHandler) UpdateExercise(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(existing)
+}
+
+// DeleteExercise handles DELETE /exercises/{id}
+func (h *ExerciseHandler) DeleteExercise(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Extract ID from path
+	idStr := chi.URLParam(r, "id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		middleware.WriteValidationError(w, "Invalid exercise ID format", map[string]interface{}{
+			"id": idStr,
+		})
+		return
+	}
+
+	// Check if exercise exists
+	if _, err := h.repo.GetByID(ctx, id); err != nil {
+		if err == domain.ErrNotFound {
+			middleware.WriteNotFoundError(w, "Exercise not found")
+			return
+		}
+		middleware.WriteInternalError(w, "Failed to retrieve exercise")
+		return
+	}
+
+	// Check for referential integrity: Exercise referenced by WorkoutEntry (FR-026)
+	referencingWorkouts, err := h.workoutRepo.ListByExerciseID(ctx, id)
+	if err != nil {
+		middleware.WriteInternalError(w, "Failed to check references")
+		return
+	}
+	if len(referencingWorkouts) > 0 {
+		middleware.WriteConflictError(w, "Cannot delete exercise - referenced by workout entries", map[string]interface{}{
+			"blocking_references": []map[string]interface{}{
+				{
+					"type":  "workout_entry",
+					"count": len(referencingWorkouts),
+				},
+			},
+		})
+		return
+	}
+
+	// Delete
+	if err := h.repo.Delete(ctx, id); err != nil {
+		if err == domain.ErrNotFound {
+			middleware.WriteNotFoundError(w, "Exercise not found")
+			return
+		}
+		middleware.WriteInternalError(w, "Failed to delete exercise")
+		return
+	}
+
+	// Return 204 No Content
+	w.WriteHeader(http.StatusNoContent)
 }

@@ -16,13 +16,15 @@ import (
 type ProgramHandler struct {
 	repo         repository.ProgramRepository
 	exerciseRepo repository.ExerciseRepository
+	workoutRepo  repository.WorkoutRepository
 }
 
 // NewProgramHandler creates a new ProgramHandler
-func NewProgramHandler(repo repository.ProgramRepository, exerciseRepo repository.ExerciseRepository) *ProgramHandler {
+func NewProgramHandler(repo repository.ProgramRepository, exerciseRepo repository.ExerciseRepository, workoutRepo repository.WorkoutRepository) *ProgramHandler {
 	return &ProgramHandler{
 		repo:         repo,
 		exerciseRepo: exerciseRepo,
+		workoutRepo:  workoutRepo,
 	}
 }
 
@@ -310,4 +312,77 @@ func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(existing)
+}
+
+// DeleteProgram handles DELETE /programs/{id}
+func (h *ProgramHandler) DeleteProgram(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Extract ID from path
+	idStr := chi.URLParam(r, "id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		middleware.WriteValidationError(w, "Invalid program ID format", map[string]interface{}{
+			"id": idStr,
+		})
+		return
+	}
+
+	// Check if program exists
+	program, err := h.repo.GetByID(ctx, id)
+	if err != nil {
+		if err == domain.ErrNotFound {
+			middleware.WriteNotFoundError(w, "Program not found")
+			return
+		}
+		middleware.WriteInternalError(w, "Failed to retrieve program")
+		return
+	}
+
+	// Check for referential integrity: Program referenced by Workout (FR-026)
+	// We need to check all ProgramNodes in the tree
+	var programNodeIDs []uuid.UUID
+	var collectNodeIDs func(nodes []domain.ProgramNode)
+	collectNodeIDs = func(nodes []domain.ProgramNode) {
+		for _, node := range nodes {
+			programNodeIDs = append(programNodeIDs, node.ID)
+			if len(node.Children) > 0 {
+				collectNodeIDs(node.Children)
+			}
+		}
+	}
+	collectNodeIDs(program.RootNodes)
+
+	// Check if any Workout references any ProgramNode in this Program
+	for _, nodeID := range programNodeIDs {
+		referencingWorkouts, err := h.workoutRepo.ListByProgramNodeID(ctx, nodeID)
+		if err != nil {
+			middleware.WriteInternalError(w, "Failed to check references")
+			return
+		}
+		if len(referencingWorkouts) > 0 {
+			middleware.WriteConflictError(w, "Cannot delete program - referenced by workouts", map[string]interface{}{
+				"blocking_references": []map[string]interface{}{
+					{
+						"type":  "workout",
+						"count": len(referencingWorkouts),
+					},
+				},
+			})
+			return
+		}
+	}
+
+	// Delete (cascades to ProgramNode records per FR-026)
+	if err := h.repo.Delete(ctx, id); err != nil {
+		if err == domain.ErrNotFound {
+			middleware.WriteNotFoundError(w, "Program not found")
+			return
+		}
+		middleware.WriteInternalError(w, "Failed to delete program")
+		return
+	}
+
+	// Return 204 No Content
+	w.WriteHeader(http.StatusNoContent)
 }

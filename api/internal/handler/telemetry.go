@@ -260,3 +260,41 @@ func (h *TelemetryHandler) UpdateTelemetryPoint(w http.ResponseWriter, r *http.R
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(existing)
 }
+
+// DeleteTelemetryPoint handles DELETE /telemetry/{id}
+func (h *TelemetryHandler) DeleteTelemetryPoint(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Extract ID from path
+	idStr := chi.URLParam(r, "id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		middleware.WriteValidationError(w, "Invalid telemetry point ID format", map[string]interface{}{
+			"id": idStr,
+		})
+		return
+	}
+
+	// Check if telemetry point exists
+	if _, err := h.repo.GetByID(ctx, id); err != nil {
+		if err == domain.ErrNotFound {
+			middleware.WriteNotFoundError(w, "Telemetry point not found")
+			return
+		}
+		middleware.WriteInternalError(w, "Failed to retrieve telemetry point")
+		return
+	}
+
+	// Delete (no dependencies per FR-026)
+	if err := h.repo.Delete(ctx, id); err != nil {
+		if err == domain.ErrNotFound {
+			middleware.WriteNotFoundError(w, "Telemetry point not found")
+			return
+		}
+		middleware.WriteInternalError(w, "Failed to delete telemetry point")
+		return
+	}
+
+	// Return 204 No Content
+	w.WriteHeader(http.StatusNoContent)
+}

@@ -484,3 +484,41 @@ func (h *WorkoutHandler) UpdateWorkout(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(existing)
 }
+
+// DeleteWorkout handles DELETE /workouts/{id}
+func (h *WorkoutHandler) DeleteWorkout(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Extract ID from path
+	idStr := chi.URLParam(r, "id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		middleware.WriteValidationError(w, "Invalid workout ID format", map[string]interface{}{
+			"id": idStr,
+		})
+		return
+	}
+
+	// Check if workout exists
+	if _, err := h.repo.GetByID(ctx, id); err != nil {
+		if err == domain.ErrNotFound {
+			middleware.WriteNotFoundError(w, "Workout not found")
+			return
+		}
+		middleware.WriteInternalError(w, "Failed to retrieve workout")
+		return
+	}
+
+	// Delete (cascades to WorkoutEntry records per FR-026)
+	if err := h.repo.Delete(ctx, id); err != nil {
+		if err == domain.ErrNotFound {
+			middleware.WriteNotFoundError(w, "Workout not found")
+			return
+		}
+		middleware.WriteInternalError(w, "Failed to delete workout")
+		return
+	}
+
+	// Return 204 No Content
+	w.WriteHeader(http.StatusNoContent)
+}

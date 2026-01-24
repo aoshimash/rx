@@ -108,13 +108,13 @@
 
 ### Implementation for User Story 3
 
-- [ ] T034 [P] [US3] Implement DeleteExercise handler in `api/internal/handler/exercise.go` (DELETE /exercises/{id}, check for WorkoutEntry references, return 409 if referenced)
-- [ ] T035 [P] [US3] Implement DeleteWorkout handler in `api/internal/handler/workout.go` (DELETE /workouts/{id}, cascade delete WorkoutEntries)
-- [ ] T036 [P] [US3] Implement DeleteProgram handler in `api/internal/handler/program.go` (DELETE /programs/{id}, check for Workout references, cascade delete ProgramNodes, return 409 if referenced by Workout)
-- [ ] T037 [P] [US3] Implement DeleteTelemetryPoint handler in `api/internal/handler/telemetry.go` (DELETE /telemetry/{id}, no dependencies)
-- [ ] T038 [US3] Add referential integrity checks in repository implementations: WorkoutRepository.ListByExerciseID for Exercise deletion check, WorkoutRepository.ListByProgramNodeID for Program deletion check
-- [ ] T039 [US3] Register delete endpoints in `api/cmd/server/main.go` (DELETE routes for all entities)
-- [ ] T040 [US3] Implement 409 Conflict error response format in handlers with blocking_references details
+- [x] T034 [P] [US3] Implement DeleteExercise handler in `api/internal/handler/exercise.go` (DELETE /exercises/{id}, check for WorkoutEntry references, return 409 if referenced)
+- [x] T035 [P] [US3] Implement DeleteWorkout handler in `api/internal/handler/workout.go` (DELETE /workouts/{id}, cascade delete WorkoutEntries)
+- [x] T036 [P] [US3] Implement DeleteProgram handler in `api/internal/handler/program.go` (DELETE /programs/{id}, check for Workout references, cascade delete ProgramNodes, return 409 if referenced by Workout)
+- [x] T037 [P] [US3] Implement DeleteTelemetryPoint handler in `api/internal/handler/telemetry.go` (DELETE /telemetry/{id}, no dependencies)
+- [x] T038 [US3] Add referential integrity checks in repository implementations: WorkoutRepository.ListByExerciseID for Exercise deletion check, WorkoutRepository.ListByProgramNodeID for Program deletion check
+- [x] T039 [US3] Register delete endpoints in `api/cmd/server/main.go` (DELETE routes for all entities)
+- [x] T040 [US3] Implement 409 Conflict error response format in handlers with blocking_references details
 
 **Checkpoint**: At this point, User Stories 1, 2, AND 3 should all work independently. Can create, retrieve, update, and delete all entity types with proper referential integrity.
 

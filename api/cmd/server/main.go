@@ -23,9 +23,9 @@ func main() {
 	telemetryRepo := memory.NewTelemetryPointRepository()
 
 	// Initialize handlers
-	exerciseHandler := handler.NewExerciseHandler(exerciseRepo)
+	exerciseHandler := handler.NewExerciseHandler(exerciseRepo, workoutRepo)
 	workoutHandler := handler.NewWorkoutHandler(workoutRepo, exerciseRepo, programRepo)
-	programHandler := handler.NewProgramHandler(programRepo, exerciseRepo)
+	programHandler := handler.NewProgramHandler(programRepo, exerciseRepo, workoutRepo)
 	telemetryHandler := handler.NewTelemetryHandler(telemetryRepo, workoutRepo)
 
 	// Initialize authentication provider based on config
@@ -62,21 +62,25 @@ func main() {
 		r.Post("/exercises", exerciseHandler.CreateExercise)
 		r.Get("/exercises/{id}", exerciseHandler.GetExercise)
 		r.Put("/exercises/{id}", exerciseHandler.UpdateExercise)
+		r.Delete("/exercises/{id}", exerciseHandler.DeleteExercise)
 
 		// Workout routes
 		r.Post("/workouts", workoutHandler.CreateWorkout)
 		r.Get("/workouts/{id}", workoutHandler.GetWorkout)
 		r.Put("/workouts/{id}", workoutHandler.UpdateWorkout)
+		r.Delete("/workouts/{id}", workoutHandler.DeleteWorkout)
 
 		// Program routes
 		r.Post("/programs", programHandler.CreateProgram)
 		r.Get("/programs/{id}", programHandler.GetProgram)
 		r.Put("/programs/{id}", programHandler.UpdateProgram)
+		r.Delete("/programs/{id}", programHandler.DeleteProgram)
 
 		// Telemetry routes
 		r.Post("/telemetry", telemetryHandler.CreateTelemetryPoint)
 		r.Get("/telemetry/{id}", telemetryHandler.GetTelemetryPoint)
 		r.Put("/telemetry/{id}", telemetryHandler.UpdateTelemetryPoint)
+		r.Delete("/telemetry/{id}", telemetryHandler.DeleteTelemetryPoint)
 	})
 
 	log.Println("Server starting on :8080")
