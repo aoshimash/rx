@@ -42,6 +42,24 @@ docker compose logs -f
 docker compose down
 ```
 
+### Building Production Image
+
+Build a production-ready container image:
+
+```bash
+# From repository root
+docker build -t optel-training:latest -f Dockerfile api
+
+# Run the image
+docker run -p 8080:8080 \
+  -e PORT=8080 \
+  -e LOG_LEVEL=info \
+  optel-training:latest
+
+# Test
+curl http://localhost:8080/api/v1/workouts
+```
+
 See [Development Guide](docs/DEVELOPMENT.md) for details.
 
 ## Documentation

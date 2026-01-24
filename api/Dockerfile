@@ -1,29 +1,43 @@
-# Development Dockerfile for OPTel Workout API
-# This is for LOCAL DEVELOPMENT ONLY - includes all development tools
-# For production, use Dockerfile.prod instead
-# Uses Ubuntu-based golang image for better compatibility
-FROM golang:1.25 AS dev
+# Production Dockerfile for OPTel Workout API
+# Multi-stage build: Ubuntu-based builder + distroless runtime
+# Distroless provides minimal attack surface (no shell, no package manager)
 
-# Install development tools
-RUN apt-get update && apt-get install -y \
-    make \
-    git \
-    curl \
-    bash \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+# Build stage (Ubuntu-based for compatibility)
+FROM golang:1.25 AS builder
 
-# Install oapi-codegen
-RUN go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+WORKDIR /build
 
-# Install golangci-lint
-RUN go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+# Copy go mod files
+COPY go.mod go.sum* ./
+RUN go mod download
 
-# Add Go bin to PATH
-ENV PATH="${PATH}:/root/go/bin"
+# Copy source code
+COPY . .
 
-# Set working directory
-WORKDIR /workspace
+# Build static binary (CGO_ENABLED=0 for distroless compatibility)
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo \
+    -ldflags="-w -s" \
+    -o bin/server cmd/server/main.go
 
-# Default command (keeps container running, can be overridden)
-CMD ["tail", "-f", "/dev/null"]
+# Runtime stage (distroless - no shell, no package manager, minimal attack surface)
+FROM gcr.io/distroless/static-debian11:nonroot
+
+# Copy CA certificates for HTTPS (distroless includes them)
+# Copy binary from builder
+COPY --from=builder /build/bin/server /app/server
+
+# Use nonroot user (distroless provides nonroot user: 65532:65532)
+USER nonroot:nonroot
+
+# Expose port
+EXPOSE 8080
+
+# Health check (requires /health endpoint to be implemented)
+# Note: distroless has no shell, so health check must use binary directly
+# Uncomment when health endpoint is available:
+# HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+#     CMD ["/app/server", "-health-check"] || exit 1
+
+# Run binary
+# Distroless has no shell, so use exec form
+ENTRYPOINT ["/app/server"]

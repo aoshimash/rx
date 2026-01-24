@@ -709,11 +709,11 @@ docker-compose -f ../docker-compose.yml up -d postgres dev
 
 ### Building Production Image
 
-**Production images are built separately from development containers.**
+**Production images are built from the single `api/Dockerfile` (no separate development Dockerfile).**
 
 ```bash
 # Build production image (from api/ directory)
-docker build -t optel-training:latest -f Dockerfile.prod .
+docker build -t optel-training:latest -f Dockerfile api
 
 # Run production container
 docker run -p 8080:8080 \
@@ -733,9 +733,37 @@ curl http://localhost:8080/api/v1/workouts
 - Minimal image size (only binary and CA certificates)
 - No shell access (enhanced security)
 - Health check support (when endpoint is implemented)
+- Self-contained: builds without requiring source code access after build stage
 
 **Files:**
-- `api/Dockerfile.prod` - Production container (optimized, minimal)
+- `api/Dockerfile` - Single production Dockerfile (optimized, minimal)
+
+### Smoke-Checking Production Image
+
+After building the production image, verify it works correctly:
+
+```bash
+# Build the image
+docker build -t optel-training:latest -f Dockerfile api
+
+# Run the container
+docker run -d -p 8080:8080 \
+  -e PORT=8080 \
+  -e LOG_LEVEL=info \
+  --name optel-test \
+  optel-training:latest
+
+# Wait a few seconds for startup, then test
+sleep 3
+curl http://localhost:8080/api/v1/workouts
+
+# Check logs
+docker logs optel-test
+
+# Clean up
+docker stop optel-test
+docker rm optel-test
+```
 
 ## Troubleshooting
 

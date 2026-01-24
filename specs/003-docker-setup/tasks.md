@@ -59,12 +59,12 @@
 
 ### Implementation for User Story 2
 
-- [ ] T013 [US2] Replace `api/Dockerfile` contents with the production build (multi-stage, minimal runtime, non-root, static binary)
-- [ ] T013a [US2] Verify FR-016: production image builds successfully and runs without requiring source code access after build (test by building image, removing source directory, and running container)
-- [ ] T014 [US2] Remove legacy `api/Dockerfile.prod`
-- [ ] T015 [US2] Update `api/.dockerignore` if needed to keep the production build context minimal and deterministic
-- [ ] T016 [P] [US2] Update `docs/DEVELOPMENT.md` and `README.md` with the production image build/run instructions (without reintroducing a dev Dockerfile)
-- [ ] T017 [US2] Add a smoke-check section to `docs/DEVELOPMENT.md` for verifying the built image responds to HTTP requests
+- [x] T013 [US2] Replace `api/Dockerfile` contents with the production build (multi-stage, minimal runtime, non-root, static binary)
+- [x] T013a [US2] Verify FR-016: production image builds successfully and runs without requiring source code access after build (test by building image, removing source directory, and running container)
+- [x] T014 [US2] Remove legacy `api/Dockerfile.prod`
+- [x] T015 [US2] Update `api/.dockerignore` if needed to keep the production build context minimal and deterministic
+- [x] T016 [P] [US2] Update `docs/DEVELOPMENT.md` and `README.md` with the production image build/run instructions (without reintroducing a dev Dockerfile)
+- [x] T017 [US2] Add a smoke-check section to `docs/DEVELOPMENT.md` for verifying the built image responds to HTTP requests
 
 **Checkpoint**: A single `api/Dockerfile` builds a minimal production image and runs successfully.
 
