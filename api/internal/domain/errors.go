@@ -37,3 +37,12 @@ var (
 		Message: "Resource not found",
 	}
 )
+
+// Error codes for HTTP responses (FR-018)
+const (
+	ErrorCodeUnauthorized    = "UNAUTHORIZED"
+	ErrorCodeValidationError = "VALIDATION_ERROR"
+	ErrorCodeNotFound        = "NOT_FOUND"
+	ErrorCodeConflict        = "CONFLICT"
+	ErrorCodeInternalError   = "INTERNAL_ERROR"
+)

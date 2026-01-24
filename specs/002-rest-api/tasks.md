@@ -145,12 +145,12 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T049 [P] Add structured logging (log/slog) to all handlers in `api/internal/handler/`
-- [ ] T050 [P] Add request ID middleware in `api/internal/middleware/request_id.go` for tracing
+- [x] T049 [P] Add structured logging (log/slog) to all handlers in `api/internal/handler/`
+- [x] T050 [P] Add request ID middleware in `api/internal/middleware/request_id.go` for tracing
 - [ ] T051 [P] Add CORS middleware in `api/internal/middleware/cors.go` if needed for frontend integration
 - [ ] T052 [P] Add request validation middleware in `api/internal/middleware/validate.go` for common validations (UUID format, etc.)
-- [ ] T053 [P] Update `api/internal/domain/errors.go` to include all error codes (UNAUTHORIZED, VALIDATION_ERROR, NOT_FOUND, CONFLICT, INTERNAL_ERROR)
-- [ ] T054 [P] Add payload size limits validation: max 500 entries per Workout, max 1000 nodes per Program, 10MB request body limit
+- [x] T053 [P] Update `api/internal/domain/errors.go` to include all error codes (UNAUTHORIZED, VALIDATION_ERROR, NOT_FOUND, CONFLICT, INTERNAL_ERROR)
+- [x] T054 [P] Add payload size limits validation: max 500 entries per Workout, max 1000 nodes per Program, 10MB request body limit
 - [ ] T055 [P] Add unit tests for repository implementations in `api/internal/store/memory/*_test.go` (table-driven tests per optel-go-standards)
 - [ ] T056 [P] Add integration tests for handlers in `api/internal/handler/*_test.go` (test full request/response cycle)
 - [ ] T057 Run `make lint` in `api/` and fix any golangci-lint issues

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -31,6 +32,7 @@ func NewExerciseHandler(repo repository.ExerciseRepository, workoutRepo reposito
 // CreateExercise handles POST /exercises
 func (h *ExerciseHandler) CreateExercise(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	slog.Info("CreateExercise request", "method", r.Method, "path", r.URL.Path)
 
 	// Decode request body (OpenAPI ExerciseCreate type)
 	var req struct {
@@ -74,10 +76,12 @@ func (h *ExerciseHandler) CreateExercise(w http.ResponseWriter, r *http.Request)
 
 	// Create
 	if err := h.repo.Create(ctx, exercise); err != nil {
+		slog.Error("Failed to create exercise", "error", err)
 		middleware.WriteInternalError(w, "Failed to create exercise")
 		return
 	}
 
+	slog.Info("Exercise created", "id", exercise.ID)
 	// Return response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
