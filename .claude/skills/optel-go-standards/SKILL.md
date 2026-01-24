@@ -43,7 +43,7 @@ api/
 1. **Schema-First** - Write OpenAPI spec first, then generate code
 2. **Explicit Errors** - No panics. Return errors explicitly.
 3. **Table-Driven Tests** - Mandatory for all test cases
-4. **Infrastructure Comments** - SRE perspective, not fitness terminology
+4. **Clear Comments** - Write clear, descriptive comments that explain what the code does
 
 ## Error Handling
 

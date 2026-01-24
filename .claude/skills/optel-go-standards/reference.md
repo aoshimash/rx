@@ -40,23 +40,23 @@ func main() {
 Domain entities and business logic.
 
 ```go
-// internal/domain/workload.go
+// internal/domain/workout.go
 package domain
 
 import "time"
 
-// Workload represents a completed unit of physical exertion.
+// Workout represents a completed unit of physical exertion.
 // Contains telemetry data: intensity (RPE), volume (load), duration, and timestamp.
-type Workload struct {
-    ID         string
-    Timestamp  time.Time
-    Duration   int       // seconds
-    Intensity  int       // RPE 1-10
-    Volume     float64   // kg
-    Subsystems []string
-    Notes      string
-    ProgramID  *string
-    CreatedAt  time.Time
+type Workout struct {
+    ID          string
+    Timestamp   time.Time
+    Duration    int       // seconds
+    Intensity   int       // RPE 1-10
+    Volume      float64   // kg
+    MuscleGroups []string
+    Notes       string
+    ProgramID   *string
+    CreatedAt   time.Time
 }
 ```
 
@@ -65,27 +65,28 @@ type Workload struct {
 Repository interfaces (ports).
 
 ```go
-// internal/repository/workload.go
+// internal/repository/workout.go
 package repository
 
 import (
     "context"
+    "time"
     "github.com/aoshimash/optel-workload/api/internal/domain"
 )
 
-type WorkloadRepository interface {
-    Create(ctx context.Context, w *domain.Workload) error
-    GetByID(ctx context.Context, id string) (*domain.Workload, error)
-    List(ctx context.Context, filter WorkloadFilter) ([]*domain.Workload, error)
+type WorkoutRepository interface {
+    Create(ctx context.Context, w *domain.Workout) error
+    GetByID(ctx context.Context, id string) (*domain.Workout, error)
+    List(ctx context.Context, filter WorkoutFilter) ([]*domain.Workout, error)
     Delete(ctx context.Context, id string) error
 }
 
-type WorkloadFilter struct {
-    From       *time.Time
-    To         *time.Time
-    Subsystems []string
-    Limit      int
-    Offset     int
+type WorkoutFilter struct {
+    From         *time.Time
+    To           *time.Time
+    MuscleGroups []string
+    Limit        int
+    Offset       int
 }
 ```
 
@@ -94,7 +95,7 @@ type WorkloadFilter struct {
 Repository implementations (adapters).
 
 ```go
-// internal/store/memory/workload.go
+// internal/store/memory/workout.go
 package memory
 
 import (
@@ -105,14 +106,14 @@ import (
     "github.com/aoshimash/optel-workload/api/internal/repository"
 )
 
-type WorkloadStore struct {
-    mu        sync.RWMutex
-    workloads map[string]*domain.Workload
+type WorkoutStore struct {
+    mu       sync.RWMutex
+    workouts map[string]*domain.Workout
 }
 
-func NewWorkloadStore() *WorkloadStore {
-    return &WorkloadStore{
-        workloads: make(map[string]*domain.Workload),
+func NewWorkoutStore() *WorkoutStore {
+    return &WorkoutStore{
+        workouts: make(map[string]*domain.Workout),
     }
 }
 ```
@@ -199,7 +200,7 @@ func mapDomainErrorToHTTP(err error) int {
 ### Table-Driven Tests
 
 ```go
-// internal/domain/workload_test.go
+// internal/domain/workout_test.go
 package domain_test
 
 import (
@@ -209,16 +210,16 @@ import (
     "github.com/aoshimash/optel-workload/api/internal/domain"
 )
 
-func TestWorkload_Validate(t *testing.T) {
+func TestWorkout_Validate(t *testing.T) {
     tests := []struct {
         name    string
-        input   domain.Workload
+        input   domain.Workout
         wantErr bool
         errCode domain.ErrorCode
     }{
         {
-            name: "valid workload",
-            input: domain.Workload{
+            name: "valid workout",
+            input: domain.Workout{
                 Timestamp: time.Now().Add(-1 * time.Hour),
                 Duration:  3600,
                 Intensity: 7,
@@ -228,7 +229,7 @@ func TestWorkload_Validate(t *testing.T) {
         },
         {
             name: "invalid intensity - too high",
-            input: domain.Workload{
+            input: domain.Workout{
                 Timestamp: time.Now().Add(-1 * time.Hour),
                 Duration:  3600,
                 Intensity: 11,
@@ -239,7 +240,7 @@ func TestWorkload_Validate(t *testing.T) {
         },
         {
             name: "invalid intensity - too low",
-            input: domain.Workload{
+            input: domain.Workout{
                 Timestamp: time.Now().Add(-1 * time.Hour),
                 Duration:  3600,
                 Intensity: 0,
@@ -250,7 +251,7 @@ func TestWorkload_Validate(t *testing.T) {
         },
         {
             name: "future timestamp",
-            input: domain.Workload{
+            input: domain.Workout{
                 Timestamp: time.Now().Add(1 * time.Hour),
                 Duration:  3600,
                 Intensity: 7,
@@ -299,8 +300,8 @@ func main() {
 
     // Usage
     slog.Info("server started", "port", 8080)
-    slog.Error("failed to process workload", 
-        "workload_id", "wl-123",
+    slog.Error("failed to process workout", 
+        "workout_id", "wo-123",
         "error", err,
     )
 }

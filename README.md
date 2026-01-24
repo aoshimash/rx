@@ -1,12 +1,12 @@
 # optel-workload
 
-An agent-native telemetry backend to monitor physical exertion as system workloads. Part of Open Physical Telemetry (OPTel).
+An agent-native telemetry backend to monitor physical exertion. Part of Open Physical Telemetry (OPTel).
 
 ## Overview
 
-OPTel (Open Physical Telemetry) is an observability stack for the human physical layer. This repository manages **Workloads** - records of physical exertion treated as system telemetry.
+OPTel (Open Physical Telemetry) is an observability stack for the human physical layer. This repository manages **Workouts** - records of physical exertion.
 
-Think of it as Prometheus for the body: no fitness tracking, no motivation scores - just data.
+No fitness tracking, no motivation scores - just data.
 
 ## Key Principles
 
@@ -24,7 +24,7 @@ make docker-up      # Start development container
 make generate       # Generate code from OpenAPI spec
 make run            # Start server (runs in container)
 # In another terminal:
-curl http://localhost:8080/api/v1/workloads
+curl http://localhost:8080/api/v1/workouts
 ```
 
 All Go development tools run inside Docker. See [Development Guide](docs/DEVELOPMENT.md) for details.

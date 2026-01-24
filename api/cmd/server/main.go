@@ -9,7 +9,7 @@ func main() {
 	// TODO: Initialize chi router and OpenAPI handlers
 	// This will be implemented after code generation works
 
-	http.HandleFunc("/api/v1/workloads", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/api/v1/workouts", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return

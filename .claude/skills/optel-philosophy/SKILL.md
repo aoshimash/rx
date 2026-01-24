@@ -1,6 +1,6 @@
 ---
 name: optel-philosophy
-description: Core philosophy and constraints for OPTel project. Use when writing code, designing APIs, or making architectural decisions. Enforces "Dumb Backend" principle and infrastructure terminology.
+description: Core philosophy and constraints for OPTel project. Use when writing code, designing APIs, or making architectural decisions. Enforces "Dumb Backend" principle.
 ---
 
 # OPTel Philosophy
@@ -29,32 +29,32 @@ description: Core philosophy and constraints for OPTel project. Use when writing
 
 ### 3. Data Integrity
 
-- **Immutable Logs** - Past workload logs are "committed transactions." Never mutable.
+- **Immutable Logs** - Past workout logs are "committed transactions." Never mutable.
 - All changes create new records, not updates to existing ones
 
-## Terminology Rules
+## Terminology
 
-Use **Infrastructure/Physics** terminology. Never use fitness terminology.
+Use intuitive, commonly understood physical and fitness terminology. The system records workouts, exercises, and physical exertion data.
 
-| ❌ Forbidden | ✅ Required |
-|-------------|------------|
-| Exercise | Workload |
-| Workout | Task |
-| Muscle | Unit / Subsystem |
-| Sweat | Output |
-| Fitness | Telemetry |
-| Training | Stress |
+**Recommended Terms:**
+- `Workout` - A completed unit of physical exertion
+- `Exercise` - A specific movement or activity
+- `MuscleGroup` - Body parts or muscle groups targeted
+- `Metrics` - Measured data (intensity, volume, duration)
+
+**Note:** The "Dumb Backend" principle remains unchanged - no business logic for health calculations, regardless of terminology used.
 
 ## Comment Style
 
-Write comments from the perspective of an SRE monitoring a system.
+Write clear, descriptive comments that explain what the code does.
 
 ```go
-// ❌ BAD
-// Track user's bench press
+// ✅ GOOD
+// CreateWorkout handles POST requests to create a new workout.
+// Records physical exertion data: intensity (RPE), volume, duration, and timestamp.
 
-// ✅ GOOD  
-// Record peak force output for the pectoral subsystem
+// ✅ GOOD
+// Record peak force output for the pectoral muscle group
 ```
 
 ## Additional Resources

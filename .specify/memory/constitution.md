@@ -17,7 +17,7 @@ Skills integration:
 Follow-up TODOs: None
 -->
 
-# OPTel Workload Constitution
+# OPTel Workout Constitution
 
 ## Core Principles
 
@@ -46,21 +46,21 @@ Development follows a **Domain-Driven Schema-First** approach:
 - Code is generated from OpenAPI spec using `oapi-codegen`
 - Handlers convert between OpenAPI types and domain models
 - API versioning uses URL path pattern `/api/v1/`
-- For domain model details (Workload, Program, Telemetry), see `.claude/skills/optel-domain/`
+- For domain model details (Workout, Program, Telemetry), see `.claude/skills/optel-domain/`
 - For Go code generation patterns, see `.claude/skills/optel-go-standards/`
 - For development workflow, see `docs/DEVELOPMENT.md`
 
-### III. Infrastructure Metaphors (NON-NEGOTIABLE)
+### III. Terminology - Use Intuitive Physical Terms
 
-Use infrastructure and physics terminology exclusively. Never use fitness terminology. Workloads are system telemetry, not exercises. Tasks are system operations, not workouts.
+Use intuitive, commonly understood physical and fitness terminology. The system records workouts, exercises, and physical exertion data. Terminology should be clear and accessible to developers and users.
 
-**Rationale**: This maintains the conceptual model of treating the human body as a production system. It ensures consistency across code, documentation, and API responses, preventing confusion between telemetry data and fitness tracking.
+**Rationale**: Intuitive terminology improves developer understanding and reduces cognitive overhead. The system remains a "dumb backend" that stores data without business logic, regardless of terminology choices.
 
-**Implementation Details**: See `.claude/skills/optel-philosophy/reference.md` for complete terminology dictionary and API design guidelines (resource naming, response structure).
+**Implementation Details**: See `.claude/skills/optel-philosophy/reference.md` for terminology glossary and API design guidelines (resource naming, response structure).
 
 ### IV. Data Integrity - Immutable Logs
 
-Past workload records are immutable "committed transactions." All changes create new records, never updates to existing ones. This supports audit trails and data integrity.
+Past workout records are immutable "committed transactions." All changes create new records, never updates to existing ones. This supports audit trails and data integrity.
 
 **Rationale**: Immutability ensures data cannot be accidentally or maliciously modified, providing a reliable audit trail. It simplifies reasoning about data state and supports time-series analysis.
 
@@ -167,8 +167,8 @@ Each component in the monorepo MAY use different technologies appropriate to its
 - Constitution Check section in implementation plans MUST be validated
 - Complexity violations MUST be justified in plan.md Complexity Tracking section
 - For detailed implementation guidelines, refer to AGENTS.md and `.claude/skills/`:
-  - **optel-philosophy**: Dumb Backend principle details, infrastructure metaphors dictionary, API design guidelines
-  - **optel-domain**: Domain models (Workload, Program, Telemetry), validation rules, entity relationships
+  - **optel-philosophy**: Dumb Backend principle details, terminology glossary, API design guidelines
+  - **optel-domain**: Domain models (Workout, Program, Telemetry), validation rules, entity relationships
   - **optel-go-standards**: Go project structure, error handling patterns, testing standards, linting configuration
 
 ### Supremacy

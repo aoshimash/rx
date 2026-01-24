@@ -39,7 +39,7 @@ make test
 make run
 
 # In another terminal, test the API
-curl http://localhost:8080/api/v1/workloads
+curl http://localhost:8080/api/v1/workouts
 ```
 
 ### Docker Commands
@@ -62,13 +62,13 @@ make docker-shell
 ### Phase 1: Core API (Current)
 
 **Goals:**
-1. Define OpenAPI specification for Workload resource
+1. Define OpenAPI specification for Workout resource
 2. Scaffold Go module with project structure
 3. Implement in-memory store for rapid prototyping
 
 **Deliverables:**
 - `openapi/openapi.yaml` - API specification
-- `internal/domain/workload.go` - Domain entity
+- `internal/domain/workout.go` - Domain entity
 - `internal/store/memory/` - In-memory implementation
 - `internal/handler/` - HTTP handlers
 
@@ -84,13 +84,13 @@ make docker-shell
 **Goals:**
 1. Define OpenAPI specification for Program resource
 2. Implement recursive tree structure
-3. Link Workloads to Programs
+3. Link Workouts to Programs
 
 ### Phase 4: MCP Server
 
 **Goals:**
 1. Implement MCP Server in `mcp/` directory
-2. Expose tools for AI agents to query and record workloads
+2. Expose tools for AI agents to query and record workouts
 3. Distribute as Docker image or Python script
 
 **Key Design:**
@@ -177,7 +177,7 @@ For each feature addition, follow this cycle:
 8. **Validate sync** - Ensure domain model and OpenAPI spec are synchronized
 9. **Commit** - Save working state before next step
 
-### Step-by-Step: Building Workload API
+### Step-by-Step: Building Workout API
 
 #### Step 1: Minimal OpenAPI Structure
 
@@ -186,15 +186,15 @@ Start with the absolute minimum - just the OpenAPI info and a single endpoint:
 ```yaml
 openapi: 3.1.0
 info:
-  title: OPTel Workload API
+  title: OPTel Workout API
   version: 0.1.0
 servers:
   - url: http://localhost:8080/api/v1
 paths:
-  /workloads:
+  /workouts:
     get:
-      summary: List workloads
-      operationId: listWorkloads
+      summary: List workouts
+      operationId: listWorkouts
       responses:
         '200':
           description: Success
@@ -226,41 +226,41 @@ make generate
 make run
 
 # Test it works (from local machine)
-curl http://localhost:8080/api/v1/workloads
+curl http://localhost:8080/api/v1/workouts
 # Should return: []
 
 # Commit
-git commit -m "feat(api): add minimal GET /workloads endpoint"
+git commit -m "feat(api): add minimal GET /workouts endpoint"
 ```
 
 #### Step 2: Add POST Endpoint with Minimal Schema
 
-Add the ability to create workloads with only required fields:
+Add the ability to create workouts with only required fields:
 
 ```yaml
 paths:
-  /workloads:
+  /workouts:
     get:
       # ... existing ...
     post:
-      summary: Create a workload
-      operationId: createWorkload
+      summary: Create a workout
+      operationId: createWorkout
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WorkloadCreate'
+                $ref: '#/components/schemas/WorkoutCreate'
       responses:
         '201':
           description: Created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Workload'
+                $ref: '#/components/schemas/Workout'
 components:
   schemas:
-    WorkloadCreate:
+    WorkoutCreate:
       type: object
       required:
         - timestamp
@@ -281,9 +281,9 @@ components:
         volume_kg:
           type: number
           minimum: 0
-    Workload:
+    Workout:
       allOf:
-        - $ref: '#/components/schemas/WorkloadCreate'
+        - $ref: '#/components/schemas/WorkoutCreate'
         - type: object
           properties:
             id:
@@ -298,7 +298,7 @@ components:
 make generate
 # Implement minimal handler with in-memory store
 # Test it works
-curl -X POST http://localhost:8080/api/v1/workloads \
+curl -X POST http://localhost:8080/api/v1/workouts \
   -H "Content-Type: application/json" \
   -d '{
     "timestamp": "2026-01-24T10:00:00Z",
@@ -307,11 +307,11 @@ curl -X POST http://localhost:8080/api/v1/workloads \
     "volume_kg": 5000
   }'
 
-# Verify GET returns the created workload
-curl http://localhost:8080/api/v1/workloads
+# Verify GET returns the created workout
+curl http://localhost:8080/api/v1/workouts
 
 # Commit
-git commit -m "feat(api): add POST /workloads with minimal schema"
+git commit -m "feat(api): add POST /workouts with minimal schema"
 ```
 
 #### Step 3: Add Optional Fields
@@ -319,7 +319,7 @@ git commit -m "feat(api): add POST /workloads with minimal schema"
 Extend the schema with optional fields one at a time:
 
 ```yaml
-    WorkloadCreate:
+    WorkoutCreate:
       type: object
       required:
         - timestamp
@@ -328,15 +328,15 @@ Extend the schema with optional fields one at a time:
         - volume_kg
       properties:
         # ... existing required fields ...
-        subsystems:
+        muscle_groups:
           type: array
           items:
             type: string
         notes:
           type: string
-    Workload:
+    Workout:
       allOf:
-        - $ref: '#/components/schemas/WorkloadCreate'
+        - $ref: '#/components/schemas/WorkoutCreate'
         - type: object
           properties:
             id:
@@ -344,8 +344,8 @@ Extend the schema with optional fields one at a time:
             created_at:
               type: string
               format: date-time
-            # Add optional fields from WorkloadCreate
-            subsystems:
+            # Add optional fields from WorkoutCreate
+            muscle_groups:
               type: array
               items:
                 type: string
@@ -358,33 +358,33 @@ Extend the schema with optional fields one at a time:
 make generate
 # Update handler to handle optional fields
 # Test with and without optional fields
-curl -X POST http://localhost:8080/api/v1/workloads \
+curl -X POST http://localhost:8080/api/v1/workouts \
   -H "Content-Type: application/json" \
   -d '{
     "timestamp": "2026-01-24T10:00:00Z",
     "duration_seconds": 3600,
     "intensity_rpe": 7,
     "volume_kg": 5000,
-    "subsystems": ["chest", "triceps"],
+    "muscle_groups": ["chest", "triceps"],
     "notes": "Bench press session"
   }'
 
 # Commit
-git commit -m "feat(api): add optional subsystems and notes fields"
+git commit -m "feat(api): add optional muscle_groups and notes fields"
 ```
 
 #### Step 4: Add GET by ID Endpoint
 
-Add the ability to retrieve a specific workload:
+Add the ability to retrieve a specific workout:
 
 ```yaml
 paths:
-  /workloads:
+  /workouts:
     # ... existing ...
-  /workloads/{id}:
+  /workouts/{id}:
     get:
-      summary: Get a workload by ID
-      operationId: getWorkload
+      summary: Get a workout by ID
+      operationId: getWorkout
       parameters:
         - name: id
           in: path
@@ -397,7 +397,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Workload'
+                $ref: '#/components/schemas/Workout'
         '404':
           description: Not found
 ```
@@ -407,15 +407,15 @@ paths:
 make generate
 # Implement handler
 # Test it works
-WORKLOAD_ID=$(curl -s -X POST http://localhost:8080/api/v1/workloads \
+WORKOUT_ID=$(curl -s -X POST http://localhost:8080/api/v1/workouts \
   -H "Content-Type: application/json" \
   -d '{"timestamp":"2026-01-24T10:00:00Z","duration_seconds":3600,"intensity_rpe":7,"volume_kg":5000}' \
   | jq -r '.id')
 
-curl http://localhost:8080/api/v1/workloads/$WORKLOAD_ID
+curl http://localhost:8080/api/v1/workouts/$WORKOUT_ID
 
 # Commit
-git commit -m "feat(api): add GET /workloads/{id} endpoint"
+git commit -m "feat(api): add GET /workouts/{id} endpoint"
 ```
 
 #### Step 5: Add Query Parameters for Filtering
@@ -423,10 +423,10 @@ git commit -m "feat(api): add GET /workloads/{id} endpoint"
 Add filtering capabilities to the list endpoint:
 
 ```yaml
-  /workloads:
+  /workouts:
     get:
-      summary: List workloads
-      operationId: listWorkloads
+      summary: List workouts
+      operationId: listWorkouts
       parameters:
         - name: from
           in: query
@@ -438,7 +438,7 @@ Add filtering capabilities to the list endpoint:
           schema:
             type: string
             format: date-time
-        - name: subsystem
+        - name: muscle_group
           in: query
           schema:
             type: string
@@ -451,11 +451,11 @@ Add filtering capabilities to the list endpoint:
 make generate
 # Implement filtering logic in handler
 # Test filters
-curl "http://localhost:8080/api/v1/workloads?from=2026-01-01T00:00:00Z&to=2026-01-31T23:59:59Z"
-curl "http://localhost:8080/api/v1/workloads?subsystem=chest"
+curl "http://localhost:8080/api/v1/workouts?from=2026-01-01T00:00:00Z&to=2026-01-31T23:59:59Z"
+curl "http://localhost:8080/api/v1/workouts?muscle_group=chest"
 
 # Commit
-git commit -m "feat(api): add query parameters for filtering workloads"
+git commit -m "feat(api): add query parameters for filtering workouts"
 ```
 
 #### Step 6: Add DELETE Endpoint
@@ -463,12 +463,12 @@ git commit -m "feat(api): add query parameters for filtering workloads"
 Add soft-delete capability:
 
 ```yaml
-  /workloads/{id}:
+  /workouts/{id}:
     get:
       # ... existing ...
     delete:
-      summary: Delete a workload
-      operationId: deleteWorkload
+      summary: Delete a workout
+      operationId: deleteWorkout
       parameters:
         - name: id
           in: path
@@ -487,12 +487,12 @@ Add soft-delete capability:
 make generate
 # Implement soft-delete (mark as deleted, don't remove)
 # Test it works
-curl -X DELETE http://localhost:8080/api/v1/workloads/$WORKLOAD_ID
-curl http://localhost:8080/api/v1/workloads/$WORKLOAD_ID
+curl -X DELETE http://localhost:8080/api/v1/workouts/$WORKOUT_ID
+curl http://localhost:8080/api/v1/workouts/$WORKOUT_ID
 # Should return 404
 
 # Commit
-git commit -m "feat(api): add DELETE /workloads/{id} endpoint"
+git commit -m "feat(api): add DELETE /workouts/{id} endpoint"
 ```
 
 ### Validation and Testing
@@ -541,7 +541,7 @@ After each step, verify:
 
 ```bash
 # 1. Create a feature branch
-git checkout -b feature/add-workload-filtering
+git checkout -b feature/add-workout-filtering
 
 # 2. Make changes following Domain-Driven Schema-First approach
 #    - Update domain model (internal/domain/)
@@ -557,7 +557,7 @@ make test
 make check-sync  # Ensure domain model and OpenAPI spec are in sync
 
 # 5. Commit with conventional commit message
-git commit -m "feat(api): add workload filtering by date range"
+git commit -m "feat(api): add workout filtering by date range"
 ```
 
 ## Makefile Targets
@@ -705,7 +705,7 @@ docker run -p 8080:8080 \
   optel-workload:latest
 
 # Test production container
-curl http://localhost:8080/api/v1/workloads
+curl http://localhost:8080/api/v1/workouts
 ```
 
 **Production Image Features:**

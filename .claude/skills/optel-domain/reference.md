@@ -1,17 +1,17 @@
 # OPTel Domain Models - Detailed Reference
 
-## Workload Entity
+## Workout Entity
 
 ### Schema Definition
 
 ```go
-type Workload struct {
+type Workout struct {
     ID          string     `json:"id"`
     Timestamp   time.Time  `json:"timestamp"`
     Duration    int        `json:"duration_seconds"`
     Intensity   int        `json:"intensity_rpe"`      // 1-10 scale
     Volume      float64    `json:"volume_kg"`
-    Subsystems  []string   `json:"subsystems,omitempty"`
+    MuscleGroups []string   `json:"muscle_groups,omitempty"`
     Notes       string     `json:"notes,omitempty"`
     ProgramID   *string    `json:"program_id,omitempty"`
     CreatedAt   time.Time  `json:"created_at"`
@@ -20,7 +20,7 @@ type Workload struct {
 
 ### Business Rules
 
-1. **Immutability** - Once created, a Workload cannot be modified. Create a new record with corrections if needed.
+1. **Immutability** - Once created, a Workout cannot be modified. Create a new record with corrections if needed.
 2. **Intensity Range** - RPE must be 1-10. Values outside this range are invalid.
 3. **Volume** - Must be non-negative. Zero is valid (e.g., mobility work).
 4. **Timestamp** - Must not be in the future.
@@ -29,10 +29,10 @@ type Workload struct {
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | /api/v1/workloads | Create a new workload |
-| GET | /api/v1/workloads | List workloads (with filters) |
-| GET | /api/v1/workloads/{id} | Get a specific workload |
-| DELETE | /api/v1/workloads/{id} | Soft-delete a workload |
+| POST | /api/v1/workouts | Create a new workout |
+| GET | /api/v1/workouts | List workouts (with filters) |
+| GET | /api/v1/workouts/{id} | Get a specific workout |
+| DELETE | /api/v1/workouts/{id} | Soft-delete a workout |
 
 Note: No PUT/PATCH operations due to immutability principle.
 
@@ -75,7 +75,7 @@ type Slot struct {
     ID         string   `json:"id"`
     Name       string   `json:"name"`
     Order      int      `json:"order"`
-    Subsystems []string `json:"subsystems"`
+    MuscleGroups []string `json:"muscle_groups"`
     TargetSets int      `json:"target_sets,omitempty"`
     TargetReps int      `json:"target_reps,omitempty"`
     TargetRPE  int      `json:"target_rpe,omitempty"`
@@ -101,20 +101,20 @@ type TelemetryPoint struct {
     MetricName string    `json:"metric_name"`
     Value      float64   `json:"value"`
     Unit       string    `json:"unit"`
-    WorkloadID string    `json:"workload_id,omitempty"`
+    WorkoutID  string    `json:"workout_id,omitempty"`
 }
 ```
 
 ### Derived Metrics
 
-Telemetry points can be derived from Workloads:
+Telemetry points can be derived from Workouts:
 
 | Metric | Derivation | Unit |
 |--------|-----------|------|
 | `daily_volume` | Sum of volume per day | kg |
 | `weekly_volume` | Sum of volume per week | kg |
 | `avg_intensity` | Average RPE per period | RPE |
-| `frequency` | Workloads per week | count |
+| `frequency` | Workouts per week | count |
 
 ## Entity Relationships
 
@@ -144,7 +144,7 @@ Telemetry points can be derived from Workloads:
 └─────────────┘
 
 ┌─────────────┐      ┌─────────────┐
-│  Workload   │─────▶│  Telemetry  │
+│   Workout   │─────▶│  Telemetry  │
 └─────────────┘ 1:N  └─────────────┘
        │
        │ N:1 (optional)
@@ -158,10 +158,10 @@ Telemetry points can be derived from Workloads:
 
 | Entity | Field | Rule |
 |--------|-------|------|
-| Workload | intensity_rpe | 1 ≤ value ≤ 10 |
-| Workload | volume_kg | value ≥ 0 |
-| Workload | duration_seconds | value > 0 |
-| Workload | timestamp | value ≤ now |
+| Workout | intensity_rpe | 1 ≤ value ≤ 10 |
+| Workout | volume_kg | value ≥ 0 |
+| Workout | duration_seconds | value > 0 |
+| Workout | timestamp | value ≤ now |
 | Program | phases | at least 1 phase |
 | Phase | days | at least 1 day |
 | Slot | target_rpe | 1 ≤ value ≤ 10 (if set) |

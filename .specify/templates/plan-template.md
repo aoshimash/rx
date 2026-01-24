@@ -31,11 +31,11 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-Verify compliance with OPTel Workload Constitution principles:
+Verify compliance with OPTel Workout Constitution principles:
 
 - **Dumb Backend**: No health calculations or business logic in backend - only data storage/retrieval
 - **Domain-Driven Schema-First**: Domain models define business logic, OpenAPI spec defines API contract. Code generated from OpenAPI spec.
-- **Infrastructure Metaphors**: Using infrastructure terminology (workload, task, telemetry), not fitness terminology
+- **Terminology**: Use intuitive, commonly understood physical and fitness terminology
 - **Data Integrity**: Immutable records - changes create new records, never updates
 - **Clean Architecture**: Domain logic separated from infrastructure, repository pattern used
 - **Monorepo Structure**: Component independence maintained, shared resources properly managed

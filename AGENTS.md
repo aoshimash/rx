@@ -6,13 +6,12 @@ This file provides guidance for AI coding agents working on this repository.
 
 **OPTel (Open Physical Telemetry)** - An observability stack for the human physical layer.
 
-This repository (`optel-workload`) is the **Output/Training Management** component. It manages "Workloads" (physical exertion records) as an agent-native telemetry backend.
+This repository (`optel-workload`) is the **Output/Training Management** component. It manages "Workouts" (physical exertion records) as an agent-native telemetry backend.
 
 ## Key Principles
 
 1. **"Dumb Backend"** - No business logic for "health." Strictly stores and retrieves telemetry data.
 2. **Domain-Driven Schema-First** - Domain models define business logic, OpenAPI spec defines API contract. Code is generated from OpenAPI spec.
-3. **Infrastructure Metaphors** - Use infrastructure terminology, not fitness terminology.
 
 For details, see `.claude/skills/optel-philosophy/`.
 
@@ -33,7 +32,7 @@ optel-workload/
 | Skill | Description |
 |-------|-------------|
 | [optel-philosophy](.claude/skills/optel-philosophy/) | Core philosophy and constraints |
-| [optel-domain](.claude/skills/optel-domain/) | Domain models (Workload, Program, Telemetry) |
+| [optel-domain](.claude/skills/optel-domain/) | Domain models (Workout, Program, Telemetry) |
 | [optel-go-standards](.claude/skills/optel-go-standards/) | Go coding standards |
 
 ## Quick Reference

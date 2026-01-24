@@ -2,7 +2,7 @@
 
 ## Overview
 
-OPTel Workload is an agent-native telemetry backend that treats the human body as a production server. It follows Clean Architecture principles with a Schema-First API approach.
+OPTel Workout is an agent-native telemetry backend for physical exertion data. It follows Clean Architecture principles with a Schema-First API approach.
 
 ## System Context
 
@@ -19,7 +19,7 @@ OPTel Workload is an agent-native telemetry backend that treats the human body a
 ┌─────────────────────────────────────────────────────────────┐
 │                        Remote Server                         │
 │  ┌─────────────────────────────────────────────────────┐    │
-│  │              OPTel Workload API (REST)              │    │
+│  │              OPTel Workout API (REST)              │    │
 │  │              - Pure API, no MCP logic               │    │
 │  └──────────────────────────┬──────────────────────────┘    │
 │                             │                                │
@@ -46,7 +46,7 @@ OPTel Workload is an agent-native telemetry backend that treats the human body a
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                     Domain Layer                             │
-│  - Entities (Workload, Program, Telemetry)                   │
+│  - Entities (Workout, Program, Telemetry)                   │
 │  - Business rules (validation)                               │
 │  - Repository interfaces (ports)                             │
 └─────────────────────────────────────────────────────────────┘
@@ -92,21 +92,21 @@ optel-workload/
 
 ## Data Flow
 
-### Create Workload
+### Create Workout
 
 ```
-1. Client sends POST /api/v1/workloads
+1. Client sends POST /api/v1/workouts
 2. Handler validates request format (OpenAPI generated)
 3. Handler converts to domain entity
 4. Domain validates business rules
-5. Repository stores the workload
+5. Repository stores the workout
 6. Handler returns response
 ```
 
-### Query Workloads
+### Query Workouts
 
 ```
-1. Client sends GET /api/v1/workloads?from=...&to=...
+1. Client sends GET /api/v1/workouts?from=...&to=...
 2. Handler parses query parameters
 3. Repository fetches with filters
 4. Handler converts to response format
@@ -121,9 +121,9 @@ optel-workload/
 - Code is generated from the spec using oapi-codegen
 - Changes to API always start with spec changes
 
-### 2. Immutable Workloads
+### 2. Immutable Workouts
 
-- Workloads cannot be modified after creation
+- Workouts cannot be modified after creation
 - Corrections require creating new records
 - Supports audit trail and data integrity
 
@@ -156,7 +156,7 @@ optel-workload/
 - **Runs on user's local machine** (not on the backend server)
 - Distributed as Docker image or Python script
 - Communicates with the OPTel API via HTTP
-- Provides tools for AI agents to query and record workloads
+- Provides tools for AI agents to query and record workouts
 - Backend remains a pure REST API with no MCP-specific logic
 
 ### Scaling
