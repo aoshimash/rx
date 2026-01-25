@@ -13,8 +13,8 @@ import (
 
 // telemetryStore implements TelemetryPointRepository with in-memory map storage
 type telemetryStore struct {
-	mu      sync.RWMutex
-	points  map[uuid.UUID]*domain.TelemetryPoint
+	mu     sync.RWMutex
+	points map[uuid.UUID]*domain.TelemetryPoint
 }
 
 // NewTelemetryPointRepository creates a new in-memory TelemetryPoint repository

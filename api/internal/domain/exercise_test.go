@@ -9,15 +9,15 @@ import (
 
 func TestValidateExercise(t *testing.T) {
 	tests := []struct {
-		name    string
+		name     string
 		exercise *Exercise
-		wantErr bool
-		errCode string
+		wantErr  bool
+		errCode  string
 	}{
 		{
-			name:    "nil exercise",
+			name:     "nil exercise",
 			exercise: nil,
-			wantErr: true,
+			wantErr:  true,
 		},
 		{
 			name: "valid exercise with minimal fields",

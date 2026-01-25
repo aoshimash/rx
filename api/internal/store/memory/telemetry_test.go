@@ -19,9 +19,9 @@ func TestTelemetryPointRepository_Create(t *testing.T) {
 			name: "create valid telemetry point",
 			point: &domain.TelemetryPoint{
 				Timestamp:  time.Now(),
-				MetricName:  "heart_rate",
-				Value:       72.0,
-				Unit:        "bpm",
+				MetricName: "heart_rate",
+				Value:      72.0,
+				Unit:       "bpm",
 			},
 			wantErr: false,
 		},
@@ -69,7 +69,7 @@ func TestTelemetryPointRepository_GetByID(t *testing.T) {
 	point := &domain.TelemetryPoint{
 		ID:         id,
 		Timestamp:  time.Now(),
-		MetricName:  "heart_rate",
+		MetricName: "heart_rate",
 		Value:      72.0,
 		Unit:       "bpm",
 		CreatedAt:  time.Now(),

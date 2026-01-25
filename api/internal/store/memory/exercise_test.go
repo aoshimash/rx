@@ -11,9 +11,9 @@ import (
 
 func TestExerciseRepository_Create(t *testing.T) {
 	tests := []struct {
-		name    string
+		name     string
 		exercise *domain.Exercise
-		wantErr bool
+		wantErr  bool
 	}{
 		{
 			name: "create valid exercise",
