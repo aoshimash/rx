@@ -6,6 +6,7 @@
 generate: deps
 	oapi-codegen -generate types,chi-server -package openapi \
 		-o pkg/openapi/server.gen.go openapi/openapi.yaml
+	go mod tidy
 
 format:
 	@echo "Checking code formatting..."
@@ -16,7 +17,9 @@ format:
 		exit 1; \
 	fi
 
-lint:
+lint: deps
+	@echo "Building packages to ensure all dependencies are available..."
+	@go build ./...
 	golangci-lint run ./...
 
 test: deps
