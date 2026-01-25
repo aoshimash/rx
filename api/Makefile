@@ -9,9 +9,10 @@ generate: deps
 
 format:
 	@echo "Checking code formatting..."
-	@if [ -n "$$(go fmt -l ./...)" ]; then \
+	@FORMAT_OUTPUT=$$(gofmt -l .); \
+	if [ -n "$$FORMAT_OUTPUT" ]; then \
 		echo "Error: Code is not formatted. Run 'go fmt ./...' to fix."; \
-		go fmt -l ./...; \
+		echo "$$FORMAT_OUTPUT"; \
 		exit 1; \
 	fi
 

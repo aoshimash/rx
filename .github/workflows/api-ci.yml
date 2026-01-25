@@ -3,14 +3,12 @@ name: API CI
 on:
   push:
     branches: [main, develop]
-    paths:
+    paths: &api-ci-paths
       - 'api/**'
       - '.github/workflows/api-ci.yml'
   pull_request:
     branches: [main, develop]
-    paths:
-      - 'api/**'
-      - '.github/workflows/api-ci.yml'
+    paths: *api-ci-paths
 
 jobs:
   api-format-lint-test:
