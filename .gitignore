@@ -37,5 +37,10 @@ Thumbs.db
 coverage/
 *.coverprofile
 
+# Codecov uploader artifacts
+codecov
+codecov.SHA256SUM
+codecov.SHA256SUM.sig
+
 # Generated code
 **/pkg/openapi/*.gen.go
