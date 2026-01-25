@@ -50,14 +50,39 @@ rm -f "$tmp"`
 2. Choose a PR title **without Conventional Commit prefixes**:
    - Good: `Add workout validation for empty telemetry`
    - Bad: `feat(workout): add workout validation for empty telemetry`
-2. Create PR using a temp file (structured body):
-   - `tmp="$(mktemp)"; cp .github/pull_request_template.md "$tmp"; cat >>"$tmp" <<'EOF'
+3. Create PR using a temp file with filled-in template structure:
+   - **Do NOT copy and append** to the template (causes duplicate sections)
+   - **Do** write the complete body following the template structure:
+   - `tmp="$(mktemp)"; cat >"$tmp" <<'EOF'
+## Summary
 
-<!-- Fill in the sections above; add extra context below if needed. -->
+- <what this PR does>
+
+## Context
+
+- Link issue(s): #<number> or N/A
+- Why this change: <reason>
+
+## Changes
+
+- <change 1>
+- <change 2>
+
+## Test plan
+
+- [x] <completed test>
+- [ ] <pending test>
+
+## Checklist
+
+- [ ] CI is green
+- [x] I added/updated tests (or explained why not) - <explanation if needed>
+- [x] I updated docs (or explained why not) - <explanation if needed>
+- [x] I checked for backwards compatibility and migrations (if applicable) - <explanation if needed>
 EOF
 gh pr create --base main --title "..." --body-file "$tmp"
 rm -f "$tmp"`
-3. Confirm:
+4. Confirm:
    - `gh pr view --web`
 
 ### Inspect a PR (local branch or by number)

@@ -10,14 +10,31 @@ Keep `SKILL.md` short. Put “rare but useful” commands here.
 ## Templates used by this repo
 
 - PR template file: `.github/pull_request_template.md`
-  - Recommended: copy into a temp file and use `--body-file`
+  - **Do NOT** copy and append to the template (causes duplicate sections)
+  - **Do** write complete body following the template structure with `cat >"$tmp"`
 - Issue template: `.github/ISSUE_TEMPLATE/work-item.md` (name: "Work Item")
   - Recommended: use `--template "Work Item"` for an initial draft, or use `--body-file` for fully scripted creation
 
 ## Temp file one-liners
 
-PR body from template:
-- `tmp="$(mktemp)"; cp .github/pull_request_template.md "$tmp"; gh pr create --title "Add X to Y" --body-file "$tmp"; rm -f "$tmp"`
+PR body (write complete body, do not copy template):
+- `tmp="$(mktemp)"; cat >"$tmp" <<'EOF'
+## Summary
+- <what>
+## Context
+- Link issue(s): N/A
+- Why this change: <reason>
+## Changes
+- <change>
+## Test plan
+- [x] <test>
+## Checklist
+- [ ] CI is green
+- [x] I added/updated tests (or explained why not)
+- [x] I updated docs (or explained why not)
+- [x] I checked for backwards compatibility and migrations (if applicable)
+EOF
+gh pr create --title "Add X to Y" --body-file "$tmp"; rm -f "$tmp"`
 
 Comment body:
 - `tmp="$(mktemp)"; cat >"$tmp" <<'EOF'
