@@ -38,6 +38,13 @@ No special environment variables are required for basic development. The DevCont
 - `PATH` includes Go bin directory (`$(go env GOPATH)/bin`)
 - Go workspace is configured at `/workspace`
 
+## GitHub CLI (`gh`)
+
+This DevContainer includes GitHub CLI (`gh`). Host authentication is not automatically shared.
+
+- First-time setup (inside DevContainer): `gh auth login`
+- See `docs/DEVELOPMENT.md` for details.
+
 ## Troubleshooting
 
 - **Container fails to start**: Check Docker is running and has enough resources allocated

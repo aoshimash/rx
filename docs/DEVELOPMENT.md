@@ -19,6 +19,20 @@ The primary development workflow uses VS Code/Cursor DevContainer for a consiste
 2. **Reopen in DevContainer** when prompted (or use Command Palette: "Dev Containers: Reopen in Container")
 3. **All development tools are automatically available** in the integrated terminal
 
+#### GitHub CLI (`gh`) authentication
+
+This DevContainer includes GitHub CLI (`gh`). **Host authentication is not automatically shared**.
+
+- On some hosts (e.g. macOS), `gh auth login` stores tokens in the system keychain, not in `~/.config/gh/hosts.yml`.
+- The Dev Containers extension provides official support for sharing **Git** credentials (HTTPS credential helper / SSH agent), but this does not automatically authenticate `gh` for API operations.
+
+**First-time setup (inside DevContainer):**
+
+```bash
+gh auth login
+gh auth status
+```
+
 ```bash
 # Inside DevContainer (integrated terminal):
 cd api
