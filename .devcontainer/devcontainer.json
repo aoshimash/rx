@@ -26,7 +26,8 @@
 	// Environment variables
 	"remoteEnv": {
 		"PATH": "${containerEnv:PATH}:$(go env GOPATH)/bin",
-		"GOTOOLCHAIN": "auto"
+		"GOTOOLCHAIN": "auto",
+		"GH_CONFIG_DIR": "/home/vscode/.config/gh"
 	},
 
 	// Customizations
