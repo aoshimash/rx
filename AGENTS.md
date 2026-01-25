@@ -12,6 +12,7 @@ This repository (`optel-training`) is the **Output/Training Management** compone
 
 1. **"Dumb Backend"** - No business logic for "health." Strictly stores and retrieves telemetry data.
 2. **Domain-Driven Schema-First** - Domain models define business logic, OpenAPI spec defines API contract. Code is generated from OpenAPI spec.
+3. **Use Latest Stable Versions** - Always use the latest stable version of containers and tools, but specify explicit version numbers (not `latest` tags) to ensure reproducible builds and consistent development environments.
 
 For details, see `.claude/skills/optel-philosophy/`.
 
