@@ -55,7 +55,7 @@ rm -f "$tmp"`
 
 <!-- Fill in the sections above; add extra context below if needed. -->
 EOF
-gh pr create --base main --head HEAD --title "..." --body-file "$tmp"
+gh pr create --base main --title "..." --body-file "$tmp"
 rm -f "$tmp"`
 3. Confirm:
    - `gh pr view --web`
