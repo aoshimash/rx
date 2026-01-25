@@ -68,9 +68,6 @@ jobs:
           name: codecov-api
           fail_ci_if_error: false
 
-      - name: Cleanup codecov artifacts
-        run: rm -f codecov codecov.SHA256SUM codecov.SHA256SUM.sig
-
       - name: Check for uncommitted changes
         working-directory: api
         run: |
