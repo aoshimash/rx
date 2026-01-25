@@ -40,10 +40,29 @@ No special environment variables are required for basic development. The DevCont
 
 ## GitHub CLI (`gh`)
 
-This DevContainer includes GitHub CLI (`gh`). Host authentication is not automatically shared.
+This DevContainer includes GitHub CLI (`gh`).
 
-- First-time setup (inside DevContainer): `gh auth login`
-- See `docs/DEVELOPMENT.md` for details.
+### Recommended: pass a host token into the container
+
+If you want `gh` and `git push` to work non-interactively (including from automation), set `GH_TOKEN` on your host **before** starting Cursor/VS Code, then rebuild the container.
+
+- **Host**: set `GH_TOKEN` (a GitHub Personal Access Token with appropriate repo scopes)
+- **DevContainer**: `GH_TOKEN` is injected via `${localEnv:GH_TOKEN}` (see `.devcontainer/devcontainer.json`)
+
+After rebuild, inside the container:
+
+```bash
+echo "GH_TOKEN_len=${#GH_TOKEN}"
+gh api user --jq '.login'
+```
+
+### Alternative: interactive login (manual)
+
+You can also authenticate inside the container:
+
+```bash
+gh auth login
+```
 
 ## Troubleshooting
 
