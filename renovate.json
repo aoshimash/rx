@@ -5,14 +5,18 @@
     "helpers:pinGitHubActionDigests"
   ],
   "timezone": "Asia/Tokyo",
-  "schedule": ["after 6pm on friday"],
-  "postUpdateOptions": ["gomodTidy"],
-  "regexManagers": [
+  "schedule": [
+    "after 6pm on friday"
+  ],
+  "postUpdateOptions": [
+    "gomodTidy"
+  ],
+  "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": [
-        "\\.devcontainer/devcontainer\\.json$",
-        "\\.github/workflows/.*\\.ya?ml$"
+      "managerFilePatterns": [
+        "/\\.devcontainer/devcontainer\\.json$/",
+        "/\\.github/workflows/.*\\.ya?ml$/"
       ],
       "matchStrings": [
         "go install github\\.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@(?<currentValue>v[0-9.]+)"
@@ -24,9 +28,9 @@
     },
     {
       "customType": "regex",
-      "fileMatch": [
-        "\\.devcontainer/devcontainer\\.json$",
-        "\\.github/workflows/.*\\.ya?ml$"
+      "managerFilePatterns": [
+        "/\\.devcontainer/devcontainer\\.json$/",
+        "/\\.github/workflows/.*\\.ya?ml$/"
       ],
       "matchStrings": [
         "go install github\\.com/golangci/golangci-lint/cmd/golangci-lint@(?<currentValue>v[0-9.]+)"
@@ -47,57 +51,97 @@
         ".github/workflows/*.yml",
         ".github/workflows/*.yaml"
       ],
-      "matchManagers": ["gomod", "dockerfile", "devcontainer", "regex"],
+      "matchManagers": [
+        "gomod",
+        "dockerfile",
+        "devcontainer",
+        "custom.regex"
+      ],
       "matchDepNames": [
         "golang",
         "go",
         "mcr.microsoft.com/devcontainers/go"
       ],
       "groupName": "Go version",
-      "schedule": ["after 6pm on friday"]
+      "schedule": [
+        "after 6pm on friday"
+      ]
     },
     {
       "description": "Group oapi-codegen updates",
-      "matchManagers": ["regex"],
-      "matchDepNames": ["github.com/oapi-codegen/oapi-codegen"],
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDepNames": [
+        "github.com/oapi-codegen/oapi-codegen"
+      ],
       "groupName": "oapi-codegen",
-      "schedule": ["after 6pm on friday"]
+      "schedule": [
+        "after 6pm on friday"
+      ]
     },
     {
       "description": "Group golangci-lint updates",
-      "matchManagers": ["regex"],
-      "matchDepNames": ["github.com/golangci/golangci-lint"],
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDepNames": [
+        "github.com/golangci/golangci-lint"
+      ],
       "groupName": "golangci-lint",
-      "schedule": ["after 6pm on friday"]
+      "schedule": [
+        "after 6pm on friday"
+      ]
     },
     {
       "description": "Group Go dependency patch and minor updates",
-      "matchManagers": ["gomod"],
-      "matchUpdateTypes": ["patch", "minor"],
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchUpdateTypes": [
+        "patch",
+        "minor"
+      ],
       "groupName": "Go dependencies (patch/minor)",
-      "schedule": ["after 6pm on friday"]
+      "schedule": [
+        "after 6pm on friday"
+      ]
     },
     {
       "description": "Group GitHub Actions updates",
-      "matchManagers": ["github-actions"],
+      "matchManagers": [
+        "github-actions"
+      ],
       "groupName": "GitHub Actions",
-      "schedule": ["after 6pm on friday"]
+      "schedule": [
+        "after 6pm on friday"
+      ]
     },
     {
       "description": "Group DevContainer features updates",
-      "matchManagers": ["devcontainer"],
+      "matchManagers": [
+        "devcontainer"
+      ],
       "matchDepNames": [
         "ghcr.io/devcontainers/features/git",
         "ghcr.io/devcontainers/features/github-cli"
       ],
       "groupName": "DevContainer features",
-      "schedule": ["after 6pm on friday"]
+      "schedule": [
+        "after 6pm on friday"
+      ]
     },
     {
       "description": "Docker distroless updates (individual PRs)",
-      "matchManagers": ["docker"],
-      "matchDepNames": ["gcr.io/distroless/static-debian11"],
-      "schedule": ["after 6pm on friday"]
+      "matchManagers": [
+        "docker"
+      ],
+      "matchDepNames": [
+        "gcr.io/distroless/static-debian11"
+      ],
+      "schedule": [
+        "after 6pm on friday"
+      ]
     }
   ]
 }
