@@ -15,9 +15,9 @@ import (
 
 // WorkoutHandler handles Workout-related HTTP requests
 type WorkoutHandler struct {
-	repo            repository.WorkoutRepository
-	exerciseRepo    repository.ExerciseRepository
-	programRepo     repository.ProgramRepository
+	repo         repository.WorkoutRepository
+	exerciseRepo repository.ExerciseRepository
+	programRepo  repository.ProgramRepository
 }
 
 // NewWorkoutHandler creates a new WorkoutHandler
@@ -35,30 +35,30 @@ func (h *WorkoutHandler) CreateWorkout(w http.ResponseWriter, r *http.Request) {
 
 	// Decode request body (OpenAPI WorkoutCreate type)
 	var req struct {
-		Timestamp      string    `json:"timestamp"`
-		SessionStart   *string   `json:"session_start,omitempty"`
-		SessionEnd     *string   `json:"session_end,omitempty"`
-		BodyWeightKg   *float64  `json:"body_weight_kg,omitempty"`
-		FatigueLevel   *int      `json:"fatigue_level,omitempty"`
-		SleepHours     *float64  `json:"sleep_hours,omitempty"`
-		ConditionNotes *string   `json:"condition_notes,omitempty"`
-		ProgramNodeID  *string   `json:"program_node_id,omitempty"`
-		ProgramContext []string  `json:"program_context,omitempty"`
-		Notes          *string   `json:"notes,omitempty"`
+		Timestamp      string   `json:"timestamp"`
+		SessionStart   *string  `json:"session_start,omitempty"`
+		SessionEnd     *string  `json:"session_end,omitempty"`
+		BodyWeightKg   *float64 `json:"body_weight_kg,omitempty"`
+		FatigueLevel   *int     `json:"fatigue_level,omitempty"`
+		SleepHours     *float64 `json:"sleep_hours,omitempty"`
+		ConditionNotes *string  `json:"condition_notes,omitempty"`
+		ProgramNodeID  *string  `json:"program_node_id,omitempty"`
+		ProgramContext []string `json:"program_context,omitempty"`
+		Notes          *string  `json:"notes,omitempty"`
 		Entries        []struct {
-			ExerciseID           string    `json:"exercise_id"`
-			DisplayName          *string   `json:"display_name,omitempty"`
-			EntryType            string    `json:"entry_type"`
-			Sets                 int       `json:"sets"`
-			Reps                 int       `json:"reps"`
-			LoadKg               float64   `json:"load_kg"`
-			RPE                  int       `json:"rpe"`
-			EntryStart           *string   `json:"entry_start,omitempty"`
-			EntryEnd             *string   `json:"entry_end,omitempty"`
-			PlannedRestSeconds   *int      `json:"planned_rest_seconds,omitempty"`
-			PerformedRestSeconds *int      `json:"performed_rest_seconds,omitempty"`
-			PerSetRestOverrides  []int     `json:"per_set_rest_overrides,omitempty"`
-			ProgramNodeID        *string   `json:"program_node_id,omitempty"`
+			ExerciseID           string  `json:"exercise_id"`
+			DisplayName          *string `json:"display_name,omitempty"`
+			EntryType            string  `json:"entry_type"`
+			Sets                 int     `json:"sets"`
+			Reps                 int     `json:"reps"`
+			LoadKg               float64 `json:"load_kg"`
+			RPE                  int     `json:"rpe"`
+			EntryStart           *string `json:"entry_start,omitempty"`
+			EntryEnd             *string `json:"entry_end,omitempty"`
+			PlannedRestSeconds   *int    `json:"planned_rest_seconds,omitempty"`
+			PerformedRestSeconds *int    `json:"performed_rest_seconds,omitempty"`
+			PerSetRestOverrides  []int   `json:"per_set_rest_overrides,omitempty"`
+			ProgramNodeID        *string `json:"program_node_id,omitempty"`
 			PlanSnapshot         *struct {
 				ProgramNodeID      *string  `json:"program_node_id,omitempty"`
 				TargetSets         *int     `json:"target_sets,omitempty"`
@@ -135,8 +135,8 @@ func (h *WorkoutHandler) CreateWorkout(w http.ResponseWriter, r *http.Request) {
 		if _, err := h.exerciseRepo.GetByID(ctx, exerciseID); err != nil {
 			if err == domain.ErrNotFound {
 				middleware.WriteValidationError(w, "Exercise not found", map[string]interface{}{
-					"field":      "entries",
-					"index":      i,
+					"field":       "entries",
+					"index":       i,
 					"exercise_id": entryReq.ExerciseID,
 				})
 				return
@@ -146,18 +146,18 @@ func (h *WorkoutHandler) CreateWorkout(w http.ResponseWriter, r *http.Request) {
 		}
 
 		entry := domain.WorkoutEntry{
-			ExerciseID:          exerciseID,
-			DisplayName:         entryReq.DisplayName,
-			EntryType:           entryReq.EntryType,
-			Sets:                entryReq.Sets,
-			Reps:                entryReq.Reps,
-			LoadKg:              entryReq.LoadKg,
-			RPE:                 entryReq.RPE,
-			PlannedRestSeconds:  entryReq.PlannedRestSeconds,
+			ExerciseID:           exerciseID,
+			DisplayName:          entryReq.DisplayName,
+			EntryType:            entryReq.EntryType,
+			Sets:                 entryReq.Sets,
+			Reps:                 entryReq.Reps,
+			LoadKg:               entryReq.LoadKg,
+			RPE:                  entryReq.RPE,
+			PlannedRestSeconds:   entryReq.PlannedRestSeconds,
 			PerformedRestSeconds: entryReq.PerformedRestSeconds,
-			PerSetRestOverrides: entryReq.PerSetRestOverrides,
-			Notes:               entryReq.Notes,
-			Order:               i,
+			PerSetRestOverrides:  entryReq.PerSetRestOverrides,
+			Notes:                entryReq.Notes,
+			Order:                i,
 		}
 
 		// Parse optional timestamps
@@ -289,30 +289,30 @@ func (h *WorkoutHandler) UpdateWorkout(w http.ResponseWriter, r *http.Request) {
 
 	// Decode request body (full replacement, same structure as Create)
 	var req struct {
-		Timestamp      string    `json:"timestamp"`
-		SessionStart   *string   `json:"session_start,omitempty"`
-		SessionEnd     *string   `json:"session_end,omitempty"`
-		BodyWeightKg   *float64  `json:"body_weight_kg,omitempty"`
-		FatigueLevel   *int      `json:"fatigue_level,omitempty"`
-		SleepHours     *float64  `json:"sleep_hours,omitempty"`
-		ConditionNotes *string   `json:"condition_notes,omitempty"`
-		ProgramNodeID  *string   `json:"program_node_id,omitempty"`
-		ProgramContext []string  `json:"program_context,omitempty"`
-		Notes          *string   `json:"notes,omitempty"`
+		Timestamp      string   `json:"timestamp"`
+		SessionStart   *string  `json:"session_start,omitempty"`
+		SessionEnd     *string  `json:"session_end,omitempty"`
+		BodyWeightKg   *float64 `json:"body_weight_kg,omitempty"`
+		FatigueLevel   *int     `json:"fatigue_level,omitempty"`
+		SleepHours     *float64 `json:"sleep_hours,omitempty"`
+		ConditionNotes *string  `json:"condition_notes,omitempty"`
+		ProgramNodeID  *string  `json:"program_node_id,omitempty"`
+		ProgramContext []string `json:"program_context,omitempty"`
+		Notes          *string  `json:"notes,omitempty"`
 		Entries        []struct {
-			ExerciseID           string    `json:"exercise_id"`
-			DisplayName          *string   `json:"display_name,omitempty"`
-			EntryType            string    `json:"entry_type"`
-			Sets                 int       `json:"sets"`
-			Reps                 int       `json:"reps"`
-			LoadKg               float64   `json:"load_kg"`
-			RPE                  int       `json:"rpe"`
-			EntryStart           *string   `json:"entry_start,omitempty"`
-			EntryEnd             *string   `json:"entry_end,omitempty"`
-			PlannedRestSeconds   *int      `json:"planned_rest_seconds,omitempty"`
-			PerformedRestSeconds *int      `json:"performed_rest_seconds,omitempty"`
-			PerSetRestOverrides  []int     `json:"per_set_rest_overrides,omitempty"`
-			ProgramNodeID        *string   `json:"program_node_id,omitempty"`
+			ExerciseID           string  `json:"exercise_id"`
+			DisplayName          *string `json:"display_name,omitempty"`
+			EntryType            string  `json:"entry_type"`
+			Sets                 int     `json:"sets"`
+			Reps                 int     `json:"reps"`
+			LoadKg               float64 `json:"load_kg"`
+			RPE                  int     `json:"rpe"`
+			EntryStart           *string `json:"entry_start,omitempty"`
+			EntryEnd             *string `json:"entry_end,omitempty"`
+			PlannedRestSeconds   *int    `json:"planned_rest_seconds,omitempty"`
+			PerformedRestSeconds *int    `json:"performed_rest_seconds,omitempty"`
+			PerSetRestOverrides  []int   `json:"per_set_rest_overrides,omitempty"`
+			ProgramNodeID        *string `json:"program_node_id,omitempty"`
 			PlanSnapshot         *struct {
 				ProgramNodeID      *string  `json:"program_node_id,omitempty"`
 				TargetSets         *int     `json:"target_sets,omitempty"`
@@ -393,8 +393,8 @@ func (h *WorkoutHandler) UpdateWorkout(w http.ResponseWriter, r *http.Request) {
 		if _, err := h.exerciseRepo.GetByID(ctx, exerciseID); err != nil {
 			if err == domain.ErrNotFound {
 				middleware.WriteValidationError(w, "Exercise not found", map[string]interface{}{
-					"field":      "entries",
-					"index":      i,
+					"field":       "entries",
+					"index":       i,
 					"exercise_id": entryReq.ExerciseID,
 				})
 				return
@@ -404,18 +404,18 @@ func (h *WorkoutHandler) UpdateWorkout(w http.ResponseWriter, r *http.Request) {
 		}
 
 		entry := domain.WorkoutEntry{
-			ExerciseID:          exerciseID,
-			DisplayName:         entryReq.DisplayName,
-			EntryType:           entryReq.EntryType,
-			Sets:                entryReq.Sets,
-			Reps:                entryReq.Reps,
-			LoadKg:              entryReq.LoadKg,
-			RPE:                 entryReq.RPE,
-			PlannedRestSeconds:  entryReq.PlannedRestSeconds,
+			ExerciseID:           exerciseID,
+			DisplayName:          entryReq.DisplayName,
+			EntryType:            entryReq.EntryType,
+			Sets:                 entryReq.Sets,
+			Reps:                 entryReq.Reps,
+			LoadKg:               entryReq.LoadKg,
+			RPE:                  entryReq.RPE,
+			PlannedRestSeconds:   entryReq.PlannedRestSeconds,
 			PerformedRestSeconds: entryReq.PerformedRestSeconds,
-			PerSetRestOverrides: entryReq.PerSetRestOverrides,
-			Notes:               entryReq.Notes,
-			Order:               i,
+			PerSetRestOverrides:  entryReq.PerSetRestOverrides,
+			Notes:                entryReq.Notes,
+			Order:                i,
 		}
 
 		// Parse optional timestamps
@@ -576,9 +576,9 @@ func (h *WorkoutHandler) ListWorkouts(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(map[string]interface{}{
-		"data":       workouts,
+		"data":        workouts,
 		"next_cursor": nextCursor,
-		"has_more":   hasMore,
+		"has_more":    hasMore,
 	}); err != nil {
 		slog.Error("Failed to encode workout list response", "error", err)
 	}
