@@ -3,7 +3,7 @@
 # Distroless provides minimal attack surface (no shell, no package manager)
 
 # Build stage (Ubuntu-based for compatibility)
-FROM golang:1.25 AS builder
+FROM golang:1.25.5 AS builder
 
 WORKDIR /build
 
