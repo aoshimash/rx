@@ -1,0 +1,102 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "timezone": "Asia/Tokyo",
+  "schedule": ["after 6pm on friday"],
+  "postUpdateOptions": ["gomodTidy"],
+  "regexManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "\\.devcontainer/devcontainer\\.json$",
+        "\\.github/workflows/.*\\.ya?ml$"
+      ],
+      "matchStrings": [
+        "go install github\\.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@(?<currentValue>v[0-9.]+)"
+      ],
+      "depNameTemplate": "github.com/oapi-codegen/oapi-codegen",
+      "datasourceTemplate": "go",
+      "versioningTemplate": "semver",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "\\.devcontainer/devcontainer\\.json$",
+        "\\.github/workflows/.*\\.ya?ml$"
+      ],
+      "matchStrings": [
+        "go install github\\.com/golangci/golangci-lint/cmd/golangci-lint@(?<currentValue>v[0-9.]+)"
+      ],
+      "depNameTemplate": "github.com/golangci/golangci-lint",
+      "datasourceTemplate": "go",
+      "versioningTemplate": "semver",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Group Go version updates across all files",
+      "matchFileNames": [
+        "api/go.mod",
+        "api/Dockerfile",
+        ".devcontainer/devcontainer.json",
+        ".github/workflows/.*\\.ya?ml$"
+      ],
+      "matchManagers": ["gomod", "docker", "regex"],
+      "matchDepNames": [
+        "golang",
+        "go",
+        "mcr.microsoft.com/devcontainers/go"
+      ],
+      "groupName": "Go version",
+      "schedule": ["after 6pm on friday"]
+    },
+    {
+      "description": "Group oapi-codegen updates",
+      "matchManagers": ["regex"],
+      "matchDepNames": ["github.com/oapi-codegen/oapi-codegen"],
+      "groupName": "oapi-codegen",
+      "schedule": ["after 6pm on friday"]
+    },
+    {
+      "description": "Group golangci-lint updates",
+      "matchManagers": ["regex"],
+      "matchDepNames": ["github.com/golangci/golangci-lint"],
+      "groupName": "golangci-lint",
+      "schedule": ["after 6pm on friday"]
+    },
+    {
+      "description": "Group Go dependency patch and minor updates",
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "groupName": "Go dependencies (patch/minor)",
+      "schedule": ["after 6pm on friday"]
+    },
+    {
+      "description": "Group GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "schedule": ["after 6pm on friday"]
+    },
+    {
+      "description": "Group DevContainer features updates",
+      "matchManagers": ["docker"],
+      "matchDepNames": [
+        "ghcr.io/devcontainers/features/git",
+        "ghcr.io/devcontainers/features/github-cli"
+      ],
+      "groupName": "DevContainer features",
+      "schedule": ["after 6pm on friday"]
+    },
+    {
+      "description": "Docker distroless updates (individual PRs)",
+      "matchManagers": ["docker"],
+      "matchDepNames": ["gcr.io/distroless/static-debian11"],
+      "schedule": ["after 6pm on friday"]
+    }
+  ]
+}

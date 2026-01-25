@@ -1,6 +1,6 @@
 {
 	"name": "OPTel Training API",
-	"image": "mcr.microsoft.com/devcontainers/go:1.25",
+	"image": "mcr.microsoft.com/devcontainers/go:1.25.5",
 	
 	"features": {
 		"ghcr.io/devcontainers/features/git:1": {},
