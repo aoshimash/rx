@@ -1,0 +1,79 @@
+name: API CI
+
+on:
+  push:
+    branches: [main]
+    paths: &api-ci-paths
+      - 'api/**'
+      - '.github/workflows/api-ci.yml'
+  pull_request:
+    branches: [main]
+    paths: *api-ci-paths
+
+jobs:
+  api-format-lint-test:
+    name: API - Format, Lint and Test
+    runs-on: ubuntu-24.04
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.5'
+          cache-dependency-path: api/go.sum
+
+      - name: Get Go environment
+        id: go-env
+        run: |
+          echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
+          echo "GOBIN=$(go env GOPATH)/bin" >> $GITHUB_ENV
+
+      - name: Cache development tools
+        id: cache-tools
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.GOBIN }}
+          key: ${{ runner.os }}-go-tools-v2.5.1-v1.64.8
+          restore-keys: |
+            ${{ runner.os }}-go-tools-
+
+      - name: Install development tools
+        if: steps.cache-tools.outputs.cache-hit != 'true'
+        run: |
+          go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.5.1
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8
+
+      - name: Add tools to PATH
+        run: echo "${{ env.GOBIN }}" >> $GITHUB_PATH
+
+      - name: Run Makefile targets
+        working-directory: api
+        run: |
+          make deps
+          make generate
+          # Run go mod tidy after generate in case generated code adds new dependencies
+          go mod tidy
+          make format
+          make lint
+          make test-coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./api/coverage.out
+          flags: unittests
+          name: codecov-api
+          fail_ci_if_error: false
+
+      - name: Check for uncommitted changes
+        working-directory: api
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Error: Uncommitted changes detected"
+            git status
+            git diff || true
+            exit 1
+          fi

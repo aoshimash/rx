@@ -18,10 +18,10 @@ type CORSConfig struct {
 // DefaultCORSConfig returns a default CORS configuration
 func DefaultCORSConfig() *CORSConfig {
 	return &CORSConfig{
-		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-Request-ID"},
-		ExposedHeaders: []string{"X-Request-ID"},
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-Request-ID"},
+		ExposedHeaders:   []string{"X-Request-ID"},
 		AllowCredentials: false,
 		MaxAge:           86400, // 24 hours
 	}

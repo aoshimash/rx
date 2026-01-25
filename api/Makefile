@@ -1,4 +1,4 @@
-.PHONY: generate lint test run build clean docker-up docker-down docker-build-prod deps
+.PHONY: generate format lint test test-coverage run build clean docker-up docker-down docker-build-prod deps
 
 # Native commands (tools must be on PATH; DevContainer provides them automatically)
 # These commands work when tools are installed locally or via DevContainer
@@ -6,12 +6,29 @@
 generate: deps
 	oapi-codegen -generate types,chi-server -package openapi \
 		-o pkg/openapi/server.gen.go openapi/openapi.yaml
+	# Note: go mod tidy is run in deps target, but if generated code adds new dependencies,
+	# you may need to run 'go mod tidy' manually after generate
 
-lint:
+format:
+	@echo "Checking code formatting..."
+	@FORMAT_OUTPUT=$$(gofmt -l .); \
+	if [ -n "$$FORMAT_OUTPUT" ]; then \
+		echo "Error: Code is not formatted. Run 'go fmt ./...' to fix."; \
+		echo "$$FORMAT_OUTPUT"; \
+		exit 1; \
+	fi
+
+lint: deps
+	@echo "Building packages to ensure all dependencies are available..."
+	@go build ./...
 	golangci-lint run ./...
 
 test: deps
 	go test -v -race ./...
+
+test-coverage: deps
+	go test -v -race -coverprofile=coverage.out ./...
+	go tool cover -func=coverage.out
 
 deps:
 	go mod download
@@ -25,6 +42,7 @@ build:
 
 clean:
 	rm -rf bin/
+	rm -f coverage.out
 
 # Docker Compose management (for smoke-testing, not iterative development)
 # Use 'docker compose' (space) instead of 'docker-compose' (hyphen) for compatibility

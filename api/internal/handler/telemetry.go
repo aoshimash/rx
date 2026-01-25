@@ -15,8 +15,8 @@ import (
 
 // TelemetryHandler handles TelemetryPoint-related HTTP requests
 type TelemetryHandler struct {
-	repo         repository.TelemetryPointRepository
-	workoutRepo  repository.WorkoutRepository
+	repo        repository.TelemetryPointRepository
+	workoutRepo repository.WorkoutRepository
 }
 
 // NewTelemetryHandler creates a new TelemetryHandler
@@ -78,7 +78,7 @@ func (h *TelemetryHandler) CreateTelemetryPoint(w http.ResponseWriter, r *http.R
 		if _, err := h.workoutRepo.GetByID(ctx, workoutID); err != nil {
 			if err == domain.ErrNotFound {
 				middleware.WriteValidationError(w, "Workout not found", map[string]interface{}{
-					"field":     "workout_id",
+					"field":      "workout_id",
 					"workout_id": *req.WorkoutID,
 				})
 				return
@@ -221,7 +221,7 @@ func (h *TelemetryHandler) UpdateTelemetryPoint(w http.ResponseWriter, r *http.R
 		if _, err := h.workoutRepo.GetByID(ctx, workoutID); err != nil {
 			if err == domain.ErrNotFound {
 				middleware.WriteValidationError(w, "Workout not found", map[string]interface{}{
-					"field":     "workout_id",
+					"field":      "workout_id",
 					"workout_id": *req.WorkoutID,
 				})
 				return
@@ -353,9 +353,9 @@ func (h *TelemetryHandler) ListTelemetryPoints(w http.ResponseWriter, r *http.Re
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(map[string]interface{}{
-		"data":       points,
+		"data":        points,
 		"next_cursor": nextCursor,
-		"has_more":   hasMore,
+		"has_more":    hasMore,
 	}); err != nil {
 		slog.Error("Failed to encode telemetry point list response", "error", err)
 	}

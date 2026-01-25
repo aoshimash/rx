@@ -17,13 +17,13 @@ type ErrorResponse struct {
 func WriteError(w http.ResponseWriter, code string, message string, statusCode int, details map[string]interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	
+
 	response := ErrorResponse{
 		Code:    code,
 		Message: message,
 		Details: details,
 	}
-	
+
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		slog.Error("Failed to encode error response", "error", err)
 	}

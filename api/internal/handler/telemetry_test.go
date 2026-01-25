@@ -36,10 +36,10 @@ func TestTelemetryHandler_Create(t *testing.T) {
 	router := setupTelemetryTestRouter()
 
 	body := map[string]interface{}{
-		"timestamp":  time.Now().Format(time.RFC3339),
+		"timestamp":   time.Now().Format(time.RFC3339),
 		"metric_name": "heart_rate",
-		"value":      72.0,
-		"unit":       "bpm",
+		"value":       72.0,
+		"unit":        "bpm",
 	}
 
 	bodyBytes, _ := json.Marshal(body)
@@ -76,8 +76,8 @@ func TestTelemetryHandler_GetByID(t *testing.T) {
 	body := map[string]interface{}{
 		"timestamp":   time.Now().Format(time.RFC3339),
 		"metric_name": "heart_rate",
-		"value":      72.0,
-		"unit":       "bpm",
+		"value":       72.0,
+		"unit":        "bpm",
 	}
 	bodyBytes, _ := json.Marshal(body)
 	createReq := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry", bytes.NewReader(bodyBytes))

@@ -79,8 +79,8 @@ func TestProgramRepository_GetByID(t *testing.T) {
 
 	id := uuid.New()
 	program := &domain.Program{
-		ID:        id,
-		Name:      "Test Program",
+		ID:   id,
+		Name: "Test Program",
 		RootNodes: []domain.ProgramNode{
 			{
 				ID:   uuid.New(),

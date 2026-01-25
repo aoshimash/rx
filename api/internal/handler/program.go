@@ -35,21 +35,21 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 
 	// Decode request body (OpenAPI ProgramCreate type)
 	var req struct {
-		Name        string `json:"name"`
+		Name        string  `json:"name"`
 		Description *string `json:"description,omitempty"`
 		RootNodes   []struct {
-			Name              string  `json:"name"`
-			NodeType          string  `json:"node_type"`
-			Order             int     `json:"order"`
-			Children          []json.RawMessage `json:"children,omitempty"` // Recursive structure
-			ExerciseID        *string `json:"exercise_id,omitempty"`
-			TargetSets        *int    `json:"target_sets,omitempty"`
-			TargetReps        *int    `json:"target_reps,omitempty"`
-			TargetRPE         *int    `json:"target_rpe,omitempty"`
-			Percent1RM        *float64 `json:"percent_1rm,omitempty"`
-			PlannedRestSeconds *int    `json:"planned_rest_seconds,omitempty"`
-			MuscleGroups      []string `json:"muscle_groups,omitempty"`
-			Notes             *string  `json:"notes,omitempty"`
+			Name               string            `json:"name"`
+			NodeType           string            `json:"node_type"`
+			Order              int               `json:"order"`
+			Children           []json.RawMessage `json:"children,omitempty"` // Recursive structure
+			ExerciseID         *string           `json:"exercise_id,omitempty"`
+			TargetSets         *int              `json:"target_sets,omitempty"`
+			TargetReps         *int              `json:"target_reps,omitempty"`
+			TargetRPE          *int              `json:"target_rpe,omitempty"`
+			Percent1RM         *float64          `json:"percent_1rm,omitempty"`
+			PlannedRestSeconds *int              `json:"planned_rest_seconds,omitempty"`
+			MuscleGroups       []string          `json:"muscle_groups,omitempty"`
+			Notes              *string           `json:"notes,omitempty"`
 		} `json:"root_nodes,omitempty"`
 	}
 
@@ -112,31 +112,31 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 
 // convertNode converts a JSON node request to a domain ProgramNode recursively
 func (h *ProgramHandler) convertNode(ctx context.Context, nodeReq struct {
-	Name              string          `json:"name"`
-	NodeType          string          `json:"node_type"`
-	Order             int             `json:"order"`
-	Children          []json.RawMessage `json:"children,omitempty"`
-	ExerciseID        *string         `json:"exercise_id,omitempty"`
-	TargetSets        *int            `json:"target_sets,omitempty"`
-	TargetReps        *int            `json:"target_reps,omitempty"`
-	TargetRPE         *int            `json:"target_rpe,omitempty"`
-	Percent1RM        *float64        `json:"percent_1rm,omitempty"`
-	PlannedRestSeconds *int           `json:"planned_rest_seconds,omitempty"`
-	MuscleGroups      []string        `json:"muscle_groups,omitempty"`
-	Notes             *string         `json:"notes,omitempty"`
+	Name               string            `json:"name"`
+	NodeType           string            `json:"node_type"`
+	Order              int               `json:"order"`
+	Children           []json.RawMessage `json:"children,omitempty"`
+	ExerciseID         *string           `json:"exercise_id,omitempty"`
+	TargetSets         *int              `json:"target_sets,omitempty"`
+	TargetReps         *int              `json:"target_reps,omitempty"`
+	TargetRPE          *int              `json:"target_rpe,omitempty"`
+	Percent1RM         *float64          `json:"percent_1rm,omitempty"`
+	PlannedRestSeconds *int              `json:"planned_rest_seconds,omitempty"`
+	MuscleGroups       []string          `json:"muscle_groups,omitempty"`
+	Notes              *string           `json:"notes,omitempty"`
 }, parentID *uuid.UUID) (*domain.ProgramNode, error) {
 	node := &domain.ProgramNode{
-		Name:         nodeReq.Name,
-		NodeType:     nodeReq.NodeType,
-		Order:        nodeReq.Order,
-		ParentID:     parentID,
-		TargetSets:   nodeReq.TargetSets,
-		TargetReps:   nodeReq.TargetReps,
-		TargetRPE:    nodeReq.TargetRPE,
-		Percent1RM:   nodeReq.Percent1RM,
+		Name:               nodeReq.Name,
+		NodeType:           nodeReq.NodeType,
+		Order:              nodeReq.Order,
+		ParentID:           parentID,
+		TargetSets:         nodeReq.TargetSets,
+		TargetReps:         nodeReq.TargetReps,
+		TargetRPE:          nodeReq.TargetRPE,
+		Percent1RM:         nodeReq.Percent1RM,
 		PlannedRestSeconds: nodeReq.PlannedRestSeconds,
-		MuscleGroups: nodeReq.MuscleGroups,
-		Notes:        nodeReq.Notes,
+		MuscleGroups:       nodeReq.MuscleGroups,
+		Notes:              nodeReq.Notes,
 	}
 
 	// Parse exercise_id if provided
@@ -159,18 +159,18 @@ func (h *ProgramHandler) convertNode(ctx context.Context, nodeReq struct {
 		node.Children = make([]domain.ProgramNode, len(nodeReq.Children))
 		for i, childJSON := range nodeReq.Children {
 			var childReq struct {
-				Name              string          `json:"name"`
-				NodeType          string          `json:"node_type"`
-				Order             int             `json:"order"`
-				Children          []json.RawMessage `json:"children,omitempty"`
-				ExerciseID        *string         `json:"exercise_id,omitempty"`
-				TargetSets        *int            `json:"target_sets,omitempty"`
-				TargetReps        *int            `json:"target_reps,omitempty"`
-				TargetRPE         *int            `json:"target_rpe,omitempty"`
-				Percent1RM        *float64        `json:"percent_1rm,omitempty"`
-				PlannedRestSeconds *int           `json:"planned_rest_seconds,omitempty"`
-				MuscleGroups      []string        `json:"muscle_groups,omitempty"`
-				Notes             *string         `json:"notes,omitempty"`
+				Name               string            `json:"name"`
+				NodeType           string            `json:"node_type"`
+				Order              int               `json:"order"`
+				Children           []json.RawMessage `json:"children,omitempty"`
+				ExerciseID         *string           `json:"exercise_id,omitempty"`
+				TargetSets         *int              `json:"target_sets,omitempty"`
+				TargetReps         *int              `json:"target_reps,omitempty"`
+				TargetRPE          *int              `json:"target_rpe,omitempty"`
+				Percent1RM         *float64          `json:"percent_1rm,omitempty"`
+				PlannedRestSeconds *int              `json:"planned_rest_seconds,omitempty"`
+				MuscleGroups       []string          `json:"muscle_groups,omitempty"`
+				Notes              *string           `json:"notes,omitempty"`
 			}
 			if err := json.Unmarshal(childJSON, &childReq); err != nil {
 				return nil, err
@@ -247,21 +247,21 @@ func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
 
 	// Decode request body (full replacement, same structure as Create)
 	var req struct {
-		Name        string `json:"name"`
+		Name        string  `json:"name"`
 		Description *string `json:"description,omitempty"`
 		RootNodes   []struct {
-			Name              string          `json:"name"`
-			NodeType          string          `json:"node_type"`
-			Order             int             `json:"order"`
-			Children          []json.RawMessage `json:"children,omitempty"`
-			ExerciseID        *string         `json:"exercise_id,omitempty"`
-			TargetSets        *int            `json:"target_sets,omitempty"`
-			TargetReps        *int            `json:"target_reps,omitempty"`
-			TargetRPE         *int            `json:"target_rpe,omitempty"`
-			Percent1RM        *float64        `json:"percent_1rm,omitempty"`
-			PlannedRestSeconds *int           `json:"planned_rest_seconds,omitempty"`
-			MuscleGroups      []string       `json:"muscle_groups,omitempty"`
-			Notes             *string        `json:"notes,omitempty"`
+			Name               string            `json:"name"`
+			NodeType           string            `json:"node_type"`
+			Order              int               `json:"order"`
+			Children           []json.RawMessage `json:"children,omitempty"`
+			ExerciseID         *string           `json:"exercise_id,omitempty"`
+			TargetSets         *int              `json:"target_sets,omitempty"`
+			TargetReps         *int              `json:"target_reps,omitempty"`
+			TargetRPE          *int              `json:"target_rpe,omitempty"`
+			Percent1RM         *float64          `json:"percent_1rm,omitempty"`
+			PlannedRestSeconds *int              `json:"planned_rest_seconds,omitempty"`
+			MuscleGroups       []string          `json:"muscle_groups,omitempty"`
+			Notes              *string           `json:"notes,omitempty"`
 		} `json:"root_nodes,omitempty"`
 	}
 
@@ -421,9 +421,9 @@ func (h *ProgramHandler) ListPrograms(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(map[string]interface{}{
-		"data":       programs,
+		"data":        programs,
 		"next_cursor": nextCursor,
-		"has_more":   hasMore,
+		"has_more":    hasMore,
 	}); err != nil {
 		slog.Error("Failed to encode program list response", "error", err)
 	}

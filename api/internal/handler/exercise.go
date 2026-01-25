@@ -14,8 +14,8 @@ import (
 
 // ExerciseHandler handles Exercise-related HTTP requests
 type ExerciseHandler struct {
-	repo         repository.ExerciseRepository
-	workoutRepo  repository.WorkoutRepository
+	repo        repository.ExerciseRepository
+	workoutRepo repository.WorkoutRepository
 }
 
 // NewExerciseHandler creates a new ExerciseHandler
@@ -281,9 +281,9 @@ func (h *ExerciseHandler) ListExercises(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(map[string]interface{}{
-		"data":       exercises,
+		"data":        exercises,
 		"next_cursor": nextCursor,
-		"has_more":   hasMore,
+		"has_more":    hasMore,
 	}); err != nil {
 		slog.Error("Failed to encode exercise list response", "error", err)
 	}
