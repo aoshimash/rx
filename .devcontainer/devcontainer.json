@@ -27,7 +27,9 @@
 	"remoteEnv": {
 		"PATH": "${containerEnv:PATH}:$(go env GOPATH)/bin",
 		"GOTOOLCHAIN": "auto",
-		"GH_CONFIG_DIR": "/home/vscode/.config/gh"
+		"GH_CONFIG_DIR": "/home/vscode/.config/gh",
+		"GH_TOKEN": "${localEnv:GH_TOKEN}",
+		"GITHUB_TOKEN": "${localEnv:GH_TOKEN}"
 	},
 
 	// Customizations
