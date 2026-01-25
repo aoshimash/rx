@@ -1,14 +1,20 @@
-name: CI
+name: API CI
 
 on:
   push:
     branches: [main, develop]
+    paths:
+      - 'api/**'
+      - '.github/workflows/api-ci.yml'
   pull_request:
     branches: [main, develop]
+    paths:
+      - 'api/**'
+      - '.github/workflows/api-ci.yml'
 
 jobs:
-  test:
-    name: Format, Lint and Test
+  api-format-lint-test:
+    name: API - Format, Lint and Test
     runs-on: ubuntu-24.04
     
     steps:
@@ -46,7 +52,7 @@ jobs:
         with:
           file: ./api/coverage.out
           flags: unittests
-          name: codecov-umbrella
+          name: codecov-api
           fail_ci_if_error: false
 
       - name: Check for uncommitted changes
