@@ -142,7 +142,12 @@ When executing `gh` commands, capture:
 
 ## Troubleshooting
 
-- If `gh` says not authenticated: run `gh auth login` (interactive) or fix token/SSH setup.
+- If `gh` auth is broken/invalid token:
+  - Check: `gh auth status`
+  - Re-auth: `gh auth login -h github.com`
+- If `git push` fails due to credential helper mismatch (e.g., `osxkeychain` in a Linux devcontainer), avoid changing git config and do a one-off push using `gh` as the credential helper:
+  - `git -c credential.helper= -c credential.helper='!gh auth git-credential' push origin HEAD`
+  - If you also need upstream: `git -c credential.helper= -c credential.helper='!gh auth git-credential' push -u origin HEAD`
 - If acting on the wrong repo: run `gh repo set-default OWNER/REPO` or pass `--repo OWNER/REPO`.
 - If JSON queries fail: verify `--json` fields and `--jq` expression.
 

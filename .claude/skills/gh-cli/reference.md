@@ -26,6 +26,11 @@ EOF
 gh pr comment 123 --body-file "$tmp"
 rm -f "$tmp"`
 
+## Devcontainer auth / push pitfalls
+
+If `gh auth status` is OK but `git push` fails (credential helper mismatch), do a one-off push without changing git config:
+- `git -c credential.helper= -c credential.helper='!gh auth git-credential' push origin HEAD`
+
 ## PR data via JSON
 
 Examples (requires `--jq` support; bundled with `gh`):
