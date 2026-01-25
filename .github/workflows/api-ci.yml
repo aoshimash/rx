@@ -54,6 +54,8 @@ jobs:
         run: |
           make deps
           make generate
+          # Run go mod tidy after generate in case generated code adds new dependencies
+          go mod tidy
           make format
           make lint
           make test-coverage
