@@ -6,7 +6,8 @@
 generate: deps
 	oapi-codegen -generate types,chi-server -package openapi \
 		-o pkg/openapi/server.gen.go openapi/openapi.yaml
-	go mod tidy
+	# Note: go mod tidy is run in deps target, but if generated code adds new dependencies,
+	# you may need to run 'go mod tidy' manually after generate
 
 format:
 	@echo "Checking code formatting..."

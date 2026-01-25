@@ -38,10 +38,6 @@ jobs:
           make generate
           make format
           make lint
-
-      - name: Generate coverage report
-        working-directory: api
-        run: |
           make test-coverage
 
       - name: Upload coverage to Codecov
@@ -56,7 +52,8 @@ jobs:
         working-directory: api
         run: |
           if [ -n "$(git status --porcelain)" ]; then
-            echo "Error: Generated files are not committed"
+            echo "Error: Uncommitted changes detected"
             git status
+            git diff || true
             exit 1
           fi
