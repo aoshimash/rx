@@ -12,7 +12,7 @@
 	"workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
 
 	// Install required development tools and configure git credential helper
-	"postCreateCommand": "git config --global credential.helper '!gh auth git-credential' && go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.5.1 && go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8 && echo 'export PATH=\"$PATH:$(go env GOPATH)/bin\"' >> ~/.bashrc && echo 'export PATH=\"$PATH:$(go env GOPATH)/bin\"' >> ~/.zshrc || true",
+	"postCreateCommand": "git config --global credential.helper '!gh auth git-credential' && go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.5.1 && go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.8.0 && echo 'export PATH=\"$PATH:$(go env GOPATH)/bin\"' >> ~/.bashrc && echo 'export PATH=\"$PATH:$(go env GOPATH)/bin\"' >> ~/.zshrc || true",
 
 	// Port forwarding for API server
 	"forwardPorts": [8080],
