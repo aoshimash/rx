@@ -44,9 +44,10 @@
         "api/go.mod",
         "api/Dockerfile",
         ".devcontainer/devcontainer.json",
-        ".github/workflows/.*\\.ya?ml$"
+        ".github/workflows/*.yml",
+        ".github/workflows/*.yaml"
       ],
-      "matchManagers": ["gomod", "docker", "regex"],
+      "matchManagers": ["gomod", "dockerfile", "devcontainer", "regex"],
       "matchDepNames": [
         "golang",
         "go",
@@ -84,7 +85,7 @@
     },
     {
       "description": "Group DevContainer features updates",
-      "matchManagers": ["docker"],
+      "matchManagers": ["devcontainer"],
       "matchDepNames": [
         "ghcr.io/devcontainers/features/git",
         "ghcr.io/devcontainers/features/github-cli"
