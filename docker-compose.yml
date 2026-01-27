@@ -1,4 +1,22 @@
 services:
+  postgres:
+    image: postgres:17
+    container_name: optel-training-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-optel}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-optel}
+      POSTGRES_DB: ${POSTGRES_DB:-optel_training}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-optel}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   api:
     build:
       context: ./api
@@ -10,3 +28,6 @@ services:
     ports:
       - "${HOST_PORT:-8080}:8080"
     restart: unless-stopped
+
+volumes:
+  postgres_data:

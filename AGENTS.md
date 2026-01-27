@@ -48,3 +48,71 @@ optel-training/
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Development Guide](docs/DEVELOPMENT.md)
+
+## AI Agent Command Execution
+
+When executing commands that require host resources (network access, Docker socket access, file system writes), AI agents **MUST** use `required_permissions: ["all"]` parameter.
+
+### Commands Requiring `required_permissions: ["all"]`
+
+| Command | Reason |
+|---------|--------|
+| `aqua install` | Requires network access (GitHub API) and file system writes (`~/.local/share/aquaproj-aqua/`) |
+| `docker compose up/down` | Requires Docker socket access |
+| `docker compose pull` | Requires network access and Docker socket access |
+| `go get`, `go install` | Requires network access (if downloading packages) |
+
+### Example Usage
+
+```python
+# Correct: Using required_permissions
+run_terminal_cmd(
+    command="aqua install",
+    required_permissions=["all"]
+)
+
+# Correct: Docker Compose commands
+run_terminal_cmd(
+    command="docker compose up -d postgres",
+    required_permissions=["all"]
+)
+```
+
+### Important Notes
+
+**Sandbox Limitations:**
+- Cursor's sandbox may block certain DNS resolution methods (`ping`, `nslookup`) even with `required_permissions: ["all"]`
+- Some commands may fail with "no such host" or "operation not permitted" errors even when network access is available via `curl`
+- Docker socket access may be restricted even with `required_permissions: ["all"]`
+
+**Workaround:**
+- If commands fail with permission errors, instruct the user to run them manually
+- Configuration files (`aqua.yaml`, `docker-compose.yml`) are correctly set up and will work when executed manually
+- The user can run `aqua install` and `docker compose up -d postgres` directly in their terminal
+
+**Note:** These commands should trigger a user confirmation prompt before execution. If the prompt doesn't appear, it may be a Cursor configuration issue, and manual execution is recommended.
+
+### Troubleshooting: Permission Prompts Not Appearing
+
+If `required_permissions: ["all"]` doesn't trigger a confirmation prompt:
+
+1. **Check Cursor Settings:**
+   - Open Cursor Settings (`Cmd + ,` on macOS, `Ctrl + ,` on Windows/Linux)
+   - Search for "sandbox" or "permissions"
+   - Ensure sandbox is enabled and permission prompts are enabled
+
+2. **Check Cursor Configuration File:**
+   - macOS: `~/Library/Application Support/Cursor/User/settings.json`
+   - Windows: `%APPDATA%\Cursor\User\settings.json`
+   - Linux: `~/.config/Cursor/User/settings.json`
+   - Look for `cursor.sandbox.*` or `cursor.permissions.*` settings
+   - Note: These settings may not be visible in the UI and may need to be added manually
+
+3. **Manual Execution:**
+   - Run commands directly in your terminal
+   - Install tools: `aqua install`
+   - Start PostgreSQL: `docker compose up -d postgres`
+
+4. **Alternative:**
+   - AI agent will ask for explicit confirmation before running commands
+   - You can approve by responding "yes" or "proceed"

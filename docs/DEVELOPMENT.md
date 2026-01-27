@@ -2,40 +2,69 @@
 
 ## Prerequisites
 
-**Local Requirements (minimal):**
+**Local Requirements:**
 - Docker & Docker Compose
+- [aqua](https://aquaproj.github.io/) - Tool version manager
 - Make
 - curl (for testing API endpoints)
 
-**Note:** All Go development tools (Go compiler, oapi-codegen, golangci-lint) are provided by the DevContainer. You don't need to install them locally.
-
 ## Project Setup
 
-### DevContainer Development Environment (Recommended)
+#### 1. Install aqua
 
-The primary development workflow uses VS Code/Cursor DevContainer for a consistent, containerized development environment.
-
-1. **Open the repository** in VS Code or Cursor
-2. **Reopen in DevContainer** when prompted (or use Command Palette: "Dev Containers: Reopen in Container")
-3. **All development tools are automatically available** in the integrated terminal
-
-#### GitHub CLI (`gh`) authentication
-
-This DevContainer includes GitHub CLI (`gh`). **Host authentication is not automatically shared**.
-
-- On some hosts (e.g. macOS), `gh auth login` stores tokens in the system keychain, not in `~/.config/gh/hosts.yml`.
-- The Dev Containers extension provides official support for sharing **Git** credentials (HTTPS credential helper / SSH agent), but this does not automatically authenticate `gh` for API operations.
-
-**First-time setup (inside DevContainer):**
+Install aqua following the [official installation guide](https://aquaproj.github.io/docs/tutorial-basics/installation):
 
 ```bash
-gh auth login
-gh auth status
+# macOS (Homebrew)
+brew install aquaproj/aqua/aqua
+
+# Or using the installer script
+curl -sSfL https://raw.githubusercontent.com/aquaproj/aqua-installer/v4.0.0/aqua-installer | bash
 ```
 
+#### 2. Install development tools via aqua
+
+This project uses aqua to manage tool versions, ensuring consistency between local development and CI environments.
+
 ```bash
-# Inside DevContainer (integrated terminal):
+# Install all tools defined in aqua.yaml
+aqua install
+
+# Verify tools are available
+go version
+oapi-codegen --version
+golangci-lint --version
+gh --version
+```
+
+**Note:** After installing aqua, tools are installed to `~/.local/share/aquaproj-aqua/bin` by default. Make sure this directory is in your PATH, or use `aqua exec` to run commands.
+
+#### 3. Start PostgreSQL with Docker Compose
+
+Start PostgreSQL and other services:
+
+```bash
+# Start PostgreSQL (and API service for smoke-testing)
+docker compose up -d postgres
+
+# Verify PostgreSQL is running
+docker compose ps
+```
+
+PostgreSQL connection details:
+- Host: `localhost`
+- Port: `5432` (configurable via `POSTGRES_PORT` environment variable)
+- User: `optel` (configurable via `POSTGRES_USER`)
+- Password: `optel` (configurable via `POSTGRES_PASSWORD`)
+- Database: `optel_training` (configurable via `POSTGRES_DB`)
+
+### 4. Development Workflow
+
+```bash
 cd api
+
+# Install dependencies
+make deps
 
 # Generate OpenAPI code
 make generate
@@ -53,11 +82,11 @@ make run
 curl http://localhost:8080/api/v1/workouts
 ```
 
-All `make` commands (generate, lint, test, run, build) work natively inside the DevContainer since all tools are on PATH.
+All `make` commands (generate, lint, test, run, build) work natively on your host machine using tools managed by aqua.
 
-### Docker Compose (Smoke-Testing)
+### Docker Compose Services
 
-Docker Compose is used for **production-like local smoke-testing**, not for iterative development. See the "Docker Compose" section below for details.
+Docker Compose provides PostgreSQL for local development and the API service for smoke-testing. See the "Docker Compose" section below for details.
 
 ## Development Phases
 
@@ -216,11 +245,10 @@ paths:
 
 **Action:**
 ```bash
-# Open repository in VS Code/Cursor and reopen in DevContainer
-# Inside DevContainer, navigate to api directory
+# Navigate to api directory
 cd api
 
-# Generate code (runs natively in DevContainer)
+# Generate code (runs natively on host with aqua-managed tools)
 make generate
 
 # Create minimal handler that returns empty array
@@ -658,47 +686,60 @@ All tests must be table-driven. See `.claude/skills/optel-go-standards/reference
 
 ## Docker
 
-### Development vs Production Containers
-
-**Important:** Development uses **DevContainer** (for iterative development) and **Docker Compose** (for smoke-testing). Production uses a single **`api/Dockerfile`** (for distribution).
-
-| Aspect | DevContainer (Development) | Production (`api/Dockerfile`) |
-|--------|---------------------------|-------------------------------|
-| Purpose | Iterative local development | Production deployment |
-| Base Image | `mcr.microsoft.com/devcontainers/go:1.25` | `gcr.io/distroless/static-debian11:nonroot` |
-| Size | Larger (includes Go compiler, tools) | Minimal (binary only, no shell, no package manager) |
-| Tools | oapi-codegen, golangci-lint, make | None (distroless has no shell) |
-| User | root (for development) | nonroot (65532:65532, provided by distroless) |
-| Security | Standard (development tools) | High (minimal attack surface, no shell) |
-| Volumes | Workspace mounted for live editing | No volumes |
-| Build | DevContainer image (managed by VS Code/Cursor) | Multi-stage build (Ubuntu builder + distroless runtime) |
-| Use Case | VS Code/Cursor DevContainer workflow | CI/CD, Kubernetes, production, Docker Compose smoke-testing |
-
 ### Development Environment
 
-The development environment uses **DevContainer** for iterative development. All Go tools (Go compiler, oapi-codegen, golangci-lint) are automatically available inside the DevContainer.
+The development environment uses **aqua** for tool version management and **Docker Compose** for PostgreSQL and smoke-testing.
 
 **Benefits:**
-- No local Go installation required
-- Consistent development environment across machines
-- Integrated with VS Code/Cursor (IntelliSense, debugging, terminal)
-- Isolated from system dependencies
-- Easy to reset or recreate
+- Consistent tool versions across local development and CI
+- No need to manually install Go, oapi-codegen, golangci-lint, etc.
+- Tools are version-controlled in `aqua.yaml`
+- PostgreSQL runs in Docker Compose for easy setup and cleanup
 
 **Workflow:**
-1. Open repository in VS Code/Cursor
-2. Reopen in DevContainer when prompted
-3. Run commands natively: `make generate`, `make lint`, `make test`, `make run`
-4. All commands execute inside the DevContainer with tools on PATH
-5. Code changes are reflected immediately (workspace is mounted)
+1. Install aqua (see Prerequisites above)
+2. Run `aqua install` to install all development tools
+3. Start PostgreSQL: `docker compose up -d postgres`
+4. Run development commands on host: `make generate`, `make lint`, `make test`, `make run`
+5. All commands use aqua-managed tools with versions matching CI
 
 **Files:**
-- `.devcontainer/devcontainer.json` - DevContainer configuration
-- `docker-compose.yml` - Production-like smoke-testing (not for iterative development)
+- `aqua.yaml` - Tool version definitions (shared with CI)
+- `docker-compose.yml` - PostgreSQL and API services
 
-### Docker Compose (Smoke-Testing)
+### Docker Compose Services
 
-Docker Compose is used for **production-like local smoke-testing**, not for iterative development.
+Docker Compose provides two services:
+
+#### PostgreSQL (Development Database)
+
+**Configuration:**
+- Service name: `postgres`
+- Image: `postgres:17`
+- Default port: `5432` (configurable via `POSTGRES_PORT`)
+- Environment variables:
+  - `POSTGRES_USER` (default: `optel`)
+  - `POSTGRES_PASSWORD` (default: `optel`)
+  - `POSTGRES_DB` (default: `optel_training`)
+- Volume: `postgres_data` (persistent data storage)
+
+**Usage:**
+
+```bash
+# Start PostgreSQL
+docker compose up -d postgres
+
+# View logs
+docker compose logs -f postgres
+
+# Stop PostgreSQL
+docker compose stop postgres
+
+# Remove PostgreSQL and data (WARNING: deletes all data)
+docker compose down -v postgres
+```
+
+#### API Service (Smoke-Testing)
 
 **Configuration:**
 - Service name: `api`
@@ -713,25 +754,27 @@ Docker Compose is used for **production-like local smoke-testing**, not for iter
 
 ```bash
 # Start the API service
-docker compose up -d
+docker compose up -d api
 
 # View logs
-docker compose logs -f
+docker compose logs -f api
 
 # Test the API
 curl http://localhost:8080/api/v1/workouts
 
 # Stop the service
-docker compose down
+docker compose down api
 
 # Custom port (if 8080 is in use)
-HOST_PORT=8081 docker compose up -d
+HOST_PORT=8081 docker compose up -d api
 ```
 
 **Important Notes:**
-- This is for smoke-testing the production container build. For iterative development, use DevContainer instead.
-- **Do not run development commands** (generate, lint, test, etc.) inside the docker-compose container. These commands should be run in DevContainer or locally with tools installed.
-- The production container uses a distroless image with no shell, so interactive debugging is not possible. Use `docker compose logs -f` to view logs.
+- The API service is for **smoke-testing** the production container build
+- **Do not run development commands** (generate, lint, test, etc.) inside the docker-compose container
+- Development commands should be run on the host using aqua-managed tools
+- The production container uses a distroless image with no shell, so interactive debugging is not possible
+- Use `docker compose logs -f` to view logs
 
 ### Building Production Image
 
@@ -795,24 +838,31 @@ docker rm optel-test
 
 ### Common Issues
 
-**DevContainer not starting:**
-- Check Docker Desktop/Engine is running
-- Ensure Dev Containers extension is installed in VS Code/Cursor
-- Rebuild DevContainer from Command Palette: `Dev Containers: Rebuild Container`
+**aqua tools not found:**
+- Ensure aqua is installed: `aqua --version`
+- Run `aqua install` to install all tools
+- Add `~/.local/share/aquaproj-aqua/bin` to your PATH, or use `aqua exec <command>`
+- On macOS/Linux, add to `~/.bashrc` or `~/.zshrc`: `export PATH="$HOME/.local/share/aquaproj-aqua/bin:$PATH"`
 
 **Permission errors:**
 - Ensure Docker has proper permissions
-- On Linux, you may need to add your user to the docker group
+- On Linux, you may need to add your user to the docker group: `sudo usermod -aG docker $USER`
 
-**oapi-codegen or golangci-lint not found (in DevContainer):**
-- These tools are installed via post-create hook in DevContainer
-- If you see "command not found", restart the terminal or run: `source ~/.bashrc`
-- Rebuild DevContainer if tools are missing: `Dev Containers: Rebuild Container`
+**PostgreSQL connection errors:**
+- Verify PostgreSQL is running: `docker compose ps`
+- Check connection details match environment variables
+- View PostgreSQL logs: `docker compose logs postgres`
+
+**oapi-codegen or golangci-lint not found:**
+- These tools are managed by aqua
+- Run `aqua install` to install them
+- Verify installation: `aqua list`
+- Ensure aqua bin directory is in PATH
 
 **golangci-lint errors:**
 - Review `.golangci.yml` for enabled linters
 - Fix issues or add exclusions if false positives
-- Run linter inside container: `make lint`
+- Run linter: `make lint` (uses aqua-managed golangci-lint)
 
 **Generated code conflicts:**
 - Always run `make generate` after changing OpenAPI spec
@@ -820,5 +870,5 @@ docker rm optel-test
 - If generation fails, check OpenAPI spec syntax
 
 **Port 8080 already in use:**
-- Change port in `docker-compose.yml` or stop the conflicting service
-- Update `ports` mapping: `"8080:8080"` → `"8081:8080"`
+- Change port via `HOST_PORT` environment variable: `HOST_PORT=8081 docker compose up -d api`
+- Or stop the conflicting service
