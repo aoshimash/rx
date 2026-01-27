@@ -6,6 +6,7 @@ on:
     paths: &api-ci-paths
       - 'api/**'
       - '.github/workflows/api-ci.yml'
+      - 'aqua.yaml'
   pull_request:
     branches: [main]
     paths: *api-ci-paths
@@ -25,7 +26,12 @@ jobs:
           aqua_version: v2.45.0
 
       - name: Install tools via aqua
-        run: aqua install
+        run: |
+          if [ ! -f aqua.yaml ]; then
+            echo "Error: aqua.yaml not found"
+            exit 1
+          fi
+          aqua install
 
       - name: Add aqua bin to PATH
         run: echo "$HOME/.local/share/aquaproj-aqua/bin" >> $GITHUB_PATH
