@@ -29,7 +29,7 @@ test: deps
 test-coverage: deps
 	@set +e; \
 	go test -v -race -coverprofile=coverage.out ./... 2>&1 | grep -v "no such tool \"covdata\"" || true; \
-	test_exit=$$?; \
+	test_exit=$${PIPESTATUS[0]}; \
 	if [ -f coverage.out ]; then \
 		go tool cover -func=coverage.out || true; \
 	fi; \
