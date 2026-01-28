@@ -25,6 +25,14 @@ jobs:
         with:
           aqua_version: v2.45.0
 
+      - name: Cache aqua tools
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/aquaproj-aqua
+          key: ${{ runner.os }}-aqua-${{ hashFiles('aqua.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-aqua-
+
       - name: Install tools via aqua
         run: |
           if [ ! -f aqua.yaml ]; then
@@ -36,13 +44,19 @@ jobs:
       - name: Add aqua bin to PATH
         run: echo "$HOME/.local/share/aquaproj-aqua/bin" >> $GITHUB_PATH
 
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('api/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
       - name: Run Makefile targets
         working-directory: api
         run: |
           make deps
           make generate
-          # Run go mod tidy after generate in case generated code adds new dependencies
-          go mod tidy
           make format
           make lint
           make test-coverage
