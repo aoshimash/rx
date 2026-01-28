@@ -1,6 +1,9 @@
 SHELL := /bin/bash
 .PHONY: generate format lint test test-coverage run build clean docker-up docker-down docker-build-prod deps check
 
+# Use bash for PIPESTATUS support (bash-specific feature)
+SHELL := /bin/bash
+
 # Native commands (tools must be on PATH; DevContainer provides them automatically)
 # These commands work when tools are installed locally or via DevContainer
 
