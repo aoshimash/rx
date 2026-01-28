@@ -39,7 +39,6 @@ test-coverage: deps
 
 deps:
 	go mod download
-	go mod tidy
 	# Build covdata tool for Go 1.25+ (not included as prebuilt binary)
 	# This ensures the tool is available in both local and CI environments
 	@go tool covdata 2>&1 | head -1 > /dev/null || go install -a cmd/covdata || true
