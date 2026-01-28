@@ -1,4 +1,4 @@
-.PHONY: generate format lint test test-coverage run build clean docker-up docker-down docker-build-prod deps
+.PHONY: generate format lint test test-coverage run build clean docker-up docker-down docker-build-prod deps check
 
 # Native commands (tools must be on PATH; DevContainer provides them automatically)
 # These commands work when tools are installed locally or via DevContainer
@@ -53,6 +53,11 @@ build:
 clean:
 	rm -rf bin/
 	rm -f coverage.out
+
+# Pre-commit check: Run format, lint, and tests
+# This is used by the pre-commit hook and can be run manually
+check: format lint test
+	@echo "✅ All checks passed!"
 
 # Docker Compose management (for smoke-testing, not iterative development)
 # Use 'docker compose' (space) instead of 'docker-compose' (hyphen) for compatibility

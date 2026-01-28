@@ -84,6 +84,41 @@ curl http://localhost:8080/api/v1/workouts
 
 All `make` commands (generate, lint, test, run, build) work natively on your host machine using tools managed by aqua.
 
+#### 4. Setup Pre-commit Hooks
+
+This repository uses pre-commit hooks to enforce code quality checks before commits. The hooks automatically run format, lint, and test checks.
+
+**Setup:**
+
+```bash
+# Run the setup script from repository root
+./scripts/setup-githooks.sh
+```
+
+This script:
+- Configures Git to use hooks from `githooks/` directory
+- Creates symlinks for all hooks
+- Ensures hooks are executable
+
+**What the pre-commit hook does:**
+
+Before each commit, the hook automatically runs:
+1. `make format` - Checks code formatting
+2. `make lint` - Runs linter
+3. `make test` - Runs tests with race detection
+
+If any check fails, the commit is aborted. Fix the errors and try again.
+
+**Manual check before committing:**
+
+You can manually run all checks:
+```bash
+cd api
+make check  # Runs format + lint + test
+```
+
+**Note:** The pre-commit hook is enforced for all commits, including AI agent commits. Do not use `git commit --no-verify` to skip hooks.
+
 ### Docker Compose Services
 
 Docker Compose provides PostgreSQL for local development and the API service for smoke-testing. See the "Docker Compose" section below for details.
@@ -582,11 +617,11 @@ make validate-openapi
 make generate
 
 # 4. Run checks
-make lint
-make test
+make check  # Runs format + lint + test
 make check-sync  # Ensure domain model and OpenAPI spec are in sync
 
 # 5. Commit with conventional commit message
+# Pre-commit hook will automatically run format, lint, and test
 git commit -m "feat(api): add workout filtering by date range"
 ```
 
@@ -595,7 +630,7 @@ git commit -m "feat(api): add workout filtering by date range"
 ```makefile
 # api/Makefile
 
-.PHONY: generate lint test run build clean validate-openapi check-sync
+.PHONY: generate lint test run build clean validate-openapi check-sync check
 
 generate:
 	oapi-codegen -generate types,chi-server -package openapi \
@@ -606,6 +641,10 @@ lint:
 
 test:
 	go test -v -race ./...
+
+check:
+	make format lint test
+	@echo "✅ All checks passed!"
 
 run:
 	go run cmd/server/main.go
