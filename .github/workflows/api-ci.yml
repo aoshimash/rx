@@ -32,7 +32,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.local/share/aquaproj-aqua
-          key: ${{ runner.os }}-aqua-v2.45.0-${{ hashFiles('aqua.yaml') }}
+          key: ${{ runner.os }}-aqua-v2.45.0-${{ hashFiles('aqua.yaml', '.github/workflows/api-ci.yml') }}
           restore-keys: |
             ${{ runner.os }}-aqua-v2.45.0-
             ${{ runner.os }}-aqua-
