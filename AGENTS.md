@@ -116,3 +116,42 @@ If `required_permissions: ["all"]` doesn't trigger a confirmation prompt:
 4. **Alternative:**
    - AI agent will ask for explicit confirmation before running commands
    - You can approve by responding "yes" or "proceed"
+
+## Pre-commit Hook Enforcement
+
+**CRITICAL**: AI agents **MUST NOT** use `git commit --no-verify` to skip pre-commit hooks.
+
+### Pre-commit Checks
+
+Before committing, the following checks are automatically executed:
+1. Code formatting (`make format`)
+2. Linting (`make lint`)
+3. Tests (`make test` with race detection)
+
+### AI Agent Commit Workflow
+
+1. **Before committing**: Ensure all checks pass locally
+   ```bash
+   cd api
+   make check  # Runs format + lint + test
+   ```
+
+2. **If checks fail**: Fix errors before committing
+   - Format errors: Run `go fmt ./...`
+   - Lint errors: Fix according to golangci-lint output
+   - Test failures: Fix failing tests
+
+3. **Commit**: Use standard `git commit` (pre-commit hook will run automatically)
+   - ❌ **DO NOT** use `git commit --no-verify`
+   - ✅ Use `git commit -m "message"` (hook runs automatically)
+
+4. **If hook fails**: The commit will be aborted. Fix errors and try again.
+
+### Setup
+
+Run the setup script to install pre-commit hooks:
+```bash
+./scripts/setup-githooks.sh
+```
+
+This configures Git to use hooks from `githooks/` directory, ensuring all developers (including AI agents) run the same checks.
