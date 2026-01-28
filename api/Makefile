@@ -1,3 +1,4 @@
+SHELL := /bin/bash
 .PHONY: generate format lint test test-coverage run build clean docker-up docker-down docker-build-prod deps check
 
 # Native commands (tools must be on PATH; DevContainer provides them automatically)
