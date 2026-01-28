@@ -56,7 +56,6 @@ jobs:
           fail_ci_if_error: false
 
       - name: Check for uncommitted changes
-        working-directory: api
         run: |
           if [ -n "$(git status --porcelain)" ]; then
             echo "Error: Uncommitted changes detected"
