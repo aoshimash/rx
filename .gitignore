@@ -43,4 +43,5 @@ codecov.SHA256SUM
 codecov.SHA256SUM.sig
 
 # Generated code
-**/pkg/openapi/*.gen.go
+# Note: OpenAPI generated code (pkg/openapi/*.gen.go) is committed to the repository
+# to ensure CI passes and to allow code review of generated code
