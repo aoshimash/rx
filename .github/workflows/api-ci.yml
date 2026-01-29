@@ -53,6 +53,27 @@ jobs:
       - name: Add aqua bin to PATH
         run: echo "$HOME/.local/share/aquaproj-aqua/bin" >> $GITHUB_PATH
 
+      - name: Start MinIO container
+        run: |
+          docker run -d --name minio \
+            -p 9000:9000 \
+            -e MINIO_ROOT_USER=minioadmin \
+            -e MINIO_ROOT_PASSWORD=minioadmin \
+            minio/minio:latest server /data
+          
+          echo "Waiting for MinIO to be ready..."
+          for i in {1..30}; do
+            if curl -f http://localhost:9000/minio/health/ready 2>/dev/null; then
+              echo "MinIO is ready!"
+              exit 0
+            fi
+            echo "Waiting for MinIO... ($i/30)"
+            sleep 2
+          done
+          echo "MinIO failed to become ready"
+          docker logs minio
+          exit 1
+
       - name: Run Makefile targets
         working-directory: api
         run: |
@@ -61,6 +82,14 @@ jobs:
           make format
           make lint
           make test-coverage
+
+      - name: Run integration tests
+        working-directory: api
+        env:
+          MINIO_ENDPOINT: http://localhost:9000
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+        run: make test-integration
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5

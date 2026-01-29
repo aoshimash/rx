@@ -1,4 +1,4 @@
-.PHONY: generate format lint test test-coverage run build clean docker-up docker-down docker-build-prod deps check
+.PHONY: generate format lint test test-coverage test-integration test-all run build clean docker-up docker-down docker-build-prod deps check
 
 # Native commands (tools must be on PATH; DevContainer provides them automatically)
 # These commands work when tools are installed locally or via DevContainer
@@ -25,6 +25,20 @@ lint: deps
 
 test: deps
 	go test -v -race ./...
+
+# Integration tests (requires MinIO via docker-compose)
+# Run integration tests using build tags
+# Usage: make test-integration
+# Prerequisite: docker compose up -d minio
+test-integration: deps
+	go test -v -tags=integration ./...
+
+# Run all tests (unit + integration)
+# This runs unit tests first, then integration tests
+# Useful for comprehensive local testing before pushing
+test-all: deps
+	go test -v -race ./...
+	go test -v -tags=integration ./...
 
 test-coverage: deps
 	@set +e; \
