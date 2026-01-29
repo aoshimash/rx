@@ -16,18 +16,6 @@ jobs:
     name: API - Format, Lint and Test
     runs-on: ubuntu-24.04
     
-    # MinIO service for integration tests
-    services:
-      minio:
-        image: minio/minio:latest
-        env:
-          MINIO_ROOT_USER: minioadmin
-          MINIO_ROOT_PASSWORD: minioadmin
-        ports:
-          - 9000:9000
-        # Note: Health check is handled by "Wait for MinIO to be ready" step
-        # using curl, since minio/minio image doesn't include mc client
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
@@ -65,8 +53,14 @@ jobs:
       - name: Add aqua bin to PATH
         run: echo "$HOME/.local/share/aquaproj-aqua/bin" >> $GITHUB_PATH
 
-      - name: Wait for MinIO to be ready
+      - name: Start MinIO container
         run: |
+          docker run -d --name minio \
+            -p 9000:9000 \
+            -e MINIO_ROOT_USER=minioadmin \
+            -e MINIO_ROOT_PASSWORD=minioadmin \
+            minio/minio:latest server /data
+          
           echo "Waiting for MinIO to be ready..."
           for i in {1..30}; do
             if curl -f http://localhost:9000/minio/health/ready 2>/dev/null; then
@@ -77,6 +71,7 @@ jobs:
             sleep 2
           done
           echo "MinIO failed to become ready"
+          docker logs minio
           exit 1
 
       - name: Run Makefile targets
