@@ -304,7 +304,6 @@ func (r *programRepository) List(ctx context.Context, limit int, after string) (
 	defer rows.Close()
 
 	programs := make([]*domain.Program, 0, limit)
-	var lastID uuid.UUID
 
 	for rows.Next() {
 		var program domain.Program
@@ -320,7 +319,6 @@ func (r *programRepository) List(ctx context.Context, limit int, after string) (
 		}
 
 		programs = append(programs, &program)
-		lastID = program.ID
 	}
 
 	if err := rows.Err(); err != nil {
@@ -334,7 +332,8 @@ func (r *programRepository) List(ctx context.Context, limit int, after string) (
 
 	var nextCursor string
 	if hasMore && len(programs) > 0 {
-		nextCursor = encodeCursor(lastID)
+		// Use the last item in the returned set, not the extra item
+		nextCursor = encodeCursor(programs[len(programs)-1].ID)
 	}
 
 	return programs, nextCursor, hasMore, nil

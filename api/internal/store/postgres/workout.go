@@ -366,7 +366,6 @@ func (r *workoutRepository) listWithFilter(ctx context.Context, timestampFrom, t
 	defer rows.Close()
 
 	workouts := make([]*domain.Workout, 0, limit)
-	var lastID uuid.UUID
 
 	for rows.Next() {
 		var workout domain.Workout
@@ -397,7 +396,6 @@ func (r *workoutRepository) listWithFilter(ctx context.Context, timestampFrom, t
 		workout.Entries = entries
 
 		workouts = append(workouts, &workout)
-		lastID = workout.ID
 	}
 
 	if err := rows.Err(); err != nil {
@@ -411,7 +409,8 @@ func (r *workoutRepository) listWithFilter(ctx context.Context, timestampFrom, t
 
 	var nextCursor string
 	if hasMore && len(workouts) > 0 {
-		nextCursor = encodeCursor(lastID)
+		// Use the last item in the returned set, not the extra item
+		nextCursor = encodeCursor(workouts[len(workouts)-1].ID)
 	}
 
 	return workouts, nextCursor, hasMore, nil

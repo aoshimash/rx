@@ -152,7 +152,6 @@ func (r *exerciseRepository) List(ctx context.Context, limit int, after string) 
 	defer rows.Close()
 
 	exercises := make([]*domain.Exercise, 0, limit)
-	var lastID uuid.UUID
 
 	for rows.Next() {
 		var exercise domain.Exercise
@@ -171,7 +170,6 @@ func (r *exerciseRepository) List(ctx context.Context, limit int, after string) 
 		}
 
 		exercises = append(exercises, &exercise)
-		lastID = exercise.ID
 	}
 
 	if err := rows.Err(); err != nil {
@@ -185,7 +183,8 @@ func (r *exerciseRepository) List(ctx context.Context, limit int, after string) 
 
 	var nextCursor string
 	if hasMore && len(exercises) > 0 {
-		nextCursor = encodeCursor(lastID)
+		// Use the last item in the returned set, not the extra item
+		nextCursor = encodeCursor(exercises[len(exercises)-1].ID)
 	}
 
 	return exercises, nextCursor, hasMore, nil

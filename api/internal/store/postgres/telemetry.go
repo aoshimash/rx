@@ -167,7 +167,6 @@ func (r *telemetryRepository) listWithFilter(ctx context.Context, metricName str
 	defer rows.Close()
 
 	points := make([]*domain.TelemetryPoint, 0, limit)
-	var lastID uuid.UUID
 
 	for rows.Next() {
 		var point domain.TelemetryPoint
@@ -185,7 +184,6 @@ func (r *telemetryRepository) listWithFilter(ctx context.Context, metricName str
 		}
 
 		points = append(points, &point)
-		lastID = point.ID
 	}
 
 	if err := rows.Err(); err != nil {
@@ -199,7 +197,8 @@ func (r *telemetryRepository) listWithFilter(ctx context.Context, metricName str
 
 	var nextCursor string
 	if hasMore && len(points) > 0 {
-		nextCursor = encodeCursor(lastID)
+		// Use the last item in the returned set, not the extra item
+		nextCursor = encodeCursor(points[len(points)-1].ID)
 	}
 
 	return points, nextCursor, hasMore, nil
