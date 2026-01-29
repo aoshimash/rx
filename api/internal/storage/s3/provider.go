@@ -139,7 +139,8 @@ func (p *Provider) GenerateUploadURL(ctx context.Context, req storage.UploadURLR
 
 	// Generate object key
 	ext := filepath.Ext(req.Filename)
-	if ext == "" {
+	// filepath.Ext("video.") returns ".", which would produce invalid key "uuid."; treat as default
+	if ext == "" || ext == "." {
 		ext = ".mp4" // default extension
 	}
 	objectKey := fmt.Sprintf("videos/%s/%s%s", normalizedUserID, uuid.New().String(), ext)
