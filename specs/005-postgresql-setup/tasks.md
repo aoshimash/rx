@@ -125,10 +125,10 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T035 [P] Add .env.example with database configuration examples
-- [ ] T036 [P] Update api/README.md with PostgreSQL setup instructions
-- [ ] T037 Run quickstart.md validation (verify all steps work)
-- [ ] T038 Verify all acceptance scenarios from spec.md pass
+- [x] T035 [P] Add .env.example with database configuration examples
+- [x] T036 [P] Update api/README.md with PostgreSQL setup instructions
+- [x] T037 Run quickstart.md validation (verify all steps work)
+- [x] T038 Verify all acceptance scenarios from spec.md pass
 
 ---
 

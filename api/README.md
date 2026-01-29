@@ -352,7 +352,20 @@ Configure via `AUTH_PROVIDER` environment variable.
 
 ### Storage
 
-Currently uses in-memory storage. Repository pattern enables seamless migration to PostgreSQL in the future.
+The API supports two storage backends:
+
+- **PostgreSQL** (default): Persistent storage using PostgreSQL 17
+- **Memory**: In-memory storage for quick testing (data lost on restart)
+
+Configure via `STORAGE_TYPE` environment variable (`postgres` or `memory`).
+
+**PostgreSQL Setup:**
+
+1. Start PostgreSQL: `docker compose up -d postgres` (from repository root)
+2. Run migrations: `cd api && make migrate`
+3. Start server: `STORAGE_TYPE=postgres make run`
+
+See `specs/005-postgresql-setup/quickstart.md` for detailed setup instructions.
 
 ## OpenAPI Specification
 
