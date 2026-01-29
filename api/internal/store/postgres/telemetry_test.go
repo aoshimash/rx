@@ -10,6 +10,7 @@ import (
 )
 
 func TestTelemetryPointRepository_Create(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool, cleanup, err := setupTestDB(ctx)
 	if err != nil {
@@ -40,6 +41,7 @@ func TestTelemetryPointRepository_Create(t *testing.T) {
 }
 
 func TestTelemetryPointRepository_GetByID(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool, cleanup, err := setupTestDB(ctx)
 	if err != nil {
@@ -72,6 +74,7 @@ func TestTelemetryPointRepository_GetByID(t *testing.T) {
 }
 
 func TestTelemetryPointRepository_Update(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool, cleanup, err := setupTestDB(ctx)
 	if err != nil {
@@ -106,6 +109,7 @@ func TestTelemetryPointRepository_Update(t *testing.T) {
 }
 
 func TestTelemetryPointRepository_Delete(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool, cleanup, err := setupTestDB(ctx)
 	if err != nil {
@@ -136,6 +140,7 @@ func TestTelemetryPointRepository_Delete(t *testing.T) {
 }
 
 func TestTelemetryPointRepository_List(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool, cleanup, err := setupTestDB(ctx)
 	if err != nil {
@@ -172,6 +177,7 @@ func TestTelemetryPointRepository_List(t *testing.T) {
 }
 
 func TestTelemetryPointRepository_ListByMetricAndTimeRange(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool, cleanup, err := setupTestDB(ctx)
 	if err != nil {

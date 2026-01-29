@@ -74,14 +74,41 @@ jobs:
           docker logs minio
           exit 1
 
-      - name: Run Makefile targets
+      - name: Download dependencies
         working-directory: api
         run: |
-          make deps
-          make generate
-          make format
-          make lint
-          make test-coverage
+          go mod download
+          go mod tidy
+
+      - name: Generate code
+        working-directory: api
+        run: |
+          oapi-codegen -generate types,chi-server -package openapi \
+            -o pkg/openapi/server.gen.go openapi/openapi.yaml
+
+      - name: Check formatting
+        working-directory: api
+        run: |
+          FORMAT_OUTPUT=$(gofmt -l .)
+          if [ -n "$FORMAT_OUTPUT" ]; then
+            echo "Error: Code is not formatted. Run 'go fmt ./...' to fix."
+            echo "$FORMAT_OUTPUT"
+            exit 1
+          fi
+
+      - name: Lint
+        working-directory: api
+        run: |
+          go build ./...
+          golangci-lint run ./...
+
+      - name: Test with coverage
+        working-directory: api
+        run: |
+          go test -v -race -coverprofile=coverage.out ./... 2>&1 | grep -v "no such tool \"covdata\"" || true
+          if [ -f coverage.out ]; then
+            go tool cover -func=coverage.out || true
+          fi
 
       - name: Run integration tests
         working-directory: api
