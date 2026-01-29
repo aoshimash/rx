@@ -16,6 +16,24 @@ jobs:
     name: API - Format, Lint and Test
     runs-on: ubuntu-24.04
     
+    # MinIO service for integration tests
+    services:
+      minio:
+        image: minio/minio:latest
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+        ports:
+          - 9000:9000
+        options: >-
+          --health-cmd "mc ready local"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+        # Start MinIO server
+        # Note: GitHub Actions services don't support 'command' field directly,
+        # so we use the default command from the image which is 'server /data'
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
@@ -53,6 +71,20 @@ jobs:
       - name: Add aqua bin to PATH
         run: echo "$HOME/.local/share/aquaproj-aqua/bin" >> $GITHUB_PATH
 
+      - name: Wait for MinIO to be ready
+        run: |
+          echo "Waiting for MinIO to be ready..."
+          for i in {1..30}; do
+            if curl -f http://localhost:9000/minio/health/ready 2>/dev/null; then
+              echo "MinIO is ready!"
+              exit 0
+            fi
+            echo "Waiting for MinIO... ($i/30)"
+            sleep 2
+          done
+          echo "MinIO failed to become ready"
+          exit 1
+
       - name: Run Makefile targets
         working-directory: api
         run: |
@@ -61,6 +93,14 @@ jobs:
           make format
           make lint
           make test-coverage
+
+      - name: Run integration tests
+        working-directory: api
+        env:
+          MINIO_ENDPOINT: http://localhost:9000
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+        run: make test-integration
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5

@@ -96,11 +96,11 @@
 
 ### Implementation for User Story 3
 
-- [ ] T024 [US3] Add MinIO service container configuration to `.github/workflows/api-ci.yml`
-- [ ] T025 [US3] Add MinIO environment variables (MINIO_ROOT_USER, MINIO_ROOT_PASSWORD) to CI workflow
-- [ ] T026 [US3] Add health check wait step for MinIO service in CI workflow
-- [ ] T027 [US3] Add integration test step `make test-integration` to CI workflow after unit tests
-- [ ] T028 [US3] Update CI workflow paths trigger to include new integration test files
+- [x] T024 [US3] Add MinIO service container configuration to `.github/workflows/api-ci.yml`
+- [x] T025 [US3] Add MinIO environment variables (MINIO_ROOT_USER, MINIO_ROOT_PASSWORD) to CI workflow
+- [x] T026 [US3] Add health check wait step for MinIO service in CI workflow
+- [x] T027 [US3] Add integration test step `make test-integration` to CI workflow after unit tests
+- [x] T028 [US3] Update CI workflow paths trigger to include new integration test files
 
 **Checkpoint**: CI pipeline runs integration tests on PRs. All user stories complete.
 
