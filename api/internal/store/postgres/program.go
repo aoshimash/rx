@@ -143,7 +143,18 @@ func (r *programRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.
 		return nil, err
 	}
 
-	// Get all program nodes
+	// Load root nodes for the program
+	rootNodes, err := r.getNodesForProgram(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	program.RootNodes = rootNodes
+
+	return &program, nil
+}
+
+// getNodesForProgram loads and builds the tree structure of nodes for a program
+func (r *programRepository) getNodesForProgram(ctx context.Context, programID uuid.UUID) ([]domain.ProgramNode, error) {
 	nodesQuery := `
 		SELECT id, program_id, parent_id, name, node_type, "order",
 		       exercise_id, target_sets, target_reps, target_rpe,
@@ -153,9 +164,9 @@ func (r *programRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.
 		ORDER BY "order" ASC
 	`
 
-	rows, err := r.pool.Query(ctx, nodesQuery, id)
+	rows, err := r.pool.Query(ctx, nodesQuery, programID)
 	if err != nil {
-		slog.Error("Failed to get program nodes", "id", id, "error", err)
+		slog.Error("Failed to get program nodes", "programID", programID, "error", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -215,12 +226,12 @@ func (r *programRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.
 	}
 
 	// Build root nodes with full tree structure
-	program.RootNodes = make([]domain.ProgramNode, 0, len(rootNodeIDs))
+	rootNodes := make([]domain.ProgramNode, 0, len(rootNodeIDs))
 	for _, rootID := range rootNodeIDs {
-		program.RootNodes = append(program.RootNodes, buildNode(rootID))
+		rootNodes = append(rootNodes, buildNode(rootID))
 	}
 
-	return &program, nil
+	return rootNodes, nil
 }
 
 func (r *programRepository) Update(ctx context.Context, program *domain.Program) error {
@@ -335,6 +346,15 @@ func (r *programRepository) List(ctx context.Context, limit int, after string) (
 	hasMore := len(programs) > limit
 	if hasMore {
 		programs = programs[:limit]
+	}
+
+	// Load RootNodes for each program (consistent with memory store behavior)
+	for _, program := range programs {
+		rootNodes, err := r.getNodesForProgram(ctx, program.ID)
+		if err != nil {
+			return nil, "", false, err
+		}
+		program.RootNodes = rootNodes
 	}
 
 	var nextCursor string

@@ -221,6 +221,80 @@ func TestProgramRepository_List(t *testing.T) {
 	}
 }
 
+func TestProgramRepository_List_WithRootNodes(t *testing.T) {
+	ctx := context.Background()
+	pool, cleanup, err := setupTestDB(ctx)
+	if err != nil {
+		t.Fatalf("Failed to setup test database: %v", err)
+	}
+	defer cleanup()
+
+	repo := NewProgramRepository(pool)
+
+	// Create a program with nodes
+	programWithNodes := &domain.Program{
+		Name: "Program With Nodes",
+		RootNodes: []domain.ProgramNode{
+			{
+				Name:     "Day 1",
+				NodeType: "day",
+				Order:    0,
+				Children: []domain.ProgramNode{
+					{
+						Name:     "Exercise 1",
+						NodeType: "exercise",
+						Order:    0,
+					},
+				},
+			},
+		},
+	}
+	if err := repo.Create(ctx, programWithNodes); err != nil {
+		t.Fatalf("Failed to create program with nodes: %v", err)
+	}
+
+	// Create a program without nodes
+	programWithoutNodes := &domain.Program{
+		Name: "Program Without Nodes",
+	}
+	if err := repo.Create(ctx, programWithoutNodes); err != nil {
+		t.Fatalf("Failed to create program without nodes: %v", err)
+	}
+
+	// List programs
+	programs, _, _, err := repo.List(ctx, 10, "")
+	if err != nil {
+		t.Fatalf("List() error = %v", err)
+	}
+
+	if len(programs) != 2 {
+		t.Fatalf("List() returned %d programs, want 2", len(programs))
+	}
+
+	// Find program with nodes and verify RootNodes are loaded
+	var foundProgramWithNodes *domain.Program
+	for _, p := range programs {
+		if p.Name == "Program With Nodes" {
+			foundProgramWithNodes = p
+			break
+		}
+	}
+
+	if foundProgramWithNodes == nil {
+		t.Fatal("Program With Nodes not found in list")
+	}
+
+	// Verify RootNodes are loaded (consistent with memory store behavior)
+	if len(foundProgramWithNodes.RootNodes) != 1 {
+		t.Errorf("List() should load RootNodes, got %d, want 1", len(foundProgramWithNodes.RootNodes))
+	}
+
+	// Verify nested children are also loaded
+	if len(foundProgramWithNodes.RootNodes) > 0 && len(foundProgramWithNodes.RootNodes[0].Children) != 1 {
+		t.Errorf("List() should load nested children, got %d, want 1", len(foundProgramWithNodes.RootNodes[0].Children))
+	}
+}
+
 func TestProgramRepository_GetByID_NestedTree(t *testing.T) {
 	ctx := context.Background()
 	pool, cleanup, err := setupTestDB(ctx)
