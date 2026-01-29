@@ -55,28 +55,28 @@
 
 ### Migration Files for User Story 1
 
-- [ ] T009 [P] [US1] Create exercises table migration in api/migrations/000001_create_exercises.up.sql
-- [ ] T010 [P] [US1] Create exercises rollback migration in api/migrations/000001_create_exercises.down.sql
-- [ ] T011 [P] [US1] Create programs table migration in api/migrations/000002_create_programs.up.sql
-- [ ] T012 [P] [US1] Create programs rollback migration in api/migrations/000002_create_programs.down.sql
-- [ ] T013 [P] [US1] Create program_nodes table migration in api/migrations/000002_create_programs.up.sql (same file, after programs)
-- [ ] T014 [P] [US1] Create workouts and workout_entries tables migration in api/migrations/000003_create_workouts.up.sql
-- [ ] T015 [P] [US1] Create workouts rollback migration in api/migrations/000003_create_workouts.down.sql
-- [ ] T016 [P] [US1] Create telemetry_points table migration in api/migrations/000004_create_telemetry.up.sql
-- [ ] T017 [P] [US1] Create telemetry rollback migration in api/migrations/000004_create_telemetry.down.sql
+- [x] T009 [P] [US1] Create exercises table migration in api/migrations/000001_create_exercises.up.sql
+- [x] T010 [P] [US1] Create exercises rollback migration in api/migrations/000001_create_exercises.down.sql
+- [x] T011 [P] [US1] Create programs table migration in api/migrations/000002_create_programs.up.sql
+- [x] T012 [P] [US1] Create programs rollback migration in api/migrations/000002_create_programs.down.sql
+- [x] T013 [P] [US1] Create program_nodes table migration in api/migrations/000002_create_programs.up.sql (same file, after programs)
+- [x] T014 [P] [US1] Create workouts and workout_entries tables migration in api/migrations/000003_create_workouts.up.sql
+- [x] T015 [P] [US1] Create workouts rollback migration in api/migrations/000003_create_workouts.down.sql
+- [x] T016 [P] [US1] Create telemetry_points table migration in api/migrations/000004_create_telemetry.up.sql
+- [x] T017 [P] [US1] Create telemetry rollback migration in api/migrations/000004_create_telemetry.down.sql
 
 ### PostgreSQL Repository Implementations for User Story 1
 
-- [ ] T018 [P] [US1] Implement ExerciseRepository in api/internal/store/postgres/exercise.go
-- [ ] T019 [P] [US1] Implement ProgramRepository in api/internal/store/postgres/program.go
-- [ ] T020 [P] [US1] Implement WorkoutRepository in api/internal/store/postgres/workout.go
-- [ ] T021 [P] [US1] Implement TelemetryPointRepository in api/internal/store/postgres/telemetry.go
+- [x] T018 [P] [US1] Implement ExerciseRepository in api/internal/store/postgres/exercise.go
+- [x] T019 [P] [US1] Implement ProgramRepository in api/internal/store/postgres/program.go
+- [x] T020 [P] [US1] Implement WorkoutRepository in api/internal/store/postgres/workout.go
+- [x] T021 [P] [US1] Implement TelemetryPointRepository in api/internal/store/postgres/telemetry.go
 
 ### Integration for User Story 1
 
-- [ ] T022 [US1] Update main.go to initialize PostgreSQL connection pool in api/cmd/server/main.go
-- [ ] T023 [US1] Add storage type switch (memory/postgres) in api/cmd/server/main.go
-- [ ] T024 [US1] Update health handler to include database connectivity check in api/internal/handler/health.go
+- [x] T022 [US1] Update main.go to initialize PostgreSQL connection pool in api/cmd/server/main.go
+- [x] T023 [US1] Add storage type switch (memory/postgres) in api/cmd/server/main.go
+- [x] T024 [US1] Update health handler to include database connectivity check in api/internal/handler/health.go
 
 **Checkpoint**: User Story 1 complete - Application can connect to PostgreSQL and perform CRUD operations
 

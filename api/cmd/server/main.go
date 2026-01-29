@@ -9,9 +9,11 @@ import (
 	"github.com/aoshimash/optel-training/api/internal/config"
 	"github.com/aoshimash/optel-training/api/internal/handler"
 	"github.com/aoshimash/optel-training/api/internal/middleware"
+	"github.com/aoshimash/optel-training/api/internal/repository"
 	"github.com/aoshimash/optel-training/api/internal/storage"
 	s3storage "github.com/aoshimash/optel-training/api/internal/storage/s3"
 	"github.com/aoshimash/optel-training/api/internal/store/memory"
+	postgresstore "github.com/aoshimash/optel-training/api/internal/store/postgres"
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 )
@@ -24,11 +26,35 @@ func main() {
 	// Load configuration
 	cfg := config.Load()
 
-	// Initialize repositories
-	exerciseRepo := memory.NewExerciseRepository()
-	workoutRepo := memory.NewWorkoutRepository()
-	programRepo := memory.NewProgramRepository()
-	telemetryRepo := memory.NewTelemetryPointRepository()
+	// Initialize repositories based on storage type
+	var exerciseRepo repository.ExerciseRepository
+	var workoutRepo repository.WorkoutRepository
+	var programRepo repository.ProgramRepository
+	var telemetryRepo repository.TelemetryPointRepository
+
+	ctx := context.Background()
+
+	if cfg.Database.StorageType == "postgres" {
+		// Initialize PostgreSQL connection pool
+		db, err := postgresstore.NewDB(ctx, cfg.Database)
+		if err != nil {
+			slog.Error("Failed to initialize PostgreSQL connection", "error", err)
+			os.Exit(1)
+		}
+		defer db.Close()
+
+		slog.Info("Using PostgreSQL storage backend")
+		exerciseRepo = postgresstore.NewExerciseRepository(db.Pool())
+		workoutRepo = postgresstore.NewWorkoutRepository(db.Pool())
+		programRepo = postgresstore.NewProgramRepository(db.Pool())
+		telemetryRepo = postgresstore.NewTelemetryPointRepository(db.Pool())
+	} else {
+		slog.Info("Using in-memory storage backend")
+		exerciseRepo = memory.NewExerciseRepository()
+		workoutRepo = memory.NewWorkoutRepository()
+		programRepo = memory.NewProgramRepository()
+		telemetryRepo = memory.NewTelemetryPointRepository()
+	}
 
 	// Initialize storage provider (optional)
 	var storageProvider storage.Provider
@@ -60,6 +86,7 @@ func main() {
 	programHandler := handler.NewProgramHandler(programRepo, exerciseRepo, workoutRepo)
 	telemetryHandler := handler.NewTelemetryHandler(telemetryRepo, workoutRepo)
 	videoHandler := handler.NewVideoHandler(storageProvider, logger)
+	healthHandler := handler.NewHealthHandler(exerciseRepo)
 
 	// Initialize authentication provider based on config
 	var authProvider middleware.AuthProvider
@@ -89,6 +116,9 @@ func main() {
 	r.Use(chiMiddleware.Logger)
 	r.Use(chiMiddleware.Recoverer)
 	r.Use(middleware.AuthMiddleware(authProvider))
+
+	// Health check endpoint (no auth required)
+	r.Get("/health", healthHandler.Health)
 
 	// API v1 routes
 	r.Route("/api/v1", func(r chi.Router) {
