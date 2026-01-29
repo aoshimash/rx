@@ -160,9 +160,10 @@ func (r *programRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.
 	}
 	defer rows.Close()
 
-	// Build node map
+	// Build node map and track parent-child relationships
 	nodeMap := make(map[uuid.UUID]*domain.ProgramNode)
-	var rootNodes []*domain.ProgramNode
+	childrenMap := make(map[uuid.UUID][]uuid.UUID) // parent ID -> child IDs
+	var rootNodeIDs []uuid.UUID
 
 	for rows.Next() {
 		var node domain.ProgramNode
@@ -189,7 +190,9 @@ func (r *programRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.
 		nodeMap[node.ID] = &node
 
 		if node.ParentID == nil {
-			rootNodes = append(rootNodes, &node)
+			rootNodeIDs = append(rootNodeIDs, node.ID)
+		} else {
+			childrenMap[*node.ParentID] = append(childrenMap[*node.ParentID], node.ID)
 		}
 	}
 
@@ -197,20 +200,24 @@ func (r *programRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.
 		return nil, err
 	}
 
-	// Build tree structure
-	for _, node := range nodeMap {
-		if node.ParentID != nil {
-			parent := nodeMap[*node.ParentID]
-			if parent != nil {
-				parent.Children = append(parent.Children, *node)
+	// Build tree structure recursively (bottom-up approach ensures all children are included)
+	var buildNode func(id uuid.UUID) domain.ProgramNode
+	buildNode = func(id uuid.UUID) domain.ProgramNode {
+		node := *nodeMap[id]
+		childIDs := childrenMap[id]
+		if len(childIDs) > 0 {
+			node.Children = make([]domain.ProgramNode, 0, len(childIDs))
+			for _, childID := range childIDs {
+				node.Children = append(node.Children, buildNode(childID))
 			}
 		}
+		return node
 	}
 
-	// Convert to slice
-	program.RootNodes = make([]domain.ProgramNode, len(rootNodes))
-	for i, node := range rootNodes {
-		program.RootNodes[i] = *node
+	// Build root nodes with full tree structure
+	program.RootNodes = make([]domain.ProgramNode, 0, len(rootNodeIDs))
+	for _, rootID := range rootNodeIDs {
+		program.RootNodes = append(program.RootNodes, buildNode(rootID))
 	}
 
 	return &program, nil

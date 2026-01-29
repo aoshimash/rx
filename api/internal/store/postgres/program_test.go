@@ -220,3 +220,131 @@ func TestProgramRepository_List(t *testing.T) {
 		t.Error("List() hasMore = false, want true")
 	}
 }
+
+func TestProgramRepository_GetByID_NestedTree(t *testing.T) {
+	ctx := context.Background()
+	pool, cleanup, err := setupTestDB(ctx)
+	if err != nil {
+		t.Fatalf("Failed to setup test database: %v", err)
+	}
+	defer cleanup()
+
+	repo := NewProgramRepository(pool)
+
+	// Create a program with deeply nested structure: Program -> Week -> Day -> Exercise
+	program := &domain.Program{
+		Name:        "Deep Nested Program",
+		Description: stringPtr("Test nested tree structure"),
+		RootNodes: []domain.ProgramNode{
+			{
+				Name:     "Week 1",
+				NodeType: "week",
+				Order:    0,
+				Children: []domain.ProgramNode{
+					{
+						Name:     "Day 1",
+						NodeType: "day",
+						Order:    0,
+						Children: []domain.ProgramNode{
+							{
+								Name:     "Exercise 1",
+								NodeType: "exercise",
+								Order:    0,
+							},
+							{
+								Name:     "Exercise 2",
+								NodeType: "exercise",
+								Order:    1,
+							},
+						},
+					},
+					{
+						Name:     "Day 2",
+						NodeType: "day",
+						Order:    1,
+						Children: []domain.ProgramNode{
+							{
+								Name:     "Exercise 3",
+								NodeType: "exercise",
+								Order:    0,
+							},
+						},
+					},
+				},
+			},
+			{
+				Name:     "Week 2",
+				NodeType: "week",
+				Order:    1,
+				Children: []domain.ProgramNode{
+					{
+						Name:     "Day 3",
+						NodeType: "day",
+						Order:    0,
+					},
+				},
+			},
+		},
+	}
+
+	if err := repo.Create(ctx, program); err != nil {
+		t.Fatalf("Failed to create program: %v", err)
+	}
+
+	// Retrieve and verify nested structure
+	got, err := repo.GetByID(ctx, program.ID)
+	if err != nil {
+		t.Fatalf("GetByID() error = %v", err)
+	}
+
+	// Verify root level
+	if len(got.RootNodes) != 2 {
+		t.Fatalf("Expected 2 root nodes (weeks), got %d", len(got.RootNodes))
+	}
+
+	// Find Week 1 (may be in any order due to UUID sorting)
+	var week1, week2 *domain.ProgramNode
+	for i := range got.RootNodes {
+		switch got.RootNodes[i].Name {
+		case "Week 1":
+			week1 = &got.RootNodes[i]
+		case "Week 2":
+			week2 = &got.RootNodes[i]
+		}
+	}
+
+	if week1 == nil {
+		t.Fatal("Week 1 not found in root nodes")
+	}
+	if week2 == nil {
+		t.Fatal("Week 2 not found in root nodes")
+	}
+
+	// Verify Week 1 has 2 days
+	if len(week1.Children) != 2 {
+		t.Errorf("Week 1 should have 2 children (days), got %d", len(week1.Children))
+	}
+
+	// Find Day 1 in Week 1
+	var day1 *domain.ProgramNode
+	for i := range week1.Children {
+		if week1.Children[i].Name == "Day 1" {
+			day1 = &week1.Children[i]
+			break
+		}
+	}
+
+	if day1 == nil {
+		t.Fatal("Day 1 not found in Week 1")
+	}
+
+	// Verify Day 1 has 2 exercises (the critical test for nested children)
+	if len(day1.Children) != 2 {
+		t.Errorf("Day 1 should have 2 children (exercises), got %d. Nested children may be lost!", len(day1.Children))
+	}
+
+	// Verify Week 2 has 1 day
+	if len(week2.Children) != 1 {
+		t.Errorf("Week 2 should have 1 child (day), got %d", len(week2.Children))
+	}
+}
