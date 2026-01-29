@@ -85,9 +85,9 @@ func TestUploadURLRequest_ContentTypeValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			isVideo := len(tt.contentType) >= 6 && tt.contentType[:6] == "video/"
-			if isVideo != tt.wantValid {
-				t.Errorf("content type %q validation = %v, want %v", tt.contentType, isVideo, tt.wantValid)
+			got := isVideoContentType(tt.contentType)
+			if got != tt.wantValid {
+				t.Errorf("isVideoContentType(%q) = %v, want %v", tt.contentType, got, tt.wantValid)
 			}
 		})
 	}

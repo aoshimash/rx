@@ -123,7 +123,7 @@ func New(ctx context.Context, cfg Config) (*Provider, error) {
 // GenerateUploadURL creates a pre-signed URL for uploading a video file
 func (p *Provider) GenerateUploadURL(ctx context.Context, req storage.UploadURLRequest) (*storage.UploadURLResponse, error) {
 	// Validate content type
-	if !strings.HasPrefix(req.ContentType, "video/") {
+	if !isVideoContentType(req.ContentType) {
 		return nil, storage.ErrInvalidContentType
 	}
 
@@ -226,4 +226,9 @@ func normalizeUserID(userID string) string {
 	}
 	sum := sha256.Sum256([]byte(userID))
 	return hex.EncodeToString(sum[:])
+}
+
+// isVideoContentType returns true if the content type is video/* (used by provider and tests).
+func isVideoContentType(contentType string) bool {
+	return strings.HasPrefix(contentType, "video/")
 }
