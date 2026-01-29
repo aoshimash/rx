@@ -8,9 +8,30 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/aoshimash/optel-training/api/internal/middleware"
+	"github.com/aoshimash/optel-training/api/internal/storage"
 )
+
+// mockStorageProvider implements storage.Provider for tests (storage configured but no real calls).
+type mockStorageProvider struct{}
+
+func (m *mockStorageProvider) GenerateUploadURL(ctx context.Context, req storage.UploadURLRequest) (*storage.UploadURLResponse, error) {
+	return &storage.UploadURLResponse{UploadURL: "https://example.com/upload", ObjectKey: "videos/u/u.mp4", ExpiresIn: 15 * time.Minute}, nil
+}
+
+func (m *mockStorageProvider) GenerateDownloadURL(ctx context.Context, req storage.DownloadURLRequest) (*storage.DownloadURLResponse, error) {
+	return &storage.DownloadURLResponse{DownloadURL: "https://example.com/download", ExpiresIn: 60 * time.Minute}, nil
+}
+
+func (m *mockStorageProvider) DeleteObject(ctx context.Context, objectKey string) error {
+	return nil
+}
+
+func (m *mockStorageProvider) ValidateObjectKey(objectKey string) bool {
+	return true
+}
 
 func TestVideoHandler_GenerateVideoUploadURL_StorageNotConfigured(t *testing.T) {
 	logger := slog.Default()
@@ -38,11 +59,29 @@ func TestVideoHandler_GenerateVideoUploadURL_StorageNotConfigured(t *testing.T) 
 }
 
 func TestVideoHandler_GenerateVideoUploadURL_MissingUserID(t *testing.T) {
-	// This test verifies that when storage is not configured, we get SERVICE_UNAVAILABLE
-	// The user ID check happens after the storage check
-	// Since we can't easily mock the S3 provider without significant refactoring,
-	// we skip this test for now and rely on integration tests for full coverage
-	t.Skip("Requires mock storage provider interface - covered by integration tests")
+	logger := slog.Default()
+	handler := NewVideoHandler(&mockStorageProvider{}, logger)
+
+	reqBody := `{"content_type": "video/mp4", "filename": "test.mp4", "content_length": 1024}`
+	req := httptest.NewRequest(http.MethodPost, "/videos/upload-url", bytes.NewBufferString(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	// Context has no user ID (e.g. request not through auth middleware)
+
+	w := httptest.NewRecorder()
+	handler.GenerateVideoUploadURL(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("expected status %d, got %d", http.StatusUnauthorized, w.Code)
+	}
+
+	var errResp map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &errResp); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	if errResp["code"] != "UNAUTHORIZED" {
+		t.Errorf("expected code UNAUTHORIZED, got %v", errResp["code"])
+	}
 }
 
 func TestVideoHandler_GenerateVideoUploadURL_InvalidContentType(t *testing.T) {
