@@ -354,7 +354,7 @@ func (r *workoutRepository) listWithFilter(ctx context.Context, timestampFrom, t
 		WHERE ($1::uuid IS NULL OR id > $1)
 		  AND ($2::timestamptz IS NULL OR timestamp >= $2)
 		  AND ($3::timestamptz IS NULL OR timestamp < $3)
-		ORDER BY timestamp DESC, id ASC
+		ORDER BY id ASC
 		LIMIT $4
 	`
 

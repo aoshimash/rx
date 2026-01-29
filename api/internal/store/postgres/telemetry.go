@@ -150,7 +150,7 @@ func (r *telemetryRepository) listWithFilter(ctx context.Context, metricName str
 		  AND ($2::text IS NULL OR metric_name = $2)
 		  AND ($3::timestamptz IS NULL OR timestamp >= $3)
 		  AND ($4::timestamptz IS NULL OR timestamp < $4)
-		ORDER BY timestamp DESC, id ASC
+		ORDER BY id ASC
 		LIMIT $5
 	`
 
