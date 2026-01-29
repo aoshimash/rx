@@ -25,14 +25,8 @@ jobs:
           MINIO_ROOT_PASSWORD: minioadmin
         ports:
           - 9000:9000
-        options: >-
-          --health-cmd "mc ready local"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 5
-        # Start MinIO server
-        # Note: GitHub Actions services don't support 'command' field directly,
-        # so we use the default command from the image which is 'server /data'
+        # Note: Health check is handled by "Wait for MinIO to be ready" step
+        # using curl, since minio/minio image doesn't include mc client
     
     steps:
       - name: Checkout code

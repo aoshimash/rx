@@ -29,18 +29,8 @@ func TestIntegration_GenerateUploadURL_Success(t *testing.T) {
 		t.Fatalf("failed to setup test bucket: %v", err)
 	}
 
-	// Create provider
-	cfg := Config{
-		Bucket:                   defaultTestBucket,
-		Region:                   defaultRegion,
-		Endpoint:                 defaultMinIOEndpoint,
-		AccessKey:                defaultMinIOUser,
-		SecretKey:                defaultMinIOPassword,
-		MaxFileSizeMB:            500,
-		UploadURLExpireMinutes:   15,
-		DownloadURLExpireMinutes: 60,
-	}
-
+	// Create provider using environment-aware config
+	cfg := newTestProviderConfig()
 	provider, err := New(ctx, cfg)
 	if err != nil {
 		t.Fatalf("failed to create provider: %v", err)
@@ -92,18 +82,8 @@ func TestIntegration_GenerateUploadURL_ActualUpload(t *testing.T) {
 		t.Fatalf("failed to setup test bucket: %v", err)
 	}
 
-	// Create provider
-	cfg := Config{
-		Bucket:                   defaultTestBucket,
-		Region:                   defaultRegion,
-		Endpoint:                 defaultMinIOEndpoint,
-		AccessKey:                defaultMinIOUser,
-		SecretKey:                defaultMinIOPassword,
-		MaxFileSizeMB:            500,
-		UploadURLExpireMinutes:   15,
-		DownloadURLExpireMinutes: 60,
-	}
-
+	// Create provider using environment-aware config
+	cfg := newTestProviderConfig()
 	provider, err := New(ctx, cfg)
 	if err != nil {
 		t.Fatalf("failed to create provider: %v", err)
@@ -188,18 +168,8 @@ func TestIntegration_GenerateDownloadURL_Success(t *testing.T) {
 		cleanupTestObjects(context.Background(), client, defaultTestBucket, []string{objectKey})
 	})
 
-	// Create provider
-	cfg := Config{
-		Bucket:                   defaultTestBucket,
-		Region:                   defaultRegion,
-		Endpoint:                 defaultMinIOEndpoint,
-		AccessKey:                defaultMinIOUser,
-		SecretKey:                defaultMinIOPassword,
-		MaxFileSizeMB:            500,
-		UploadURLExpireMinutes:   15,
-		DownloadURLExpireMinutes: 60,
-	}
-
+	// Create provider using environment-aware config
+	cfg := newTestProviderConfig()
 	provider, err := New(ctx, cfg)
 	if err != nil {
 		t.Fatalf("failed to create provider: %v", err)
@@ -255,18 +225,8 @@ func TestIntegration_GenerateDownloadURL_ActualDownload(t *testing.T) {
 		cleanupTestObjects(context.Background(), client, defaultTestBucket, []string{objectKey})
 	})
 
-	// Create provider
-	cfg := Config{
-		Bucket:                   defaultTestBucket,
-		Region:                   defaultRegion,
-		Endpoint:                 defaultMinIOEndpoint,
-		AccessKey:                defaultMinIOUser,
-		SecretKey:                defaultMinIOPassword,
-		MaxFileSizeMB:            500,
-		UploadURLExpireMinutes:   15,
-		DownloadURLExpireMinutes: 60,
-	}
-
+	// Create provider using environment-aware config
+	cfg := newTestProviderConfig()
 	provider, err := New(ctx, cfg)
 	if err != nil {
 		t.Fatalf("failed to create provider: %v", err)
@@ -337,18 +297,8 @@ func TestIntegration_DeleteObject_Success(t *testing.T) {
 		t.Fatalf("failed to upload test file: %v", err)
 	}
 
-	// Create provider
-	cfg := Config{
-		Bucket:                   defaultTestBucket,
-		Region:                   defaultRegion,
-		Endpoint:                 defaultMinIOEndpoint,
-		AccessKey:                defaultMinIOUser,
-		SecretKey:                defaultMinIOPassword,
-		MaxFileSizeMB:            500,
-		UploadURLExpireMinutes:   15,
-		DownloadURLExpireMinutes: 60,
-	}
-
+	// Create provider using environment-aware config
+	cfg := newTestProviderConfig()
 	provider, err := New(ctx, cfg)
 	if err != nil {
 		t.Fatalf("failed to create provider: %v", err)
@@ -381,18 +331,8 @@ func TestIntegration_DeleteObject_NonExistent(t *testing.T) {
 		t.Fatalf("failed to setup test bucket: %v", err)
 	}
 
-	// Create provider
-	cfg := Config{
-		Bucket:                   defaultTestBucket,
-		Region:                   defaultRegion,
-		Endpoint:                 defaultMinIOEndpoint,
-		AccessKey:                defaultMinIOUser,
-		SecretKey:                defaultMinIOPassword,
-		MaxFileSizeMB:            500,
-		UploadURLExpireMinutes:   15,
-		DownloadURLExpireMinutes: 60,
-	}
-
+	// Create provider using environment-aware config
+	cfg := newTestProviderConfig()
 	provider, err := New(ctx, cfg)
 	if err != nil {
 		t.Fatalf("failed to create provider: %v", err)

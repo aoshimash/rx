@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -18,6 +19,7 @@ import (
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/google/uuid"
 
 	"github.com/aoshimash/optel-training/api/internal/middleware"
@@ -34,24 +36,39 @@ const (
 	connectionTimeout    = 2 * time.Second
 )
 
+// testMinIOConfig holds MinIO connection configuration resolved from environment variables.
+type testMinIOConfig struct {
+	Endpoint  string
+	AccessKey string
+	SecretKey string
+}
+
+// getTestMinIOConfig returns MinIO configuration from environment variables with defaults.
+func getTestMinIOConfig() testMinIOConfig {
+	cfg := testMinIOConfig{
+		Endpoint:  os.Getenv("MINIO_ENDPOINT"),
+		AccessKey: os.Getenv("MINIO_ROOT_USER"),
+		SecretKey: os.Getenv("MINIO_ROOT_PASSWORD"),
+	}
+
+	if cfg.Endpoint == "" {
+		cfg.Endpoint = defaultMinIOEndpoint
+	}
+	if cfg.AccessKey == "" {
+		cfg.AccessKey = defaultMinIOUser
+	}
+	if cfg.SecretKey == "" {
+		cfg.SecretKey = defaultMinIOPassword
+	}
+
+	return cfg
+}
+
 // skipIfMinIOUnavailable checks if MinIO is available and skips the test if not.
 func skipIfMinIOUnavailable(t *testing.T) {
 	t.Helper()
 
-	endpoint := os.Getenv("MINIO_ENDPOINT")
-	if endpoint == "" {
-		endpoint = defaultMinIOEndpoint
-	}
-
-	accessKey := os.Getenv("MINIO_ROOT_USER")
-	if accessKey == "" {
-		accessKey = defaultMinIOUser
-	}
-
-	secretKey := os.Getenv("MINIO_ROOT_PASSWORD")
-	if secretKey == "" {
-		secretKey = defaultMinIOPassword
-	}
+	minioCfg := getTestMinIOConfig()
 
 	ctx, cancel := context.WithTimeout(context.Background(), connectionTimeout)
 	defer cancel()
@@ -59,8 +76,8 @@ func skipIfMinIOUnavailable(t *testing.T) {
 	cfg, err := awsconfig.LoadDefaultConfig(ctx,
 		awsconfig.WithRegion(defaultRegion),
 		awsconfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
-			accessKey,
-			secretKey,
+			minioCfg.AccessKey,
+			minioCfg.SecretKey,
 			"",
 		)),
 	)
@@ -69,7 +86,7 @@ func skipIfMinIOUnavailable(t *testing.T) {
 	}
 
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.BaseEndpoint = aws.String(endpoint)
+		o.BaseEndpoint = aws.String(minioCfg.Endpoint)
 		o.UsePathStyle = true
 	})
 
@@ -84,28 +101,14 @@ func newTestVideoHandler(t *testing.T) (*VideoHandler, *s3.Client) {
 	t.Helper()
 
 	ctx := context.Background()
-
-	endpoint := os.Getenv("MINIO_ENDPOINT")
-	if endpoint == "" {
-		endpoint = defaultMinIOEndpoint
-	}
-
-	accessKey := os.Getenv("MINIO_ROOT_USER")
-	if accessKey == "" {
-		accessKey = defaultMinIOUser
-	}
-
-	secretKey := os.Getenv("MINIO_ROOT_PASSWORD")
-	if secretKey == "" {
-		secretKey = defaultMinIOPassword
-	}
+	minioCfg := getTestMinIOConfig()
 
 	// Create S3 client for test cleanup
 	cfg, err := awsconfig.LoadDefaultConfig(ctx,
 		awsconfig.WithRegion(defaultRegion),
 		awsconfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
-			accessKey,
-			secretKey,
+			minioCfg.AccessKey,
+			minioCfg.SecretKey,
 			"",
 		)),
 	)
@@ -114,26 +117,29 @@ func newTestVideoHandler(t *testing.T) (*VideoHandler, *s3.Client) {
 	}
 
 	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.BaseEndpoint = aws.String(endpoint)
+		o.BaseEndpoint = aws.String(minioCfg.Endpoint)
 		o.UsePathStyle = true
 	})
 
-	// Ensure test bucket exists
+	// Ensure test bucket exists (only ignore BucketAlreadyExists errors)
 	_, err = s3Client.CreateBucket(ctx, &s3.CreateBucketInput{
 		Bucket: aws.String(defaultTestBucket),
 	})
 	if err != nil {
-		// Ignore if bucket already exists
-		t.Logf("bucket creation: %v (may already exist)", err)
+		var bne *types.BucketAlreadyExists
+		var bao *types.BucketAlreadyOwnedByYou
+		if !errors.As(err, &bne) && !errors.As(err, &bao) {
+			t.Fatalf("failed to create test bucket: %v", err)
+		}
 	}
 
-	// Create storage provider
+	// Create storage provider using environment-aware config
 	providerCfg := s3provider.Config{
 		Bucket:                   defaultTestBucket,
 		Region:                   defaultRegion,
-		Endpoint:                 endpoint,
-		AccessKey:                accessKey,
-		SecretKey:                secretKey,
+		Endpoint:                 minioCfg.Endpoint,
+		AccessKey:                minioCfg.AccessKey,
+		SecretKey:                minioCfg.SecretKey,
 		MaxFileSizeMB:            500,
 		UploadURLExpireMinutes:   15,
 		DownloadURLExpireMinutes: 60,

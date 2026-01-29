@@ -26,25 +26,55 @@ const (
 	connectionTimeout    = 2 * time.Second
 )
 
+// testMinIOConfig holds MinIO connection configuration resolved from environment variables.
+type testMinIOConfig struct {
+	Endpoint  string
+	AccessKey string
+	SecretKey string
+}
+
+// getTestMinIOConfig returns MinIO configuration from environment variables with defaults.
+func getTestMinIOConfig() testMinIOConfig {
+	cfg := testMinIOConfig{
+		Endpoint:  os.Getenv("MINIO_ENDPOINT"),
+		AccessKey: os.Getenv("MINIO_ROOT_USER"),
+		SecretKey: os.Getenv("MINIO_ROOT_PASSWORD"),
+	}
+
+	if cfg.Endpoint == "" {
+		cfg.Endpoint = defaultMinIOEndpoint
+	}
+	if cfg.AccessKey == "" {
+		cfg.AccessKey = defaultMinIOUser
+	}
+	if cfg.SecretKey == "" {
+		cfg.SecretKey = defaultMinIOPassword
+	}
+
+	return cfg
+}
+
+// newTestProviderConfig creates a Config for S3 provider using environment-aware MinIO settings.
+func newTestProviderConfig() Config {
+	minioCfg := getTestMinIOConfig()
+	return Config{
+		Bucket:                   defaultTestBucket,
+		Region:                   defaultRegion,
+		Endpoint:                 minioCfg.Endpoint,
+		AccessKey:                minioCfg.AccessKey,
+		SecretKey:                minioCfg.SecretKey,
+		MaxFileSizeMB:            500,
+		UploadURLExpireMinutes:   15,
+		DownloadURLExpireMinutes: 60,
+	}
+}
+
 // skipIfMinIOUnavailable checks if MinIO is available and skips the test if not.
 // This allows integration tests to run gracefully in environments without MinIO.
 func skipIfMinIOUnavailable(t *testing.T) {
 	t.Helper()
 
-	endpoint := os.Getenv("MINIO_ENDPOINT")
-	if endpoint == "" {
-		endpoint = defaultMinIOEndpoint
-	}
-
-	accessKey := os.Getenv("MINIO_ROOT_USER")
-	if accessKey == "" {
-		accessKey = defaultMinIOUser
-	}
-
-	secretKey := os.Getenv("MINIO_ROOT_PASSWORD")
-	if secretKey == "" {
-		secretKey = defaultMinIOPassword
-	}
+	minioCfg := getTestMinIOConfig()
 
 	ctx, cancel := context.WithTimeout(context.Background(), connectionTimeout)
 	defer cancel()
@@ -53,8 +83,8 @@ func skipIfMinIOUnavailable(t *testing.T) {
 	cfg, err := awsconfig.LoadDefaultConfig(ctx,
 		awsconfig.WithRegion(defaultRegion),
 		awsconfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
-			accessKey,
-			secretKey,
+			minioCfg.AccessKey,
+			minioCfg.SecretKey,
 			"",
 		)),
 	)
@@ -63,7 +93,7 @@ func skipIfMinIOUnavailable(t *testing.T) {
 	}
 
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.BaseEndpoint = aws.String(endpoint)
+		o.BaseEndpoint = aws.String(minioCfg.Endpoint)
 		o.UsePathStyle = true
 	})
 
@@ -109,27 +139,14 @@ func cleanupTestObjects(ctx context.Context, client *s3.Client, bucket string, k
 func newTestMinIOClient(t *testing.T) *s3.Client {
 	t.Helper()
 
-	endpoint := os.Getenv("MINIO_ENDPOINT")
-	if endpoint == "" {
-		endpoint = defaultMinIOEndpoint
-	}
-
-	accessKey := os.Getenv("MINIO_ROOT_USER")
-	if accessKey == "" {
-		accessKey = defaultMinIOUser
-	}
-
-	secretKey := os.Getenv("MINIO_ROOT_PASSWORD")
-	if secretKey == "" {
-		secretKey = defaultMinIOPassword
-	}
+	minioCfg := getTestMinIOConfig()
 
 	ctx := context.Background()
 	cfg, err := awsconfig.LoadDefaultConfig(ctx,
 		awsconfig.WithRegion(defaultRegion),
 		awsconfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
-			accessKey,
-			secretKey,
+			minioCfg.AccessKey,
+			minioCfg.SecretKey,
 			"",
 		)),
 	)
@@ -138,7 +155,7 @@ func newTestMinIOClient(t *testing.T) *s3.Client {
 	}
 
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.BaseEndpoint = aws.String(endpoint)
+		o.BaseEndpoint = aws.String(minioCfg.Endpoint)
 		o.UsePathStyle = true
 	})
 
