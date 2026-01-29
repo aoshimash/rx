@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"strings"
 )
 
 // contextKey is a type for context keys used in this package
@@ -12,6 +13,8 @@ type contextKey string
 const (
 	// userIDKey is the context key for storing the user ID
 	userIDKey contextKey = "userID"
+	// bearerPrefix is the Authorization header value prefix for Bearer token scheme
+	bearerPrefix = "Bearer "
 )
 
 // AuthProvider defines the interface for authentication providers
@@ -75,11 +78,10 @@ func (p *StubProvider) Authenticate(r *http.Request) (string, error) {
 		return "", &AuthError{Code: "UNAUTHORIZED", Message: "Authentication required"}
 	}
 
-	// Extract user ID from the header
-	// Remove "Bearer " prefix if present
+	// Extract user ID from the header (remove Bearer prefix if present)
 	userID := authHeader
-	if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
-		userID = authHeader[7:]
+	if strings.HasPrefix(authHeader, bearerPrefix) {
+		userID = authHeader[len(bearerPrefix):]
 	}
 
 	// Use a default user ID if the header only contained "Bearer " or was empty after stripping
