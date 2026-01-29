@@ -25,10 +25,10 @@
 
 **Purpose**: Project initialization and dependency setup
 
-- [ ] T001 Add PostgreSQL dependencies to api/go.mod (pgx/v5, pgxpool, golang-migrate, cenkalti/backoff)
-- [ ] T002 Add Testcontainers dependencies to api/go.mod (testcontainers-go, postgres module)
-- [ ] T003 Update docker-compose.yml to use PostgreSQL 17 (change from postgres:18 to postgres:17)
-- [ ] T004 [P] Create api/migrations/ directory structure
+- [x] T001 Add PostgreSQL dependencies to api/go.mod (pgx/v5, pgxpool, golang-migrate, cenkalti/backoff)
+- [x] T002 Add Testcontainers dependencies to api/go.mod (testcontainers-go, postgres module)
+- [x] T003 Update docker-compose.yml to use PostgreSQL 17 (change from postgres:18 to postgres:17)
+- [x] T004 [P] Create api/migrations/ directory structure
 
 ---
 
