@@ -25,11 +25,11 @@
 
 **Purpose**: Create shared test helper utilities for MinIO integration tests
 
-- [ ] T001 Create test helper file with build tag in `api/internal/storage/s3/testhelper_integration_test.go`
-- [ ] T002 Implement `skipIfMinIOUnavailable(t *testing.T)` helper function for graceful test skipping
-- [ ] T003 Implement `setupTestBucket(ctx, client, bucket)` helper function for bucket creation
-- [ ] T004 Implement `cleanupTestObjects(ctx, client, bucket, keys)` helper function for test cleanup
-- [ ] T005 Implement `newTestMinIOClient(t *testing.T)` helper function to create configured S3 client
+- [x] T001 Create test helper file with build tag in `api/internal/storage/s3/testhelper_integration_test.go`
+- [x] T002 Implement `skipIfMinIOUnavailable(t *testing.T)` helper function for graceful test skipping
+- [x] T003 Implement `setupTestBucket(ctx, client, bucket)` helper function for bucket creation
+- [x] T004 Implement `cleanupTestObjects(ctx, client, bucket, keys)` helper function for test cleanup
+- [x] T005 Implement `newTestMinIOClient(t *testing.T)` helper function to create configured S3 client
 
 ---
 
