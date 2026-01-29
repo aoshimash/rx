@@ -702,6 +702,43 @@ This project follows [Semantic Versioning](https://semver.org/) (SemVer):
 | `PORT` | Server port | `8080` |
 | `LOG_LEVEL` | Logging level (debug, info, warn, error) | `info` |
 | `DATABASE_URL` | PostgreSQL connection string (Phase 2) | - |
+| `AUTH_PROVIDER` | Authentication provider (stub, jwt, cognito) | `stub` |
+
+### Video Upload Configuration
+
+Video upload functionality requires object storage configuration. When not configured, video endpoints return 503 Service Unavailable.
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `STORAGE_PROVIDER` | Storage provider type: `s3` or `r2` | - (disabled) |
+| `STORAGE_BUCKET` | Storage bucket name | - |
+| `STORAGE_REGION` | AWS region (for S3) | - |
+| `STORAGE_ENDPOINT` | Custom endpoint URL (for R2/MinIO) | - |
+| `STORAGE_ACCESS_KEY` | Access key ID | - |
+| `STORAGE_SECRET_KEY` | Secret access key | - |
+| `VIDEO_MAX_SIZE_MB` | Maximum video file size in MB | `500` |
+| `VIDEO_PRESIGN_UPLOAD_EXPIRE_MINUTES` | Upload URL expiration in minutes | `15` |
+| `VIDEO_PRESIGN_DOWNLOAD_EXPIRE_MINUTES` | Download URL expiration in minutes | `60` |
+
+#### Example: AWS S3
+
+```bash
+export STORAGE_PROVIDER=s3
+export STORAGE_BUCKET=my-training-videos
+export STORAGE_REGION=ap-northeast-1
+export STORAGE_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
+export STORAGE_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+```
+
+#### Example: Cloudflare R2
+
+```bash
+export STORAGE_PROVIDER=r2
+export STORAGE_BUCKET=my-training-videos
+export STORAGE_ENDPOINT=https://ACCOUNT_ID.r2.cloudflarestorage.com
+export STORAGE_ACCESS_KEY=your-access-key
+export STORAGE_SECRET_KEY=your-secret-key
+```
 
 ## Testing
 

@@ -231,6 +231,22 @@ func TestValidateWorkoutEntry(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "video_object_key too long",
+			entry: &WorkoutEntry{
+				ID:             uuid.New(),
+				WorkoutID:      workoutID,
+				Order:          0,
+				ExerciseID:     exerciseID,
+				EntryType:      "top",
+				Sets:           1,
+				Reps:           1,
+				LoadKg:         100.0,
+				RPE:            8,
+				VideoObjectKey: stringPtr(stringWithLength(501)),
+			},
+			wantErr: true,
+		},
+		{
 			name: "load_kg rounding to 0.1kg",
 			entry: &WorkoutEntry{
 				ID:         uuid.New(),

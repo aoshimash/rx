@@ -112,6 +112,26 @@ curl -H "Authorization: Bearer <token>" http://localhost:8080/api/v1/exercises
 - `timestamp_from`: Filter points at or after this timestamp (RFC3339)
 - `timestamp_to`: Filter points before this timestamp (RFC3339)
 
+### Video Upload
+
+Video upload allows attaching videos to workout entries. Files are stored in external object storage (S3, R2). The API only handles pre-signed URL generation.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/videos/upload-url` | Generate pre-signed URL for uploading a video |
+| POST | `/videos/download-url` | Generate pre-signed URL for downloading a video |
+
+**Upload Flow:**
+1. Request upload URL with `content_type`, `filename`, and `content_length`
+2. Upload video directly to the returned `upload_url` using HTTP PUT
+3. Save the returned `object_key` in `WorkoutEntry.video_object_key`
+
+**Download Flow:**
+1. Request download URL with `object_key` from `WorkoutEntry.video_object_key`
+2. Download video directly from the returned `download_url` using HTTP GET
+
+> **Note**: Video upload requires storage configuration. See `docs/DEVELOPMENT.md` for environment variables.
+
 ## Examples
 
 ### Create an Exercise

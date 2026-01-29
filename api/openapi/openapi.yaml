@@ -412,6 +412,77 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /videos/upload-url:
+    post:
+      summary: Generate pre-signed URL for video upload
+      description: |
+        Generates a pre-signed URL for uploading a video file directly to object storage.
+        The client should use this URL to upload the video via HTTP PUT.
+        After successful upload, include the returned object_key in the WorkoutEntry.
+      operationId: generateVideoUploadURL
+      tags: [Video]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VideoUploadURLRequest'
+      responses:
+        '200':
+          description: Pre-signed upload URL generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoUploadURLResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          description: Storage service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: SERVICE_UNAVAILABLE
+                message: Video storage is not configured
+
+  /videos/download-url:
+    post:
+      summary: Generate pre-signed URL for video download
+      description: |
+        Generates a pre-signed URL for downloading a video file from object storage.
+        The client should use this URL to download the video via HTTP GET.
+      operationId: generateVideoDownloadURL
+      tags: [Video]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VideoDownloadURLRequest'
+      responses:
+        '200':
+          description: Pre-signed download URL generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoDownloadURLResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          description: Storage service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: SERVICE_UNAVAILABLE
+                message: Video storage is not configured
+
 components:
   # ========================================
   # Security Schemes
@@ -816,6 +887,10 @@ components:
         notes:
           type: string
           maxLength: 2000
+        video_object_key:
+          type: string
+          maxLength: 500
+          description: Object key for uploaded video in storage (from upload-url response)
 
     WorkoutEntryCreate:
       type: object
@@ -875,6 +950,10 @@ components:
         notes:
           type: string
           maxLength: 2000
+        video_object_key:
+          type: string
+          maxLength: 500
+          description: Object key for uploaded video in storage (from upload-url response)
 
     # ========================================
     # PlanSnapshot
@@ -1213,6 +1292,76 @@ components:
           nullable: true
         has_more:
           type: boolean
+
+    # ========================================
+    # Video
+    # ========================================
+    VideoUploadURLRequest:
+      type: object
+      required:
+        - content_type
+        - filename
+        - content_length
+      properties:
+        content_type:
+          type: string
+          description: MIME type of the video file (must be video/*)
+          example: video/mp4
+        filename:
+          type: string
+          maxLength: 255
+          description: Original filename
+          example: deadlift.mp4
+        content_length:
+          type: integer
+          format: int64
+          minimum: 1
+          description: File size in bytes
+          example: 52428800
+
+    VideoUploadURLResponse:
+      type: object
+      required:
+        - upload_url
+        - object_key
+        - expires_in
+      properties:
+        upload_url:
+          type: string
+          format: uri
+          description: Pre-signed URL for uploading the video via HTTP PUT
+        object_key:
+          type: string
+          description: Object key to be stored in WorkoutEntry.video_object_key after successful upload
+        expires_in:
+          type: integer
+          description: Seconds until the upload URL expires
+          example: 900
+
+    VideoDownloadURLRequest:
+      type: object
+      required:
+        - object_key
+      properties:
+        object_key:
+          type: string
+          maxLength: 500
+          description: Object key from WorkoutEntry.video_object_key
+
+    VideoDownloadURLResponse:
+      type: object
+      required:
+        - download_url
+        - expires_in
+      properties:
+        download_url:
+          type: string
+          format: uri
+          description: Pre-signed URL for downloading the video via HTTP GET
+        expires_in:
+          type: integer
+          description: Seconds until the download URL expires
+          example: 3600
 
     # ========================================
     # Common Response Types

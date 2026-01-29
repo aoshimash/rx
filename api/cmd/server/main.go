@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"os"
@@ -8,6 +9,8 @@ import (
 	"github.com/aoshimash/optel-training/api/internal/config"
 	"github.com/aoshimash/optel-training/api/internal/handler"
 	"github.com/aoshimash/optel-training/api/internal/middleware"
+	"github.com/aoshimash/optel-training/api/internal/storage"
+	s3storage "github.com/aoshimash/optel-training/api/internal/storage/s3"
 	"github.com/aoshimash/optel-training/api/internal/store/memory"
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
@@ -27,11 +30,36 @@ func main() {
 	programRepo := memory.NewProgramRepository()
 	telemetryRepo := memory.NewTelemetryPointRepository()
 
+	// Initialize storage provider (optional)
+	var storageProvider storage.Provider
+	if cfg.Storage.IsStorageEnabled() {
+		switch cfg.Storage.Provider {
+		case "s3", "r2":
+			if cfg.Storage.S3Config.Bucket == "" {
+				slog.Error("STORAGE_BUCKET is required when STORAGE_PROVIDER is set", "provider", cfg.Storage.Provider)
+				os.Exit(1)
+			}
+			var err error
+			storageProvider, err = s3storage.New(context.Background(), cfg.Storage.S3Config)
+			if err != nil {
+				slog.Error("Failed to initialize storage provider", "error", err)
+				os.Exit(1)
+			}
+			slog.Info("Storage provider initialized", "provider", cfg.Storage.Provider)
+		default:
+			slog.Error("Unsupported storage provider", "provider", cfg.Storage.Provider)
+			os.Exit(1)
+		}
+	} else {
+		slog.Info("Video storage is disabled (STORAGE_PROVIDER not set)")
+	}
+
 	// Initialize handlers
 	exerciseHandler := handler.NewExerciseHandler(exerciseRepo, workoutRepo)
 	workoutHandler := handler.NewWorkoutHandler(workoutRepo, exerciseRepo, programRepo)
 	programHandler := handler.NewProgramHandler(programRepo, exerciseRepo, workoutRepo)
 	telemetryHandler := handler.NewTelemetryHandler(telemetryRepo, workoutRepo)
+	videoHandler := handler.NewVideoHandler(storageProvider, logger)
 
 	// Initialize authentication provider based on config
 	var authProvider middleware.AuthProvider
@@ -91,6 +119,10 @@ func main() {
 		r.Get("/telemetry/{id}", telemetryHandler.GetTelemetryPoint)
 		r.Put("/telemetry/{id}", telemetryHandler.UpdateTelemetryPoint)
 		r.Delete("/telemetry/{id}", telemetryHandler.DeleteTelemetryPoint)
+
+		// Video routes
+		r.Post("/videos/upload-url", videoHandler.GenerateVideoUploadURL)
+		r.Post("/videos/download-url", videoHandler.GenerateVideoDownloadURL)
 	})
 
 	slog.Info("Server starting", "port", 8080)

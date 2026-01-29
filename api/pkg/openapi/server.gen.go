@@ -201,6 +201,45 @@ type TelemetryPointListResponse struct {
 	NextCursor *string          `json:"next_cursor"`
 }
 
+// VideoDownloadURLRequest defines model for VideoDownloadURLRequest.
+type VideoDownloadURLRequest struct {
+	// ObjectKey Object key from WorkoutEntry.video_object_key
+	ObjectKey string `json:"object_key"`
+}
+
+// VideoDownloadURLResponse defines model for VideoDownloadURLResponse.
+type VideoDownloadURLResponse struct {
+	// DownloadUrl Pre-signed URL for downloading the video via HTTP GET
+	DownloadUrl string `json:"download_url"`
+
+	// ExpiresIn Seconds until the download URL expires
+	ExpiresIn int `json:"expires_in"`
+}
+
+// VideoUploadURLRequest defines model for VideoUploadURLRequest.
+type VideoUploadURLRequest struct {
+	// ContentLength File size in bytes
+	ContentLength int64 `json:"content_length"`
+
+	// ContentType MIME type of the video file (must be video/*)
+	ContentType string `json:"content_type"`
+
+	// Filename Original filename
+	Filename string `json:"filename"`
+}
+
+// VideoUploadURLResponse defines model for VideoUploadURLResponse.
+type VideoUploadURLResponse struct {
+	// ExpiresIn Seconds until the upload URL expires
+	ExpiresIn int `json:"expires_in"`
+
+	// ObjectKey Object key to be stored in WorkoutEntry.video_object_key after successful upload
+	ObjectKey string `json:"object_key"`
+
+	// UploadUrl Pre-signed URL for uploading the video via HTTP PUT
+	UploadUrl string `json:"upload_url"`
+}
+
 // Workout defines model for Workout.
 type Workout struct {
 	// BodyWeightKg Body weight at session (kg)
@@ -298,8 +337,11 @@ type WorkoutEntry struct {
 	Rpe int `json:"rpe"`
 
 	// Sets Number of sets performed
-	Sets      int                `json:"sets"`
-	WorkoutId openapi_types.UUID `json:"workout_id"`
+	Sets int `json:"sets"`
+
+	// VideoObjectKey Object key for uploaded video in storage (from upload-url response)
+	VideoObjectKey *string            `json:"video_object_key,omitempty"`
+	WorkoutId      openapi_types.UUID `json:"workout_id"`
 }
 
 // WorkoutEntryEntryType Entry type
@@ -324,6 +366,9 @@ type WorkoutEntryCreate struct {
 	Reps               int                 `json:"reps"`
 	Rpe                int                 `json:"rpe"`
 	Sets               int                 `json:"sets"`
+
+	// VideoObjectKey Object key for uploaded video in storage (from upload-url response)
+	VideoObjectKey *string `json:"video_object_key,omitempty"`
 }
 
 // WorkoutEntryCreateEntryType defines model for WorkoutEntryCreate.EntryType.
@@ -435,6 +480,12 @@ type CreateTelemetryPointJSONRequestBody = TelemetryPointCreate
 // UpdateTelemetryPointJSONRequestBody defines body for UpdateTelemetryPoint for application/json ContentType.
 type UpdateTelemetryPointJSONRequestBody = TelemetryPointCreate
 
+// GenerateVideoDownloadURLJSONRequestBody defines body for GenerateVideoDownloadURL for application/json ContentType.
+type GenerateVideoDownloadURLJSONRequestBody = VideoDownloadURLRequest
+
+// GenerateVideoUploadURLJSONRequestBody defines body for GenerateVideoUploadURL for application/json ContentType.
+type GenerateVideoUploadURLJSONRequestBody = VideoUploadURLRequest
+
 // CreateWorkoutJSONRequestBody defines body for CreateWorkout for application/json ContentType.
 type CreateWorkoutJSONRequestBody = WorkoutCreate
 
@@ -488,6 +539,12 @@ type ServerInterface interface {
 	// Update telemetry point
 	// (PUT /telemetry/{id})
 	UpdateTelemetryPoint(w http.ResponseWriter, r *http.Request, id TelemetryPointId)
+	// Generate pre-signed URL for video download
+	// (POST /videos/download-url)
+	GenerateVideoDownloadURL(w http.ResponseWriter, r *http.Request)
+	// Generate pre-signed URL for video upload
+	// (POST /videos/upload-url)
+	GenerateVideoUploadURL(w http.ResponseWriter, r *http.Request)
 	// List workouts
 	// (GET /workouts)
 	ListWorkouts(w http.ResponseWriter, r *http.Request, params ListWorkoutsParams)
@@ -596,6 +653,18 @@ func (_ Unimplemented) GetTelemetryPoint(w http.ResponseWriter, r *http.Request,
 // Update telemetry point
 // (PUT /telemetry/{id})
 func (_ Unimplemented) UpdateTelemetryPoint(w http.ResponseWriter, r *http.Request, id TelemetryPointId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Generate pre-signed URL for video download
+// (POST /videos/download-url)
+func (_ Unimplemented) GenerateVideoDownloadURL(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Generate pre-signed URL for video upload
+// (POST /videos/upload-url)
+func (_ Unimplemented) GenerateVideoUploadURL(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1124,6 +1193,46 @@ func (siw *ServerInterfaceWrapper) UpdateTelemetryPoint(w http.ResponseWriter, r
 	handler.ServeHTTP(w, r)
 }
 
+// GenerateVideoDownloadURL operation middleware
+func (siw *ServerInterfaceWrapper) GenerateVideoDownloadURL(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GenerateVideoDownloadURL(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GenerateVideoUploadURL operation middleware
+func (siw *ServerInterfaceWrapper) GenerateVideoUploadURL(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GenerateVideoUploadURL(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListWorkouts operation middleware
 func (siw *ServerInterfaceWrapper) ListWorkouts(w http.ResponseWriter, r *http.Request) {
 
@@ -1451,6 +1560,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/telemetry/{id}", wrapper.UpdateTelemetryPoint)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/videos/download-url", wrapper.GenerateVideoDownloadURL)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/videos/upload-url", wrapper.GenerateVideoUploadURL)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/workouts", wrapper.ListWorkouts)
