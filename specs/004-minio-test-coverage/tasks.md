@@ -76,13 +76,13 @@
 
 ### Implementation for User Story 2
 
-- [ ] T017 [US2] Create integration test file with build tag in `api/internal/handler/video_integration_test.go`
-- [ ] T018 [US2] Implement test helper `newTestVideoHandler(t *testing.T)` that creates handler with real MinIO provider
-- [ ] T019 [US2] Implement `TestIntegration_GenerateVideoUploadURL_ValidRequest` - verify API returns valid pre-signed URL
-- [ ] T020 [US2] Implement `TestIntegration_GenerateVideoUploadURL_InvalidContentType` - verify content type validation
-- [ ] T021 [US2] Implement `TestIntegration_GenerateVideoDownloadURL_ValidRequest` - verify API returns valid pre-signed URL
-- [ ] T022 [US2] Implement `TestIntegration_GenerateVideoDownloadURL_InvalidObjectKey` - verify object key validation
-- [ ] T023 [US2] Add test cleanup to remove any uploaded objects after handler tests
+- [x] T017 [US2] Create integration test file with build tag in `api/internal/handler/video_integration_test.go`
+- [x] T018 [US2] Implement test helper `newTestVideoHandler(t *testing.T)` that creates handler with real MinIO provider
+- [x] T019 [US2] Implement `TestIntegration_GenerateVideoUploadURL_ValidRequest` - verify API returns valid pre-signed URL
+- [x] T020 [US2] Implement `TestIntegration_GenerateVideoUploadURL_InvalidContentType` - verify content type validation
+- [x] T021 [US2] Implement `TestIntegration_GenerateVideoDownloadURL_ValidRequest` - verify API returns valid pre-signed URL
+- [x] T022 [US2] Implement `TestIntegration_GenerateVideoDownloadURL_InvalidObjectKey` - verify object key validation
+- [x] T023 [US2] Add test cleanup to remove any uploaded objects after handler tests
 
 **Checkpoint**: Video handler integration tests pass. Both US1 and US2 tests pass independently.
 
