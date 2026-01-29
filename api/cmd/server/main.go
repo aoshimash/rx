@@ -115,13 +115,13 @@ func main() {
 	r.Use(chiMiddleware.RealIP)
 	r.Use(chiMiddleware.Logger)
 	r.Use(chiMiddleware.Recoverer)
-	r.Use(middleware.AuthMiddleware(authProvider))
 
 	// Health check endpoint (no auth required)
 	r.Get("/health", healthHandler.Health)
 
-	// API v1 routes
+	// API routes require authentication
 	r.Route("/api/v1", func(r chi.Router) {
+		r.Use(middleware.AuthMiddleware(authProvider))
 		// Exercise routes
 		r.Post("/exercises", exerciseHandler.CreateExercise)
 		r.Get("/exercises", exerciseHandler.ListExercises)
