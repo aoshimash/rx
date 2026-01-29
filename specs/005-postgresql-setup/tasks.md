@@ -90,10 +90,10 @@
 
 ### Implementation for User Story 2
 
-- [ ] T025 [US2] Create migration runner utility in api/internal/store/postgres/migrate.go
-- [ ] T026 [US2] Add embedded migrations support using Go embed in api/internal/store/postgres/migrate.go
-- [ ] T027 [US2] Implement migrate CLI command integration in api/Makefile
-- [ ] T028 [US2] Add migration status check functionality in api/internal/store/postgres/migrate.go
+- [x] T025 [US2] Create migration runner utility in api/internal/store/postgres/migrate.go
+- [x] T026 [US2] Add file system migrations support in api/internal/store/postgres/migrate.go (Note: Using file:// instead of embed due to path constraints)
+- [x] T027 [US2] Implement migrate CLI command integration in api/Makefile (Already completed in T008)
+- [x] T028 [US2] Add migration status check functionality in api/internal/store/postgres/migrate.go
 
 **Checkpoint**: User Story 2 complete - Migrations can be run via `make migrate`
 
