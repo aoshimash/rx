@@ -61,7 +61,7 @@ func ContextWithUserID(ctx context.Context, userID string) context.Context {
 	return context.WithValue(ctx, userIDKey, userID)
 }
 
-// StubProvider is a development-only provider that checks for Authorization header presence
+// StubProvider is a development-only provider that checks for Authorization header presence.
 type StubProvider struct{}
 
 // NewStubProvider creates a new stub authentication provider
@@ -69,9 +69,10 @@ func NewStubProvider() *StubProvider {
 	return &StubProvider{}
 }
 
-// Authenticate checks if Authorization header is present (stub implementation)
-// In stub mode, the user ID is extracted from the Authorization header value
-// Expected format: "Bearer <user_id>" or just "<user_id>"
+// Authenticate extracts the user ID from the request's Authorization header.
+// It does not validate tokens; the header value (after optional "Bearer " prefix) is used as the user ID.
+// Expected format: "Bearer <user_id>" or "<user_id>". If the value is empty after stripping the prefix,
+// a default "stub-user" is returned. For development and testing only.
 func (p *StubProvider) Authenticate(r *http.Request) (string, error) {
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
