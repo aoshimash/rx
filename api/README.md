@@ -14,14 +14,18 @@ This API provides CRUD operations for the following domain models:
 
 ### Prerequisites
 
-- **For Development**: VS Code/Cursor with Dev Containers extension
+- **For Development**: [aqua](https://aquaproj.github.io/) (tool version manager)
 - **For Smoke-Testing**: Docker and Docker Compose installed
 
 ### Development (Recommended)
 
-1. Open the repository in VS Code/Cursor
-2. Reopen in DevContainer when prompted
-3. Inside DevContainer, run:
+1. Install development tools via aqua:
+
+```bash
+aqua install
+```
+
+2. Run development commands:
 
 ```bash
 cd api
@@ -246,12 +250,12 @@ make run
 
 ### Development Workflow
 
-1. Open repository in VS Code/Cursor and reopen in DevContainer
+1. Install development tools: `aqua install`
 2. Modify OpenAPI spec in `api/openapi/openapi.yaml`
-3. Regenerate code: `make generate` (runs natively in DevContainer)
+3. Regenerate code: `make generate`
 4. Implement handlers in `api/internal/handler/`
-5. Run tests: `make test` (runs natively in DevContainer)
-6. Start server: `make run` (runs natively in DevContainer)
+5. Run tests: `make test`
+6. Start server: `make run`
 
 For production-like smoke-testing, use `docker compose up` from the repository root.
 

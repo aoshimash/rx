@@ -16,14 +16,17 @@ No fitness tracking, no motivation scores - just data.
 
 ## Quick Start
 
-**Prerequisites:** Docker, Docker Compose (for smoke-testing), VS Code/Cursor with Dev Containers extension (for development)
+**Prerequisites:** Docker, Docker Compose (for smoke-testing), [aqua](https://aquaproj.github.io/) (for development)
 
 ### Development (Recommended)
 
-Open this repository in VS Code/Cursor and reopen in DevContainer when prompted. All development tools (Go, oapi-codegen, golangci-lint) are automatically available.
+Install development tools via aqua and run commands natively on your host machine:
 
 ```bash
-# Inside DevContainer:
+# Install development tools (Go, oapi-codegen, golangci-lint)
+aqua install
+
+# Run development commands
 cd api
 make generate      # Generate code from OpenAPI spec
 make lint          # Run linter
@@ -51,7 +54,7 @@ docker compose down
 
 **Configuration:** Default port is 8080. Set `HOST_PORT` environment variable to use a different port (e.g., `HOST_PORT=8081 docker compose up -d`).
 
-**Note:** Docker Compose is for smoke-testing only. Do not run development commands (generate, lint, test, etc.) inside the docker-compose container. Use DevContainer for development tasks.
+**Note:** Docker Compose is for smoke-testing only. Do not run development commands (generate, lint, test, etc.) inside the docker-compose container. Use aqua-managed tools on your host for development tasks.
 
 ### Building Production Image
 
