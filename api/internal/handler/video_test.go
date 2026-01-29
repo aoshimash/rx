@@ -139,13 +139,16 @@ func TestGetUserID(t *testing.T) {
 		name   string
 		ctx    context.Context
 		wantID string
-		wantOK bool
 	}{
 		{
 			name:   "context without user ID",
 			ctx:    context.Background(),
 			wantID: "",
-			wantOK: false,
+		},
+		{
+			name:   "context with user ID",
+			ctx:    middleware.ContextWithUserID(context.Background(), "user-123"),
+			wantID: "user-123",
 		},
 	}
 

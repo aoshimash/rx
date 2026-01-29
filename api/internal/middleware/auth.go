@@ -52,6 +52,12 @@ func GetUserID(ctx context.Context) string {
 	return userID
 }
 
+// ContextWithUserID returns a copy of ctx with the user ID set.
+// It is intended for use in tests or when constructing request context with a known user ID.
+func ContextWithUserID(ctx context.Context, userID string) context.Context {
+	return context.WithValue(ctx, userIDKey, userID)
+}
+
 // StubProvider is a development-only provider that checks for Authorization header presence
 type StubProvider struct{}
 
