@@ -18,6 +18,9 @@ type Config struct {
 
 	// Storage holds object storage configuration for video uploads
 	Storage StorageConfig
+
+	// Database holds database configuration
+	Database DatabaseConfig
 }
 
 // StorageConfig holds object storage configuration
@@ -32,6 +35,37 @@ type StorageConfig struct {
 // IsStorageEnabled returns true if storage is configured
 func (c *StorageConfig) IsStorageEnabled() bool {
 	return c.Provider != ""
+}
+
+// DatabaseConfig holds database configuration
+type DatabaseConfig struct {
+	// Host is the database host
+	Host string
+
+	// Port is the database port
+	Port int
+
+	// User is the database user
+	User string
+
+	// Password is the database password
+	Password string
+
+	// Name is the database name
+	Name string
+
+	// SSLMode is the SSL mode (disable, require, verify-ca, verify-full)
+	SSLMode string
+
+	// MaxConns is the maximum number of connections in the pool
+	MaxConns int
+
+	// MinConns is the minimum number of connections in the pool
+	MinConns int
+
+	// StorageType specifies which storage backend to use
+	// Options: "memory", "postgres"
+	StorageType string
 }
 
 // Load reads configuration from environment variables
@@ -53,6 +87,9 @@ func Load() *Config {
 
 	// Load storage configuration
 	cfg.Storage = loadStorageConfig()
+
+	// Load database configuration
+	cfg.Database = loadDatabaseConfig()
 
 	return cfg
 }
@@ -103,4 +140,18 @@ func getEnvOrDefaultInt64(key string, defaultValue int64) int64 {
 		}
 	}
 	return defaultValue
+}
+
+func loadDatabaseConfig() DatabaseConfig {
+	return DatabaseConfig{
+		Host:        getEnvOrDefault("DB_HOST", "localhost"),
+		Port:        getEnvOrDefaultInt("DB_PORT", 5432),
+		User:        getEnvOrDefault("DB_USER", "optel"),
+		Password:    getEnvOrDefault("DB_PASSWORD", "optel"),
+		Name:        getEnvOrDefault("DB_NAME", "optel_training"),
+		SSLMode:     getEnvOrDefault("DB_SSLMODE", "disable"),
+		MaxConns:    getEnvOrDefaultInt("DB_MAX_CONNS", 10),
+		MinConns:    getEnvOrDefaultInt("DB_MIN_CONNS", 2),
+		StorageType: getEnvOrDefault("STORAGE_TYPE", "memory"),
+	}
 }

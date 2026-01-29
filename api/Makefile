@@ -1,4 +1,4 @@
-.PHONY: generate format lint test test-coverage test-integration test-all run build clean docker-up docker-down docker-build-prod deps check
+.PHONY: generate format lint test test-coverage test-integration test-all run build clean docker-up docker-down docker-build-prod deps check migrate migrate-down migrate-down-1 migrate-status migrate-create
 
 # Native commands (tools must be on PATH; DevContainer provides them automatically)
 # These commands work when tools are installed locally or via DevContainer
@@ -87,3 +87,34 @@ docker-down:
 # Note: Run from api/ directory, so build context is current directory (.)
 docker-build-prod:
 	docker build -t optel-training:latest -f Dockerfile .
+
+# Database migration commands
+# Prerequisites: PostgreSQL must be running (docker compose up -d postgres)
+# Migration files are in migrations/ directory
+
+# Build connection string from environment variables
+DB_URL ?= postgres://$${DB_USER:-optel}:$${DB_PASSWORD:-optel}@$${DB_HOST:-localhost}:$${DB_PORT:-5432}/$${DB_NAME:-optel_training}?sslmode=$${DB_SSLMODE:-disable}
+
+migrate: deps
+	@echo "Running database migrations..."
+	@migrate -path migrations -database "$(DB_URL)" up
+
+migrate-down: deps
+	@echo "Rolling back all migrations..."
+	@migrate -path migrations -database "$(DB_URL)" down
+
+migrate-down-1: deps
+	@echo "Rolling back last migration..."
+	@migrate -path migrations -database "$(DB_URL)" down 1
+
+migrate-status: deps
+	@echo "Checking migration status..."
+	@migrate -path migrations -database "$(DB_URL)" version
+
+migrate-create: deps
+	@if [ -z "$(NAME)" ]; then \
+		echo "Error: NAME is required. Usage: make migrate-create NAME=create_users_table"; \
+		exit 1; \
+	fi
+	@echo "Creating migration files: migrations/$$(date +%Y%m%d%H%M%S)_$(NAME).{up,down}.sql"
+	@migrate create -ext sql -dir migrations -seq $(NAME)
