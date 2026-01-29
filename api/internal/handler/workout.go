@@ -68,7 +68,8 @@ func (h *WorkoutHandler) CreateWorkout(w http.ResponseWriter, r *http.Request) {
 				Percent1RM         *float64 `json:"percent_1rm,omitempty"`
 				PlannedRestSeconds *int     `json:"planned_rest_seconds,omitempty"`
 			} `json:"plan_snapshot,omitempty"`
-			Notes *string `json:"notes,omitempty"`
+			Notes          *string `json:"notes,omitempty"`
+			VideoObjectKey *string `json:"video_object_key,omitempty"`
 		} `json:"entries"`
 	}
 
@@ -157,6 +158,7 @@ func (h *WorkoutHandler) CreateWorkout(w http.ResponseWriter, r *http.Request) {
 			PerformedRestSeconds: entryReq.PerformedRestSeconds,
 			PerSetRestOverrides:  entryReq.PerSetRestOverrides,
 			Notes:                entryReq.Notes,
+			VideoObjectKey:       entryReq.VideoObjectKey,
 			Order:                i,
 		}
 
@@ -322,7 +324,8 @@ func (h *WorkoutHandler) UpdateWorkout(w http.ResponseWriter, r *http.Request) {
 				Percent1RM         *float64 `json:"percent_1rm,omitempty"`
 				PlannedRestSeconds *int     `json:"planned_rest_seconds,omitempty"`
 			} `json:"plan_snapshot,omitempty"`
-			Notes *string `json:"notes,omitempty"`
+			Notes          *string `json:"notes,omitempty"`
+			VideoObjectKey *string `json:"video_object_key,omitempty"`
 		} `json:"entries"`
 	}
 
@@ -415,6 +418,7 @@ func (h *WorkoutHandler) UpdateWorkout(w http.ResponseWriter, r *http.Request) {
 			PerformedRestSeconds: entryReq.PerformedRestSeconds,
 			PerSetRestOverrides:  entryReq.PerSetRestOverrides,
 			Notes:                entryReq.Notes,
+			VideoObjectKey:       entryReq.VideoObjectKey,
 			Order:                i,
 		}
 

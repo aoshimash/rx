@@ -213,6 +213,13 @@ func ValidateWorkoutEntry(e *WorkoutEntry) error {
 		}
 	}
 
+	// Validate video_object_key length if provided
+	if e.VideoObjectKey != nil {
+		if err := ValidateStringLength("video_object_key", *e.VideoObjectKey, 1, 500); err != nil {
+			return err
+		}
+	}
+
 	// Validate rest seconds if provided
 	if e.PlannedRestSeconds != nil && *e.PlannedRestSeconds < 0 {
 		return &ValidationError{

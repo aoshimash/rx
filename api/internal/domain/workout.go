@@ -36,6 +36,7 @@ type WorkoutEntry struct {
 	ProgramNodeID        *uuid.UUID    `json:"program_node_id,omitempty"`
 	PlanSnapshot         *PlanSnapshot `json:"plan_snapshot,omitempty"`
 	Notes                *string       `json:"notes,omitempty"`
+	VideoObjectKey       *string       `json:"video_object_key,omitempty"`
 }
 
 // Workout represents a completed training session containing performed entries.
