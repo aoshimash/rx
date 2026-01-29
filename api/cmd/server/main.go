@@ -35,6 +35,10 @@ func main() {
 	if cfg.Storage.IsStorageEnabled() {
 		switch cfg.Storage.Provider {
 		case "s3", "r2":
+			if cfg.Storage.S3Config.Bucket == "" {
+				slog.Error("STORAGE_BUCKET is required when STORAGE_PROVIDER is set", "provider", cfg.Storage.Provider)
+				os.Exit(1)
+			}
 			var err error
 			storageProvider, err = s3storage.New(context.Background(), cfg.Storage.S3Config)
 			if err != nil {
