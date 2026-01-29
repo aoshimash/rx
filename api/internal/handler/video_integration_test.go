@@ -21,7 +21,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/aoshimash/optel-training/api/internal/middleware"
-	"github.com/aoshimash/optel-training/api/internal/storage/s3"
+	s3provider "github.com/aoshimash/optel-training/api/internal/storage/s3"
 	"github.com/aoshimash/optel-training/api/pkg/openapi"
 )
 
@@ -128,7 +128,7 @@ func newTestVideoHandler(t *testing.T) (*VideoHandler, *s3.Client) {
 	}
 
 	// Create storage provider
-	providerCfg := s3.Config{
+	providerCfg := s3provider.Config{
 		Bucket:                   defaultTestBucket,
 		Region:                   defaultRegion,
 		Endpoint:                 endpoint,
@@ -139,7 +139,7 @@ func newTestVideoHandler(t *testing.T) (*VideoHandler, *s3.Client) {
 		DownloadURLExpireMinutes: 60,
 	}
 
-	provider, err := s3.New(ctx, providerCfg)
+	provider, err := s3provider.New(ctx, providerCfg)
 	if err != nil {
 		t.Fatalf("failed to create storage provider: %v", err)
 	}

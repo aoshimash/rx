@@ -258,8 +258,14 @@ api/
 # Generate code from OpenAPI spec
 make generate
 
-# Run tests
+# Run unit tests
 make test
+
+# Run integration tests (requires MinIO)
+make test-integration
+
+# Run all tests (unit + integration)
+make test-all
 
 # Run linter
 make lint
@@ -282,8 +288,14 @@ For production-like smoke-testing, use `docker compose up` from the repository r
 ### Testing
 
 ```bash
-# Run all tests
+# Run all unit tests
 make test
+
+# Run integration tests (requires MinIO)
+make test-integration
+
+# Run all tests (unit + integration)
+make test-all
 
 # Run specific package tests
 go test ./internal/handler -v
@@ -291,6 +303,34 @@ go test ./internal/handler -v
 # Run quickstart validation tests
 go test ./internal/handler -run TestQuickstart -v
 ```
+
+#### Integration Tests
+
+Integration tests verify real interactions with MinIO (S3-compatible object storage) for video upload/download functionality.
+
+**Prerequisites:**
+- Start MinIO: `docker compose up -d minio` (from repository root)
+- MinIO console available at http://localhost:9001 (login: minioadmin/minioadmin)
+
+**Running Integration Tests:**
+```bash
+cd api
+make test-integration  # Runs tests with -tags=integration
+```
+
+**Test Behavior:**
+- Tests automatically skip if MinIO is unavailable (no failures)
+- Tests use fixed bucket name `optel-test-videos`
+- Test objects are automatically cleaned up via `t.Cleanup()`
+
+**Environment Variables:**
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MINIO_ENDPOINT` | `http://localhost:9000` | MinIO server endpoint |
+| `MINIO_ROOT_USER` | `minioadmin` | MinIO access key |
+| `MINIO_ROOT_PASSWORD` | `minioadmin` | MinIO secret key |
+
+For more details, see `specs/004-minio-test-coverage/quickstart.md`.
 
 ## Architecture
 

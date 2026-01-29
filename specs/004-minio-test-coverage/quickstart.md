@@ -31,13 +31,14 @@ docker compose ps minio
 cd api
 
 # Run only integration tests
-go test -v -tags=integration ./internal/storage/s3/...
+make test-integration
 
 # Run all tests (unit + integration)
-go test -v -tags=integration ./...
+make test-all
 
-# Or use Makefile target (after implementation)
-make test-integration
+# Run specific integration test
+go test -v -tags=integration ./internal/storage/s3/...
+go test -v -tags=integration ./internal/handler/...
 ```
 
 ### 3. Run Without MinIO
@@ -63,23 +64,14 @@ go test -v -tags=integration ./internal/storage/s3/...
 
 ## CI Pipeline
 
-Integration tests run automatically on all PRs:
+Integration tests run automatically on all PRs. The workflow:
 
-```yaml
-# .github/workflows/api-ci.yml additions
-services:
-  minio:
-    image: minio/minio:latest
-    ports:
-      - 9000:9000
-    env:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+1. Starts MinIO service container
+2. Waits for MinIO to become healthy
+3. Runs unit tests
+4. Runs integration tests with MinIO
 
-steps:
-  - name: Run integration tests
-    run: go test -v -tags=integration ./...
-```
+See `.github/workflows/api-ci.yml` for complete configuration.
 
 ## Test Coverage
 
@@ -127,7 +119,10 @@ MinIO console at `http://localhost:9001` can be used to manually inspect/create 
 
 ## Files to Implement
 
-1. `api/internal/storage/s3/provider_integration_test.go` - S3 provider integration tests
-2. `api/internal/handler/video_integration_test.go` - Video handler integration tests
-3. `api/Makefile` - Add `test-integration` target
-4. `.github/workflows/api-ci.yml` - Add MinIO service and integration test step
+All implementation files have been created:
+
+1. ✅ `api/internal/storage/s3/testhelper_integration_test.go` - Test helper utilities
+2. ✅ `api/internal/storage/s3/provider_integration_test.go` - S3 provider integration tests
+3. ✅ `api/internal/handler/video_integration_test.go` - Video handler integration tests
+4. ✅ `api/Makefile` - Added `test-integration` and `test-all` targets
+5. ✅ `.github/workflows/api-ci.yml` - Added MinIO service and integration test step

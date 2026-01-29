@@ -110,11 +110,11 @@
 
 **Purpose**: Final improvements and documentation
 
-- [ ] T029 [P] Update `specs/004-minio-test-coverage/quickstart.md` with actual test execution commands
-- [ ] T030 [P] Add integration test documentation to `api/README.md`
-- [ ] T031 Verify all integration tests pass locally with `cd api && make test-integration`
-- [ ] T032 Verify integration tests are skipped gracefully when MinIO is unavailable
-- [ ] T033 Run `make check` to ensure all linting and existing tests still pass
+- [x] T029 [P] Update `specs/004-minio-test-coverage/quickstart.md` with actual test execution commands
+- [x] T030 [P] Add integration test documentation to `api/README.md`
+- [x] T031 Verify all integration tests pass locally with `cd api && make test-integration`
+- [x] T032 Verify integration tests are skipped gracefully when MinIO is unavailable
+- [x] T033 Run `make check` to ensure all linting and existing tests still pass
 
 ---
 
