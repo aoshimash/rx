@@ -38,10 +38,10 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T005 Extend database config in api/internal/config/config.go (DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, DB_SSLMODE, DB_MAX_CONNS, DB_MIN_CONNS, STORAGE_TYPE)
-- [ ] T006 Create database connection module with connection pool in api/internal/store/postgres/db.go
-- [ ] T007 Implement Exponential Backoff retry logic for connection in api/internal/store/postgres/db.go
-- [ ] T008 Add Makefile targets for database operations in api/Makefile (migrate, migrate-down, migrate-down-1, migrate-status, migrate-create)
+- [x] T005 Extend database config in api/internal/config/config.go (DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, DB_SSLMODE, DB_MAX_CONNS, DB_MIN_CONNS, STORAGE_TYPE)
+- [x] T006 Create database connection module with connection pool in api/internal/store/postgres/db.go
+- [x] T007 Implement Exponential Backoff retry logic for connection in api/internal/store/postgres/db.go
+- [x] T008 Add Makefile targets for database operations in api/Makefile (migrate, migrate-down, migrate-down-1, migrate-status, migrate-create)
 
 **Checkpoint**: Foundation ready - database connection infrastructure established
 
