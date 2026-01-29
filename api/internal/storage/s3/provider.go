@@ -23,7 +23,7 @@ import (
 type Config struct {
 	// Bucket is the storage bucket name
 	Bucket string
-	// Region is the storage region (for S3)
+	// Region is the AWS region used when connecting to S3 (not used for R2)
 	Region string
 	// Endpoint is the custom endpoint URL (for R2/MinIO)
 	Endpoint string
