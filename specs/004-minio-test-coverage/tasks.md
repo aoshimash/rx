@@ -39,9 +39,9 @@
 
 **⚠️ CRITICAL**: This enables local execution of integration tests
 
-- [ ] T006 Add `test-integration` target to `api/Makefile` that runs `go test -v -tags=integration ./...`
-- [ ] T007 Add `test-all` target to `api/Makefile` that runs both unit and integration tests
-- [ ] T008 Update `api/Makefile` comments to document integration test usage
+- [x] T006 Add `test-integration` target to `api/Makefile` that runs `go test -v -tags=integration ./...`
+- [x] T007 Add `test-all` target to `api/Makefile` that runs both unit and integration tests
+- [x] T008 Update `api/Makefile` comments to document integration test usage
 
 **Checkpoint**: Developers can now run `make test-integration` locally (requires MinIO via docker-compose)
 
