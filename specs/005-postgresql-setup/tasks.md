@@ -107,15 +107,15 @@
 
 ### Test Infrastructure for User Story 3
 
-- [ ] T029 [US3] Create Testcontainers helper in api/internal/store/postgres/testhelper_test.go
-- [ ] T030 [US3] Implement test database setup with automatic migration in api/internal/store/postgres/testhelper_test.go
+- [x] T029 [US3] Create Testcontainers helper in api/internal/store/postgres/testhelper_test.go
+- [x] T030 [US3] Implement test database setup with automatic migration in api/internal/store/postgres/testhelper_test.go
 
 ### Repository Tests for User Story 3
 
-- [ ] T031 [P] [US3] Add ExerciseRepository integration tests in api/internal/store/postgres/exercise_test.go
-- [ ] T032 [P] [US3] Add ProgramRepository integration tests in api/internal/store/postgres/program_test.go
-- [ ] T033 [P] [US3] Add WorkoutRepository integration tests in api/internal/store/postgres/workout_test.go
-- [ ] T034 [P] [US3] Add TelemetryPointRepository integration tests in api/internal/store/postgres/telemetry_test.go
+- [x] T031 [P] [US3] Add ExerciseRepository integration tests in api/internal/store/postgres/exercise_test.go
+- [x] T032 [P] [US3] Add ProgramRepository integration tests in api/internal/store/postgres/program_test.go
+- [x] T033 [P] [US3] Add WorkoutRepository integration tests in api/internal/store/postgres/workout_test.go
+- [x] T034 [P] [US3] Add TelemetryPointRepository integration tests in api/internal/store/postgres/telemetry_test.go
 
 **Checkpoint**: User Story 3 complete - Integration tests run with isolated Testcontainers PostgreSQL
 
