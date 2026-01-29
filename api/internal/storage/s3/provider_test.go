@@ -1,6 +1,8 @@
 package s3
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"testing"
 )
 
@@ -66,6 +68,27 @@ func TestValidateObjectKey(t *testing.T) {
 				t.Errorf("ValidateObjectKey(%q) = %v, want %v", tt.objectKey, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestNormalizeUserID_HashesSpecialCharacters(t *testing.T) {
+	// User IDs with special characters must be SHA256-hashed for safe object key prefix
+	userID := "user@example.com"
+	got := normalizeUserID(userID)
+	if got == "" {
+		t.Fatal("normalizeUserID returned empty for user ID with special chars")
+	}
+	if got == userID {
+		t.Error("expected hashed value for special chars, got same user ID")
+	}
+	// SHA256 hex is 64 chars
+	if len(got) != 64 {
+		t.Errorf("expected 64-char hex, got len %d", len(got))
+	}
+	h := sha256.Sum256([]byte(userID))
+	want := hex.EncodeToString(h[:])
+	if got != want {
+		t.Errorf("normalizeUserID(%q) = %q, want %q (SHA256 hex)", userID, got, want)
 	}
 }
 
