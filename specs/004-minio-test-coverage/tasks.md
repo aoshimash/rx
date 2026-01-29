@@ -55,14 +55,14 @@
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Create integration test file with build tag in `api/internal/storage/s3/provider_integration_test.go`
-- [ ] T010 [US1] Implement `TestIntegration_GenerateUploadURL_Success` - verify pre-signed upload URL generation
-- [ ] T011 [US1] Implement `TestIntegration_GenerateUploadURL_ActualUpload` - verify actual file upload via pre-signed URL
-- [ ] T012 [US1] Implement `TestIntegration_GenerateDownloadURL_Success` - verify pre-signed download URL generation
-- [ ] T013 [US1] Implement `TestIntegration_GenerateDownloadURL_ActualDownload` - verify actual file download via pre-signed URL
-- [ ] T014 [US1] Implement `TestIntegration_DeleteObject_Success` - verify object deletion works correctly
-- [ ] T015 [US1] Implement `TestIntegration_DeleteObject_NonExistent` - verify deletion of non-existent object is idempotent
-- [ ] T016 [US1] Add test cleanup in `t.Cleanup()` to remove uploaded objects after each test
+- [x] T009 [US1] Create integration test file with build tag in `api/internal/storage/s3/provider_integration_test.go`
+- [x] T010 [US1] Implement `TestIntegration_GenerateUploadURL_Success` - verify pre-signed upload URL generation
+- [x] T011 [US1] Implement `TestIntegration_GenerateUploadURL_ActualUpload` - verify actual file upload via pre-signed URL
+- [x] T012 [US1] Implement `TestIntegration_GenerateDownloadURL_Success` - verify pre-signed download URL generation
+- [x] T013 [US1] Implement `TestIntegration_GenerateDownloadURL_ActualDownload` - verify actual file download via pre-signed URL
+- [x] T014 [US1] Implement `TestIntegration_DeleteObject_Success` - verify object deletion works correctly
+- [x] T015 [US1] Implement `TestIntegration_DeleteObject_NonExistent` - verify deletion of non-existent object is idempotent
+- [x] T016 [US1] Add test cleanup in `t.Cleanup()` to remove uploaded objects after each test
 
 **Checkpoint**: S3 provider integration tests pass with MinIO. Run `cd api && make test-integration`
 
