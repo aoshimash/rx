@@ -122,6 +122,45 @@ task check  # Runs format + lint + test
 
 Docker Compose provides PostgreSQL for local development and the API service for smoke-testing. See the "Docker Compose" section below for details.
 
+## API Documentation
+
+The project includes an interactive API documentation viewer powered by Scalar API Reference. This allows developers to view and test API endpoints directly from their browser.
+
+### Starting the Documentation Server
+
+Start the API documentation server:
+
+```bash
+docker compose up -d api-docs
+```
+
+The documentation will be available at:
+
+```
+http://localhost:8081
+```
+
+### Using the Documentation
+
+Once the server is running:
+
+1. Open `http://localhost:8081` in your browser
+2. Browse all available API endpoints with their request/response schemas
+3. Use the "Try it" feature to send test requests to a running API server
+
+### Testing API Endpoints
+
+To use the "Try it" feature, ensure both the API server and documentation server are running:
+
+```bash
+# Start both services
+docker compose up -d api api-docs
+
+# The documentation UI will allow you to send requests to http://localhost:8080/api/v1
+```
+
+The "Try it" feature sends requests directly from your browser to the API server, allowing you to test endpoints without external tools like curl or Postman.
+
 ## Development Phases
 
 ### Phase 1: Core API (Current)
