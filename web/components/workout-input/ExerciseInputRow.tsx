@@ -1,14 +1,18 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import type { EntryType } from '@/types/api';
 import { X } from 'lucide-react';
+import { EntryTypeCombobox } from './EntryTypeCombobox';
 
 interface ExerciseInputRowProps {
   exerciseName: string;
+  entryType: EntryType;
   sets: number;
   reps: number;
   load: number;
   rpe: number;
+  onEntryTypeChange: (value: EntryType) => void;
   onSetsChange: (value: number) => void;
   onRepsChange: (value: number) => void;
   onLoadChange: (value: number) => void;
@@ -29,10 +33,12 @@ interface ExerciseInputRowProps {
  */
 export function ExerciseInputRow({
   exerciseName,
+  entryType,
   sets,
   reps,
   load,
   rpe,
+  onEntryTypeChange,
   onSetsChange,
   onRepsChange,
   onLoadChange,
@@ -57,6 +63,11 @@ export function ExerciseInputRow({
           {planValues.rpe && ` (RPE ${planValues.rpe})`}
         </div>
       )}
+
+      <div className="space-y-2">
+        <Label>Entry Type</Label>
+        <EntryTypeCombobox value={entryType} onChange={onEntryTypeChange} />
+      </div>
 
       <div className="grid grid-cols-4 gap-3">
         <div className="space-y-2">

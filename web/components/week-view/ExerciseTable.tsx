@@ -6,12 +6,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { EntryTypeBadge } from '@/components/workout-input/EntryTypeBadge';
 import { calculateDiff } from '@/lib/utils/diff';
-import type { ProgramNode, WorkoutEntry } from '@/types/api';
+import type { EntryType, ProgramNode, WorkoutEntry } from '@/types/api';
 import { StatusBadge } from './StatusBadge';
 
 interface ExerciseRow {
   exerciseName: string;
+  entryType?: EntryType;
   plan: {
     sets?: number;
     reps?: number;
@@ -72,7 +74,12 @@ export function ExerciseTable({ exercises }: ExerciseTableProps) {
 
           return (
             <TableRow key={idx}>
-              <TableCell className="font-medium">{row.exerciseName}</TableCell>
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-2">
+                  <span>{row.exerciseName}</span>
+                  <EntryTypeBadge entryType={row.entryType} />
+                </div>
+              </TableCell>
               <TableCell className="text-center">
                 {row.plan ? (
                   <div className="space-y-1 text-sm">

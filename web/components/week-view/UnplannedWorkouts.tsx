@@ -29,6 +29,7 @@ export function UnplannedWorkouts({ workouts }: UnplannedWorkoutsProps) {
           {workouts.map((workout) => {
             const exercises = workout.entries.map((entry) => ({
               exerciseName: entry.display_name || 'Unknown Exercise',
+              entryType: entry.entry_type,
               plan: null,
               actual: {
                 sets: entry.sets,
