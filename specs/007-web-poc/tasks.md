@@ -86,11 +86,11 @@ This feature uses the OPTel monorepo structure:
 
 ### Implementation for User Story 2
 
-- [ ] T027 [P] [US2] Create ExerciseInputRow component for single exercise entry in web/components/workout-input/ExerciseInputRow.tsx
-- [ ] T028 [P] [US2] Create AddExerciseButton component for unplanned exercises in web/components/workout-input/AddExerciseButton.tsx
-- [ ] T029 [US2] Create WorkoutModal component with form, validation, and session notes field in web/components/workout-input/WorkoutModal.tsx
-- [ ] T030 [US2] Integrate WorkoutModal into Week View with trigger button in web/app/page.tsx
-- [ ] T031 [US2] Add workout creation mutation with optimistic update in web/lib/hooks/useWorkouts.ts
+- [X] T027 [P] [US2] Create ExerciseInputRow component for single exercise entry in web/components/workout-input/ExerciseInputRow.tsx
+- [X] T028 [P] [US2] Create AddExerciseButton component for unplanned exercises in web/components/workout-input/AddExerciseButton.tsx
+- [X] T029 [US2] Create WorkoutModal component with form, validation, and session notes field in web/components/workout-input/WorkoutModal.tsx
+- [X] T030 [US2] Integrate WorkoutModal into Week View with trigger button in web/app/page.tsx
+- [X] T031 [US2] Add workout creation mutation with optimistic update in web/lib/hooks/useWorkouts.ts
 
 **Checkpoint**: User Story 2 complete - Users can record workouts and see them in Week View
 
