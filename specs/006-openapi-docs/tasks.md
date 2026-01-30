@@ -40,10 +40,10 @@ This feature modifies infrastructure files at the repository root:
 
 ### Implementation for User Story 1
 
-- [ ] T002 [US1] Verify `api-docs` service starts successfully with `docker compose up -d api-docs`
-- [ ] T003 [US1] Verify documentation is accessible at `http://localhost:8081`
-- [ ] T004 [US1] Verify all API endpoints from `api/openapi/openapi.yaml` are displayed correctly
-- [ ] T005 [US1] Verify endpoint details (request parameters, request body, response schemas) are shown
+- [x] T002 [US1] Verify `api-docs` service starts successfully with `docker compose up -d api-docs`
+- [x] T003 [US1] Verify documentation is accessible at `http://localhost:8081`
+- [x] T004 [US1] Verify all API endpoints from `api/openapi/openapi.yaml` are displayed correctly
+- [x] T005 [US1] Verify endpoint details (request parameters, request body, response schemas) are shown
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - developers can view API documentation locally
 
@@ -70,11 +70,11 @@ This feature modifies infrastructure files at the repository root:
 
 **Purpose**: Update developer documentation and finalize the feature
 
-- [ ] T010 Add "API Documentation" section to `docs/DEVELOPMENT.md`
-- [ ] T011 [P] Document startup command `docker compose up -d api-docs` in `docs/DEVELOPMENT.md`
-- [ ] T012 [P] Document access URL `http://localhost:8081` in `docs/DEVELOPMENT.md`
-- [ ] T013 Document "Try it" feature usage with running API server in `docs/DEVELOPMENT.md`
-- [ ] T014 Run quickstart.md validation (manual test of all documented commands)
+- [x] T010 Add "API Documentation" section to `docs/DEVELOPMENT.md`
+- [x] T011 [P] Document startup command `docker compose up -d api-docs` in `docs/DEVELOPMENT.md`
+- [x] T012 [P] Document access URL `http://localhost:8081` in `docs/DEVELOPMENT.md`
+- [x] T013 Document "Try it" feature usage with running API server in `docs/DEVELOPMENT.md`
+- [x] T014 Run quickstart.md validation (manual test of all documented commands)
 
 ---
 
