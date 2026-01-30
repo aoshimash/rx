@@ -163,9 +163,9 @@ This feature uses the OPTel monorepo structure:
 
 ### Implementation for User Story 6
 
-- [ ] T052 [P] [US6] Create CSV export utility with UTF-8 BOM in web/lib/utils/export.ts
-- [ ] T053 [US6] Create ExportButton component with options dropdown in web/components/export/ExportButton.tsx
-- [ ] T054 [US6] Integrate ExportButton into Week View header in web/app/page.tsx
+- [X] T052 [P] [US6] Create CSV export utility with UTF-8 BOM in web/lib/utils/export.ts
+- [X] T053 [US6] Create ExportButton component with options dropdown in web/components/export/ExportButton.tsx
+- [X] T054 [US6] Integrate ExportButton into Week View header in web/app/page.tsx
 
 **Checkpoint**: User Story 6 complete - Users can export data to CSV
 

@@ -2,6 +2,7 @@
 
 import { WeekView } from '@/components/week-view/WeekView';
 import { WorkoutModal } from '@/components/workout-input/WorkoutModal';
+import { ExportButton } from '@/components/export/ExportButton';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -99,10 +100,13 @@ export default function Home() {
             <p className="text-muted-foreground">Program: {program.name}</p>
           )}
         </div>
-        <Button onClick={() => setWorkoutModalOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Record Workout
-        </Button>
+        <div className="flex items-center gap-2">
+          <ExportButton workouts={workouts} program={program} />
+          <Button onClick={() => setWorkoutModalOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Record Workout
+          </Button>
+        </div>
       </div>
 
       <WeekView program={program} workouts={workouts} />
