@@ -1,3 +1,7 @@
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { TokenInputModal } from '@/components/auth/TokenInputModal';
+import { Header } from '@/components/layout/Header';
+import { QueryProvider } from '@/components/providers/QueryProvider';
 import type { Metadata } from 'next';
 import './globals.css';
 
@@ -13,7 +17,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <ErrorBoundary>
+          <QueryProvider>
+            <Header />
+            {children}
+            <TokenInputModal />
+          </QueryProvider>
+        </ErrorBoundary>
+      </body>
     </html>
   );
 }
