@@ -1,17 +1,63 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
-	"log/slog"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/aoshimash/optel-training/api/internal/domain"
 	"github.com/aoshimash/optel-training/api/internal/middleware"
 	"github.com/aoshimash/optel-training/api/internal/repository"
-	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
+
+// workoutRequest represents the request body for creating/updating a workout
+type workoutRequest struct {
+	Timestamp      string                `json:"timestamp"`
+	SessionStart   *string               `json:"session_start,omitempty"`
+	SessionEnd     *string               `json:"session_end,omitempty"`
+	BodyWeightKg   *float64              `json:"body_weight_kg,omitempty"`
+	FatigueLevel   *int                  `json:"fatigue_level,omitempty"`
+	SleepHours     *float64              `json:"sleep_hours,omitempty"`
+	ConditionNotes *string               `json:"condition_notes,omitempty"`
+	ProgramNodeID  *string               `json:"program_node_id,omitempty"`
+	ProgramContext []string              `json:"program_context,omitempty"`
+	Notes          *string               `json:"notes,omitempty"`
+	Entries        []workoutEntryRequest `json:"entries"`
+}
+
+// workoutEntryRequest represents a workout entry in the request body
+type workoutEntryRequest struct {
+	ExerciseID           string               `json:"exercise_id"`
+	DisplayName          *string              `json:"display_name,omitempty"`
+	EntryType            string               `json:"entry_type"`
+	Sets                 int                  `json:"sets"`
+	Reps                 int                  `json:"reps"`
+	LoadKg               float64              `json:"load_kg"`
+	RPE                  int                  `json:"rpe"`
+	EntryStart           *string              `json:"entry_start,omitempty"`
+	EntryEnd             *string              `json:"entry_end,omitempty"`
+	PlannedRestSeconds   *int                 `json:"planned_rest_seconds,omitempty"`
+	PerformedRestSeconds *int                 `json:"performed_rest_seconds,omitempty"`
+	PerSetRestOverrides  []int                `json:"per_set_rest_overrides,omitempty"`
+	ProgramNodeID        *string              `json:"program_node_id,omitempty"`
+	PlanSnapshot         *planSnapshotRequest `json:"plan_snapshot,omitempty"`
+	Notes                *string              `json:"notes,omitempty"`
+	VideoObjectKey       *string              `json:"video_object_key,omitempty"`
+}
+
+// planSnapshotRequest represents a plan snapshot in the request body
+type planSnapshotRequest struct {
+	ProgramNodeID      *string  `json:"program_node_id,omitempty"`
+	TargetSets         *int     `json:"target_sets,omitempty"`
+	TargetReps         *int     `json:"target_reps,omitempty"`
+	TargetRPE          *int     `json:"target_rpe,omitempty"`
+	TargetLoadKg       *float64 `json:"target_load_kg,omitempty"`
+	Percent1RM         *float64 `json:"percent_1rm,omitempty"`
+	PlannedRestSeconds *int     `json:"planned_rest_seconds,omitempty"`
+}
 
 // WorkoutHandler handles Workout-related HTTP requests
 type WorkoutHandler struct {
@@ -29,65 +75,15 @@ func NewWorkoutHandler(repo repository.WorkoutRepository, exerciseRepo repositor
 	}
 }
 
-// CreateWorkout handles POST /workouts
-func (h *WorkoutHandler) CreateWorkout(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	// Decode request body (OpenAPI WorkoutCreate type)
-	var req struct {
-		Timestamp      string   `json:"timestamp"`
-		SessionStart   *string  `json:"session_start,omitempty"`
-		SessionEnd     *string  `json:"session_end,omitempty"`
-		BodyWeightKg   *float64 `json:"body_weight_kg,omitempty"`
-		FatigueLevel   *int     `json:"fatigue_level,omitempty"`
-		SleepHours     *float64 `json:"sleep_hours,omitempty"`
-		ConditionNotes *string  `json:"condition_notes,omitempty"`
-		ProgramNodeID  *string  `json:"program_node_id,omitempty"`
-		ProgramContext []string `json:"program_context,omitempty"`
-		Notes          *string  `json:"notes,omitempty"`
-		Entries        []struct {
-			ExerciseID           string  `json:"exercise_id"`
-			DisplayName          *string `json:"display_name,omitempty"`
-			EntryType            string  `json:"entry_type"`
-			Sets                 int     `json:"sets"`
-			Reps                 int     `json:"reps"`
-			LoadKg               float64 `json:"load_kg"`
-			RPE                  int     `json:"rpe"`
-			EntryStart           *string `json:"entry_start,omitempty"`
-			EntryEnd             *string `json:"entry_end,omitempty"`
-			PlannedRestSeconds   *int    `json:"planned_rest_seconds,omitempty"`
-			PerformedRestSeconds *int    `json:"performed_rest_seconds,omitempty"`
-			PerSetRestOverrides  []int   `json:"per_set_rest_overrides,omitempty"`
-			ProgramNodeID        *string `json:"program_node_id,omitempty"`
-			PlanSnapshot         *struct {
-				ProgramNodeID      *string  `json:"program_node_id,omitempty"`
-				TargetSets         *int     `json:"target_sets,omitempty"`
-				TargetReps         *int     `json:"target_reps,omitempty"`
-				TargetRPE          *int     `json:"target_rpe,omitempty"`
-				TargetLoadKg       *float64 `json:"target_load_kg,omitempty"`
-				Percent1RM         *float64 `json:"percent_1rm,omitempty"`
-				PlannedRestSeconds *int     `json:"planned_rest_seconds,omitempty"`
-			} `json:"plan_snapshot,omitempty"`
-			Notes          *string `json:"notes,omitempty"`
-			VideoObjectKey *string `json:"video_object_key,omitempty"`
-		} `json:"entries"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		middleware.WriteValidationError(w, "Invalid request body", map[string]interface{}{
-			"error": err.Error(),
-		})
-		return
-	}
-
+// parseWorkoutRequest parses and validates a workout request into a domain model
+func (h *WorkoutHandler) parseWorkoutRequest(ctx context.Context, req *workoutRequest) (*domain.Workout, error) {
 	// Parse timestamp
 	timestamp, err := time.Parse(time.RFC3339, req.Timestamp)
 	if err != nil {
-		middleware.WriteValidationError(w, "Invalid timestamp format", map[string]interface{}{
-			"field": "timestamp",
-			"error": err.Error(),
-		})
-		return
+		return nil, &domain.ValidationError{
+			Field:   "timestamp",
+			Message: "invalid timestamp format: " + err.Error(),
+		}
 	}
 
 	// Convert to domain model
@@ -99,51 +95,74 @@ func (h *WorkoutHandler) CreateWorkout(w http.ResponseWriter, r *http.Request) {
 		ConditionNotes: req.ConditionNotes,
 		ProgramContext: req.ProgramContext,
 		Notes:          req.Notes,
-		Entries:        make([]domain.WorkoutEntry, len(req.Entries)),
 	}
 
-	// Parse optional timestamps
+	// Parse optional timestamps (return error if format is invalid)
 	if req.SessionStart != nil {
-		if t, err := time.Parse(time.RFC3339, *req.SessionStart); err == nil {
-			workout.SessionStart = &t
+		t, err := time.Parse(time.RFC3339, *req.SessionStart)
+		if err != nil {
+			return nil, &domain.ValidationError{
+				Field:   "session_start",
+				Message: "invalid timestamp format: " + err.Error(),
+			}
 		}
+		workout.SessionStart = &t
 	}
 	if req.SessionEnd != nil {
-		if t, err := time.Parse(time.RFC3339, *req.SessionEnd); err == nil {
-			workout.SessionEnd = &t
+		t, err := time.Parse(time.RFC3339, *req.SessionEnd)
+		if err != nil {
+			return nil, &domain.ValidationError{
+				Field:   "session_end",
+				Message: "invalid timestamp format: " + err.Error(),
+			}
 		}
+		workout.SessionEnd = &t
 	}
 
-	// Parse program_node_id
+	// Parse program_node_id (return error if format is invalid)
 	if req.ProgramNodeID != nil {
-		if id, err := uuid.Parse(*req.ProgramNodeID); err == nil {
-			workout.ProgramNodeID = &id
+		id, err := uuid.Parse(*req.ProgramNodeID)
+		if err != nil {
+			return nil, &domain.ValidationError{
+				Field:   "program_node_id",
+				Message: "invalid UUID format: " + err.Error(),
+			}
 		}
+		workout.ProgramNodeID = &id
 	}
 
 	// Convert entries
-	for i, entryReq := range req.Entries {
+	entries, err := h.convertEntries(ctx, req.Entries)
+	if err != nil {
+		return nil, err
+	}
+	workout.Entries = entries
+
+	return workout, nil
+}
+
+// convertEntries converts request entries to domain entries with validation
+func (h *WorkoutHandler) convertEntries(ctx context.Context, entryReqs []workoutEntryRequest) ([]domain.WorkoutEntry, error) {
+	entries := make([]domain.WorkoutEntry, len(entryReqs))
+
+	for i, entryReq := range entryReqs {
 		exerciseID, err := uuid.Parse(entryReq.ExerciseID)
 		if err != nil {
-			middleware.WriteValidationError(w, "Invalid exercise_id format", map[string]interface{}{
-				"field": "entries",
-				"index": i,
-			})
-			return
+			return nil, &domain.ValidationError{
+				Field:   fmt.Sprintf("entries[%d].exercise_id", i),
+				Message: "invalid exercise_id format",
+			}
 		}
 
 		// Validate Exercise exists (FR-026)
 		if _, err := h.exerciseRepo.GetByID(ctx, exerciseID); err != nil {
 			if err == domain.ErrNotFound {
-				middleware.WriteValidationError(w, "Exercise not found", map[string]interface{}{
-					"field":       "entries",
-					"index":       i,
-					"exercise_id": entryReq.ExerciseID,
-				})
-				return
+				return nil, &domain.ValidationError{
+					Field:   fmt.Sprintf("entries[%d].exercise_id", i),
+					Message: fmt.Sprintf("exercise not found: %s", entryReq.ExerciseID),
+				}
 			}
-			middleware.WriteInternalError(w, "Failed to validate exercise")
-			return
+			return nil, err
 		}
 
 		entry := domain.WorkoutEntry{
@@ -162,53 +181,106 @@ func (h *WorkoutHandler) CreateWorkout(w http.ResponseWriter, r *http.Request) {
 			Order:                i,
 		}
 
-		// Parse optional timestamps
+		// Parse optional timestamps (return error if format is invalid)
 		if entryReq.EntryStart != nil {
-			if t, err := time.Parse(time.RFC3339, *entryReq.EntryStart); err == nil {
-				entry.EntryStart = &t
+			t, err := time.Parse(time.RFC3339, *entryReq.EntryStart)
+			if err != nil {
+				return nil, &domain.ValidationError{
+					Field:   fmt.Sprintf("entries[%d].entry_start", i),
+					Message: "invalid timestamp format: " + err.Error(),
+				}
 			}
+			entry.EntryStart = &t
 		}
 		if entryReq.EntryEnd != nil {
-			if t, err := time.Parse(time.RFC3339, *entryReq.EntryEnd); err == nil {
-				entry.EntryEnd = &t
+			t, err := time.Parse(time.RFC3339, *entryReq.EntryEnd)
+			if err != nil {
+				return nil, &domain.ValidationError{
+					Field:   fmt.Sprintf("entries[%d].entry_end", i),
+					Message: "invalid timestamp format: " + err.Error(),
+				}
 			}
+			entry.EntryEnd = &t
 		}
 
-		// Parse program_node_id
+		// Parse program_node_id (return error if format is invalid)
 		if entryReq.ProgramNodeID != nil {
-			if id, err := uuid.Parse(*entryReq.ProgramNodeID); err == nil {
-				entry.ProgramNodeID = &id
+			id, err := uuid.Parse(*entryReq.ProgramNodeID)
+			if err != nil {
+				return nil, &domain.ValidationError{
+					Field:   fmt.Sprintf("entries[%d].program_node_id", i),
+					Message: "invalid UUID format: " + err.Error(),
+				}
 			}
+			entry.ProgramNodeID = &id
 		}
 
 		// Convert plan_snapshot
 		if entryReq.PlanSnapshot != nil {
-			snapshot := domain.PlanSnapshot{
-				TargetSets:         entryReq.PlanSnapshot.TargetSets,
-				TargetReps:         entryReq.PlanSnapshot.TargetReps,
-				TargetRPE:          entryReq.PlanSnapshot.TargetRPE,
-				TargetLoadKg:       entryReq.PlanSnapshot.TargetLoadKg,
-				Percent1RM:         entryReq.PlanSnapshot.Percent1RM,
-				PlannedRestSeconds: entryReq.PlanSnapshot.PlannedRestSeconds,
+			snapshot, err := convertPlanSnapshot(entryReq.PlanSnapshot, i)
+			if err != nil {
+				return nil, err
 			}
-			if entryReq.PlanSnapshot.ProgramNodeID != nil {
-				if id, err := uuid.Parse(*entryReq.PlanSnapshot.ProgramNodeID); err == nil {
-					snapshot.ProgramNodeID = &id
-				}
-			}
-			entry.PlanSnapshot = &snapshot
+			entry.PlanSnapshot = snapshot
 		}
 
-		workout.Entries[i] = entry
+		entries[i] = entry
+	}
+
+	return entries, nil
+}
+
+// convertPlanSnapshot converts a plan snapshot request to domain model
+func convertPlanSnapshot(req *planSnapshotRequest, entryIndex int) (*domain.PlanSnapshot, error) {
+	snapshot := domain.PlanSnapshot{
+		TargetSets:         req.TargetSets,
+		TargetReps:         req.TargetReps,
+		TargetRPE:          req.TargetRPE,
+		TargetLoadKg:       req.TargetLoadKg,
+		Percent1RM:         req.Percent1RM,
+		PlannedRestSeconds: req.PlannedRestSeconds,
+	}
+
+	if req.ProgramNodeID != nil {
+		id, err := uuid.Parse(*req.ProgramNodeID)
+		if err != nil {
+			return nil, &domain.ValidationError{
+				Field:   fmt.Sprintf("entries[%d].plan_snapshot.program_node_id", entryIndex),
+				Message: "invalid UUID format: " + err.Error(),
+			}
+		}
+		snapshot.ProgramNodeID = &id
+	}
+
+	return &snapshot, nil
+}
+
+// CreateWorkout handles POST /workouts
+func (h *WorkoutHandler) CreateWorkout(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Decode request body
+	var req workoutRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		middleware.WriteValidationError(w, "Invalid request body", map[string]interface{}{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Parse and validate request
+	workout, err := h.parseWorkoutRequest(ctx, &req)
+	if err != nil {
+		if handleValidationError(w, err) {
+			return
+		}
+		middleware.WriteInternalError(w, "Failed to parse workout request")
+		return
 	}
 
 	// Validate
 	if err := domain.ValidateWorkout(workout); err != nil {
-		if ve, ok := err.(*domain.ValidationError); ok {
-			middleware.WriteValidationError(w, "Validation failed", map[string]interface{}{
-				"field":   ve.Field,
-				"message": ve.Message,
-			})
+		if handleValidationError(w, err) {
 			return
 		}
 		middleware.WriteValidationError(w, "Validation failed", map[string]interface{}{
@@ -224,24 +296,17 @@ func (h *WorkoutHandler) CreateWorkout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(workout); err != nil {
-		slog.Error("Failed to encode workout response", "error", err)
-	}
+	writeJSON(w, http.StatusCreated, workout)
 }
 
 // GetWorkout handles GET /workouts/{id}
 func (h *WorkoutHandler) GetWorkout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// Extract ID from path
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	// Extract and parse ID from path
+	id, err := parseUUIDParam(r, "id", "workout")
 	if err != nil {
-		middleware.WriteValidationError(w, "Invalid workout ID format", map[string]interface{}{
-			"id": idStr,
-		})
+		middleware.WriteValidationError(w, err.Error(), nil)
 		return
 	}
 
@@ -257,24 +322,17 @@ func (h *WorkoutHandler) GetWorkout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(workout); err != nil {
-		slog.Error("Failed to encode workout response", "error", err)
-	}
+	writeJSON(w, http.StatusOK, workout)
 }
 
 // UpdateWorkout handles PUT /workouts/{id}
 func (h *WorkoutHandler) UpdateWorkout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// Extract ID from path
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	// Extract and parse ID from path
+	id, err := parseUUIDParam(r, "id", "workout")
 	if err != nil {
-		middleware.WriteValidationError(w, "Invalid workout ID format", map[string]interface{}{
-			"id": idStr,
-		})
+		middleware.WriteValidationError(w, err.Error(), nil)
 		return
 	}
 
@@ -289,46 +347,8 @@ func (h *WorkoutHandler) UpdateWorkout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Decode request body (full replacement, same structure as Create)
-	var req struct {
-		Timestamp      string   `json:"timestamp"`
-		SessionStart   *string  `json:"session_start,omitempty"`
-		SessionEnd     *string  `json:"session_end,omitempty"`
-		BodyWeightKg   *float64 `json:"body_weight_kg,omitempty"`
-		FatigueLevel   *int     `json:"fatigue_level,omitempty"`
-		SleepHours     *float64 `json:"sleep_hours,omitempty"`
-		ConditionNotes *string  `json:"condition_notes,omitempty"`
-		ProgramNodeID  *string  `json:"program_node_id,omitempty"`
-		ProgramContext []string `json:"program_context,omitempty"`
-		Notes          *string  `json:"notes,omitempty"`
-		Entries        []struct {
-			ExerciseID           string  `json:"exercise_id"`
-			DisplayName          *string `json:"display_name,omitempty"`
-			EntryType            string  `json:"entry_type"`
-			Sets                 int     `json:"sets"`
-			Reps                 int     `json:"reps"`
-			LoadKg               float64 `json:"load_kg"`
-			RPE                  int     `json:"rpe"`
-			EntryStart           *string `json:"entry_start,omitempty"`
-			EntryEnd             *string `json:"entry_end,omitempty"`
-			PlannedRestSeconds   *int    `json:"planned_rest_seconds,omitempty"`
-			PerformedRestSeconds *int    `json:"performed_rest_seconds,omitempty"`
-			PerSetRestOverrides  []int   `json:"per_set_rest_overrides,omitempty"`
-			ProgramNodeID        *string `json:"program_node_id,omitempty"`
-			PlanSnapshot         *struct {
-				ProgramNodeID      *string  `json:"program_node_id,omitempty"`
-				TargetSets         *int     `json:"target_sets,omitempty"`
-				TargetReps         *int     `json:"target_reps,omitempty"`
-				TargetRPE          *int     `json:"target_rpe,omitempty"`
-				TargetLoadKg       *float64 `json:"target_load_kg,omitempty"`
-				Percent1RM         *float64 `json:"percent_1rm,omitempty"`
-				PlannedRestSeconds *int     `json:"planned_rest_seconds,omitempty"`
-			} `json:"plan_snapshot,omitempty"`
-			Notes          *string `json:"notes,omitempty"`
-			VideoObjectKey *string `json:"video_object_key,omitempty"`
-		} `json:"entries"`
-	}
-
+	// Decode request body
+	var req workoutRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		middleware.WriteValidationError(w, "Invalid request body", map[string]interface{}{
 			"error": err.Error(),
@@ -336,139 +356,23 @@ func (h *WorkoutHandler) UpdateWorkout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse timestamp
-	timestamp, err := time.Parse(time.RFC3339, req.Timestamp)
+	// Parse and validate request
+	updated, err := h.parseWorkoutRequest(ctx, &req)
 	if err != nil {
-		middleware.WriteValidationError(w, "Invalid timestamp format", map[string]interface{}{
-			"field": "timestamp",
-			"error": err.Error(),
-		})
+		if handleValidationError(w, err) {
+			return
+		}
+		middleware.WriteInternalError(w, "Failed to parse workout request")
 		return
 	}
 
-	// Update existing workout (full replacement)
-	existing.Timestamp = timestamp
-	existing.BodyWeightKg = req.BodyWeightKg
-	existing.FatigueLevel = req.FatigueLevel
-	existing.SleepHours = req.SleepHours
-	existing.ConditionNotes = req.ConditionNotes
-	existing.ProgramContext = req.ProgramContext
-	existing.Notes = req.Notes
-	existing.Entries = make([]domain.WorkoutEntry, len(req.Entries))
-
-	// Parse optional timestamps
-	if req.SessionStart != nil {
-		if t, err := time.Parse(time.RFC3339, *req.SessionStart); err == nil {
-			existing.SessionStart = &t
-		}
-	} else {
-		existing.SessionStart = nil
-	}
-	if req.SessionEnd != nil {
-		if t, err := time.Parse(time.RFC3339, *req.SessionEnd); err == nil {
-			existing.SessionEnd = &t
-		}
-	} else {
-		existing.SessionEnd = nil
-	}
-
-	// Parse program_node_id
-	if req.ProgramNodeID != nil {
-		if id, err := uuid.Parse(*req.ProgramNodeID); err == nil {
-			existing.ProgramNodeID = &id
-		}
-	} else {
-		existing.ProgramNodeID = nil
-	}
-
-	// Convert entries (same logic as Create)
-	for i, entryReq := range req.Entries {
-		exerciseID, err := uuid.Parse(entryReq.ExerciseID)
-		if err != nil {
-			middleware.WriteValidationError(w, "Invalid exercise_id format", map[string]interface{}{
-				"field": "entries",
-				"index": i,
-			})
-			return
-		}
-
-		// Validate Exercise exists
-		if _, err := h.exerciseRepo.GetByID(ctx, exerciseID); err != nil {
-			if err == domain.ErrNotFound {
-				middleware.WriteValidationError(w, "Exercise not found", map[string]interface{}{
-					"field":       "entries",
-					"index":       i,
-					"exercise_id": entryReq.ExerciseID,
-				})
-				return
-			}
-			middleware.WriteInternalError(w, "Failed to validate exercise")
-			return
-		}
-
-		entry := domain.WorkoutEntry{
-			ExerciseID:           exerciseID,
-			DisplayName:          entryReq.DisplayName,
-			EntryType:            entryReq.EntryType,
-			Sets:                 entryReq.Sets,
-			Reps:                 entryReq.Reps,
-			LoadKg:               entryReq.LoadKg,
-			RPE:                  entryReq.RPE,
-			PlannedRestSeconds:   entryReq.PlannedRestSeconds,
-			PerformedRestSeconds: entryReq.PerformedRestSeconds,
-			PerSetRestOverrides:  entryReq.PerSetRestOverrides,
-			Notes:                entryReq.Notes,
-			VideoObjectKey:       entryReq.VideoObjectKey,
-			Order:                i,
-		}
-
-		// Parse optional timestamps
-		if entryReq.EntryStart != nil {
-			if t, err := time.Parse(time.RFC3339, *entryReq.EntryStart); err == nil {
-				entry.EntryStart = &t
-			}
-		}
-		if entryReq.EntryEnd != nil {
-			if t, err := time.Parse(time.RFC3339, *entryReq.EntryEnd); err == nil {
-				entry.EntryEnd = &t
-			}
-		}
-
-		// Parse program_node_id
-		if entryReq.ProgramNodeID != nil {
-			if id, err := uuid.Parse(*entryReq.ProgramNodeID); err == nil {
-				entry.ProgramNodeID = &id
-			}
-		}
-
-		// Convert plan_snapshot
-		if entryReq.PlanSnapshot != nil {
-			snapshot := domain.PlanSnapshot{
-				TargetSets:         entryReq.PlanSnapshot.TargetSets,
-				TargetReps:         entryReq.PlanSnapshot.TargetReps,
-				TargetRPE:          entryReq.PlanSnapshot.TargetRPE,
-				TargetLoadKg:       entryReq.PlanSnapshot.TargetLoadKg,
-				Percent1RM:         entryReq.PlanSnapshot.Percent1RM,
-				PlannedRestSeconds: entryReq.PlanSnapshot.PlannedRestSeconds,
-			}
-			if entryReq.PlanSnapshot.ProgramNodeID != nil {
-				if id, err := uuid.Parse(*entryReq.PlanSnapshot.ProgramNodeID); err == nil {
-					snapshot.ProgramNodeID = &id
-				}
-			}
-			entry.PlanSnapshot = &snapshot
-		}
-
-		existing.Entries[i] = entry
-	}
+	// Preserve ID and timestamps from existing workout
+	updated.ID = existing.ID
+	updated.CreatedAt = existing.CreatedAt
 
 	// Validate
-	if err := domain.ValidateWorkout(existing); err != nil {
-		if ve, ok := err.(*domain.ValidationError); ok {
-			middleware.WriteValidationError(w, "Validation failed", map[string]interface{}{
-				"field":   ve.Field,
-				"message": ve.Message,
-			})
+	if err := domain.ValidateWorkout(updated); err != nil {
+		if handleValidationError(w, err) {
 			return
 		}
 		middleware.WriteValidationError(w, "Validation failed", map[string]interface{}{
@@ -478,7 +382,7 @@ func (h *WorkoutHandler) UpdateWorkout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update
-	if err := h.repo.Update(ctx, existing); err != nil {
+	if err := h.repo.Update(ctx, updated); err != nil {
 		if err == domain.ErrNotFound {
 			middleware.WriteNotFoundError(w, "Workout not found")
 			return
@@ -488,24 +392,17 @@ func (h *WorkoutHandler) UpdateWorkout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(existing); err != nil {
-		slog.Error("Failed to encode workout response", "error", err)
-	}
+	writeJSON(w, http.StatusOK, updated)
 }
 
 // DeleteWorkout handles DELETE /workouts/{id}
 func (h *WorkoutHandler) DeleteWorkout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// Extract ID from path
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	// Extract and parse ID from path
+	id, err := parseUUIDParam(r, "id", "workout")
 	if err != nil {
-		middleware.WriteValidationError(w, "Invalid workout ID format", map[string]interface{}{
-			"id": idStr,
-		})
+		middleware.WriteValidationError(w, err.Error(), nil)
 		return
 	}
 
@@ -577,13 +474,9 @@ func (h *WorkoutHandler) ListWorkouts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return paginated response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(map[string]interface{}{
+	writeJSON(w, http.StatusOK, map[string]interface{}{
 		"data":        workouts,
 		"next_cursor": nextCursor,
 		"has_more":    hasMore,
-	}); err != nil {
-		slog.Error("Failed to encode workout list response", "error", err)
-	}
+	})
 }

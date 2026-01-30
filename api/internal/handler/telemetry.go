@@ -2,14 +2,12 @@ package handler
 
 import (
 	"encoding/json"
-	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/aoshimash/optel-training/api/internal/domain"
 	"github.com/aoshimash/optel-training/api/internal/middleware"
 	"github.com/aoshimash/optel-training/api/internal/repository"
-	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
@@ -91,11 +89,7 @@ func (h *TelemetryHandler) CreateTelemetryPoint(w http.ResponseWriter, r *http.R
 
 	// Validate
 	if err := domain.ValidateTelemetryPoint(point); err != nil {
-		if ve, ok := err.(*domain.ValidationError); ok {
-			middleware.WriteValidationError(w, "Validation failed", map[string]interface{}{
-				"field":   ve.Field,
-				"message": ve.Message,
-			})
+		if handleValidationError(w, err) {
 			return
 		}
 		middleware.WriteValidationError(w, "Validation failed", map[string]interface{}{
@@ -111,24 +105,17 @@ func (h *TelemetryHandler) CreateTelemetryPoint(w http.ResponseWriter, r *http.R
 	}
 
 	// Return response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(point); err != nil {
-		slog.Error("Failed to encode telemetry point response", "error", err)
-	}
+	writeJSON(w, http.StatusCreated, point)
 }
 
 // GetTelemetryPoint handles GET /telemetry/{id}
 func (h *TelemetryHandler) GetTelemetryPoint(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// Extract ID from path
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	// Extract and parse ID from path
+	id, err := parseUUIDParam(r, "id", "telemetry point")
 	if err != nil {
-		middleware.WriteValidationError(w, "Invalid telemetry point ID format", map[string]interface{}{
-			"id": idStr,
-		})
+		middleware.WriteValidationError(w, err.Error(), nil)
 		return
 	}
 
@@ -144,24 +131,17 @@ func (h *TelemetryHandler) GetTelemetryPoint(w http.ResponseWriter, r *http.Requ
 	}
 
 	// Return response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(point); err != nil {
-		slog.Error("Failed to encode telemetry point response", "error", err)
-	}
+	writeJSON(w, http.StatusOK, point)
 }
 
 // UpdateTelemetryPoint handles PUT /telemetry/{id}
 func (h *TelemetryHandler) UpdateTelemetryPoint(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// Extract ID from path
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	// Extract and parse ID from path
+	id, err := parseUUIDParam(r, "id", "telemetry point")
 	if err != nil {
-		middleware.WriteValidationError(w, "Invalid telemetry point ID format", map[string]interface{}{
-			"id": idStr,
-		})
+		middleware.WriteValidationError(w, err.Error(), nil)
 		return
 	}
 
@@ -236,11 +216,7 @@ func (h *TelemetryHandler) UpdateTelemetryPoint(w http.ResponseWriter, r *http.R
 
 	// Validate
 	if err := domain.ValidateTelemetryPoint(existing); err != nil {
-		if ve, ok := err.(*domain.ValidationError); ok {
-			middleware.WriteValidationError(w, "Validation failed", map[string]interface{}{
-				"field":   ve.Field,
-				"message": ve.Message,
-			})
+		if handleValidationError(w, err) {
 			return
 		}
 		middleware.WriteValidationError(w, "Validation failed", map[string]interface{}{
@@ -260,24 +236,17 @@ func (h *TelemetryHandler) UpdateTelemetryPoint(w http.ResponseWriter, r *http.R
 	}
 
 	// Return response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(existing); err != nil {
-		slog.Error("Failed to encode telemetry point response", "error", err)
-	}
+	writeJSON(w, http.StatusOK, existing)
 }
 
 // DeleteTelemetryPoint handles DELETE /telemetry/{id}
 func (h *TelemetryHandler) DeleteTelemetryPoint(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// Extract ID from path
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	// Extract and parse ID from path
+	id, err := parseUUIDParam(r, "id", "telemetry point")
 	if err != nil {
-		middleware.WriteValidationError(w, "Invalid telemetry point ID format", map[string]interface{}{
-			"id": idStr,
-		})
+		middleware.WriteValidationError(w, err.Error(), nil)
 		return
 	}
 
@@ -350,13 +319,9 @@ func (h *TelemetryHandler) ListTelemetryPoints(w http.ResponseWriter, r *http.Re
 	}
 
 	// Return paginated response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(map[string]interface{}{
+	writeJSON(w, http.StatusOK, map[string]interface{}{
 		"data":        points,
 		"next_cursor": nextCursor,
 		"has_more":    hasMore,
-	}); err != nil {
-		slog.Error("Failed to encode telemetry point list response", "error", err)
-	}
+	})
 }
