@@ -23,7 +23,7 @@ type WorkoutEntry struct {
 	Order                int           `json:"order"`
 	ExerciseID           uuid.UUID     `json:"exercise_id"`
 	DisplayName          *string       `json:"display_name,omitempty"`
-	EntryType            string        `json:"entry_type"`
+	EntryType            *string       `json:"entry_type,omitempty"`
 	Sets                 int           `json:"sets"`
 	Reps                 int           `json:"reps"`
 	LoadKg               float64       `json:"load_kg"`

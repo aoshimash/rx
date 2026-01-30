@@ -30,7 +30,7 @@ func TestWorkoutRepository_Create(t *testing.T) {
 					{
 						Order:      1,
 						ExerciseID: uuid.New(),
-						EntryType:  "work",
+						EntryType:  stringPtr("work"),
 						Sets:       3,
 						Reps:       10,
 						LoadKg:     100.0,
@@ -88,7 +88,7 @@ func TestWorkoutRepository_GetByID(t *testing.T) {
 				WorkoutID:  id,
 				Order:      1,
 				ExerciseID: exerciseID,
-				EntryType:  "work",
+				EntryType:  stringPtr("work"),
 				Sets:       3,
 				Reps:       10,
 				LoadKg:     100.0,

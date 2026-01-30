@@ -9,6 +9,8 @@ import (
 	"github.com/google/uuid"
 )
 
+// stringPtr is defined in exercise_test.go
+
 func TestWorkoutRepository_Create(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -32,7 +34,7 @@ func TestWorkoutRepository_Create(t *testing.T) {
 		Entries: []domain.WorkoutEntry{
 			{
 				ExerciseID: exercise.ID,
-				EntryType:  "work",
+				EntryType:  stringPtr("work"),
 				Sets:       3,
 				Reps:       10,
 				LoadKg:     100.0,
@@ -80,7 +82,7 @@ func TestWorkoutRepository_GetByID(t *testing.T) {
 		Entries: []domain.WorkoutEntry{
 			{
 				ExerciseID: exercise.ID,
-				EntryType:  "work",
+				EntryType:  stringPtr("work"),
 				Sets:       3,
 				Reps:       10,
 				LoadKg:     100.0,
@@ -127,7 +129,7 @@ func TestWorkoutRepository_Update(t *testing.T) {
 		Entries: []domain.WorkoutEntry{
 			{
 				ExerciseID: exercise.ID,
-				EntryType:  "work",
+				EntryType:  stringPtr("work"),
 				Sets:       3,
 				Reps:       10,
 				LoadKg:     100.0,
@@ -176,7 +178,7 @@ func TestWorkoutRepository_Delete(t *testing.T) {
 		Entries: []domain.WorkoutEntry{
 			{
 				ExerciseID: exercise.ID,
-				EntryType:  "work",
+				EntryType:  stringPtr("work"),
 				Sets:       3,
 				Reps:       10,
 				LoadKg:     100.0,
@@ -223,7 +225,7 @@ func TestWorkoutRepository_List(t *testing.T) {
 			Entries: []domain.WorkoutEntry{
 				{
 					ExerciseID: exercise.ID,
-					EntryType:  "work",
+					EntryType:  stringPtr("work"),
 					Sets:       3,
 					Reps:       10,
 					LoadKg:     100.0,
