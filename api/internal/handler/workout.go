@@ -32,7 +32,7 @@ type workoutRequest struct {
 type workoutEntryRequest struct {
 	ExerciseID           string               `json:"exercise_id"`
 	DisplayName          *string              `json:"display_name,omitempty"`
-	EntryType            string               `json:"entry_type"`
+	EntryType            *string              `json:"entry_type,omitempty"`
 	Sets                 int                  `json:"sets"`
 	Reps                 int                  `json:"reps"`
 	LoadKg               float64              `json:"load_kg"`
@@ -168,7 +168,7 @@ func (h *WorkoutHandler) convertEntries(ctx context.Context, entryReqs []workout
 		entry := domain.WorkoutEntry{
 			ExerciseID:           exerciseID,
 			DisplayName:          entryReq.DisplayName,
-			EntryType:            entryReq.EntryType,
+			EntryType:            entryReq.EntryType, // nullable
 			Sets:                 entryReq.Sets,
 			Reps:                 entryReq.Reps,
 			LoadKg:               entryReq.LoadKg,

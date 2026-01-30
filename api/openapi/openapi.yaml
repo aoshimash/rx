@@ -812,7 +812,6 @@ components:
         - workout_id
         - order
         - exercise_id
-        - entry_type
         - sets
         - reps
         - load_kg
@@ -838,8 +837,9 @@ components:
           description: Override display name
         entry_type:
           type: string
-          enum: [top, main, backoff, accessory]
-          description: Entry type
+          maxLength: 50
+          nullable: true
+          description: Entry type (e.g., top, main, backoff). User-defined values allowed.
         sets:
           type: integer
           minimum: 1
@@ -896,7 +896,6 @@ components:
       type: object
       required:
         - exercise_id
-        - entry_type
         - sets
         - reps
         - load_kg
@@ -910,7 +909,9 @@ components:
           maxLength: 200
         entry_type:
           type: string
-          enum: [top, main, backoff, accessory]
+          maxLength: 50
+          nullable: true
+          description: Entry type (e.g., top, main, backoff). User-defined values allowed.
         sets:
           type: integer
           minimum: 1

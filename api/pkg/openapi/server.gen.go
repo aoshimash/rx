@@ -18,22 +18,6 @@ const (
 	BearerAuthScopes = "bearerAuth.Scopes"
 )
 
-// Defines values for WorkoutEntryEntryType.
-const (
-	WorkoutEntryEntryTypeAccessory WorkoutEntryEntryType = "accessory"
-	WorkoutEntryEntryTypeBackoff   WorkoutEntryEntryType = "backoff"
-	WorkoutEntryEntryTypeMain      WorkoutEntryEntryType = "main"
-	WorkoutEntryEntryTypeTop       WorkoutEntryEntryType = "top"
-)
-
-// Defines values for WorkoutEntryCreateEntryType.
-const (
-	WorkoutEntryCreateEntryTypeAccessory WorkoutEntryCreateEntryType = "accessory"
-	WorkoutEntryCreateEntryTypeBackoff   WorkoutEntryCreateEntryType = "backoff"
-	WorkoutEntryCreateEntryTypeMain      WorkoutEntryCreateEntryType = "main"
-	WorkoutEntryCreateEntryTypeTop       WorkoutEntryCreateEntryType = "top"
-)
-
 // Error defines model for Error.
 type Error struct {
 	// Code Error code
@@ -301,8 +285,8 @@ type WorkoutEntry struct {
 	EntryEnd    *time.Time `json:"entry_end,omitempty"`
 	EntryStart  *time.Time `json:"entry_start,omitempty"`
 
-	// EntryType Entry type
-	EntryType WorkoutEntryEntryType `json:"entry_type"`
+	// EntryType Entry type (e.g., top, main, backoff). User-defined values allowed.
+	EntryType *string `json:"entry_type"`
 
 	// ExerciseId Exercise performed
 	ExerciseId openapi_types.UUID `json:"exercise_id"`
@@ -344,20 +328,19 @@ type WorkoutEntry struct {
 	WorkoutId      openapi_types.UUID `json:"workout_id"`
 }
 
-// WorkoutEntryEntryType Entry type
-type WorkoutEntryEntryType string
-
 // WorkoutEntryCreate defines model for WorkoutEntryCreate.
 type WorkoutEntryCreate struct {
-	DisplayName          *string                     `json:"display_name,omitempty"`
-	EntryEnd             *time.Time                  `json:"entry_end,omitempty"`
-	EntryStart           *time.Time                  `json:"entry_start,omitempty"`
-	EntryType            WorkoutEntryCreateEntryType `json:"entry_type"`
-	ExerciseId           openapi_types.UUID          `json:"exercise_id"`
-	LoadKg               float64                     `json:"load_kg"`
-	Notes                *string                     `json:"notes,omitempty"`
-	PerSetRestOverrides  *[]int                      `json:"per_set_rest_overrides,omitempty"`
-	PerformedRestSeconds *int                        `json:"performed_rest_seconds,omitempty"`
+	DisplayName *string    `json:"display_name,omitempty"`
+	EntryEnd    *time.Time `json:"entry_end,omitempty"`
+	EntryStart  *time.Time `json:"entry_start,omitempty"`
+
+	// EntryType Entry type (e.g., top, main, backoff). User-defined values allowed.
+	EntryType            *string            `json:"entry_type"`
+	ExerciseId           openapi_types.UUID `json:"exercise_id"`
+	LoadKg               float64            `json:"load_kg"`
+	Notes                *string            `json:"notes,omitempty"`
+	PerSetRestOverrides  *[]int             `json:"per_set_rest_overrides,omitempty"`
+	PerformedRestSeconds *int               `json:"performed_rest_seconds,omitempty"`
 
 	// PlanSnapshot Snapshot of planned values at execution time
 	PlanSnapshot       *PlanSnapshot       `json:"plan_snapshot,omitempty"`
@@ -370,9 +353,6 @@ type WorkoutEntryCreate struct {
 	// VideoObjectKey Object key for uploaded video in storage (from upload-url response)
 	VideoObjectKey *string `json:"video_object_key,omitempty"`
 }
-
-// WorkoutEntryCreateEntryType defines model for WorkoutEntryCreate.EntryType.
-type WorkoutEntryCreateEntryType string
 
 // WorkoutListResponse defines model for WorkoutListResponse.
 type WorkoutListResponse struct {
