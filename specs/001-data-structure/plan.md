@@ -5,7 +5,7 @@
 
 ## Summary
 
-Define the core domain entities for OPTel Training: **Workout**, **WorkoutEntry**, **Program**, **ProgramNode**, **Exercise**, and **TelemetryPoint**. These structures form the foundation for all training data storage and retrieval, supporting both performed workout logs and planned training programs with flexible hierarchy.
+Define the core domain entities for OPTel Workout: **Workout**, **WorkoutEntry**, **Program**, **ProgramNode**, **Exercise**, and **TelemetryPoint**. These structures form the foundation for all training data storage and retrieval, supporting both performed workout logs and planned training programs with flexible hierarchy.
 
 **Technical Approach**: Domain-Driven Schema-First development—define Go domain models with business rules, then generate OpenAPI spec and API types from the domain model definitions.
 

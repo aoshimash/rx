@@ -27,7 +27,7 @@
 
 ### User Story 1 - Record a Workout Session with Structured Entries (Priority: P1)
 
-As an agent or client integrating with OPTel Training, I can represent a completed training session as a workout that contains ordered performed entries so that logs remain consistent, searchable, and comparable over time.
+As an agent or client integrating with OPTel Workout, I can represent a completed training session as a workout that contains ordered performed entries so that logs remain consistent, searchable, and comparable over time.
 
 **Why this priority**: A canonical workout record is the foundation for all storage, retrieval, and downstream analysis. Without it, every integration becomes bespoke.
 
@@ -152,7 +152,7 @@ Additional observed realities that influence the data model:
 
 #### Source B: Program Spreadsheet PDF (“EVLT FullBodyhypertrophy 9weeks”)
 
-The document includes both **training program prescriptions** and additional non-training information (e.g., nutrition guidance, profile). For OPTel Training’s “dumb backend” scope:
+The document includes both **training program prescriptions** and additional non-training information (e.g., nutrition guidance, profile). For OPTel Workout’s “dumb backend” scope:
 
 - **In-scope for Program**: week/day structure, per-exercise prescription fields.
 - **Out-of-scope as domain entities (for now)**: nutrition and profile calculations. If retained, they should be captured as generic telemetry metrics rather than first-class “health” logic.

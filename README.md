@@ -1,4 +1,4 @@
-# optel-training
+# optel-workout
 
 An agent-native telemetry backend to monitor physical exertion. Part of Open Physical Telemetry (OPTel).
 
@@ -62,13 +62,13 @@ Build a production-ready container image:
 
 ```bash
 # From repository root
-docker build -t optel-training:latest -f api/Dockerfile api
+docker build -t optel-workout:latest -f api/Dockerfile api
 
 # Run the image
 docker run -p 8080:8080 \
   -e PORT=8080 \
   -e LOG_LEVEL=info \
-  optel-training:latest
+  optel-workout:latest
 
 # Test
 curl http://localhost:8080/api/v1/workouts
@@ -95,7 +95,7 @@ See [Development Guide](docs/DEVELOPMENT.md) for details.
 ## Project Structure
 
 ```
-optel-training/
+optel-workout/
 ├── api/              # REST API (Go)
 ├── mcp/              # MCP Server (runs on user's local machine)
 ├── frontend/         # Frontend (future)

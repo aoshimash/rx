@@ -23,7 +23,7 @@ The documentation server is defined as a Docker Compose service:
 # Added to docker-compose.yml
 api-docs:
   image: scalarapi/api-reference:latest
-  container_name: optel-training-api-docs
+  container_name: optel-workout-api-docs
   ports:
     - "${API_DOCS_PORT:-8081}:80"
   volumes:
@@ -45,6 +45,6 @@ api-docs:
 
 ## Notes
 
-- No new REST API endpoints are added to the OPTel Training API
+- No new REST API endpoints are added to the OPTel Workout API
 - The documentation server is a separate service that reads the existing OpenAPI spec
 - "Try it" requests go directly from browser to API server (`http://localhost:8080/api/v1`)

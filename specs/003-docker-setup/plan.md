@@ -65,7 +65,7 @@ specs/003-docker-setup/
 -->
 
 ```text
-optel-training/
+optel-workout/
 ├── .devcontainer/             # DevContainer configuration (added)
 │   ├── devcontainer.json
 │   ├── README.md

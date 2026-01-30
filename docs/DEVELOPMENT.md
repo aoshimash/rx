@@ -55,7 +55,7 @@ PostgreSQL connection details:
 - Port: `5432` (configurable via `POSTGRES_PORT` environment variable)
 - User: `optel` (configurable via `POSTGRES_USER`)
 - Password: `optel` (configurable via `POSTGRES_PASSWORD`)
-- Database: `optel_training` (configurable via `POSTGRES_DB`)
+- Database: `optel_workout` (configurable via `POSTGRES_DB`)
 
 ### 4. Development Workflow
 
@@ -853,7 +853,7 @@ Docker Compose provides two services:
 - Environment variables:
   - `POSTGRES_USER` (default: `optel`)
   - `POSTGRES_PASSWORD` (default: `optel`)
-  - `POSTGRES_DB` (default: `optel_training`)
+  - `POSTGRES_DB` (default: `optel_workout`)
 - Volume: `postgres_data` (persistent data storage)
 
 **Usage:**
@@ -915,13 +915,13 @@ HOST_PORT=8081 docker compose up -d api
 
 ```bash
 # Build production image (from api/ directory)
-docker build -t optel-training:latest -f Dockerfile api
+docker build -t optel-workout:latest -f Dockerfile api
 
 # Run production container
 docker run -p 8080:8080 \
   -e PORT=8080 \
   -e LOG_LEVEL=info \
-  optel-training:latest
+  optel-workout:latest
 
 # Test production container
 curl http://localhost:8080/api/v1/workouts
@@ -946,14 +946,14 @@ After building the production image, verify it works correctly:
 
 ```bash
 # Build the image
-docker build -t optel-training:latest -f Dockerfile api
+docker build -t optel-workout:latest -f Dockerfile api
 
 # Run the container
 docker run -d -p 8080:8080 \
   -e PORT=8080 \
   -e LOG_LEVEL=info \
   --name optel-test \
-  optel-training:latest
+  optel-workout:latest
 
 # Wait a few seconds for startup, then test
 sleep 3

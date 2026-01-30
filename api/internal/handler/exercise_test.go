@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/aoshimash/optel-training/api/internal/middleware"
-	"github.com/aoshimash/optel-training/api/internal/store/memory"
+	"github.com/aoshimash/optel-workout/api/internal/middleware"
+	"github.com/aoshimash/optel-workout/api/internal/store/memory"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )

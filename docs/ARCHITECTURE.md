@@ -2,7 +2,7 @@
 
 ## Overview
 
-OPTel Workout is an agent-native telemetry backend for physical exertion data. It follows Clean Architecture principles with a Schema-First API approach.
+OPTel Workout is an agent-native telemetry backend for workout (physical exertion) data. It follows Clean Architecture principles with a Schema-First API approach.
 
 ## System Context
 
@@ -63,7 +63,7 @@ OPTel Workout is an agent-native telemetry backend for physical exertion data. I
 ## Directory Structure
 
 ```
-optel-training/
+optel-workout/
 ├── api/                          # REST API (Go)
 │   ├── cmd/
 │   │   └── server/

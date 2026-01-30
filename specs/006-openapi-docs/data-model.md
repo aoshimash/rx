@@ -29,7 +29,7 @@ This feature does not introduce new domain entities or data models. It provides 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | API_DOCS_PORT | integer | 8081 | Host port for documentation server |
-| Container name | string | optel-training-api-docs | Docker container identifier |
+| Container name | string | optel-workout-api-docs | Docker container identifier |
 
 ## Relationships
 
@@ -53,7 +53,7 @@ This feature does not introduce new domain entities or data models. It provides 
             │ "Try it" requests
             ▼
 ┌─────────────────────────┐
-│  OPTel Training API     │
+│  OPTel Workout API     │
 │  (http://localhost:8080)│
 └─────────────────────────┘
 ```

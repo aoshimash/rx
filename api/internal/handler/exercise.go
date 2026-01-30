@@ -5,9 +5,9 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/aoshimash/optel-training/api/internal/domain"
-	"github.com/aoshimash/optel-training/api/internal/middleware"
-	"github.com/aoshimash/optel-training/api/internal/repository"
+	"github.com/aoshimash/optel-workout/api/internal/domain"
+	"github.com/aoshimash/optel-workout/api/internal/middleware"
+	"github.com/aoshimash/optel-workout/api/internal/repository"
 )
 
 // ExerciseHandler handles Exercise-related HTTP requests

@@ -1,6 +1,6 @@
-# OPTel Training API
+# OPTel Workout API
 
-REST API for managing training data (Workouts, Exercises, Programs, and Telemetry).
+REST API for managing workout data (Workouts, Exercises, Programs, and Telemetry).
 
 ## Overview
 

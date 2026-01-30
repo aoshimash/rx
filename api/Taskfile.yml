@@ -119,7 +119,7 @@ tasks:
   docker-build-prod:
     desc: Build production Docker image
     cmds:
-      - docker build -t optel-training:latest -f Dockerfile .
+      - docker build -t optel-workout:latest -f Dockerfile .
 
   # Database migration commands
   # Prerequisites: PostgreSQL must be running (docker compose up -d postgres)
@@ -130,28 +130,28 @@ tasks:
     deps: [deps]
     cmds:
       - echo "Running database migrations..."
-      - migrate -path migrations -database "postgres://${DB_USER:-optel}:${DB_PASSWORD:-optel}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-optel_training}?sslmode=${DB_SSLMODE:-disable}" up
+      - migrate -path migrations -database "postgres://${DB_USER:-optel}:${DB_PASSWORD:-optel}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-optel_workout}?sslmode=${DB_SSLMODE:-disable}" up
 
   migrate-down:
     desc: Roll back all migrations
     deps: [deps]
     cmds:
       - echo "Rolling back all migrations..."
-      - migrate -path migrations -database "postgres://${DB_USER:-optel}:${DB_PASSWORD:-optel}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-optel_training}?sslmode=${DB_SSLMODE:-disable}" down
+      - migrate -path migrations -database "postgres://${DB_USER:-optel}:${DB_PASSWORD:-optel}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-optel_workout}?sslmode=${DB_SSLMODE:-disable}" down
 
   migrate-down-1:
     desc: Roll back last migration
     deps: [deps]
     cmds:
       - echo "Rolling back last migration..."
-      - migrate -path migrations -database "postgres://${DB_USER:-optel}:${DB_PASSWORD:-optel}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-optel_training}?sslmode=${DB_SSLMODE:-disable}" down 1
+      - migrate -path migrations -database "postgres://${DB_USER:-optel}:${DB_PASSWORD:-optel}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-optel_workout}?sslmode=${DB_SSLMODE:-disable}" down 1
 
   migrate-status:
     desc: Check migration status
     deps: [deps]
     cmds:
       - echo "Checking migration status..."
-      - migrate -path migrations -database "postgres://${DB_USER:-optel}:${DB_PASSWORD:-optel}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-optel_training}?sslmode=${DB_SSLMODE:-disable}" version
+      - migrate -path migrations -database "postgres://${DB_USER:-optel}:${DB_PASSWORD:-optel}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-optel_workout}?sslmode=${DB_SSLMODE:-disable}" version
 
   migrate-create:
     desc: Create a new migration (requires NAME variable)

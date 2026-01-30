@@ -1,4 +1,4 @@
-# OpenAPI Schema Components for OPTel Training
+# OpenAPI Schema Components for OPTel Workout
 # Feature: 001-data-structure
 # Date: 2026-01-24
 #
@@ -6,7 +6,7 @@
 
 openapi: 3.0.3
 info:
-  title: OPTel Training API - Entity Schemas
+  title: OPTel Workout API - Entity Schemas
   version: 1.0.0
   description: Core entity schemas for training data
 

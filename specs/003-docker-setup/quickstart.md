@@ -28,7 +28,7 @@ Build the production image using the single Dockerfile under `api/`.
 Example:
 
 ```bash
-docker build -f api/Dockerfile api -t optel-training:latest
+docker build -f api/Dockerfile api -t optel-workout:latest
 ```
 
 ## Smoke-test with Docker Compose

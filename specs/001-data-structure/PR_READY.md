@@ -39,7 +39,7 @@ feat: define core data structures for training data
 ```markdown
 ## Summary
 
-Define core domain entities for OPTel Training: **Workout**, **WorkoutEntry**, **Program**, **ProgramNode**, **Exercise**, and **TelemetryPoint**. These structures form the foundation for all training data storage and retrieval.
+Define core domain entities for OPTel Workout: **Workout**, **WorkoutEntry**, **Program**, **ProgramNode**, **Exercise**, and **TelemetryPoint**. These structures form the foundation for all training data storage and retrieval.
 
 ## Implementation
 
