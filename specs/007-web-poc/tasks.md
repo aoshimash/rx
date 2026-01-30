@@ -104,16 +104,16 @@ This feature uses the OPTel monorepo structure:
 
 ### Implementation for User Story 3
 
-- [ ] T032 [P] [US3] Create ExerciseCombobox component with autocomplete in web/components/program-editor/ExerciseCombobox.tsx
-- [ ] T033 [P] [US3] Create ExerciseRow component for exercise prescription in web/components/program-editor/ExerciseRow.tsx
-- [ ] T034 [US3] Create ExerciseTable component for day's exercise list in web/components/program-editor/ExerciseTable.tsx
-- [ ] T035 [US3] Create DayAccordion component for collapsible day editor in web/components/program-editor/DayAccordion.tsx
-- [ ] T036 [US3] Create WeekAccordion component for collapsible week editor in web/components/program-editor/WeekAccordion.tsx
-- [ ] T037 [US3] Create ProgramForm component with full hierarchical editor in web/components/program-editor/ProgramForm.tsx
-- [ ] T038 [US3] Create Program Editor page (create mode) in web/app/programs/new/page.tsx
-- [ ] T039 [US3] Create Program Editor page (edit mode) in web/app/programs/[id]/edit/page.tsx
-- [ ] T040 [US3] Add program creation/update mutations in web/lib/hooks/usePrograms.ts
-- [ ] T041 [US3] Add delete confirmation dialog to program editor in web/components/program-editor/DeleteConfirmDialog.tsx
+- [X] T032 [P] [US3] Create ExerciseCombobox component with autocomplete in web/components/program-editor/ExerciseCombobox.tsx
+- [X] T033 [P] [US3] Create ExerciseRow component for exercise prescription in web/components/program-editor/ExerciseRow.tsx
+- [X] T034 [US3] Create ExerciseTable component for day's exercise list in web/components/program-editor/ExerciseTable.tsx
+- [X] T035 [US3] Create DayAccordion component for collapsible day editor in web/components/program-editor/DayAccordion.tsx
+- [X] T036 [US3] Create WeekAccordion component for collapsible week editor in web/components/program-editor/WeekAccordion.tsx
+- [X] T037 [US3] Create ProgramForm component with full hierarchical editor in web/components/program-editor/ProgramForm.tsx
+- [X] T038 [US3] Create Program Editor page (create mode) in web/app/programs/new/page.tsx
+- [X] T039 [US3] Create Program Editor page (edit mode) in web/app/programs/[id]/edit/page.tsx
+- [X] T040 [US3] Add program creation/update mutations in web/lib/hooks/usePrograms.ts
+- [X] T041 [US3] Add delete confirmation dialog to program editor in web/components/program-editor/DeleteConfirmDialog.tsx
 
 **Checkpoint**: User Story 3 complete - Users can create and edit training programs
 
