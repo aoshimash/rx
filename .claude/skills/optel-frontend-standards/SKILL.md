@@ -43,7 +43,7 @@ optel-workout/
 
 ## Key Principles
 
-1. **TypeScript Only** - No JavaScript. All files must be `.ts`/`.tsx` (never `.js`/`.jsx`)
+1. **TypeScript Only** - No JavaScript for source code. All source files must be `.ts`/`.tsx`. Config files may use `.js`/`.mjs` when TS not supported.
 2. **React Shared Mental Model** - Web and Mobile share React patterns
 3. **Type Safety** - TypeScript everywhere, Zod for runtime validation
 4. **API-First** - Use TanStack Query for all API communication
