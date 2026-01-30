@@ -150,7 +150,7 @@ Additional observed realities that influence the data model:
 - Explicit timing (session start/end, per-entry start/end) is not reliably present in the CSV today; the data structure should allow capturing it as structured fields when available, rather than embedding it in notes.
 - Load units may be mixed (e.g., kg and lb); canonical storage is kilograms, so unit conversion is required before storage.
 
-#### Source B: Program Spreadsheet PDF (“EVLT FullBodyhypertrophy 9weeks”)
+#### Source B: Program Spreadsheet PDF (“Example Program”)
 
 The document includes both **training program prescriptions** and additional non-training information (e.g., nutrition guidance, profile). For OPTel Workout’s “dumb backend” scope:
 

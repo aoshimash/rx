@@ -35,7 +35,7 @@ The main screen displays one week at a time with collapsible days.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ Week 3 of "EVLT FullBody 9weeks"              [< Prev] [Next >]            │
+│ Week 3 of "FullBody 9weeks"                   [< Prev] [Next >]            │
 │ Jan 27 - Feb 2, 2026                          [📅 Edit Schedule]           │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
@@ -130,7 +130,7 @@ Tree/form-based UI for creating and editing training programs.
 │ Program Editor                                                              │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│ Program Name: [EVLT FullBody 9weeks                    ]                   │
+│ Program Name: [FullBody 9weeks                         ]                   │
 │ Description:  [Full body training, 3 days per week     ]                   │
 │                                                                             │
 │ ─────────────────────────────────────────────────────────────────────────── │
