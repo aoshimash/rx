@@ -8,8 +8,6 @@ import (
 	"github.com/aoshimash/optel-training/api/internal/domain"
 	"github.com/aoshimash/optel-training/api/internal/middleware"
 	"github.com/aoshimash/optel-training/api/internal/repository"
-	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 )
 
 // ExerciseHandler handles Exercise-related HTTP requests
@@ -58,11 +56,7 @@ func (h *ExerciseHandler) CreateExercise(w http.ResponseWriter, r *http.Request)
 
 	// Validate
 	if err := domain.ValidateExercise(exercise); err != nil {
-		if ve, ok := err.(*domain.ValidationError); ok {
-			middleware.WriteValidationError(w, "Validation failed", map[string]interface{}{
-				"field":   ve.Field,
-				"message": ve.Message,
-			})
+		if handleValidationError(w, err) {
 			return
 		}
 		middleware.WriteValidationError(w, "Validation failed", map[string]interface{}{
@@ -80,24 +74,17 @@ func (h *ExerciseHandler) CreateExercise(w http.ResponseWriter, r *http.Request)
 
 	slog.Info("Exercise created", "id", exercise.ID)
 	// Return response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(exercise); err != nil {
-		slog.Error("Failed to encode exercise response", "error", err)
-	}
+	writeJSON(w, http.StatusCreated, exercise)
 }
 
 // GetExercise handles GET /exercises/{id}
 func (h *ExerciseHandler) GetExercise(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// Extract ID from path
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	// Extract and parse ID from path
+	id, err := parseUUIDParam(r, "id", "exercise")
 	if err != nil {
-		middleware.WriteValidationError(w, "Invalid exercise ID format", map[string]interface{}{
-			"id": idStr,
-		})
+		middleware.WriteValidationError(w, err.Error(), nil)
 		return
 	}
 
@@ -113,24 +100,17 @@ func (h *ExerciseHandler) GetExercise(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(exercise); err != nil {
-		slog.Error("Failed to encode exercise response", "error", err)
-	}
+	writeJSON(w, http.StatusOK, exercise)
 }
 
 // UpdateExercise handles PUT /exercises/{id}
 func (h *ExerciseHandler) UpdateExercise(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// Extract ID from path
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	// Extract and parse ID from path
+	id, err := parseUUIDParam(r, "id", "exercise")
 	if err != nil {
-		middleware.WriteValidationError(w, "Invalid exercise ID format", map[string]interface{}{
-			"id": idStr,
-		})
+		middleware.WriteValidationError(w, err.Error(), nil)
 		return
 	}
 
@@ -170,11 +150,7 @@ func (h *ExerciseHandler) UpdateExercise(w http.ResponseWriter, r *http.Request)
 
 	// Validate
 	if err := domain.ValidateExercise(existing); err != nil {
-		if ve, ok := err.(*domain.ValidationError); ok {
-			middleware.WriteValidationError(w, "Validation failed", map[string]interface{}{
-				"field":   ve.Field,
-				"message": ve.Message,
-			})
+		if handleValidationError(w, err) {
 			return
 		}
 		middleware.WriteValidationError(w, "Validation failed", map[string]interface{}{
@@ -194,24 +170,17 @@ func (h *ExerciseHandler) UpdateExercise(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Return response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(existing); err != nil {
-		slog.Error("Failed to encode exercise response", "error", err)
-	}
+	writeJSON(w, http.StatusOK, existing)
 }
 
 // DeleteExercise handles DELETE /exercises/{id}
 func (h *ExerciseHandler) DeleteExercise(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// Extract ID from path
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	// Extract and parse ID from path
+	id, err := parseUUIDParam(r, "id", "exercise")
 	if err != nil {
-		middleware.WriteValidationError(w, "Invalid exercise ID format", map[string]interface{}{
-			"id": idStr,
-		})
+		middleware.WriteValidationError(w, err.Error(), nil)
 		return
 	}
 
@@ -278,13 +247,9 @@ func (h *ExerciseHandler) ListExercises(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Return paginated response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(map[string]interface{}{
+	writeJSON(w, http.StatusOK, map[string]interface{}{
 		"data":        exercises,
 		"next_cursor": nextCursor,
 		"has_more":    hasMore,
-	}); err != nil {
-		slog.Error("Failed to encode exercise list response", "error", err)
-	}
+	})
 }

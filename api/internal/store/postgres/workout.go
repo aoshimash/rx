@@ -23,6 +23,72 @@ func NewWorkoutRepository(pool *pgxpool.Pool) repository.WorkoutRepository {
 	return &workoutRepository{pool: pool}
 }
 
+// scanWorkoutRow scans a workout row from the database
+func scanWorkoutRow(row pgx.Row) (*domain.Workout, error) {
+	var workout domain.Workout
+	err := row.Scan(
+		&workout.ID,
+		&workout.Timestamp,
+		&workout.SessionStart,
+		&workout.SessionEnd,
+		&workout.BodyWeightKg,
+		&workout.FatigueLevel,
+		&workout.SleepHours,
+		&workout.ConditionNotes,
+		&workout.ProgramNodeID,
+		&workout.ProgramContext,
+		&workout.Notes,
+		&workout.CreatedAt,
+		&workout.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &workout, nil
+}
+
+// scanWorkoutEntryRow scans a workout entry row from the database
+func scanWorkoutEntryRow(row pgx.Row) (*domain.WorkoutEntry, []byte, error) {
+	var entry domain.WorkoutEntry
+	var planSnapshotJSON []byte
+
+	err := row.Scan(
+		&entry.ID,
+		&entry.WorkoutID,
+		&entry.Order,
+		&entry.ExerciseID,
+		&entry.DisplayName,
+		&entry.EntryType,
+		&entry.Sets,
+		&entry.Reps,
+		&entry.LoadKg,
+		&entry.RPE,
+		&entry.EntryStart,
+		&entry.EntryEnd,
+		&entry.PlannedRestSeconds,
+		&entry.PerformedRestSeconds,
+		&entry.PerSetRestOverrides,
+		&entry.ProgramNodeID,
+		&planSnapshotJSON,
+		&entry.Notes,
+		&entry.VideoObjectKey,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Deserialize PlanSnapshot from JSONB
+	if len(planSnapshotJSON) > 0 {
+		var planSnapshot domain.PlanSnapshot
+		if err := json.Unmarshal(planSnapshotJSON, &planSnapshot); err != nil {
+			return nil, nil, err
+		}
+		entry.PlanSnapshot = &planSnapshot
+	}
+
+	return &entry, planSnapshotJSON, nil
+}
+
 func (r *workoutRepository) Create(ctx context.Context, workout *domain.Workout) error {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
@@ -155,23 +221,7 @@ func (r *workoutRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.
 		WHERE id = $1
 	`
 
-	var workout domain.Workout
-	err := r.pool.QueryRow(ctx, query, id).Scan(
-		&workout.ID,
-		&workout.Timestamp,
-		&workout.SessionStart,
-		&workout.SessionEnd,
-		&workout.BodyWeightKg,
-		&workout.FatigueLevel,
-		&workout.SleepHours,
-		&workout.ConditionNotes,
-		&workout.ProgramNodeID,
-		&workout.ProgramContext,
-		&workout.Notes,
-		&workout.CreatedAt,
-		&workout.UpdatedAt,
-	)
-
+	workout, err := scanWorkoutRow(r.pool.QueryRow(ctx, query, id))
 	if err == pgx.ErrNoRows {
 		return nil, domain.ErrNotFound
 	}
@@ -181,72 +231,14 @@ func (r *workoutRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.
 	}
 
 	// Get workout entries
-	entriesQuery := `
-		SELECT id, workout_id, "order", exercise_id, display_name,
-		       entry_type, sets, reps, load_kg, rpe,
-		       entry_start, entry_end, planned_rest_seconds,
-		       performed_rest_seconds, per_set_rest_overrides,
-		       program_node_id, plan_snapshot, notes, video_object_key
-		FROM workout_entries
-		WHERE workout_id = $1
-		ORDER BY "order" ASC
-	`
-
-	rows, err := r.pool.Query(ctx, entriesQuery, id)
+	entries, err := r.getEntriesForWorkout(ctx, id)
 	if err != nil {
 		slog.Error("Failed to get workout entries", "id", id, "error", err)
 		return nil, err
 	}
-	defer rows.Close()
-
-	entries := make([]domain.WorkoutEntry, 0)
-	for rows.Next() {
-		var entry domain.WorkoutEntry
-		var planSnapshotJSON []byte
-
-		err := rows.Scan(
-			&entry.ID,
-			&entry.WorkoutID,
-			&entry.Order,
-			&entry.ExerciseID,
-			&entry.DisplayName,
-			&entry.EntryType,
-			&entry.Sets,
-			&entry.Reps,
-			&entry.LoadKg,
-			&entry.RPE,
-			&entry.EntryStart,
-			&entry.EntryEnd,
-			&entry.PlannedRestSeconds,
-			&entry.PerformedRestSeconds,
-			&entry.PerSetRestOverrides,
-			&entry.ProgramNodeID,
-			&planSnapshotJSON,
-			&entry.Notes,
-			&entry.VideoObjectKey,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		// Deserialize PlanSnapshot from JSONB
-		if len(planSnapshotJSON) > 0 {
-			var planSnapshot domain.PlanSnapshot
-			if err := json.Unmarshal(planSnapshotJSON, &planSnapshot); err != nil {
-				return nil, err
-			}
-			entry.PlanSnapshot = &planSnapshot
-		}
-
-		entries = append(entries, entry)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
 
 	workout.Entries = entries
-	return &workout, nil
+	return workout, nil
 }
 
 func (r *workoutRepository) Update(ctx context.Context, workout *domain.Workout) error {
@@ -368,22 +360,7 @@ func (r *workoutRepository) listWithFilter(ctx context.Context, timestampFrom, t
 	workouts := make([]*domain.Workout, 0, limit)
 
 	for rows.Next() {
-		var workout domain.Workout
-		err := rows.Scan(
-			&workout.ID,
-			&workout.Timestamp,
-			&workout.SessionStart,
-			&workout.SessionEnd,
-			&workout.BodyWeightKg,
-			&workout.FatigueLevel,
-			&workout.SleepHours,
-			&workout.ConditionNotes,
-			&workout.ProgramNodeID,
-			&workout.ProgramContext,
-			&workout.Notes,
-			&workout.CreatedAt,
-			&workout.UpdatedAt,
-		)
+		workout, err := scanWorkoutRow(rows)
 		if err != nil {
 			return nil, "", false, err
 		}
@@ -395,7 +372,7 @@ func (r *workoutRepository) listWithFilter(ctx context.Context, timestampFrom, t
 		}
 		workout.Entries = entries
 
-		workouts = append(workouts, &workout)
+		workouts = append(workouts, workout)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -436,44 +413,11 @@ func (r *workoutRepository) getEntriesForWorkout(ctx context.Context, workoutID 
 
 	entries := make([]domain.WorkoutEntry, 0)
 	for rows.Next() {
-		var entry domain.WorkoutEntry
-		var planSnapshotJSON []byte
-
-		err := rows.Scan(
-			&entry.ID,
-			&entry.WorkoutID,
-			&entry.Order,
-			&entry.ExerciseID,
-			&entry.DisplayName,
-			&entry.EntryType,
-			&entry.Sets,
-			&entry.Reps,
-			&entry.LoadKg,
-			&entry.RPE,
-			&entry.EntryStart,
-			&entry.EntryEnd,
-			&entry.PlannedRestSeconds,
-			&entry.PerformedRestSeconds,
-			&entry.PerSetRestOverrides,
-			&entry.ProgramNodeID,
-			&planSnapshotJSON,
-			&entry.Notes,
-			&entry.VideoObjectKey,
-		)
+		entry, _, err := scanWorkoutEntryRow(rows)
 		if err != nil {
 			return nil, err
 		}
-
-		// Deserialize PlanSnapshot from JSONB
-		if len(planSnapshotJSON) > 0 {
-			var planSnapshot domain.PlanSnapshot
-			if err := json.Unmarshal(planSnapshotJSON, &planSnapshot); err != nil {
-				return nil, err
-			}
-			entry.PlanSnapshot = &planSnapshot
-		}
-
-		entries = append(entries, entry)
+		entries = append(entries, *entry)
 	}
 
 	return entries, rows.Err()
@@ -500,22 +444,7 @@ func (r *workoutRepository) ListByExerciseID(ctx context.Context, exerciseID uui
 
 	workouts := make([]*domain.Workout, 0)
 	for rows.Next() {
-		var workout domain.Workout
-		err := rows.Scan(
-			&workout.ID,
-			&workout.Timestamp,
-			&workout.SessionStart,
-			&workout.SessionEnd,
-			&workout.BodyWeightKg,
-			&workout.FatigueLevel,
-			&workout.SleepHours,
-			&workout.ConditionNotes,
-			&workout.ProgramNodeID,
-			&workout.ProgramContext,
-			&workout.Notes,
-			&workout.CreatedAt,
-			&workout.UpdatedAt,
-		)
+		workout, err := scanWorkoutRow(rows)
 		if err != nil {
 			return nil, err
 		}
@@ -527,7 +456,7 @@ func (r *workoutRepository) ListByExerciseID(ctx context.Context, exerciseID uui
 		}
 		workout.Entries = entries
 
-		workouts = append(workouts, &workout)
+		workouts = append(workouts, workout)
 	}
 
 	return workouts, rows.Err()
@@ -553,22 +482,7 @@ func (r *workoutRepository) ListByProgramNodeID(ctx context.Context, programNode
 
 	workouts := make([]*domain.Workout, 0)
 	for rows.Next() {
-		var workout domain.Workout
-		err := rows.Scan(
-			&workout.ID,
-			&workout.Timestamp,
-			&workout.SessionStart,
-			&workout.SessionEnd,
-			&workout.BodyWeightKg,
-			&workout.FatigueLevel,
-			&workout.SleepHours,
-			&workout.ConditionNotes,
-			&workout.ProgramNodeID,
-			&workout.ProgramContext,
-			&workout.Notes,
-			&workout.CreatedAt,
-			&workout.UpdatedAt,
-		)
+		workout, err := scanWorkoutRow(rows)
 		if err != nil {
 			return nil, err
 		}
@@ -580,7 +494,7 @@ func (r *workoutRepository) ListByProgramNodeID(ctx context.Context, programNode
 		}
 		workout.Entries = entries
 
-		workouts = append(workouts, &workout)
+		workouts = append(workouts, workout)
 	}
 
 	return workouts, rows.Err()
