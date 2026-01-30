@@ -56,7 +56,6 @@ specs/006-openapi-docs/
 ```text
 # Files modified by this feature
 docker-compose.yml       # Add api-docs service
-.env.example             # Add API_DOCS_PORT variable
 docs/DEVELOPMENT.md      # Add documentation server instructions
 
 # Files read by this feature (no modification)
@@ -87,15 +86,7 @@ api-docs:
   restart: unless-stopped
 ```
 
-### Phase 2: Environment Configuration
-
-Add to `.env.example`:
-```
-# API Documentation
-API_DOCS_PORT=8081
-```
-
-### Phase 3: Documentation Update
+### Phase 2: Documentation Update
 
 Update `docs/DEVELOPMENT.md` with:
 - New section for API Documentation

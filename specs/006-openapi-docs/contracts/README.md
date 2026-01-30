@@ -36,12 +36,6 @@ api-docs:
   restart: unless-stopped
 ```
 
-### Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `API_DOCS_PORT` | `8081` | Port to expose the documentation UI |
-
 ## Service Endpoints
 
 | Endpoint | Description |
