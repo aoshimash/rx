@@ -9,6 +9,7 @@ import (
 )
 
 func TestProgramRepository_Create(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool, cleanup, err := setupTestDB(ctx)
 	if err != nil {
@@ -75,6 +76,7 @@ func TestProgramRepository_Create(t *testing.T) {
 }
 
 func TestProgramRepository_GetByID(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool, cleanup, err := setupTestDB(ctx)
 	if err != nil {
@@ -123,6 +125,7 @@ func TestProgramRepository_GetByID(t *testing.T) {
 }
 
 func TestProgramRepository_Update(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool, cleanup, err := setupTestDB(ctx)
 	if err != nil {
@@ -158,6 +161,7 @@ func TestProgramRepository_Update(t *testing.T) {
 }
 
 func TestProgramRepository_Delete(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool, cleanup, err := setupTestDB(ctx)
 	if err != nil {
@@ -188,6 +192,7 @@ func TestProgramRepository_Delete(t *testing.T) {
 }
 
 func TestProgramRepository_List(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool, cleanup, err := setupTestDB(ctx)
 	if err != nil {
@@ -222,6 +227,7 @@ func TestProgramRepository_List(t *testing.T) {
 }
 
 func TestProgramRepository_List_WithRootNodes(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool, cleanup, err := setupTestDB(ctx)
 	if err != nil {
@@ -296,6 +302,7 @@ func TestProgramRepository_List_WithRootNodes(t *testing.T) {
 }
 
 func TestProgramRepository_GetByID_NestedTree(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool, cleanup, err := setupTestDB(ctx)
 	if err != nil {

@@ -9,6 +9,7 @@ import (
 )
 
 func TestExerciseRepository_Create(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool, cleanup, err := setupTestDB(ctx)
 	if err != nil {
@@ -67,6 +68,7 @@ func TestExerciseRepository_Create(t *testing.T) {
 }
 
 func TestExerciseRepository_GetByID(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool, cleanup, err := setupTestDB(ctx)
 	if err != nil {
@@ -105,6 +107,7 @@ func TestExerciseRepository_GetByID(t *testing.T) {
 }
 
 func TestExerciseRepository_Update(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool, cleanup, err := setupTestDB(ctx)
 	if err != nil {
@@ -146,6 +149,7 @@ func TestExerciseRepository_Update(t *testing.T) {
 }
 
 func TestExerciseRepository_Delete(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool, cleanup, err := setupTestDB(ctx)
 	if err != nil {
@@ -176,6 +180,7 @@ func TestExerciseRepository_Delete(t *testing.T) {
 }
 
 func TestExerciseRepository_List(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool, cleanup, err := setupTestDB(ctx)
 	if err != nil {

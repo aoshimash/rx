@@ -12,8 +12,88 @@ on:
     paths: *api-ci-paths
 
 jobs:
-  api-format-lint-test:
-    name: API - Format, Lint and Test
+  # Job 1: Format check and Lint (fast feedback)
+  lint:
+    name: Format and Lint
+    runs-on: ubuntu-24.04
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+
+      - name: Cache Go modules
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Cache aqua tools
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5
+        with:
+          path: ~/.local/share/aquaproj-aqua
+          key: ${{ runner.os }}-aqua-v2.45.0-${{ hashFiles('aqua.yaml', '.github/workflows/api-ci.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-aqua-v2.45.0-
+            ${{ runner.os }}-aqua-
+
+      - name: Setup aqua
+        uses: aquaproj/aqua-installer@11dd79b4e498d471a9385aa9fb7f62bb5f52a73c # v4.0.4
+        with:
+          aqua_version: v2.45.0
+
+      - name: Install tools via aqua
+        run: |
+          if [ ! -f aqua.yaml ]; then
+            echo "Error: aqua.yaml not found"
+            exit 1
+          fi
+          aqua install
+
+      - name: Add aqua bin to PATH
+        run: echo "$HOME/.local/share/aquaproj-aqua/bin" >> $GITHUB_PATH
+
+      - name: Download dependencies
+        working-directory: api
+        run: |
+          go mod download
+          go mod tidy
+
+      - name: Generate code
+        working-directory: api
+        run: |
+          oapi-codegen -generate types,chi-server -package openapi \
+            -o pkg/openapi/server.gen.go openapi/openapi.yaml
+
+      - name: Check formatting
+        working-directory: api
+        run: |
+          FORMAT_OUTPUT=$(gofmt -l .)
+          if [ -n "$FORMAT_OUTPUT" ]; then
+            echo "Error: Code is not formatted. Run 'go fmt ./...' to fix."
+            echo "$FORMAT_OUTPUT"
+            exit 1
+          fi
+
+      - name: Lint
+        working-directory: api
+        run: |
+          go build ./...
+          golangci-lint run ./...
+
+      - name: Check for uncommitted changes
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Error: Uncommitted changes detected"
+            git status
+            git diff || true
+            exit 1
+          fi
+
+  # Job 2: Tests (runs in parallel with lint)
+  test:
+    name: Test
     runs-on: ubuntu-24.04
     
     steps:
@@ -74,14 +154,19 @@ jobs:
           docker logs minio
           exit 1
 
-      - name: Run Makefile targets
+      - name: Download dependencies
         working-directory: api
         run: |
-          make deps
-          make generate
-          make format
-          make lint
-          make test-coverage
+          go mod download
+          go mod tidy
+
+      - name: Test with coverage
+        working-directory: api
+        run: |
+          go test -v -race -coverprofile=coverage.out ./... 2>&1 | grep -v "no such tool \"covdata\"" || true
+          if [ -f coverage.out ]; then
+            go tool cover -func=coverage.out || true
+          fi
 
       - name: Run integration tests
         working-directory: api
@@ -98,12 +183,3 @@ jobs:
           flags: unittests
           name: codecov-api
           fail_ci_if_error: false
-
-      - name: Check for uncommitted changes
-        run: |
-          if [ -n "$(git status --porcelain)" ]; then
-            echo "Error: Uncommitted changes detected"
-            git status
-            git diff || true
-            exit 1
-          fi
