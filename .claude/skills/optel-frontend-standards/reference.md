@@ -545,33 +545,132 @@ export function formatRelative(isoString: string): string {
 }
 ```
 
-## Linting and Formatting
+## TypeScript Only Policy
 
-### ESLint Configuration
+**CRITICAL**: JavaScript is NOT allowed in this project.
+
+- ✅ Use `.ts` for non-React files
+- ✅ Use `.tsx` for React component files
+- ❌ Never use `.js` or `.jsx`
+- ❌ Never use `// @ts-ignore` or `// @ts-nocheck`
+- ❌ Never use `any` type (use `unknown` if type is truly unknown)
+
+### Strict TypeScript Configuration
 
 ```json
-// .eslintrc.json
+// tsconfig.json (key settings)
 {
-  "extends": [
-    "next/core-web-vitals",
-    "next/typescript"
-  ],
-  "rules": {
-    "@typescript-eslint/no-unused-vars": "error",
-    "@typescript-eslint/no-explicit-any": "error"
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
   }
 }
 ```
 
-### Prettier Configuration
+## Linting and Formatting with Biome
+
+**Biome is required** for all frontend projects. It replaces ESLint and Prettier with a single, fast tool.
+
+### Installation
+
+```bash
+pnpm add -D @biomejs/biome
+```
+
+### Biome Configuration
 
 ```json
-// .prettierrc
+// biome.json
 {
-  "semi": true,
-  "singleQuote": true,
-  "tabWidth": 2,
-  "trailingComma": "es5",
-  "printWidth": 100
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "organizeImports": {
+    "enabled": true
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "complexity": {
+        "noExcessiveCognitiveComplexity": "warn"
+      },
+      "correctness": {
+        "noUnusedImports": "error",
+        "noUnusedVariables": "error",
+        "useExhaustiveDependencies": "warn"
+      },
+      "style": {
+        "noNonNullAssertion": "warn",
+        "useConst": "error",
+        "useImportType": "error"
+      },
+      "suspicious": {
+        "noExplicitAny": "error"
+      }
+    }
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "always",
+      "trailingCommas": "es5"
+    }
+  },
+  "files": {
+    "ignore": [
+      "node_modules",
+      ".next",
+      "dist",
+      "*.gen.ts"
+    ]
+  }
 }
 ```
+
+### Package.json Scripts
+
+```json
+{
+  "scripts": {
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format --write .",
+    "check": "biome check .",
+    "check:fix": "biome check --write ."
+  }
+}
+```
+
+### Editor Integration
+
+For VS Code, install the [Biome extension](https://marketplace.visualstudio.com/items?itemName=biomejs.biome) and add to `.vscode/settings.json`:
+
+```json
+{
+  "editor.defaultFormatter": "biomejs.biome",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "quickfix.biome": "explicit",
+    "source.organizeImports.biome": "explicit"
+  }
+}
+```
+
+### Pre-commit Check
+
+Run before committing:
+
+```bash
+pnpm check
+```
+
+This runs both linting and formatting checks in a single command.

@@ -16,7 +16,8 @@ This is the web frontend for OPTel Workout, providing:
 | Category | Technology |
 |----------|------------|
 | Framework | Next.js (App Router) |
-| Language | TypeScript |
+| Language | TypeScript (no JavaScript) |
+| Linter/Formatter | Biome |
 | State Management | TanStack Query |
 | UI Library | shadcn/ui |
 | Styling | Tailwind CSS |
@@ -45,6 +46,13 @@ pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Linting and Formatting
+
+```bash
+pnpm check       # Run lint and format check
+pnpm check:fix   # Fix lint and format issues
+```
 
 ### Build
 

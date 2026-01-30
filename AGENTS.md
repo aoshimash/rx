@@ -53,7 +53,8 @@ optel-workout/
 ### Web Frontend
 
 - **Framework**: Next.js (App Router)
-- **Language**: TypeScript
+- **Language**: TypeScript only (no JavaScript)
+- **Linter/Formatter**: Biome
 - **State Management**: TanStack Query
 - **UI Library**: shadcn/ui + Tailwind CSS
 - **Forms**: React Hook Form + Zod
@@ -61,7 +62,8 @@ optel-workout/
 ### Mobile (Future)
 
 - **Framework**: React Native + Expo
-- **Language**: TypeScript
+- **Language**: TypeScript only (no JavaScript)
+- **Linter/Formatter**: Biome
 - **State Management**: TanStack Query
 
 ## Documentation

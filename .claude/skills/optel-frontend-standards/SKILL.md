@@ -12,7 +12,8 @@ description: Frontend coding standards for OPTel project (Web and Mobile). Cover
 | Component | Choice |
 |-----------|--------|
 | Framework | Next.js (App Router) |
-| Language | TypeScript |
+| Language | TypeScript (no JavaScript) |
+| Linter/Formatter | Biome |
 | State Management | TanStack Query (React Query) |
 | UI Library | shadcn/ui |
 | Styling | Tailwind CSS |
@@ -24,7 +25,8 @@ description: Frontend coding standards for OPTel project (Web and Mobile). Cover
 | Component | Choice |
 |-----------|--------|
 | Framework | React Native + Expo |
-| Language | TypeScript |
+| Language | TypeScript (no JavaScript) |
+| Linter/Formatter | Biome |
 | State Management | TanStack Query |
 | Navigation | Expo Router |
 
@@ -41,10 +43,12 @@ optel-workout/
 
 ## Key Principles
 
-1. **React Shared Mental Model** - Web and Mobile share React patterns
-2. **Type Safety** - TypeScript everywhere, Zod for runtime validation
-3. **API-First** - Use TanStack Query for all API communication
-4. **Component Separation** - Clear distinction between Page, Feature, and UI components
+1. **TypeScript Only** - No JavaScript. All files must be `.ts`/`.tsx` (never `.js`/`.jsx`)
+2. **React Shared Mental Model** - Web and Mobile share React patterns
+3. **Type Safety** - TypeScript everywhere, Zod for runtime validation
+4. **API-First** - Use TanStack Query for all API communication
+5. **Component Separation** - Clear distinction between Page, Feature, and UI components
+6. **Biome Required** - Use Biome for linting and formatting (no ESLint/Prettier)
 
 ## Web vs Mobile Scope
 

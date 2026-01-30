@@ -50,7 +50,8 @@ Technology choices prioritize:
 | Category | Technology | Rationale |
 |----------|------------|-----------|
 | Framework | Next.js (App Router) | React official recommendation, largest community |
-| Language | TypeScript | Type safety, AI-friendly |
+| Language | TypeScript | Type safety, AI-friendly (**no JavaScript**) |
+| Linter/Formatter | Biome | Single tool, fast, simple config |
 | State Management | TanStack Query | API-focused, automatic caching |
 | UI Library | shadcn/ui | Copy-paste components, easy customization |
 | Styling | Tailwind CSS | Utility-first, consistent patterns |
@@ -63,7 +64,8 @@ Technology choices prioritize:
 | Category | Technology | Rationale |
 |----------|------------|-----------|
 | Framework | React Native + Expo | Simplified build, easier AI iteration |
-| Language | TypeScript | Shared with Web |
+| Language | TypeScript | Shared with Web (**no JavaScript**) |
+| Linter/Formatter | Biome | Consistent with Web |
 | State Management | TanStack Query | Consistent with Web |
 | Navigation | Expo Router | File-based routing like Next.js |
 
