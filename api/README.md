@@ -29,8 +29,8 @@ aqua install
 
 ```bash
 cd api
-make generate  # Generate code from OpenAPI spec
-make run        # Start server
+task generate  # Generate code from OpenAPI spec
+task run       # Start server
 ```
 
 The API will be available at `http://localhost:8080/api/v1`.
@@ -252,36 +252,36 @@ api/
 └── pkg/openapi/         # Generated OpenAPI code (gitignored)
 ```
 
-### Makefile Targets
+### Taskfile Tasks
 
 ```bash
 # Generate code from OpenAPI spec
-make generate
+task generate
 
 # Run unit tests
-make test
+task test
 
 # Run integration tests (requires MinIO)
-make test-integration
+task test-integration
 
 # Run all tests (unit + integration)
-make test-all
+task test-all
 
 # Run linter
-make lint
+task lint
 
-# Start server (requires Docker)
-make run
+# Start server
+task run
 ```
 
 ### Development Workflow
 
 1. Install development tools: `aqua install`
 2. Modify OpenAPI spec in `api/openapi/openapi.yaml`
-3. Regenerate code: `make generate`
+3. Regenerate code: `task generate`
 4. Implement handlers in `api/internal/handler/`
-5. Run tests: `make test`
-6. Start server: `make run`
+5. Run tests: `task test`
+6. Start server: `task run`
 
 For production-like smoke-testing, use `docker compose up` from the repository root.
 
@@ -289,13 +289,13 @@ For production-like smoke-testing, use `docker compose up` from the repository r
 
 ```bash
 # Run all unit tests
-make test
+task test
 
 # Run integration tests (requires MinIO)
-make test-integration
+task test-integration
 
 # Run all tests (unit + integration)
-make test-all
+task test-all
 
 # Run specific package tests
 go test ./internal/handler -v
@@ -315,7 +315,7 @@ Integration tests verify real interactions with MinIO (S3-compatible object stor
 **Running Integration Tests:**
 ```bash
 cd api
-make test-integration  # Runs tests with -tags=integration
+task test-integration  # Runs tests with -tags=integration
 ```
 
 **Test Behavior:**

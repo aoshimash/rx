@@ -5,7 +5,6 @@
 **Local Requirements:**
 - Docker & Docker Compose
 - [aqua](https://aquaproj.github.io/) - Tool version manager
-- Make
 - curl (for testing API endpoints)
 
 ## Project Setup
@@ -64,25 +63,25 @@ PostgreSQL connection details:
 cd api
 
 # Install dependencies
-make deps
+task deps
 
 # Generate OpenAPI code
-make generate
+task generate
 
 # Run linter
-make lint
+task lint
 
 # Run tests
-make test
+task test
 
 # Start development server
-make run
+task run
 
 # In another terminal, test the API
 curl http://localhost:8080/api/v1/workouts
 ```
 
-All `make` commands (generate, lint, test, run, build) work natively on your host machine using tools managed by aqua.
+All `task` commands (generate, lint, test, run, build) work natively on your host machine using tools managed by aqua.
 
 #### 4. Setup Pre-commit Hooks
 
@@ -103,9 +102,9 @@ This script:
 **What the pre-commit hook does:**
 
 Before each commit, the hook automatically runs:
-1. `make format` - Checks code formatting
-2. `make lint` - Runs linter
-3. `make test` - Runs tests with race detection
+1. `task format` - Checks code formatting
+2. `task lint` - Runs linter
+3. `task test` - Runs tests with race detection
 
 If any check fails, the commit is aborted. Fix the errors and try again.
 
@@ -114,7 +113,7 @@ If any check fails, the commit is aborted. Fix the errors and try again.
 You can manually run all checks:
 ```bash
 cd api
-make check  # Runs format + lint + test
+task check  # Runs format + lint + test
 ```
 
 **Note:** The pre-commit hook is enforced for all commits, including AI agent commits. Do not use `git commit --no-verify` to skip hooks.
@@ -188,7 +187,7 @@ We use a **Domain-Driven Schema-First** approach that combines the benefits of d
    - Define minimal schemas first (only required fields)
    - Add fields incrementally as needed
    - Document domain model references in schema descriptions
-3. **Generate code** - Run `make generate`
+3. **Generate code** - Run `task generate`
    - This generates Go types and server stubs from the OpenAPI spec
 4. **Implement handlers** - Write handler logic
    - Convert OpenAPI types to domain models
@@ -198,8 +197,8 @@ We use a **Domain-Driven Schema-First** approach that combines the benefits of d
    - Test domain logic separately
    - Test conversion between OpenAPI and domain types
    - Test handlers with integration tests
-6. **Run linter** - Run `make lint`
-7. **Test** - Run `make test`
+6. **Run linter** - Run `task lint`
+7. **Test** - Run `task test`
 
 ## Incremental Development Guide
 
@@ -222,10 +221,10 @@ When modifying domain models or OpenAPI specs:
   - [ ] Required fields match
   - [ ] Validation rules match
   - [ ] Types match (int, string, etc.)
-- [ ] Run code generation (`make generate`)
+- [ ] Run code generation (`task generate`)
 - [ ] Update conversion layer in handlers
 - [ ] Update tests
-- [ ] Run validation (`make validate-openapi`)
+- [ ] Run validation (`task validate-openapi`)
 
 **Note:** The domain reference (`.claude/skills/optel-domain/reference.md`) shows the **target state** or **reference implementation**, not a requirement to implement everything upfront. Use it as inspiration, but feel free to start simpler and build up.
 
@@ -235,7 +234,7 @@ For each feature addition, follow this cycle:
 
 1. **Define domain model** - Add domain entity with business rules
 2. **Create/update OpenAPI spec** - Define API contract referencing domain model
-3. **Generate code** - Run `make generate`
+3. **Generate code** - Run `task generate`
 4. **Implement repository** - Create repository implementation (memory/postgres)
 5. **Implement handler** - Convert between OpenAPI types and domain models
 6. **Test manually** - Use `curl` or similar to verify it works
@@ -284,11 +283,11 @@ paths:
 cd api
 
 # Generate code (runs natively on host with aqua-managed tools)
-make generate
+task generate
 
 # Create minimal handler that returns empty array
 # Start server (runs natively in DevContainer, in background or another terminal)
-make run
+task run
 
 # Test it works (from local machine or DevContainer terminal)
 curl http://localhost:8080/api/v1/workouts
@@ -360,7 +359,7 @@ components:
 
 **Action:**
 ```bash
-make generate
+task generate
 # Implement minimal handler with in-memory store
 # Test it works
 curl -X POST http://localhost:8080/api/v1/workouts \
@@ -420,7 +419,7 @@ Extend the schema with optional fields one at a time:
 
 **Action:**
 ```bash
-make generate
+task generate
 # Update handler to handle optional fields
 # Test with and without optional fields
 curl -X POST http://localhost:8080/api/v1/workouts \
@@ -469,7 +468,7 @@ paths:
 
 **Action:**
 ```bash
-make generate
+task generate
 # Implement handler
 # Test it works
 WORKOUT_ID=$(curl -s -X POST http://localhost:8080/api/v1/workouts \
@@ -513,7 +512,7 @@ Add filtering capabilities to the list endpoint:
 
 **Action:**
 ```bash
-make generate
+task generate
 # Implement filtering logic in handler
 # Test filters
 curl "http://localhost:8080/api/v1/workouts?from=2026-01-01T00:00:00Z&to=2026-01-31T23:59:59Z"
@@ -549,7 +548,7 @@ Add soft-delete capability:
 
 **Action:**
 ```bash
-make generate
+task generate
 # Implement soft-delete (mark as deleted, don't remove)
 # Test it works
 curl -X DELETE http://localhost:8080/api/v1/workouts/$WORKOUT_ID
@@ -572,24 +571,24 @@ After each step, verify:
 
 2. **Generated code compiles:**
    ```bash
-   make generate
+   task generate
    go build ./...
    ```
 
 3. **Handlers work:**
    ```bash
-   make run
+   task run
    # Test with curl in another terminal
    ```
 
 4. **Tests pass:**
    ```bash
-   make test
+   task test
    ```
 
 5. **Linter passes:**
    ```bash
-   make lint
+   task lint
    ```
 
 ### Best Practices
@@ -597,7 +596,7 @@ After each step, verify:
 1. **One feature per commit** - Each step should be a single, focused commit
 2. **Test before moving on** - Don't proceed to the next step until current one works
 3. **Keep specs minimal** - Only add what's needed for current functionality
-4. **Validate frequently** - Run `make validate-openapi`, `make generate`, and `make test` after each change
+4. **Validate frequently** - Run `task validate-openapi`, `task generate`, and `task test` after each change
 5. **Maintain sync** - When modifying domain models, update OpenAPI spec and vice versa
 6. **Document decisions** - Add comments in spec and domain models for non-obvious choices
 7. **Reference domain models** - Include domain model references in OpenAPI schema descriptions
@@ -613,59 +612,78 @@ git checkout -b feature/add-workout-filtering
 #    - Update OpenAPI spec (openapi/openapi.yaml)
 
 # 3. Validate and generate code
-make validate-openapi
-make generate
+task validate-openapi
+task generate
 
 # 4. Run checks
-make check  # Runs format + lint + test
-make check-sync  # Ensure domain model and OpenAPI spec are in sync
+task check  # Runs format + lint + test
+task check-sync  # Ensure domain model and OpenAPI spec are in sync
 
 # 5. Commit with conventional commit message
 # Pre-commit hook will automatically run format, lint, and test
 git commit -m "feat(api): add workout filtering by date range"
 ```
 
-## Makefile Targets
+## Taskfile Tasks
 
-```makefile
-# api/Makefile
+```yaml
+# api/Taskfile.yml
 
-.PHONY: generate lint test run build clean validate-openapi check-sync check
+version: '3'
 
-generate:
-	oapi-codegen -generate types,chi-server -package openapi \
-		-o pkg/openapi/server.gen.go openapi/openapi.yaml
+tasks:
+  generate:
+    desc: Generate code from OpenAPI spec
+    cmds:
+      - oapi-codegen -generate types,chi-server -package openapi -o pkg/openapi/server.gen.go openapi/openapi.yaml
 
-lint:
-	golangci-lint run ./...
+  lint:
+    desc: Run linter
+    cmds:
+      - golangci-lint run ./...
 
-test:
-	go test -v -race ./...
+  test:
+    desc: Run unit tests with race detection
+    cmds:
+      - go test -v -race ./...
 
-check:
-	make format lint test
-	@echo "✅ All checks passed!"
+  check:
+    desc: Run format, lint, and tests (pre-commit check)
+    cmds:
+      - task: format
+      - task: lint
+      - task: test
+      - echo "All checks passed!"
 
-run:
-	go run cmd/server/main.go
+  run:
+    desc: Start the development server
+    cmds:
+      - go run cmd/server/main.go
 
-build:
-	go build -o bin/server cmd/server/main.go
+  build:
+    desc: Build the server binary
+    cmds:
+      - go build -o bin/server cmd/server/main.go
 
-clean:
-	rm -rf bin/
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - rm -rf bin/
 
-# Validate OpenAPI spec
-validate-openapi:
-	@echo "Validating OpenAPI spec..."
-	@npx @apidevtools/swagger-cli validate openapi/openapi.yaml || \
-		(echo "ERROR: OpenAPI spec validation failed. Install swagger-cli: npm install -g @apidevtools/swagger-cli" && exit 1)
+  # Validate OpenAPI spec
+  validate-openapi:
+    desc: Validate OpenAPI specification
+    cmds:
+      - echo "Validating OpenAPI spec..."
+      - npx @apidevtools/swagger-cli validate openapi/openapi.yaml
 
-# Check domain model and OpenAPI spec synchronization
-# Note: This requires a custom script (scripts/check-sync.go) to be implemented
-check-sync:
-	@echo "Checking domain model and OpenAPI spec sync..."
-	@go run scripts/check-sync.go || echo "WARNING: Sync check script not implemented yet"
+  # Check domain model and OpenAPI spec synchronization
+  # Note: This requires a custom script (scripts/check-sync.go) to be implemented
+  check-sync:
+    desc: Check domain model and OpenAPI spec sync
+    cmds:
+      - echo "Checking domain model and OpenAPI spec sync..."
+      - go run scripts/check-sync.go || echo "WARNING: Sync check script not implemented yet"
 ```
 
 ## Versioning Strategy
@@ -746,7 +764,7 @@ export STORAGE_SECRET_KEY=your-secret-key
 
 ```bash
 # Run all tests
-make test
+task test
 
 # Run tests with coverage
 go test -v -race -coverprofile=coverage.out ./...
@@ -776,7 +794,7 @@ The development environment uses **aqua** for tool version management and **Dock
 1. Install aqua (see Prerequisites above)
 2. Run `aqua install` to install all development tools
 3. Start PostgreSQL: `docker compose up -d postgres`
-4. Run development commands on host: `make generate`, `make lint`, `make test`, `make run`
+4. Run development commands on host: `task generate`, `task lint`, `task test`, `task run`
 5. All commands use aqua-managed tools with versions matching CI
 
 **Files:**
@@ -938,10 +956,10 @@ docker rm optel-test
 **golangci-lint errors:**
 - Review `.golangci.yml` for enabled linters
 - Fix issues or add exclusions if false positives
-- Run linter: `make lint` (uses aqua-managed golangci-lint)
+- Run linter: `task lint` (uses aqua-managed golangci-lint)
 
 **Generated code conflicts:**
-- Always run `make generate` after changing OpenAPI spec
+- Always run `task generate` after changing OpenAPI spec
 - Commit generated code with spec changes
 - If generation fails, check OpenAPI spec syntax
 
