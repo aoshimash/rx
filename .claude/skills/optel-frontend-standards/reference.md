@@ -545,34 +545,17 @@ export function formatRelative(isoString: string): string {
 }
 ```
 
-## TypeScript Only Policy
+## TypeScript Policy
 
-**CRITICAL**: JavaScript is NOT allowed for source code in this project.
+**Prefer TypeScript**: Use TypeScript (`.ts`/`.tsx`) whenever possible. JavaScript is acceptable for configuration files or when tools require it.
 
-### Source Code (Strict)
+### Guidelines
 
 - ✅ Use `.ts` for non-React files
 - ✅ Use `.tsx` for React component files
-- ❌ Never use `.js` or `.jsx` for source code
-- ❌ Never use `// @ts-ignore` or `// @ts-nocheck`
-- ❌ Never use `any` type (use `unknown` if type is truly unknown)
-
-### Configuration Files (Exception)
-
-Some tools don't support TypeScript config files. Use this priority:
-
-1. **Prefer `.ts`** when supported (e.g., `next.config.ts`, `tailwind.config.ts`)
-2. **Use `.mjs`/`.cjs`** when TS not supported (e.g., `postcss.config.mjs`)
-3. **Use `.js`** only as last resort
-
-| File | Recommended |
-|------|-------------|
-| `next.config.ts` | ✅ TypeScript supported |
-| `tailwind.config.ts` | ✅ TypeScript supported |
-| `postcss.config.mjs` | ⚠️ JS required (no TS support) |
-| `biome.json` | ✅ JSON only |
-
-Configuration files (`.js`/`.mjs`/`.cjs` in project root) are exempt from the "no JavaScript" rule.
+- ✅ Use `.js`/`.mjs` for config files if needed (e.g., `postcss.config.mjs`)
+- ⚠️ Avoid `// @ts-ignore` and `// @ts-nocheck` (fix the type issue instead)
+- ⚠️ Avoid `any` type (use `unknown` or proper types)
 
 ### Strict TypeScript Configuration
 
