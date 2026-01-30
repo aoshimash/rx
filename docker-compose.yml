@@ -52,11 +52,11 @@ services:
     image: scalarapi/api-reference:latest
     container_name: optel-training-api-docs
     ports:
-      - "${API_DOCS_PORT:-8081}:80"
+      - "${API_DOCS_PORT:-8081}:8080"
     volumes:
-      - ./api/openapi/openapi.yaml:/app/public/openapi.yaml:ro
+      - ./api/openapi/openapi.yaml:/docs/openapi.yaml:ro
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80/health"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
       interval: 10s
       timeout: 5s
       retries: 3
