@@ -112,7 +112,7 @@ func main() {
 
 	// Add middleware
 	r.Use(middleware.CORSMiddleware(middleware.DefaultCORSConfig())) // CORS
-	r.Use(middleware.RequestID) // Custom request ID middleware (replaces chi's RequestID to add X-Request-ID header)
+	r.Use(middleware.RequestID)                                      // Custom request ID middleware (replaces chi's RequestID to add X-Request-ID header)
 	r.Use(chiMiddleware.RealIP)
 	r.Use(chiMiddleware.Logger)
 	r.Use(chiMiddleware.Recoverer)
