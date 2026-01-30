@@ -90,7 +90,7 @@ export function exportWorkoutsToCSV(
         String(entry.reps),
         String(entry.load_kg),
         String(entry.rpe),
-        entry.entry_type,
+        entry.entry_type || '',
         entry.notes || '',
       ]);
     }
