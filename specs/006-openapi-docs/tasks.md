@@ -57,10 +57,10 @@ This feature modifies infrastructure files at the repository root:
 
 ### Implementation for User Story 2
 
-- [ ] T006 [US2] Start API server alongside documentation server with `docker compose up -d api api-docs`
-- [ ] T007 [US2] Verify "Try it" feature is available on endpoints in the documentation UI
-- [ ] T008 [US2] Verify test request can be sent to a running API endpoint (e.g., GET /api/v1/workouts)
-- [ ] T009 [US2] Verify response is displayed correctly in the documentation interface
+- [x] T006 [US2] Start API server alongside documentation server with `docker compose up -d api api-docs`
+- [x] T007 [US2] Verify "Try it" feature is available on endpoints in the documentation UI
+- [x] T008 [US2] Verify test request can be sent to a running API endpoint (e.g., GET /api/v1/workouts)
+- [x] T009 [US2] Verify response is displayed correctly in the documentation interface
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work - developers can view docs and test API requests
 
