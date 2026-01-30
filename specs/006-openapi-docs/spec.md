@@ -53,7 +53,7 @@ As a developer, I want to send test requests directly from the API documentation
 
 - **FR-001**: System MUST provide a command to start a local documentation server that serves the API reference via Docker Compose (extending the existing `docker-compose.yml`)
 - **FR-002**: System MUST use Scalar (https://github.com/scalar/scalar) as the documentation rendering tool
-- **FR-003**: System MUST render documentation from the OpenAPI specification file at `api/openapi.yaml`
+- **FR-003**: System MUST render documentation from the OpenAPI specification file at `api/openapi/openapi.yaml`
 - **FR-004**: Documentation MUST display all API endpoints with their HTTP methods, paths, and descriptions
 - **FR-005**: Documentation MUST show request parameters (path, query, header) with their types and descriptions
 - **FR-006**: Documentation MUST show request body schemas with examples
@@ -64,7 +64,7 @@ As a developer, I want to send test requests directly from the API documentation
 
 ### Key Entities
 
-- **OpenAPI Specification**: The existing YAML file at `api/openapi.yaml` defining the API contract
+- **OpenAPI Specification**: The existing YAML file at `api/openapi/openapi.yaml` defining the API contract
 - **Documentation Server**: A local server that serves the Scalar-rendered API reference
 - **API Reference UI**: The interactive web interface displayed to developers
 
@@ -83,7 +83,7 @@ As a developer, I want to send test requests directly from the API documentation
 ### Session 2026-01-30
 
 - Q: ドキュメンテーションサーバーの起動方法は？ → A: Docker Compose に追加（既存の docker-compose.yml を拡張）
-- Q: OpenAPI 仕様ファイルの場所は？ → A: `api/openapi.yaml`
+- Q: OpenAPI 仕様ファイルの場所は？ → A: `api/openapi/openapi.yaml`
 
 ## Assumptions
 

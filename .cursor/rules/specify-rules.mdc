@@ -8,6 +8,8 @@ Auto-generated from all feature plans. Last updated: 2026-01-25
 - Go 1.25+ + aws-sdk-go-v2, chi, oapi-codegen (004-minio-test-coverage)
 - MinIO (S3-compatible, docker-compose.ymlに定義済み) (004-minio-test-coverage)
 - PostgreSQL 17.x (005-postgresql-setup)
+- N/A (Docker-based deployment, no application code) + Docker, Docker Compose, Scalar API Reference (`scalarapi/api-reference:latest`) (006-openapi-docs)
+- N/A (stateless documentation viewer) (006-openapi-docs)
 
 - Go 1.25+ + chi (HTTP router), oapi-codegen (OpenAPI code generation) (001-data-structure)
 
@@ -27,9 +29,9 @@ tests/
 Go 1.25+: Follow standard conventions
 
 ## Recent Changes
+- 006-openapi-docs: Added N/A (Docker-based deployment, no application code) + Docker, Docker Compose, Scalar API Reference (`scalarapi/api-reference:latest`)
 - 005-postgresql-setup: Added Go 1.25+
 - 004-minio-test-coverage: Added Go 1.25+ + aws-sdk-go-v2, chi, oapi-codegen
-- 003-docker-setup: Added Go 1.25+ (API component) + Docker, Docker Compose, VS Code/Cursor Dev Containers (developer workflow)
 
 
 <!-- MANUAL ADDITIONS START -->
