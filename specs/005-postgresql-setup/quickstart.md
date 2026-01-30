@@ -19,7 +19,7 @@ docker compose up -d postgres
 
 # Verify it's running
 docker compose ps
-# Expected: optel-training-postgres running, healthy
+# Expected: optel-workout-postgres running, healthy
 ```
 
 ### 2. Run Migrations
@@ -64,7 +64,7 @@ curl http://localhost:8080/health
 | `DB_PORT` | 5432 | PostgreSQL port |
 | `DB_USER` | optel | Database user |
 | `DB_PASSWORD` | optel | Database password |
-| `DB_NAME` | optel_training | Database name |
+| `DB_NAME` | optel_workout | Database name |
 | `DB_SSLMODE` | disable | SSL mode |
 | `DB_MAX_CONNS` | 10 | Max pool connections |
 | `STORAGE_TYPE` | postgres | Storage type (postgres/memory) |

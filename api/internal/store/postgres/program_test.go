@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/aoshimash/optel-training/api/internal/domain"
+	"github.com/aoshimash/optel-workout/api/internal/domain"
 	"github.com/google/uuid"
 )
 

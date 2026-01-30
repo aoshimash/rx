@@ -17,8 +17,8 @@ import (
     "os/signal"
     "syscall"
 
-    "github.com/aoshimash/optel-training/api/internal/config"
-    "github.com/aoshimash/optel-training/api/internal/handler"
+    "github.com/aoshimash/optel-workout/api/internal/config"
+    "github.com/aoshimash/optel-workout/api/internal/handler"
 )
 
 func main() {
@@ -71,7 +71,7 @@ package repository
 import (
     "context"
     "time"
-    "github.com/aoshimash/optel-training/api/internal/domain"
+    "github.com/aoshimash/optel-workout/api/internal/domain"
 )
 
 type WorkoutRepository interface {
@@ -102,8 +102,8 @@ import (
     "context"
     "sync"
 
-    "github.com/aoshimash/optel-training/api/internal/domain"
-    "github.com/aoshimash/optel-training/api/internal/repository"
+    "github.com/aoshimash/optel-workout/api/internal/domain"
+    "github.com/aoshimash/optel-workout/api/internal/repository"
 )
 
 type WorkoutStore struct {
@@ -174,7 +174,7 @@ import (
     "errors"
     "net/http"
 
-    "github.com/aoshimash/optel-training/api/internal/domain"
+    "github.com/aoshimash/optel-workout/api/internal/domain"
 )
 
 func mapDomainErrorToHTTP(err error) int {
@@ -207,7 +207,7 @@ import (
     "testing"
     "time"
 
-    "github.com/aoshimash/optel-training/api/internal/domain"
+    "github.com/aoshimash/optel-workout/api/internal/domain"
 )
 
 func TestWorkout_Validate(t *testing.T) {

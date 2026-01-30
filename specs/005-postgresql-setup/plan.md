@@ -5,7 +5,7 @@
 
 ## Summary
 
-OPTel Training APIのデータ永続化層としてPostgreSQL 17を導入する。既存のインメモリストレージからPostgreSQLへの移行を実現し、Testcontainersを使用した統合テスト環境を構築する。
+OPTel Workout APIのデータ永続化層としてPostgreSQL 17を導入する。既存のインメモリストレージからPostgreSQLへの移行を実現し、Testcontainersを使用した統合テスト環境を構築する。
 
 ## Technical Context
 

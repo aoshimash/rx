@@ -1,11 +1,11 @@
-# Quickstart: OPTel Training Data Structures
+# Quickstart: OPTel Workout Data Structures
 
 **Feature**: 001-data-structure  
 **Date**: 2026-01-24
 
 ## Overview
 
-OPTel Training uses 6 core entities to store training data:
+OPTel Workout uses 6 core entities to store training data:
 
 | Entity | Purpose |
 |--------|---------|

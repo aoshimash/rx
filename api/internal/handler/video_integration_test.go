@@ -22,9 +22,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/google/uuid"
 
-	"github.com/aoshimash/optel-training/api/internal/middleware"
-	s3provider "github.com/aoshimash/optel-training/api/internal/storage/s3"
-	"github.com/aoshimash/optel-training/api/pkg/openapi"
+	"github.com/aoshimash/optel-workout/api/internal/middleware"
+	s3provider "github.com/aoshimash/optel-workout/api/internal/storage/s3"
+	"github.com/aoshimash/optel-workout/api/pkg/openapi"
 )
 
 const (

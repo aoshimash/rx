@@ -6,7 +6,7 @@ This file provides guidance for AI coding agents working on this repository.
 
 **OPTel (Open Physical Telemetry)** - An observability stack for the human physical layer.
 
-This repository (`optel-training`) is the **Output/Training Management** component. It manages "Workouts" (physical exertion records) as an agent-native telemetry backend.
+This repository (`optel-workout`) is the **Workout Management** component. It manages "Workouts" (physical exertion records) as an agent-native telemetry backend.
 
 ## Key Principles
 
@@ -18,7 +18,7 @@ For details, see `.claude/skills/optel-philosophy/`.
 ## Project Structure
 
 ```
-optel-training/
+optel-workout/
 ├── api/                  # REST API (Go)
 ├── mcp/                  # MCP Server (runs on user's local machine)
 ├── frontend/             # Frontend (future)

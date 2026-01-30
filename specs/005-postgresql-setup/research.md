@@ -138,7 +138,7 @@ func setupTestDB(t *testing.T) (*pgxpool.Pool, func()) {
 | `DB_PORT` | No | 5432 | データベースポート |
 | `DB_USER` | No | optel | データベースユーザー |
 | `DB_PASSWORD` | No | optel | データベースパスワード |
-| `DB_NAME` | No | optel_training | データベース名 |
+| `DB_NAME` | No | optel_workout | データベース名 |
 | `DB_SSLMODE` | No | disable | SSL モード (dev: disable) |
 | `DB_MAX_CONNS` | No | 10 | 最大接続数 |
 | `DB_MIN_CONNS` | No | 2 | 最小接続数 |

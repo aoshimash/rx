@@ -24,7 +24,7 @@ Open your browser and navigate to:
 http://localhost:8081
 ```
 
-You should see the Scalar API Reference with all OPTel Training API endpoints.
+You should see the Scalar API Reference with all OPTel Workout API endpoints.
 
 ### 3. Test API Endpoints (Optional)
 

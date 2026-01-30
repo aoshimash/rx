@@ -1,11 +1,11 @@
 services:
   postgres:
     image: postgres:17
-    container_name: optel-training-postgres
+    container_name: optel-workout-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-optel}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-optel}
-      POSTGRES_DB: ${POSTGRES_DB:-optel_training}
+      POSTGRES_DB: ${POSTGRES_DB:-optel_workout}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -21,7 +21,7 @@ services:
     build:
       context: ./api
       dockerfile: Dockerfile
-    container_name: optel-training-api
+    container_name: optel-workout-api
     environment:
       - PORT=${PORT:-8080}
       - LOG_LEVEL=${LOG_LEVEL:-info}
@@ -31,7 +31,7 @@ services:
 
   minio:
     image: minio/minio:latest
-    container_name: optel-training-minio
+    container_name: optel-workout-minio
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
@@ -50,7 +50,7 @@ services:
 
   api-docs:
     image: scalarapi/api-reference:latest
-    container_name: optel-training-api-docs
+    container_name: optel-workout-api-docs
     ports:
       - "${API_DOCS_PORT:-8081}:8080"
     volumes:

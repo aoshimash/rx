@@ -1,6 +1,6 @@
 # Tasks: Docker Development Environment Setup
 
-**Input**: Design documents from `/Users/aoshima/dev/github/aoshimash/optel-training/specs/003-docker-setup/`  
+**Input**: Design documents from `/Users/aoshima/dev/github/aoshimash/optel-workout/specs/003-docker-setup/`  
 **Prerequisites**: `plan.md`, `spec.md`, `research.md`, `data-model.md`, `contracts/`, `quickstart.md`  
 **Tests**: No new automated tests requested; include smoke-check tasks where relevant.
 

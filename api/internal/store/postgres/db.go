@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/aoshimash/optel-training/api/internal/config"
+	"github.com/aoshimash/optel-workout/api/internal/config"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/jackc/pgx/v5/pgxpool"
 )

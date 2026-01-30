@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aoshimash/optel-training/api/internal/domain"
-	"github.com/aoshimash/optel-training/api/internal/repository"
+	"github.com/aoshimash/optel-workout/api/internal/domain"
+	"github.com/aoshimash/optel-workout/api/internal/repository"
 	"github.com/google/uuid"
 )
 

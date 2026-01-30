@@ -9,7 +9,7 @@
 
 ### User Story 1 - View API Documentation Locally (Priority: P1)
 
-As a developer working on the OPTel Training API, I want to view beautiful, interactive API documentation in my local browser so that I can understand available endpoints, request/response formats, and test API calls directly from the documentation.
+As a developer working on the OPTel Workout API, I want to view beautiful, interactive API documentation in my local browser so that I can understand available endpoints, request/response formats, and test API calls directly from the documentation.
 
 **Why this priority**: This is the core functionality requested. Without the ability to view documentation locally, the feature has no value. This enables developers to quickly understand and interact with the API during development.
 

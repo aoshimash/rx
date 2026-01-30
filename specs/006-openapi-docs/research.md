@@ -66,7 +66,7 @@
 ```yaml
 api-docs:
   image: scalarapi/api-reference:latest
-  container_name: optel-training-api-docs
+  container_name: optel-workout-api-docs
   ports:
     - "${API_DOCS_PORT:-8081}:80"
   volumes:
