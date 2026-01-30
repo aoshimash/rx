@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { ExerciseInputRow } from './ExerciseInputRow';
 import { AddExerciseButton } from './AddExerciseButton';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { ProgramNode, WorkoutEntryCreate } from '@/types/api';
 
 interface WorkoutModalProps {
@@ -51,7 +51,7 @@ export function WorkoutModal({
   const [isSaving, setIsSaving] = useState(false);
 
   // Initialize entries from day node when modal opens
-  useState(() => {
+  useEffect(() => {
     if (open && dayNode) {
       const exerciseNodes =
         dayNode.children?.filter((child) => child.node_type === 'exercise') || [];
@@ -75,7 +75,7 @@ export function WorkoutModal({
 
       setEntries(initialEntries);
     }
-  });
+  }, [open, dayNode]);
 
   const handleAddExercise = () => {
     const newEntry: EntryInput = {

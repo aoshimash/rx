@@ -16,12 +16,13 @@ import { useWorkouts, useCreateWorkout } from '@/lib/hooks/useWorkouts';
 import { useProgramStore } from '@/stores/program';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import type { WorkoutEntryCreate } from '@/types/api';
+import type { WorkoutEntryCreate, ProgramNode } from '@/types/api';
 
 export default function Home() {
   const [workoutModalOpen, setWorkoutModalOpen] = useState(false);
+  const [selectedDayNode, setSelectedDayNode] = useState<ProgramNode | undefined>();
   const { selectedProgramId, setSelectedProgram } = useProgramStore();
 
   // Fetch programs and selected program details
@@ -37,16 +38,29 @@ export default function Home() {
   const program = selectedProgram || (programs.length > 0 ? programs[0] : null);
   const workouts = workoutsData?.data || [];
 
+  // Get first day node for quick workout recording
+  const firstDayNode = useMemo(() => {
+    if (!program) return undefined;
+    const firstWeek = program.root_nodes?.find((n) => n.node_type === 'week');
+    return firstWeek?.children?.find((n) => n.node_type === 'day');
+  }, [program]);
+
   const handleSaveWorkout = async (entries: WorkoutEntryCreate[], notes: string) => {
     await createWorkout.mutateAsync({
       timestamp: new Date().toISOString(),
       notes,
       entries,
+      program_node_id: selectedDayNode?.id,
     });
   };
 
   const handleProgramChange = (programId: string) => {
     setSelectedProgram(programId);
+  };
+
+  const handleOpenWorkoutModal = () => {
+    setSelectedDayNode(firstDayNode);
+    setWorkoutModalOpen(true);
   };
 
   if (programsLoading || selectedProgramLoading || workoutsLoading) {
@@ -102,7 +116,7 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-2">
           <ExportButton workouts={workouts} program={program} />
-          <Button onClick={() => setWorkoutModalOpen(true)}>
+          <Button onClick={handleOpenWorkoutModal}>
             <Plus className="h-4 w-4 mr-2" />
             Record Workout
           </Button>
@@ -114,6 +128,7 @@ export default function Home() {
       <WorkoutModal
         open={workoutModalOpen}
         onOpenChange={setWorkoutModalOpen}
+        dayNode={selectedDayNode}
         onSave={handleSaveWorkout}
       />
     </main>
