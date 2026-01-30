@@ -67,12 +67,12 @@ This feature uses the OPTel monorepo structure:
 
 ### Implementation for User Story 1
 
-- [ ] T021 [P] [US1] Create StatusBadge component for ✓/≠/○/📝 indicators in web/components/week-view/StatusBadge.tsx
-- [ ] T022 [P] [US1] Create ExerciseTable component showing Plan/Actual/Diff columns in web/components/week-view/ExerciseTable.tsx
-- [ ] T023 [US1] Create DayAccordion component with collapsible day content in web/components/week-view/DayAccordion.tsx
-- [ ] T024 [US1] Create WeekView component with week navigation (Prev/Next) in web/components/week-view/WeekView.tsx
-- [ ] T025 [US1] Create UnplannedWorkouts section component in web/components/week-view/UnplannedWorkouts.tsx
-- [ ] T026 [US1] Implement Week View main page integrating all components in web/app/page.tsx
+- [X] T021 [P] [US1] Create StatusBadge component for ✓/≠/○/📝 indicators in web/components/week-view/StatusBadge.tsx
+- [X] T022 [P] [US1] Create ExerciseTable component showing Plan/Actual/Diff columns in web/components/week-view/ExerciseTable.tsx
+- [X] T023 [US1] Create DayAccordion component with collapsible day content in web/components/week-view/DayAccordion.tsx
+- [X] T024 [US1] Create WeekView component with week navigation (Prev/Next) in web/components/week-view/WeekView.tsx
+- [X] T025 [US1] Create UnplannedWorkouts section component in web/components/week-view/UnplannedWorkouts.tsx
+- [X] T026 [US1] Implement Week View main page integrating all components in web/app/page.tsx
 
 **Checkpoint**: User Story 1 complete - Week View displays Plan vs Actual with diff indicators
 
