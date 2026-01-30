@@ -56,25 +56,15 @@ jobs:
 
       - name: Download dependencies
         working-directory: api
-        run: |
-          go mod download
-          go mod tidy
+        run: task deps
 
       - name: Generate code
         working-directory: api
-        run: |
-          oapi-codegen -generate types,chi-server -package openapi \
-            -o pkg/openapi/server.gen.go openapi/openapi.yaml
+        run: task generate
 
       - name: Check formatting
         working-directory: api
-        run: |
-          FORMAT_OUTPUT=$(gofmt -l .)
-          if [ -n "$FORMAT_OUTPUT" ]; then
-            echo "Error: Code is not formatted. Run 'go fmt ./...' to fix."
-            echo "$FORMAT_OUTPUT"
-            exit 1
-          fi
+        run: task format
 
       - name: Lint
         working-directory: api
@@ -156,17 +146,11 @@ jobs:
 
       - name: Download dependencies
         working-directory: api
-        run: |
-          go mod download
-          go mod tidy
+        run: task deps
 
       - name: Test with coverage
         working-directory: api
-        run: |
-          go test -v -race -coverprofile=coverage.out ./... 2>&1 | grep -v "no such tool \"covdata\"" || true
-          if [ -f coverage.out ]; then
-            go tool cover -func=coverage.out || true
-          fi
+        run: task test-coverage
 
       - name: Run integration tests
         working-directory: api
@@ -174,7 +158,7 @@ jobs:
           MINIO_ENDPOINT: http://localhost:9000
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
-        run: make test-integration
+        run: task test-integration
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5

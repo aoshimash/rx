@@ -1,0 +1,166 @@
+# https://taskfile.dev
+
+version: '3'
+
+# Use bash with pipefail to enable PIPESTATUS for capturing exit codes in pipelines
+set: [pipefail]
+
+vars:
+  DOCKER_COMPOSE: 'docker compose -f ../docker-compose.yml'
+  # DB_URL is built using shell expansion in migrate tasks to respect environment variables
+
+tasks:
+  deps:
+    desc: Download and tidy Go modules
+    cmds:
+      - go mod download
+      - go mod tidy
+      # Build covdata tool for Go 1.25+ (not included as prebuilt binary)
+      # This ensures the tool is available in both local and CI environments
+      - go tool covdata version >/dev/null 2>&1 || go install -a cmd/covdata || true
+
+  generate:
+    desc: Generate code from OpenAPI spec
+    deps: [deps]
+    cmds:
+      - |
+        oapi-codegen -generate types,chi-server -package openapi \
+          -o pkg/openapi/server.gen.go openapi/openapi.yaml
+      # Note: go mod tidy is run in deps target, but if generated code adds new dependencies,
+      # you may need to run 'go mod tidy' manually after generate
+
+  format:
+    desc: Check code formatting
+    cmds:
+      - |
+        echo "Checking code formatting..."
+        FORMAT_OUTPUT=$(gofmt -l .)
+        if [ -n "$FORMAT_OUTPUT" ]; then
+          echo "Error: Code is not formatted. Run 'go fmt ./...' to fix."
+          echo "$FORMAT_OUTPUT"
+          exit 1
+        fi
+
+  lint:
+    desc: Run linter
+    deps: [deps]
+    cmds:
+      - echo "Building packages to ensure all dependencies are available..."
+      - go build ./...
+      - golangci-lint run ./...
+
+  test:
+    desc: Run unit tests with race detection
+    deps: [deps]
+    cmds:
+      - go test -v -race ./...
+
+  test-integration:
+    desc: Run integration tests (requires MinIO via docker-compose)
+    deps: [deps]
+    cmds:
+      - go test -v -tags=integration ./...
+
+  test-all:
+    desc: Run all tests (unit + integration)
+    deps: [deps]
+    cmds:
+      - go test -v -race ./...
+      - go test -v -tags=integration ./...
+
+  test-coverage:
+    desc: Run tests with coverage
+    deps: [deps]
+    cmds:
+      - |
+        set +e
+        go test -v -race -coverprofile=coverage.out ./... 2>&1 | grep -v "no such tool \"covdata\""
+        test_exit=${PIPESTATUS[0]}
+        if [ -f coverage.out ]; then
+          go tool cover -func=coverage.out || true
+        fi
+        exit $test_exit
+
+  run:
+    desc: Start the development server
+    cmds:
+      - go run cmd/server/main.go
+
+  build:
+    desc: Build the server binary
+    cmds:
+      - go build -o bin/server cmd/server/main.go
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - rm -rf bin/
+      - rm -f coverage.out
+
+  check:
+    desc: Run format, lint, and tests (pre-commit check)
+    cmds:
+      - task: format
+      - task: lint
+      - task: test
+      - echo "All checks passed!"
+
+  # Docker Compose management (for smoke-testing, not iterative development)
+  docker-up:
+    desc: Start Docker Compose services
+    cmds:
+      - '{{.DOCKER_COMPOSE}} up -d'
+
+  docker-down:
+    desc: Stop Docker Compose services
+    cmds:
+      - '{{.DOCKER_COMPOSE}} down'
+
+  docker-build-prod:
+    desc: Build production Docker image
+    cmds:
+      - docker build -t optel-training:latest -f Dockerfile .
+
+  # Database migration commands
+  # Prerequisites: PostgreSQL must be running (docker compose up -d postgres)
+  # Migration files are in migrations/ directory
+
+  migrate:
+    desc: Run database migrations
+    deps: [deps]
+    cmds:
+      - echo "Running database migrations..."
+      - migrate -path migrations -database "postgres://${DB_USER:-optel}:${DB_PASSWORD:-optel}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-optel_training}?sslmode=${DB_SSLMODE:-disable}" up
+
+  migrate-down:
+    desc: Roll back all migrations
+    deps: [deps]
+    cmds:
+      - echo "Rolling back all migrations..."
+      - migrate -path migrations -database "postgres://${DB_USER:-optel}:${DB_PASSWORD:-optel}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-optel_training}?sslmode=${DB_SSLMODE:-disable}" down
+
+  migrate-down-1:
+    desc: Roll back last migration
+    deps: [deps]
+    cmds:
+      - echo "Rolling back last migration..."
+      - migrate -path migrations -database "postgres://${DB_USER:-optel}:${DB_PASSWORD:-optel}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-optel_training}?sslmode=${DB_SSLMODE:-disable}" down 1
+
+  migrate-status:
+    desc: Check migration status
+    deps: [deps]
+    cmds:
+      - echo "Checking migration status..."
+      - migrate -path migrations -database "postgres://${DB_USER:-optel}:${DB_PASSWORD:-optel}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-optel_training}?sslmode=${DB_SSLMODE:-disable}" version
+
+  migrate-create:
+    desc: Create a new migration (requires NAME variable)
+    deps: [deps]
+    cmds:
+      - |
+        if [ -z "{{.NAME}}" ]; then
+          echo "Error: NAME is required. Usage: task migrate-create NAME=create_users_table"
+          exit 1
+        fi
+        echo "Creating migration files: migrations/$(date +%Y%m%d%H%M%S)_{{.NAME}}.{up,down}.sql"
+        migrate create -ext sql -dir migrations -seq {{.NAME}}

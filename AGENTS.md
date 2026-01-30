@@ -124,16 +124,16 @@ If `required_permissions: ["all"]` doesn't trigger a confirmation prompt:
 ### Pre-commit Checks
 
 Before committing, the following checks are automatically executed:
-1. Code formatting (`make format`)
-2. Linting (`make lint`)
-3. Tests (`make test` with race detection)
+1. Code formatting (`task format`)
+2. Linting (`task lint`)
+3. Tests (`task test` with race detection)
 
 ### AI Agent Commit Workflow
 
 1. **Before committing**: Ensure all checks pass locally
    ```bash
    cd api
-   make check  # Runs format + lint + test
+   task check  # Runs format + lint + test
    ```
 
 2. **If checks fail**: Fix errors before committing

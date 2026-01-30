@@ -17,3 +17,6 @@ packages:
 
   # GitHub CLI
   - name: cli/cli@v2.67.0
+
+  # Task runner (Makefile alternative)
+  - name: go-task/task@v3.43.3
