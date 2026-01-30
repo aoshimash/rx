@@ -1,0 +1,113 @@
+name: Web CI
+
+on:
+  push:
+    branches: [main]
+    paths: &web-ci-paths
+      - 'web/**'
+      - '.github/workflows/web-ci.yml'
+      - 'aqua.yaml'
+  pull_request:
+    branches: [main]
+    paths: *web-ci-paths
+
+jobs:
+  # Job 1: Lint check (fast feedback)
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+
+      - name: Cache pnpm store
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5
+        with:
+          path: ~/.local/share/pnpm/store
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('web/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Cache aqua tools
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5
+        with:
+          path: ~/.local/share/aquaproj-aqua
+          key: ${{ runner.os }}-aqua-v2.45.0-${{ hashFiles('aqua.yaml', '.github/workflows/web-ci.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-aqua-v2.45.0-
+            ${{ runner.os }}-aqua-
+
+      - name: Setup aqua
+        uses: aquaproj/aqua-installer@11dd79b4e498d471a9385aa9fb7f62bb5f52a73c # v4.0.4
+        with:
+          aqua_version: v2.45.0
+
+      - name: Install tools via aqua
+        run: |
+          if [ ! -f aqua.yaml ]; then
+            echo "Error: aqua.yaml not found"
+            exit 1
+          fi
+          aqua install
+
+      - name: Add aqua bin to PATH
+        run: echo "$HOME/.local/share/aquaproj-aqua/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        working-directory: web
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint and format check
+        working-directory: web
+        run: pnpm check
+
+  # Job 2: Build (runs in parallel with lint)
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+
+      - name: Cache pnpm store
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5
+        with:
+          path: ~/.local/share/pnpm/store
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('web/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Cache aqua tools
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5
+        with:
+          path: ~/.local/share/aquaproj-aqua
+          key: ${{ runner.os }}-aqua-v2.45.0-${{ hashFiles('aqua.yaml', '.github/workflows/web-ci.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-aqua-v2.45.0-
+            ${{ runner.os }}-aqua-
+
+      - name: Setup aqua
+        uses: aquaproj/aqua-installer@11dd79b4e498d471a9385aa9fb7f62bb5f52a73c # v4.0.4
+        with:
+          aqua_version: v2.45.0
+
+      - name: Install tools via aqua
+        run: |
+          if [ ! -f aqua.yaml ]; then
+            echo "Error: aqua.yaml not found"
+            exit 1
+          fi
+          aqua install
+
+      - name: Add aqua bin to PATH
+        run: echo "$HOME/.local/share/aquaproj-aqua/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        working-directory: web
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        working-directory: web
+        run: pnpm build
