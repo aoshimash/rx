@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { ProgramNode, WorkoutEntryCreate } from '@/types/api';
+import type { EntryType, ProgramNode, WorkoutEntryCreate } from '@/types/api';
 import { useEffect, useState } from 'react';
 import { AddExerciseButton } from './AddExerciseButton';
 import { ExerciseInputRow } from './ExerciseInputRow';
@@ -20,6 +20,7 @@ interface EntryInput {
   id: string;
   exercise_id: string;
   exercise_name: string;
+  entry_type: EntryType;
   sets: number;
   reps: number;
   load: number;
@@ -55,6 +56,7 @@ export function WorkoutModal({ open, onOpenChange, dayNode, onSave }: WorkoutMod
         id: `${node.id}-${idx}`,
         exercise_id: node.exercise_id || '',
         exercise_name: node.name,
+        entry_type: 'Main',
         sets: node.target_sets || 3,
         reps: node.target_reps || 10,
         load: 0,
@@ -77,6 +79,7 @@ export function WorkoutModal({ open, onOpenChange, dayNode, onSave }: WorkoutMod
       id: `new-${Date.now()}`,
       exercise_id: '', // Will need exercise selector in future
       exercise_name: 'New Exercise',
+      entry_type: null,
       sets: 3,
       reps: 10,
       load: 0,
@@ -95,7 +98,7 @@ export function WorkoutModal({ open, onOpenChange, dayNode, onSave }: WorkoutMod
       const workoutEntries: WorkoutEntryCreate[] = entries.map((entry) => ({
         exercise_id: entry.exercise_id,
         display_name: entry.exercise_name,
-        entry_type: 'main',
+        entry_type: entry.entry_type,
         sets: entry.sets,
         reps: entry.reps,
         load_kg: entry.load,
@@ -137,10 +140,16 @@ export function WorkoutModal({ open, onOpenChange, dayNode, onSave }: WorkoutMod
             <ExerciseInputRow
               key={entry.id}
               exerciseName={entry.exercise_name}
+              entryType={entry.entry_type}
               sets={entry.sets}
               reps={entry.reps}
               load={entry.load}
               rpe={entry.rpe}
+              onEntryTypeChange={(value) => {
+                setEntries(
+                  entries.map((e) => (e.id === entry.id ? { ...e, entry_type: value } : e))
+                );
+              }}
               onSetsChange={(value) => {
                 setEntries(entries.map((e) => (e.id === entry.id ? { ...e, sets: value } : e)));
               }}
