@@ -25,13 +25,13 @@ This feature uses the OPTel monorepo structure:
 
 **Purpose**: Project initialization, dependency installation, and base configuration
 
-- [ ] T001 Install new dependencies: `pnpm add @tanstack/react-query @hookform/resolvers react-hook-form zod ky date-fns` in web/
-- [ ] T002 Initialize shadcn/ui with `npx shadcn@latest init` in web/
-- [ ] T003 [P] Add shadcn/ui core components: button, input, form, select, table in web/components/ui/
-- [ ] T004 [P] Add shadcn/ui layout components: accordion, dialog, alert-dialog in web/components/ui/
-- [ ] T005 [P] Add shadcn/ui data entry components: calendar, command, popover in web/components/ui/
-- [ ] T006 [P] Add shadcn/ui display components: badge, card, separator in web/components/ui/
-- [ ] T007 Create environment configuration file web/.env.local with NEXT_PUBLIC_API_URL
+- [X] T001 Install new dependencies: `pnpm add @tanstack/react-query @hookform/resolvers react-hook-form zod ky date-fns` in web/
+- [X] T002 Initialize shadcn/ui with `npx shadcn@latest init` in web/
+- [X] T003 [P] Add shadcn/ui core components: button, input, form, select, table in web/components/ui/
+- [X] T004 [P] Add shadcn/ui layout components: accordion, dialog, alert-dialog in web/components/ui/
+- [X] T005 [P] Add shadcn/ui data entry components: calendar, command, popover in web/components/ui/
+- [X] T006 [P] Add shadcn/ui display components: badge, card, separator in web/components/ui/
+- [X] T007 Create environment configuration file web/.env.local with NEXT_PUBLIC_API_URL
 
 ---
 
