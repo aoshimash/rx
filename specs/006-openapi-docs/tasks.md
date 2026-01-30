@@ -26,7 +26,7 @@ This feature modifies infrastructure files at the repository root:
 
 **Purpose**: Add Scalar API Reference service to Docker Compose
 
-- [ ] T001 Add `api-docs` service to `docker-compose.yml` with Scalar API Reference image
+- [x] T001 Add `api-docs` service to `docker-compose.yml` with Scalar API Reference image
 
 **Checkpoint**: Docker Compose configuration is ready for documentation server
 
