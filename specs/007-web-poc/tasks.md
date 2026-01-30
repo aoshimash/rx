@@ -145,11 +145,11 @@ This feature uses the OPTel monorepo structure:
 
 ### Implementation for User Story 5
 
-- [ ] T047 [P] [US5] Create ProgramCard component for program list item in web/components/programs/ProgramCard.tsx
-- [ ] T048 [US5] Create Program List page in web/app/programs/page.tsx
-- [ ] T049 [US5] Create program selection store for current program in web/stores/program.ts
-- [ ] T050 [US5] Add program selector dropdown to Week View header in web/app/page.tsx
-- [ ] T051 [US5] Update Week View to filter by selected program in web/components/week-view/WeekView.tsx
+- [X] T047 [P] [US5] Create ProgramCard component for program list item in web/components/programs/ProgramCard.tsx
+- [X] T048 [US5] Create Program List page in web/app/programs/page.tsx
+- [X] T049 [US5] Create program selection store for current program in web/stores/program.ts
+- [X] T050 [US5] Add program selector dropdown to Week View header in web/app/page.tsx
+- [X] T051 [US5] Update Week View to filter by selected program in web/components/week-view/WeekView.tsx
 
 **Checkpoint**: User Story 5 complete - Users can select and switch programs
 
