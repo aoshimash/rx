@@ -100,7 +100,11 @@ export function EntryTypeCombobox({ value, onChange, className }: EntryTypeCombo
             </CommandEmpty>
             <CommandGroup heading="Suggestions">
               {filteredSuggestions.map((suggestion) => (
-                <CommandItem key={suggestion} value={suggestion} onSelect={handleSelect}>
+                <CommandItem
+                  key={suggestion}
+                  value={suggestion}
+                  onSelect={() => handleSelect(suggestion)}
+                >
                   <Check
                     className={cn(
                       'mr-2 h-4 w-4',
@@ -113,7 +117,7 @@ export function EntryTypeCombobox({ value, onChange, className }: EntryTypeCombo
                 </CommandItem>
               ))}
               {showCustomOption && (
-                <CommandItem value={inputValue} onSelect={handleSelect}>
+                <CommandItem value={inputValue} onSelect={() => handleSelect(inputValue)}>
                   <Check className="mr-2 h-4 w-4 opacity-0" />
                   Use &quot;{inputValue}&quot;
                 </CommandItem>
