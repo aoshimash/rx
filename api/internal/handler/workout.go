@@ -97,23 +97,38 @@ func (h *WorkoutHandler) parseWorkoutRequest(ctx context.Context, req *workoutRe
 		Notes:          req.Notes,
 	}
 
-	// Parse optional timestamps
+	// Parse optional timestamps (return error if format is invalid)
 	if req.SessionStart != nil {
-		if t, err := time.Parse(time.RFC3339, *req.SessionStart); err == nil {
-			workout.SessionStart = &t
+		t, err := time.Parse(time.RFC3339, *req.SessionStart)
+		if err != nil {
+			return nil, &domain.ValidationError{
+				Field:   "session_start",
+				Message: "invalid timestamp format: " + err.Error(),
+			}
 		}
+		workout.SessionStart = &t
 	}
 	if req.SessionEnd != nil {
-		if t, err := time.Parse(time.RFC3339, *req.SessionEnd); err == nil {
-			workout.SessionEnd = &t
+		t, err := time.Parse(time.RFC3339, *req.SessionEnd)
+		if err != nil {
+			return nil, &domain.ValidationError{
+				Field:   "session_end",
+				Message: "invalid timestamp format: " + err.Error(),
+			}
 		}
+		workout.SessionEnd = &t
 	}
 
-	// Parse program_node_id
+	// Parse program_node_id (return error if format is invalid)
 	if req.ProgramNodeID != nil {
-		if id, err := uuid.Parse(*req.ProgramNodeID); err == nil {
-			workout.ProgramNodeID = &id
+		id, err := uuid.Parse(*req.ProgramNodeID)
+		if err != nil {
+			return nil, &domain.ValidationError{
+				Field:   "program_node_id",
+				Message: "invalid UUID format: " + err.Error(),
+			}
 		}
+		workout.ProgramNodeID = &id
 	}
 
 	// Convert entries
@@ -166,28 +181,47 @@ func (h *WorkoutHandler) convertEntries(ctx context.Context, entryReqs []workout
 			Order:                i,
 		}
 
-		// Parse optional timestamps
+		// Parse optional timestamps (return error if format is invalid)
 		if entryReq.EntryStart != nil {
-			if t, err := time.Parse(time.RFC3339, *entryReq.EntryStart); err == nil {
-				entry.EntryStart = &t
+			t, err := time.Parse(time.RFC3339, *entryReq.EntryStart)
+			if err != nil {
+				return nil, &domain.ValidationError{
+					Field:   fmt.Sprintf("entries[%d].entry_start", i),
+					Message: "invalid timestamp format: " + err.Error(),
+				}
 			}
+			entry.EntryStart = &t
 		}
 		if entryReq.EntryEnd != nil {
-			if t, err := time.Parse(time.RFC3339, *entryReq.EntryEnd); err == nil {
-				entry.EntryEnd = &t
+			t, err := time.Parse(time.RFC3339, *entryReq.EntryEnd)
+			if err != nil {
+				return nil, &domain.ValidationError{
+					Field:   fmt.Sprintf("entries[%d].entry_end", i),
+					Message: "invalid timestamp format: " + err.Error(),
+				}
 			}
+			entry.EntryEnd = &t
 		}
 
-		// Parse program_node_id
+		// Parse program_node_id (return error if format is invalid)
 		if entryReq.ProgramNodeID != nil {
-			if id, err := uuid.Parse(*entryReq.ProgramNodeID); err == nil {
-				entry.ProgramNodeID = &id
+			id, err := uuid.Parse(*entryReq.ProgramNodeID)
+			if err != nil {
+				return nil, &domain.ValidationError{
+					Field:   fmt.Sprintf("entries[%d].program_node_id", i),
+					Message: "invalid UUID format: " + err.Error(),
+				}
 			}
+			entry.ProgramNodeID = &id
 		}
 
 		// Convert plan_snapshot
 		if entryReq.PlanSnapshot != nil {
-			entry.PlanSnapshot = convertPlanSnapshot(entryReq.PlanSnapshot)
+			snapshot, err := convertPlanSnapshot(entryReq.PlanSnapshot, i)
+			if err != nil {
+				return nil, err
+			}
+			entry.PlanSnapshot = snapshot
 		}
 
 		entries[i] = entry
@@ -197,7 +231,7 @@ func (h *WorkoutHandler) convertEntries(ctx context.Context, entryReqs []workout
 }
 
 // convertPlanSnapshot converts a plan snapshot request to domain model
-func convertPlanSnapshot(req *planSnapshotRequest) *domain.PlanSnapshot {
+func convertPlanSnapshot(req *planSnapshotRequest, entryIndex int) (*domain.PlanSnapshot, error) {
 	snapshot := domain.PlanSnapshot{
 		TargetSets:         req.TargetSets,
 		TargetReps:         req.TargetReps,
@@ -208,12 +242,17 @@ func convertPlanSnapshot(req *planSnapshotRequest) *domain.PlanSnapshot {
 	}
 
 	if req.ProgramNodeID != nil {
-		if id, err := uuid.Parse(*req.ProgramNodeID); err == nil {
-			snapshot.ProgramNodeID = &id
+		id, err := uuid.Parse(*req.ProgramNodeID)
+		if err != nil {
+			return nil, &domain.ValidationError{
+				Field:   fmt.Sprintf("entries[%d].plan_snapshot.program_node_id", entryIndex),
+				Message: "invalid UUID format: " + err.Error(),
+			}
 		}
+		snapshot.ProgramNodeID = &id
 	}
 
-	return &snapshot
+	return &snapshot, nil
 }
 
 // CreateWorkout handles POST /workouts
