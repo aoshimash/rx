@@ -127,11 +127,11 @@ This feature uses the OPTel monorepo structure:
 
 ### Implementation for User Story 4
 
-- [ ] T042 [P] [US4] Create schedule generation utility with skip weekends/avoid consecutive in web/lib/utils/schedule.ts
-- [ ] T043 [US4] Create ScheduleModal component with date picker and options in web/components/schedule/ScheduleModal.tsx
-- [ ] T044 [US4] Create schedule store for client-side schedule persistence in web/stores/schedule.ts
-- [ ] T045 [US4] Integrate ScheduleModal into Week View header in web/app/page.tsx
-- [ ] T046 [US4] Update DayAccordion to display scheduled dates in web/components/week-view/DayAccordion.tsx
+- [X] T042 [P] [US4] Create schedule generation utility with skip weekends/avoid consecutive in web/lib/utils/schedule.ts
+- [X] T043 [US4] Create ScheduleModal component with date picker and options in web/components/schedule/ScheduleModal.tsx
+- [X] T044 [US4] Create schedule store for client-side schedule persistence in web/stores/schedule.ts
+- [X] T045 [US4] Integrate ScheduleModal into Week View header in web/app/page.tsx
+- [X] T046 [US4] Update DayAccordion to display scheduled dates in web/components/week-view/DayAccordion.tsx
 
 **Checkpoint**: User Story 4 complete - Schedule dates display in Week View
 

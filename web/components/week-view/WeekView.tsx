@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DayAccordion } from './DayAccordion';
 import { UnplannedWorkouts } from './UnplannedWorkouts';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ScheduleModal } from '@/components/schedule/ScheduleModal';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { startOfWeek, endOfWeek, addWeeks, format } from 'date-fns';
+import { useScheduleStore } from '@/stores/schedule';
 import type { Program, Workout } from '@/types/api';
 import type { DiffStatus } from '@/lib/utils/diff';
 import { calculateDiff } from '@/lib/utils/diff';
@@ -23,9 +25,12 @@ interface WeekViewProps {
  * - Week navigation (Prev/Next)
  * - Collapsible days with exercise tables
  * - Unplanned workouts section
+ * - Schedule configuration
  */
 export function WeekView({ program, workouts }: WeekViewProps) {
   const [weekOffset, setWeekOffset] = useState(0);
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+  const { getSchedule, setSchedule } = useScheduleStore();
 
   // Calculate current week range
   const { weekStart, weekEnd } = useMemo(() => {
@@ -36,6 +41,9 @@ export function WeekView({ program, workouts }: WeekViewProps) {
       weekEnd: endOfWeek(baseDate, { weekStartsOn: 1 }),
     };
   }, [weekOffset]);
+
+  // Get schedule for current program
+  const schedule = program ? getSchedule(program.id) : undefined;
 
   // Build day data from program and workouts
   const days = useMemo(() => {
@@ -52,22 +60,25 @@ export function WeekView({ program, workouts }: WeekViewProps) {
     const dayNodes =
       firstWeek.children?.filter((node) => node.node_type === 'day') || [];
 
-    return dayNodes.map((dayNode) => {
+    return dayNodes.map((dayNode, idx) => {
       // Find workout for this day (matching by program_node_id)
       const workout = workouts.find((w) => w.program_node_id === dayNode.id);
+
+      // Get scheduled date if available
+      const scheduledDate = schedule?.find((s) => s.dayIndex === idx)?.date;
 
       // Calculate overall day status
       const status = calculateDayStatus(dayNode, workout);
 
       return {
         dayName: dayNode.name,
-        date: undefined, // Schedule feature (Phase 6)
+        date: scheduledDate,
         programNode: dayNode,
         workout,
         status,
       };
     });
-  }, [program, workouts]);
+  }, [program, workouts, schedule]);
 
   // Get unplanned workouts (no program_node_id or node not in current program)
   const unplannedWorkouts = useMemo(() => {
@@ -88,6 +99,11 @@ export function WeekView({ program, workouts }: WeekViewProps) {
 
   const handlePrevWeek = () => setWeekOffset((prev) => prev - 1);
   const handleNextWeek = () => setWeekOffset((prev) => prev + 1);
+  const handleScheduleGenerated = (newSchedule: any[]) => {
+    if (program) {
+      setSchedule(program.id, newSchedule);
+    }
+  };
 
   if (!program) {
     return (
@@ -108,6 +124,14 @@ export function WeekView({ program, workouts }: WeekViewProps) {
           <div className="flex items-center justify-between">
             <CardTitle>Week View</CardTitle>
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setScheduleModalOpen(true)}
+              >
+                <CalendarIcon className="h-4 w-4 mr-2" />
+                Schedule
+              </Button>
               <Button variant="outline" size="sm" onClick={handlePrevWeek}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -132,6 +156,13 @@ export function WeekView({ program, workouts }: WeekViewProps) {
       </Card>
 
       <UnplannedWorkouts workouts={unplannedWorkouts} />
+
+      <ScheduleModal
+        open={scheduleModalOpen}
+        onOpenChange={setScheduleModalOpen}
+        program={program}
+        onScheduleGenerated={handleScheduleGenerated}
+      />
     </div>
   );
 }
