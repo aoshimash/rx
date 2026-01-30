@@ -20,8 +20,11 @@ For details, see `.claude/skills/optel-philosophy/`.
 ```
 optel-workout/
 ├── api/                  # REST API (Go)
+├── web/                  # Web frontend (Next.js + React)
+├── mobile/               # Mobile app (React Native + Expo) - future
 ├── mcp/                  # MCP Server (runs on user's local machine)
-├── frontend/             # Frontend (future)
+├── packages/             # Shared packages (future)
+│   └── shared/           # Types, API client, validation schemas
 ├── infra/                # Terraform/Helm (future)
 ├── docs/                 # Documentation
 └── .claude/skills/       # AI agent skills
@@ -33,9 +36,12 @@ optel-workout/
 |-------|-------------|
 | [optel-philosophy](.claude/skills/optel-philosophy/) | Core philosophy and constraints |
 | [optel-domain](.claude/skills/optel-domain/) | Domain models (Workout, Program, Telemetry) |
-| [optel-go-standards](.claude/skills/optel-go-standards/) | Go coding standards |
+| [optel-go-standards](.claude/skills/optel-go-standards/) | Go coding standards (API) |
+| [optel-frontend-standards](.claude/skills/optel-frontend-standards/) | Frontend coding standards (Web/Mobile) |
 
 ## Quick Reference
+
+### API (Go)
 
 - **Language**: Go 1.25+
 - **HTTP Server**: chi
@@ -44,10 +50,25 @@ optel-workout/
 - **Logging**: log/slog
 - **Testing**: standard testing package
 
+### Web Frontend
+
+- **Framework**: Next.js (App Router)
+- **Language**: TypeScript
+- **State Management**: TanStack Query
+- **UI Library**: shadcn/ui + Tailwind CSS
+- **Forms**: React Hook Form + Zod
+
+### Mobile (Future)
+
+- **Framework**: React Native + Expo
+- **Language**: TypeScript
+- **State Management**: TanStack Query
+
 ## Documentation
 
-- [Architecture](docs/ARCHITECTURE.md)
-- [Development Guide](docs/DEVELOPMENT.md)
+- [Architecture](docs/ARCHITECTURE.md) - System architecture
+- [Frontend Architecture](docs/FRONTEND_ARCHITECTURE.md) - Web/Mobile architecture
+- [Development Guide](docs/DEVELOPMENT.md) - Development setup
 
 ## AI Agent Command Execution
 
@@ -61,6 +82,8 @@ When executing commands that require host resources (network access, Docker sock
 | `docker compose up/down` | Requires Docker socket access |
 | `docker compose pull` | Requires network access and Docker socket access |
 | `go get`, `go install` | Requires network access (if downloading packages) |
+| `npm install`, `pnpm install` | Requires network access (npm registry) |
+| `npx create-next-app` | Requires network access |
 
 ### Example Usage
 
