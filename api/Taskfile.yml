@@ -3,9 +3,8 @@
 version: '3'
 
 vars:
-  # Build connection string from environment variables
-  DB_URL: 'postgres://{{.DB_USER | default "optel"}}:{{.DB_PASSWORD | default "optel"}}@{{.DB_HOST | default "localhost"}}:{{.DB_PORT | default "5432"}}/{{.DB_NAME | default "optel_training"}}?sslmode={{.DB_SSLMODE | default "disable"}}'
   DOCKER_COMPOSE: 'docker compose -f ../docker-compose.yml'
+  # DB_URL is built using shell expansion in migrate tasks to respect environment variables
 
 tasks:
   deps:
@@ -130,28 +129,28 @@ tasks:
     deps: [deps]
     cmds:
       - echo "Running database migrations..."
-      - migrate -path migrations -database "{{.DB_URL}}" up
+      - migrate -path migrations -database "postgres://${DB_USER:-optel}:${DB_PASSWORD:-optel}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-optel_training}?sslmode=${DB_SSLMODE:-disable}" up
 
   migrate-down:
     desc: Roll back all migrations
     deps: [deps]
     cmds:
       - echo "Rolling back all migrations..."
-      - migrate -path migrations -database "{{.DB_URL}}" down
+      - migrate -path migrations -database "postgres://${DB_USER:-optel}:${DB_PASSWORD:-optel}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-optel_training}?sslmode=${DB_SSLMODE:-disable}" down
 
   migrate-down-1:
     desc: Roll back last migration
     deps: [deps]
     cmds:
       - echo "Rolling back last migration..."
-      - migrate -path migrations -database "{{.DB_URL}}" down 1
+      - migrate -path migrations -database "postgres://${DB_USER:-optel}:${DB_PASSWORD:-optel}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-optel_training}?sslmode=${DB_SSLMODE:-disable}" down 1
 
   migrate-status:
     desc: Check migration status
     deps: [deps]
     cmds:
       - echo "Checking migration status..."
-      - migrate -path migrations -database "{{.DB_URL}}" version
+      - migrate -path migrations -database "postgres://${DB_USER:-optel}:${DB_PASSWORD:-optel}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-optel_training}?sslmode=${DB_SSLMODE:-disable}" version
 
   migrate-create:
     desc: Create a new migration (requires NAME variable)
