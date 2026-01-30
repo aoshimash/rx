@@ -2,6 +2,9 @@
 
 version: '3'
 
+# Use bash with pipefail to enable PIPESTATUS for capturing exit codes in pipelines
+set: [pipefail]
+
 vars:
   DOCKER_COMPOSE: 'docker compose -f ../docker-compose.yml'
   # DB_URL is built using shell expansion in migrate tasks to respect environment variables
@@ -14,7 +17,7 @@ tasks:
       - go mod tidy
       # Build covdata tool for Go 1.25+ (not included as prebuilt binary)
       # This ensures the tool is available in both local and CI environments
-      - go tool covdata 2>&1 | head -1 > /dev/null || go install -a cmd/covdata || true
+      - go tool covdata version >/dev/null 2>&1 || go install -a cmd/covdata || true
 
   generate:
     desc: Generate code from OpenAPI spec
