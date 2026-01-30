@@ -19,7 +19,7 @@ export interface DiffResult {
 
 /**
  * Calculate diff between plan and actual workout
- * 
+ *
  * Per spec: Only Sets, Reps, and Load are considered for diff.
  * RPE differences do NOT count as diff.
  */

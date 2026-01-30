@@ -1,6 +1,6 @@
 /**
  * TypeScript Types for OPTel Workout API
- * 
+ *
  * These types are aligned with the OpenAPI specification at api/openapi/openapi.yaml.
  * They should be kept in sync with any API changes.
  */

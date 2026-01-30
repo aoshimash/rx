@@ -1,9 +1,9 @@
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+import type { Exercise } from '@/types/api';
 import { X } from 'lucide-react';
 import { ExerciseCombobox } from './ExerciseCombobox';
-import type { Exercise } from '@/types/api';
 
 interface ExerciseRowProps {
   exerciseId?: string;
@@ -42,11 +42,7 @@ export function ExerciseRow({
         </Button>
       </div>
 
-      <ExerciseCombobox
-        exercises={exercises}
-        value={exerciseId}
-        onSelect={onExerciseChange}
-      />
+      <ExerciseCombobox exercises={exercises} value={exerciseId} onSelect={onExerciseChange} />
 
       <div className="grid grid-cols-3 gap-3">
         <div className="space-y-2">

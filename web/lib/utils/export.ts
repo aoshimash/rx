@@ -1,4 +1,4 @@
-import type { Workout, Program } from '@/types/api';
+import type { Program, Workout } from '@/types/api';
 
 /**
  * CSV export utility with UTF-8 BOM
@@ -14,7 +14,7 @@ interface ExportOptions {
  */
 function arrayToCSV(data: string[][], options: ExportOptions = {}): string {
   const { delimiter = ',' } = options;
-  
+
   return data
     .map((row) =>
       row
@@ -39,7 +39,7 @@ function downloadCSV(filename: string, csv: string): void {
   const BOM = '\uFEFF';
   const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
-  
+
   if (link.download !== undefined) {
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);

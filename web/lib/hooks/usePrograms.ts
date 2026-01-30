@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { programsApi } from '@/lib/api/programs';
 import type { ProgramCreate } from '@/types/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 /**
  * Fetch all programs
@@ -28,7 +28,7 @@ export function useProgram(id: string | null) {
  */
 export function useCreateProgram() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (data: ProgramCreate) => programsApi.create(data),
     onSuccess: () => {
@@ -42,10 +42,9 @@ export function useCreateProgram() {
  */
 export function useUpdateProgram() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: ProgramCreate }) =>
-      programsApi.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: ProgramCreate }) => programsApi.update(id, data),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['programs'] });
       queryClient.invalidateQueries({ queryKey: ['programs', variables.id] });
@@ -58,7 +57,7 @@ export function useUpdateProgram() {
  */
 export function useDeleteProgram() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (id: string) => programsApi.delete(id),
     onSuccess: () => {

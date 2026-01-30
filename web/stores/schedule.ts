@@ -1,6 +1,6 @@
+import type { DaySchedule } from '@/lib/utils/schedule';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { DaySchedule } from '@/lib/utils/schedule';
 
 interface ScheduleState {
   schedules: Record<string, DaySchedule[]>; // programId -> schedule
@@ -11,7 +11,7 @@ interface ScheduleState {
 
 /**
  * Schedule store for client-side schedule persistence
- * 
+ *
  * Stores schedule assignments per program
  */
 export const useScheduleStore = create<ScheduleState>()(

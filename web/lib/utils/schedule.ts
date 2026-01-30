@@ -13,15 +13,12 @@ export interface DaySchedule {
 
 /**
  * Generate schedule dates for program days
- * 
+ *
  * @param programDayCount - Number of training days in the program
  * @param options - Schedule configuration
  * @returns Array of day schedules with assigned dates
  */
-export function generateSchedule(
-  programDayCount: number,
-  options: ScheduleOptions
-): DaySchedule[] {
+export function generateSchedule(programDayCount: number, options: ScheduleOptions): DaySchedule[] {
   const { startDate, skipWeekends, avoidConsecutive } = options;
   const schedule: DaySchedule[] = [];
   let currentDate = parseISO(startDate);

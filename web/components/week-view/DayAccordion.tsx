@@ -4,10 +4,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import type { DiffStatus } from '@/lib/utils/diff';
+import type { ProgramNode, Workout, WorkoutEntry } from '@/types/api';
 import { ExerciseTable } from './ExerciseTable';
 import { StatusBadge } from './StatusBadge';
-import type { ProgramNode, Workout } from '@/types/api';
-import type { DiffStatus } from '@/lib/utils/diff';
 
 interface DayData {
   dayName: string;
@@ -23,7 +23,7 @@ interface DayAccordionProps {
 
 /**
  * Collapsible day accordion for Week View
- * 
+ *
  * Each day shows:
  * - Day name and date (if scheduled)
  * - Overall status badge
@@ -85,14 +85,12 @@ function buildExerciseRows(day: DayData) {
   const actualEntries = day.workout?.entries || [];
 
   // Create a map of exercise_id to actual entries
-  const actualMap = new Map(
-    actualEntries.map((entry) => [entry.exercise_id, entry])
-  );
+  const actualMap = new Map(actualEntries.map((entry) => [entry.exercise_id, entry]));
 
   // Add all planned exercises
   for (const node of plannedExercises) {
     const actual = node.exercise_id ? actualMap.get(node.exercise_id) : undefined;
-    
+
     rows.push({
       exerciseName: node.name,
       plan: {

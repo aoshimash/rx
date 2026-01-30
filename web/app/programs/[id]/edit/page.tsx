@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
 import { ProgramForm } from '@/components/program-editor/ProgramForm';
-import { useExercises } from '@/lib/hooks/useExercises';
-import { useProgram, useUpdateProgram, useDeleteProgram } from '@/lib/hooks/usePrograms';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useExercises } from '@/lib/hooks/useExercises';
+import { useDeleteProgram, useProgram, useUpdateProgram } from '@/lib/hooks/usePrograms';
 import type { ProgramNodeCreate } from '@/types/api';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function EditProgramPage() {
   const router = useRouter();
@@ -63,9 +63,7 @@ export default function EditProgramPage() {
     <main className="container mx-auto p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Edit Training Program</h1>
-        <p className="text-muted-foreground mt-1">
-          Modify weeks, days, and exercise prescriptions
-        </p>
+        <p className="text-muted-foreground mt-1">Modify weeks, days, and exercise prescriptions</p>
       </div>
 
       <ProgramForm

@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { exercisesApi } from '@/lib/api/exercises';
 import type { ExerciseCreate } from '@/types/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 /**
  * Fetch all exercises
@@ -28,7 +28,7 @@ export function useExercise(id: string | null) {
  */
 export function useCreateExercise() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (data: ExerciseCreate) => exercisesApi.create(data),
     onSuccess: () => {
@@ -42,7 +42,7 @@ export function useCreateExercise() {
  */
 export function useUpdateExercise() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: ExerciseCreate }) =>
       exercisesApi.update(id, data),
@@ -58,7 +58,7 @@ export function useUpdateExercise() {
  */
 export function useDeleteExercise() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (id: string) => exercisesApi.delete(id),
     onSuccess: () => {

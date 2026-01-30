@@ -6,9 +6,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { StatusBadge } from './StatusBadge';
 import { calculateDiff } from '@/lib/utils/diff';
 import type { ProgramNode, WorkoutEntry } from '@/types/api';
+import { StatusBadge } from './StatusBadge';
 
 interface ExerciseRow {
   exerciseName: string;
@@ -34,7 +34,7 @@ interface ExerciseTableProps {
 
 /**
  * Exercise table showing Plan/Actual/Diff columns
- * 
+ *
  * Displays planned exercises from program nodes and actual workout entries
  * with diff status indicators.
  */
@@ -80,9 +80,7 @@ export function ExerciseTable({ exercises }: ExerciseTableProps) {
                       {row.plan.sets}×{row.plan.reps} @ {row.plan.load}kg
                     </div>
                     {row.plan.rpe && (
-                      <div className="text-xs text-muted-foreground">
-                        RPE {row.plan.rpe}
-                      </div>
+                      <div className="text-xs text-muted-foreground">RPE {row.plan.rpe}</div>
                     )}
                   </div>
                 ) : (
@@ -96,9 +94,7 @@ export function ExerciseTable({ exercises }: ExerciseTableProps) {
                       {row.actual.sets}×{row.actual.reps} @ {row.actual.load}kg
                     </div>
                     {row.actual.rpe && (
-                      <div className="text-xs text-muted-foreground">
-                        RPE {row.actual.rpe}
-                      </div>
+                      <div className="text-xs text-muted-foreground">RPE {row.actual.rpe}</div>
                     )}
                   </div>
                 ) : (

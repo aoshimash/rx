@@ -4,12 +4,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+import type { Exercise, ProgramNodeCreate } from '@/types/api';
 import { X } from 'lucide-react';
 import { ExerciseTable } from './ExerciseTable';
-import type { Exercise, ProgramNodeCreate } from '@/types/api';
 
 interface DayAccordionProps {
   days: ProgramNodeCreate[];

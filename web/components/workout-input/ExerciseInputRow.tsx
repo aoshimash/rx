@@ -1,7 +1,7 @@
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 interface ExerciseInputRowProps {
   exerciseName: string;
@@ -24,7 +24,7 @@ interface ExerciseInputRowProps {
 
 /**
  * Single exercise input row for workout recording
- * 
+ *
  * Shows planned values as placeholders and allows editing actual values
  */
 export function ExerciseInputRow({

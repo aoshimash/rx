@@ -39,9 +39,7 @@ export default function ProgramsPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Training Programs</h1>
-          <p className="text-muted-foreground mt-1">
-            Select a program to view in Week View
-          </p>
+          <p className="text-muted-foreground mt-1">Select a program to view in Week View</p>
         </div>
         <Link href="/programs/new">
           <Button>

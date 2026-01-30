@@ -1,13 +1,13 @@
 'use client';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { ExerciseInputRow } from './ExerciseInputRow';
-import { AddExerciseButton } from './AddExerciseButton';
-import { useState, useEffect } from 'react';
+import { Label } from '@/components/ui/label';
 import type { ProgramNode, WorkoutEntryCreate } from '@/types/api';
+import { useEffect, useState } from 'react';
+import { AddExerciseButton } from './AddExerciseButton';
+import { ExerciseInputRow } from './ExerciseInputRow';
 
 interface WorkoutModalProps {
   open: boolean;
@@ -35,17 +35,12 @@ interface EntryInput {
 
 /**
  * Modal for recording workout results
- * 
+ *
  * Pre-populates planned exercises from program node
  * Allows adding unplanned exercises
  * Includes session notes field
  */
-export function WorkoutModal({
-  open,
-  onOpenChange,
-  dayNode,
-  onSave,
-}: WorkoutModalProps) {
+export function WorkoutModal({ open, onOpenChange, dayNode, onSave }: WorkoutModalProps) {
   const [entries, setEntries] = useState<EntryInput[]>([]);
   const [sessionNotes, setSessionNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -147,38 +142,18 @@ export function WorkoutModal({
               load={entry.load}
               rpe={entry.rpe}
               onSetsChange={(value) => {
-                setEntries(
-                  entries.map((e) =>
-                    e.id === entry.id ? { ...e, sets: value } : e
-                  )
-                );
+                setEntries(entries.map((e) => (e.id === entry.id ? { ...e, sets: value } : e)));
               }}
               onRepsChange={(value) => {
-                setEntries(
-                  entries.map((e) =>
-                    e.id === entry.id ? { ...e, reps: value } : e
-                  )
-                );
+                setEntries(entries.map((e) => (e.id === entry.id ? { ...e, reps: value } : e)));
               }}
               onLoadChange={(value) => {
-                setEntries(
-                  entries.map((e) =>
-                    e.id === entry.id ? { ...e, load: value } : e
-                  )
-                );
+                setEntries(entries.map((e) => (e.id === entry.id ? { ...e, load: value } : e)));
               }}
               onRpeChange={(value) => {
-                setEntries(
-                  entries.map((e) =>
-                    e.id === entry.id ? { ...e, rpe: value } : e
-                  )
-                );
+                setEntries(entries.map((e) => (e.id === entry.id ? { ...e, rpe: value } : e)));
               }}
-              onRemove={
-                !entry.program_node_id
-                  ? () => handleRemoveEntry(entry.id)
-                  : undefined
-              }
+              onRemove={!entry.program_node_id ? () => handleRemoveEntry(entry.id) : undefined}
               planValues={entry.plan}
             />
           ))}

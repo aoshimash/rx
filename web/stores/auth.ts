@@ -1,6 +1,6 @@
 /**
  * Authentication Token Store
- * 
+ *
  * Manages Bearer token persistence in localStorage for API authentication.
  * Token is requested lazily when API operations are attempted.
  */

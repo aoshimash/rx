@@ -1,15 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { authStore } from '@/stores/auth';
+import { useEffect, useState } from 'react';
 
 /**
  * Token input modal for lazy authentication
- * 
+ *
  * Triggered when API operations require authentication
  */
 export function TokenInputModal() {
@@ -56,9 +62,7 @@ export function TokenInputModal() {
               placeholder="Enter your token"
               onKeyDown={(e) => e.key === 'Enter' && handleSave()}
             />
-            <p className="text-sm text-muted-foreground">
-              You can also set this in Settings page.
-            </p>
+            <p className="text-sm text-muted-foreground">You can also set this in Settings page.</p>
           </div>
 
           <div className="flex justify-end gap-2">

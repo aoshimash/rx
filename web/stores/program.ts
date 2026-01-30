@@ -9,7 +9,7 @@ interface ProgramSelectionState {
 
 /**
  * Program selection store for current program
- * 
+ *
  * Persists the currently selected program across sessions
  */
 export const useProgramStore = create<ProgramSelectionState>()(

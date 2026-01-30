@@ -1,5 +1,5 @@
-import ky, { type KyInstance } from 'ky';
 import { authStore } from '@/stores/auth';
+import ky, { type KyInstance } from 'ky';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
 
@@ -22,7 +22,7 @@ export const api: KyInstance = ky.create({
         if (response.status === 401) {
           // Clear invalid token
           authStore.clearToken();
-          
+
           // Trigger auth modal
           if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('auth:required'));

@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ExerciseTable } from './ExerciseTable';
 import type { Workout } from '@/types/api';
+import { ExerciseTable } from './ExerciseTable';
 
 interface UnplannedWorkoutsProps {
   workouts: Workout[];
@@ -8,7 +8,7 @@ interface UnplannedWorkoutsProps {
 
 /**
  * Section showing workouts without program association
- * 
+ *
  * Displays workouts that were not linked to any program node
  */
 export function UnplannedWorkouts({ workouts }: UnplannedWorkoutsProps) {
@@ -48,9 +48,7 @@ export function UnplannedWorkouts({ workouts }: UnplannedWorkoutsProps) {
                     hour: 'numeric',
                     minute: '2-digit',
                   })}
-                  {workout.notes && (
-                    <span className="ml-2">- {workout.notes}</span>
-                  )}
+                  {workout.notes && <span className="ml-2">- {workout.notes}</span>}
                 </div>
                 <ExerciseTable exercises={exercises} />
               </div>

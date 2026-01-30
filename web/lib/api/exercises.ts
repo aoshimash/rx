@@ -1,9 +1,5 @@
+import type { Exercise, ExerciseCreate, ExerciseListResponse } from '@/types/api';
 import { api } from './client';
-import type {
-  Exercise,
-  ExerciseCreate,
-  ExerciseListResponse,
-} from '@/types/api';
 
 interface PaginationParams {
   limit?: number;

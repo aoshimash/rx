@@ -1,17 +1,17 @@
 'use client';
 
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
-import { format } from 'date-fns';
-import type { DaySchedule } from '@/lib/utils/schedule';
 import { cn } from '@/lib/utils';
-import { generateSchedule, type ScheduleOptions } from '@/lib/utils/schedule';
+import type { DaySchedule } from '@/lib/utils/schedule';
+import { type ScheduleOptions, generateSchedule } from '@/lib/utils/schedule';
 import type { Program } from '@/types/api';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+import { useState } from 'react';
 
 interface ScheduleModalProps {
   open: boolean;
@@ -22,7 +22,7 @@ interface ScheduleModalProps {
 
 /**
  * Modal for configuring schedule settings
- * 
+ *
  * Allows setting:
  * - Start date
  * - Skip weekends option
@@ -110,9 +110,7 @@ export function ScheduleModal({
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label>Avoid Consecutive Days</Label>
-                <div className="text-sm text-muted-foreground">
-                  Add rest day between workouts
-                </div>
+                <div className="text-sm text-muted-foreground">Add rest day between workouts</div>
               </div>
               <input
                 type="checkbox"

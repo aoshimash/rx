@@ -1,6 +1,6 @@
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Home, Dumbbell, Settings } from 'lucide-react';
+import { Dumbbell, Home, Settings } from 'lucide-react';
+import Link from 'next/link';
 
 /**
  * Navigation header with links to main pages

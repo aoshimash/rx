@@ -1,9 +1,5 @@
+import type { Program, ProgramCreate, ProgramListResponse } from '@/types/api';
 import { api } from './client';
-import type {
-  Program,
-  ProgramCreate,
-  ProgramListResponse,
-} from '@/types/api';
 
 interface PaginationParams {
   limit?: number;

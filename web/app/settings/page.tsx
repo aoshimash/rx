@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { authStore } from '@/stores/auth';
+import { useEffect, useState } from 'react';
 
 export default function SettingsPage() {
   const [token, setToken] = useState('');
@@ -33,9 +33,7 @@ export default function SettingsPage() {
     <main className="container mx-auto p-6 max-w-2xl">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-muted-foreground mt-1">
-          Configure your application preferences
-        </p>
+        <p className="text-muted-foreground mt-1">Configure your application preferences</p>
       </div>
 
       <Card>
@@ -71,11 +69,7 @@ export default function SettingsPage() {
             )}
           </div>
 
-          {hasToken && (
-            <div className="text-sm text-green-600">
-              ✓ Token is configured
-            </div>
-          )}
+          {hasToken && <div className="text-sm text-green-600">✓ Token is configured</div>}
         </CardContent>
       </Card>
     </main>

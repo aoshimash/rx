@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { ProgramForm } from '@/components/program-editor/ProgramForm';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useExercises } from '@/lib/hooks/useExercises';
 import { useCreateProgram } from '@/lib/hooks/usePrograms';
-import { Skeleton } from '@/components/ui/skeleton';
 import type { ProgramNodeCreate } from '@/types/api';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export default function NewProgramPage() {
   const router = useRouter();
@@ -48,9 +48,7 @@ export default function NewProgramPage() {
     <main className="container mx-auto p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Create Training Program</h1>
-        <p className="text-muted-foreground mt-1">
-          Define weeks, days, and exercise prescriptions
-        </p>
+        <p className="text-muted-foreground mt-1">Define weeks, days, and exercise prescriptions</p>
       </div>
 
       <ProgramForm

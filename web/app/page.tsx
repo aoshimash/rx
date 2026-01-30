@@ -1,7 +1,5 @@
 'use client';
 
-import { WeekView } from '@/components/week-view/WeekView';
-import { WorkoutModal } from '@/components/workout-input/WorkoutModal';
 import { ExportButton } from '@/components/export/ExportButton';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,14 +9,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { usePrograms, useProgram } from '@/lib/hooks/usePrograms';
-import { useWorkouts, useCreateWorkout } from '@/lib/hooks/useWorkouts';
-import { useProgramStore } from '@/stores/program';
 import { Skeleton } from '@/components/ui/skeleton';
+import { WeekView } from '@/components/week-view/WeekView';
+import { WorkoutModal } from '@/components/workout-input/WorkoutModal';
+import { useProgram, usePrograms } from '@/lib/hooks/usePrograms';
+import { useCreateWorkout, useWorkouts } from '@/lib/hooks/useWorkouts';
+import { useProgramStore } from '@/stores/program';
+import type { ProgramNode, WorkoutEntryCreate } from '@/types/api';
 import { Plus } from 'lucide-react';
-import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import type { WorkoutEntryCreate, ProgramNode } from '@/types/api';
+import { useMemo, useState } from 'react';
 
 export default function Home() {
   const [workoutModalOpen, setWorkoutModalOpen] = useState(false);
@@ -27,9 +27,8 @@ export default function Home() {
 
   // Fetch programs and selected program details
   const { data: programsData, isLoading: programsLoading } = usePrograms();
-  const { data: selectedProgram, isLoading: selectedProgramLoading } = useProgram(
-    selectedProgramId
-  );
+  const { data: selectedProgram, isLoading: selectedProgramLoading } =
+    useProgram(selectedProgramId);
   const { data: workoutsData, isLoading: workoutsLoading } = useWorkouts();
   const createWorkout = useCreateWorkout();
 
@@ -115,7 +114,7 @@ export default function Home() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <ExportButton workouts={workouts} program={program} />
+          <ExportButton workouts={workouts} program={program || null} />
           <Button onClick={handleOpenWorkoutModal}>
             <Plus className="h-4 w-4 mr-2" />
             Record Workout
@@ -123,7 +122,7 @@ export default function Home() {
         </div>
       </div>
 
-      <WeekView program={program} workouts={workouts} />
+      <WeekView program={program || null} workouts={workouts} />
 
       <WorkoutModal
         open={workoutModalOpen}
@@ -134,4 +133,3 @@ export default function Home() {
     </main>
   );
 }
-

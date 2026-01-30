@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
+import type { Exercise, ProgramNodeCreate } from '@/types/api';
 import { Plus } from 'lucide-react';
 import { ExerciseRow } from './ExerciseRow';
-import type { Exercise, ProgramNodeCreate } from '@/types/api';
 
 interface ExerciseTableProps {
   exercises: ProgramNodeCreate[];
@@ -33,7 +33,6 @@ export function ExerciseTable({
         <ExerciseRow
           key={idx}
           exerciseId={exercise.exercise_id}
-          exerciseName={exercise.name}
           targetSets={exercise.target_sets}
           targetReps={exercise.target_reps}
           targetRpe={exercise.target_rpe}

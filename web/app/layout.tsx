@@ -1,8 +1,8 @@
-import type { Metadata } from 'next';
-import { QueryProvider } from '@/components/providers/QueryProvider';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { TokenInputModal } from '@/components/auth/TokenInputModal';
 import { Header } from '@/components/layout/Header';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { QueryProvider } from '@/components/providers/QueryProvider';
+import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {

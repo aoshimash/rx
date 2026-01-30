@@ -1,9 +1,9 @@
 'use client';
 
-import { Component, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
+import { Component, type ReactNode } from 'react';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -16,7 +16,7 @@ interface ErrorBoundaryState {
 
 /**
  * Error boundary with user-friendly error messages and retry button
- * 
+ *
  * Catches React errors and provides recovery UI
  */
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
@@ -61,21 +61,20 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               </ul>
               {this.state.error && (
                 <details className="text-sm">
-                  <summary className="cursor-pointer font-medium">
-                    Technical details
-                  </summary>
+                  <summary className="cursor-pointer font-medium">Technical details</summary>
                   <pre className="mt-2 p-2 bg-muted rounded text-xs overflow-auto">
                     {this.state.error.message}
                   </pre>
                 </details>
               )}
               <div className="flex gap-2">
-                <Button onClick={this.handleRetry}>
-                  Retry
-                </Button>
-                <Button variant="outline" onClick={() => {
-                  window.location.href = '/settings';
-                }}>
+                <Button onClick={this.handleRetry}>Retry</Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    window.location.href = '/settings';
+                  }}
+                >
                   Check Settings
                 </Button>
               </div>

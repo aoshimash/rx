@@ -1,8 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Calendar } from 'lucide-react';
-import Link from 'next/link';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Program } from '@/types/api';
+import { Calendar, Edit } from 'lucide-react';
+import Link from 'next/link';
 
 interface ProgramCardProps {
   program: Program;
@@ -14,8 +14,7 @@ interface ProgramCardProps {
  * Program list item card
  */
 export function ProgramCard({ program, onSelect, isSelected }: ProgramCardProps) {
-  const weekCount =
-    program.root_nodes?.filter((node) => node.node_type === 'week').length || 0;
+  const weekCount = program.root_nodes?.filter((node) => node.node_type === 'week').length || 0;
   const dayCount =
     program.root_nodes?.reduce((count, week) => {
       const days = week.children?.filter((child) => child.node_type === 'day') || [];
@@ -29,9 +28,7 @@ export function ProgramCard({ program, onSelect, isSelected }: ProgramCardProps)
           <div>
             <CardTitle className="text-xl">{program.name}</CardTitle>
             {program.description && (
-              <p className="text-sm text-muted-foreground mt-1">
-                {program.description}
-              </p>
+              <p className="text-sm text-muted-foreground mt-1">{program.description}</p>
             )}
           </div>
           <Link href={`/programs/${program.id}/edit`}>

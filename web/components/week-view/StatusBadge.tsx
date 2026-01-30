@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge';
-import { getStatusIcon, getStatusVariant, type DiffStatus } from '@/lib/utils/diff';
+import { type DiffStatus, getStatusIcon, getStatusVariant } from '@/lib/utils/diff';
 
 interface StatusBadgeProps {
   status: DiffStatus;
@@ -9,7 +9,7 @@ interface StatusBadgeProps {
 
 /**
  * Status indicator badge for Plan vs Actual comparison
- * 
+ *
  * Icons:
  * - ✓ (match): Plan and actual match
  * - ≠ (diff): Plan and actual differ

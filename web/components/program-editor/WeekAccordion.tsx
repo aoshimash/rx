@@ -4,19 +4,24 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { X, Plus } from 'lucide-react';
-import { DayAccordion } from './DayAccordion';
 import type { Exercise, ProgramNodeCreate } from '@/types/api';
+import { Plus, X } from 'lucide-react';
+import { DayAccordion } from './DayAccordion';
 
 interface WeekAccordionProps {
   weeks: ProgramNodeCreate[];
   availableExercises: Exercise[];
   onWeekNameChange: (weekIndex: number, name: string) => void;
   onDayNameChange: (weekIndex: number, dayIndex: number, name: string) => void;
-  onExerciseChange: (weekIndex: number, dayIndex: number, exerciseIndex: number, exerciseId: string) => void;
+  onExerciseChange: (
+    weekIndex: number,
+    dayIndex: number,
+    exerciseIndex: number,
+    exerciseId: string
+  ) => void;
   onSetsChange: (weekIndex: number, dayIndex: number, exerciseIndex: number, value: number) => void;
   onRepsChange: (weekIndex: number, dayIndex: number, exerciseIndex: number, value: number) => void;
   onRpeChange: (weekIndex: number, dayIndex: number, exerciseIndex: number, value: number) => void;
@@ -90,12 +95,8 @@ export function WeekAccordion({
                   onRepsChange={(dayIdx, exIdx, value) =>
                     onRepsChange(weekIdx, dayIdx, exIdx, value)
                   }
-                  onRpeChange={(dayIdx, exIdx, value) =>
-                    onRpeChange(weekIdx, dayIdx, exIdx, value)
-                  }
-                  onRemoveExercise={(dayIdx, exIdx) =>
-                    onRemoveExercise(weekIdx, dayIdx, exIdx)
-                  }
+                  onRpeChange={(dayIdx, exIdx, value) => onRpeChange(weekIdx, dayIdx, exIdx, value)}
+                  onRemoveExercise={(dayIdx, exIdx) => onRemoveExercise(weekIdx, dayIdx, exIdx)}
                   onAddExercise={(dayIdx) => onAddExercise(weekIdx, dayIdx)}
                   onRemoveDay={(dayIdx) => onRemoveDay(weekIdx, dayIdx)}
                 />

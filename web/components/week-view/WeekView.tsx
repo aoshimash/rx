@@ -1,17 +1,18 @@
 'use client';
 
+import { ScheduleModal } from '@/components/schedule/ScheduleModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DayAccordion } from './DayAccordion';
-import { UnplannedWorkouts } from './UnplannedWorkouts';
-import { ScheduleModal } from '@/components/schedule/ScheduleModal';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { startOfWeek, endOfWeek, addWeeks, format } from 'date-fns';
-import { useScheduleStore } from '@/stores/schedule';
-import type { Program, Workout } from '@/types/api';
 import type { DiffStatus } from '@/lib/utils/diff';
 import { calculateDiff } from '@/lib/utils/diff';
+import type { DaySchedule } from '@/lib/utils/schedule';
+import { useScheduleStore } from '@/stores/schedule';
+import type { Program, ProgramNode, Workout } from '@/types/api';
+import { addWeeks, endOfWeek, format, startOfWeek } from 'date-fns';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { DayAccordion } from './DayAccordion';
+import { UnplannedWorkouts } from './UnplannedWorkouts';
 
 interface WeekViewProps {
   program: Program | null;
@@ -20,7 +21,7 @@ interface WeekViewProps {
 
 /**
  * Week View component with navigation and Plan/Actual/Diff display
- * 
+ *
  * Shows:
  * - Week navigation (Prev/Next)
  * - Collapsible days with exercise tables
@@ -50,15 +51,13 @@ export function WeekView({ program, workouts }: WeekViewProps) {
     if (!program) return [];
 
     // Get week nodes from program
-    const weekNodes =
-      program.root_nodes?.filter((node) => node.node_type === 'week') || [];
+    const weekNodes = program.root_nodes?.filter((node) => node.node_type === 'week') || [];
 
     // For now, show first week's days (multi-week support is future work)
     const firstWeek = weekNodes[0];
     if (!firstWeek) return [];
 
-    const dayNodes =
-      firstWeek.children?.filter((node) => node.node_type === 'day') || [];
+    const dayNodes = firstWeek.children?.filter((node) => node.node_type === 'day') || [];
 
     return dayNodes.map((dayNode, idx) => {
       // Find workout for this day (matching by program_node_id)
@@ -85,16 +84,12 @@ export function WeekView({ program, workouts }: WeekViewProps) {
     if (!program) return workouts;
 
     const programNodeIds = new Set(
-      program.root_nodes?.flatMap((week) =>
-        week.children?.flatMap((day) =>
-          day.children?.map((ex) => ex.id)
-        ) || []
+      program.root_nodes?.flatMap(
+        (week) => week.children?.flatMap((day) => day.children?.map((ex) => ex.id)) || []
       ) || []
     );
 
-    return workouts.filter(
-      (w) => !w.program_node_id || !programNodeIds.has(w.program_node_id)
-    );
+    return workouts.filter((w) => !w.program_node_id || !programNodeIds.has(w.program_node_id));
   }, [program, workouts]);
 
   const handlePrevWeek = () => setWeekOffset((prev) => prev - 1);
@@ -124,11 +119,7 @@ export function WeekView({ program, workouts }: WeekViewProps) {
           <div className="flex items-center justify-between">
             <CardTitle>Week View</CardTitle>
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setScheduleModalOpen(true)}
-              >
+              <Button variant="outline" size="sm" onClick={() => setScheduleModalOpen(true)}>
                 <CalendarIcon className="h-4 w-4 mr-2" />
                 Schedule
               </Button>
@@ -148,9 +139,7 @@ export function WeekView({ program, workouts }: WeekViewProps) {
           {days.length > 0 ? (
             <DayAccordion days={days} />
           ) : (
-            <div className="text-center text-muted-foreground py-4">
-              No days found in program
-            </div>
+            <div className="text-center text-muted-foreground py-4">No days found in program</div>
           )}
         </CardContent>
       </Card>
@@ -173,8 +162,7 @@ export function WeekView({ program, workouts }: WeekViewProps) {
 function calculateDayStatus(dayNode: ProgramNode, workout?: Workout): DiffStatus {
   if (!workout) return 'pending';
 
-  const exerciseNodes =
-    dayNode.children?.filter((child) => child.node_type === 'exercise') || [];
+  const exerciseNodes = dayNode.children?.filter((child) => child.node_type === 'exercise') || [];
 
   if (exerciseNodes.length === 0) {
     return workout.entries.length > 0 ? 'unplanned' : 'pending';

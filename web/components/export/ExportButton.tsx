@@ -7,9 +7,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { exportProgramToCSV, exportWorkoutsToCSV } from '@/lib/utils/export';
+import type { Program, Workout } from '@/types/api';
 import { Download } from 'lucide-react';
-import { exportWorkoutsToCSV, exportProgramToCSV } from '@/lib/utils/export';
-import type { Workout, Program } from '@/types/api';
 
 interface ExportButtonProps {
   workouts: Workout[];

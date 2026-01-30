@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { workoutsApi } from '@/lib/api/workouts';
 import type { WorkoutCreate } from '@/types/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface WorkoutFilters {
   timestamp_from?: string;
@@ -33,7 +33,7 @@ export function useWorkout(id: string | null) {
  */
 export function useCreateWorkout() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (data: WorkoutCreate) => workoutsApi.create(data),
     onSuccess: () => {
@@ -47,10 +47,9 @@ export function useCreateWorkout() {
  */
 export function useUpdateWorkout() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: WorkoutCreate }) =>
-      workoutsApi.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: WorkoutCreate }) => workoutsApi.update(id, data),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['workouts'] });
       queryClient.invalidateQueries({ queryKey: ['workouts', variables.id] });
@@ -63,7 +62,7 @@ export function useUpdateWorkout() {
  */
 export function useDeleteWorkout() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (id: string) => workoutsApi.delete(id),
     onSuccess: () => {
