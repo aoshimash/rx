@@ -41,19 +41,19 @@ This feature uses the OPTel monorepo structure:
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T008 Create TypeScript API types aligned with OpenAPI spec in web/types/api.ts
-- [ ] T009 [P] Create Zod validation schemas for forms in web/schemas/forms.ts
-- [ ] T010 [P] Create auth token store with localStorage in web/stores/auth.ts
-- [ ] T011 Create API client base with ky and auth headers in web/lib/api/client.ts
-- [ ] T012 [P] Create exercises API functions in web/lib/api/exercises.ts
-- [ ] T013 [P] Create programs API functions in web/lib/api/programs.ts
-- [ ] T014 [P] Create workouts API functions in web/lib/api/workouts.ts
-- [ ] T015 Create TanStack Query provider component in web/components/providers/QueryProvider.tsx
-- [ ] T016 Update root layout with QueryProvider in web/app/layout.tsx
-- [ ] T017 [P] Create useExercises hook with TanStack Query in web/lib/hooks/useExercises.ts
-- [ ] T018 [P] Create usePrograms hook with TanStack Query in web/lib/hooks/usePrograms.ts
-- [ ] T019 [P] Create useWorkouts hook with TanStack Query in web/lib/hooks/useWorkouts.ts
-- [ ] T020 Create diff calculation utility in web/lib/utils/diff.ts
+- [X] T008 Create TypeScript API types aligned with OpenAPI spec in web/types/api.ts
+- [X] T009 [P] Create Zod validation schemas for forms in web/schemas/forms.ts
+- [X] T010 [P] Create auth token store with localStorage in web/stores/auth.ts
+- [X] T011 Create API client base with ky and auth headers in web/lib/api/client.ts
+- [X] T012 [P] Create exercises API functions in web/lib/api/exercises.ts
+- [X] T013 [P] Create programs API functions in web/lib/api/programs.ts
+- [X] T014 [P] Create workouts API functions in web/lib/api/workouts.ts
+- [X] T015 Create TanStack Query provider component in web/components/providers/QueryProvider.tsx
+- [X] T016 Update root layout with QueryProvider in web/app/layout.tsx
+- [X] T017 [P] Create useExercises hook with TanStack Query in web/lib/hooks/useExercises.ts
+- [X] T018 [P] Create usePrograms hook with TanStack Query in web/lib/hooks/usePrograms.ts
+- [X] T019 [P] Create useWorkouts hook with TanStack Query in web/lib/hooks/useWorkouts.ts
+- [X] T020 Create diff calculation utility in web/lib/utils/diff.ts
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
