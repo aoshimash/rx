@@ -73,8 +73,8 @@ function buildExerciseRows(day: DayData) {
     exerciseName: string;
     plan: { sets?: number; reps?: number; load?: number; rpe?: number } | null;
     actual: { sets: number; reps: number; load: number; rpe: number } | null;
-    entry?: any;
-    node?: any;
+    entry?: WorkoutEntry;
+    node?: ProgramNode;
   }> = [];
 
   // Get planned exercises from program node

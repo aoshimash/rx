@@ -7,7 +7,6 @@ import type { Exercise } from '@/types/api';
 
 interface ExerciseRowProps {
   exerciseId?: string;
-  exerciseName: string;
   targetSets?: number;
   targetReps?: number;
   targetRpe?: number;
@@ -24,7 +23,6 @@ interface ExerciseRowProps {
  */
 export function ExerciseRow({
   exerciseId,
-  exerciseName,
   targetSets,
   targetReps,
   targetRpe,

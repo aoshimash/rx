@@ -8,6 +8,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
+import type { DaySchedule } from '@/lib/utils/schedule';
 import { cn } from '@/lib/utils';
 import { generateSchedule, type ScheduleOptions } from '@/lib/utils/schedule';
 import type { Program } from '@/types/api';
@@ -16,7 +17,7 @@ interface ScheduleModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   program: Program;
-  onScheduleGenerated: (schedule: any[]) => void;
+  onScheduleGenerated: (schedule: DaySchedule[]) => void;
 }
 
 /**

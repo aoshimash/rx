@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { QueryProvider } from '@/components/providers/QueryProvider';
 import { TokenInputModal } from '@/components/auth/TokenInputModal';
 import { Header } from '@/components/layout/Header';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -17,11 +18,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <QueryProvider>
-          <Header />
-          {children}
-          <TokenInputModal />
-        </QueryProvider>
+        <ErrorBoundary>
+          <QueryProvider>
+            <Header />
+            {children}
+            <TokenInputModal />
+          </QueryProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

@@ -97,7 +97,7 @@ export function WorkoutModal({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const workoutEntries: WorkoutEntryCreate[] = entries.map((entry, idx) => ({
+      const workoutEntries: WorkoutEntryCreate[] = entries.map((entry) => ({
         exercise_id: entry.exercise_id,
         display_name: entry.exercise_name,
         entry_type: 'main',

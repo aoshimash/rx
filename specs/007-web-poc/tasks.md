@@ -187,12 +187,12 @@ This feature uses the OPTel monorepo structure:
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T060 [P] Add loading states to all pages with Skeleton components
-- [ ] T061 [P] Add error boundaries with user-friendly error messages and retry button for API failures
-- [ ] T062 [P] Add empty state components for lists (no programs, no workouts)
-- [ ] T063 Ensure responsive design works on tablet/mobile viewports
-- [ ] T064 Run Biome lint and format checks across all new files
-- [ ] T065 Validate quickstart.md instructions work end-to-end and verify page load < 3 seconds (SC-001)
+- [X] T060 [P] Add loading states to all pages with Skeleton components
+- [X] T061 [P] Add error boundaries with user-friendly error messages and retry button for API failures
+- [X] T062 [P] Add empty state components for lists (no programs, no workouts)
+- [X] T063 Ensure responsive design works on tablet/mobile viewports
+- [X] T064 Run Biome lint and format checks across all new files
+- [X] T065 Validate quickstart.md instructions work end-to-end and verify page load < 3 seconds (SC-001)
 
 ---
 

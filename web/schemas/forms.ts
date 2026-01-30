@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { EntryType, ProgramNodeCreate } from '@/types/api';
+import type { ProgramNodeCreate } from '@/types/api';
 
 // ============================================================================
 // Exercise Forms

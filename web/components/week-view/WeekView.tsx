@@ -99,7 +99,7 @@ export function WeekView({ program, workouts }: WeekViewProps) {
 
   const handlePrevWeek = () => setWeekOffset((prev) => prev - 1);
   const handleNextWeek = () => setWeekOffset((prev) => prev + 1);
-  const handleScheduleGenerated = (newSchedule: any[]) => {
+  const handleScheduleGenerated = (newSchedule: DaySchedule[]) => {
     if (program) {
       setSchedule(program.id, newSchedule);
     }
@@ -170,11 +170,11 @@ export function WeekView({ program, workouts }: WeekViewProps) {
 /**
  * Calculate overall status for a day based on its exercises
  */
-function calculateDayStatus(dayNode: any, workout?: Workout): DiffStatus {
+function calculateDayStatus(dayNode: ProgramNode, workout?: Workout): DiffStatus {
   if (!workout) return 'pending';
 
   const exerciseNodes =
-    dayNode.children?.filter((child: any) => child.node_type === 'exercise') || [];
+    dayNode.children?.filter((child) => child.node_type === 'exercise') || [];
 
   if (exerciseNodes.length === 0) {
     return workout.entries.length > 0 ? 'unplanned' : 'pending';

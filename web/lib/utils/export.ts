@@ -57,7 +57,7 @@ function downloadCSV(filename: string, csv: string): void {
 export function exportWorkoutsToCSV(
   workouts: Workout[],
   program?: Program,
-  options: { scope: 'all' | 'current-week' } = { scope: 'all' }
+  _options: { scope: 'all' | 'current-week' } = { scope: 'all' }
 ): void {
   const headers = [
     'Date',
