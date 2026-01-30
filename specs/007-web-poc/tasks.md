@@ -175,11 +175,11 @@ This feature uses the OPTel monorepo structure:
 
 **Purpose**: Token management UI and settings page
 
-- [ ] T055 [P] Create TokenInputModal component for lazy auth prompt in web/components/auth/TokenInputModal.tsx
-- [ ] T056 Create Settings page with token input form in web/app/settings/page.tsx
-- [ ] T057 Integrate TokenInputModal with auth:required event in web/app/layout.tsx
-- [ ] T058 Add navigation header with links to Programs, Settings in web/components/layout/Header.tsx
-- [ ] T059 Update root layout with Header component in web/app/layout.tsx
+- [X] T055 [P] Create TokenInputModal component for lazy auth prompt in web/components/auth/TokenInputModal.tsx
+- [X] T056 Create Settings page with token input form in web/app/settings/page.tsx
+- [X] T057 Integrate TokenInputModal with auth:required event in web/app/layout.tsx
+- [X] T058 Add navigation header with links to Programs, Settings in web/components/layout/Header.tsx
+- [X] T059 Update root layout with Header component in web/app/layout.tsx
 
 ---
 
