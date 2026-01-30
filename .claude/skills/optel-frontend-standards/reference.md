@@ -652,21 +652,6 @@ pnpm add -D @biomejs/biome
 }
 ```
 
-### Editor Integration
-
-For VS Code, install the [Biome extension](https://marketplace.visualstudio.com/items?itemName=biomejs.biome) and add to `.vscode/settings.json`:
-
-```json
-{
-  "editor.defaultFormatter": "biomejs.biome",
-  "editor.formatOnSave": true,
-  "editor.codeActionsOnSave": {
-    "quickfix.biome": "explicit",
-    "source.organizeImports.biome": "explicit"
-  }
-}
-```
-
 ### Pre-commit Check
 
 Run before committing:

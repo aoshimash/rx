@@ -20,3 +20,12 @@ packages:
 
   # Task runner (Makefile alternative)
   - name: go-task/task@v3.43.3
+
+  # Node.js (Active LTS)
+  - name: nodejs/node@v24.13.0
+
+  # Package manager
+  - name: pnpm/pnpm@v9.15.4
+
+  # Linter/Formatter for web frontend
+  - name: biomejs/biome@cli/v1.9.4
