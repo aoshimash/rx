@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/aoshimash/optel-workout/api/internal/config"
-	"github.com/cenkalti/backoff/v4"
+	"github.com/cenkalti/backoff/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -25,17 +25,13 @@ type DB struct {
 func NewDB(ctx context.Context, cfg config.DatabaseConfig) (*DB, error) {
 	connStr := buildConnectionString(cfg)
 
-	var pool *pgxpool.Pool
-	var err error
-
 	// Exponential backoff retry logic
 	backoffConfig := backoff.NewExponentialBackOff()
 	backoffConfig.InitialInterval = 1 * time.Second
 	backoffConfig.MaxInterval = 30 * time.Second
-	backoffConfig.MaxElapsedTime = 2 * time.Minute
 
 	retryCount := 0
-	operation := func() error {
+	operation := func() (*pgxpool.Pool, error) {
 		retryCount++
 		slog.Info("Attempting database connection",
 			"attempt", retryCount,
@@ -44,7 +40,7 @@ func NewDB(ctx context.Context, cfg config.DatabaseConfig) (*DB, error) {
 
 		poolConfig, err := pgxpool.ParseConfig(connStr)
 		if err != nil {
-			return fmt.Errorf("failed to parse connection string: %w", err)
+			return nil, fmt.Errorf("failed to parse connection string: %w", err)
 		}
 
 		// Configure connection pool
@@ -54,13 +50,13 @@ func NewDB(ctx context.Context, cfg config.DatabaseConfig) (*DB, error) {
 		poolConfig.MaxConnIdleTime = 30 * time.Minute
 		poolConfig.HealthCheckPeriod = 1 * time.Minute
 
-		pool, err = pgxpool.NewWithConfig(ctx, poolConfig)
+		pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 		if err != nil {
 			slog.Warn("Database connection failed",
 				"attempt", retryCount,
 				"error", err,
 			)
-			return fmt.Errorf("failed to create connection pool: %w", err)
+			return nil, fmt.Errorf("failed to create connection pool: %w", err)
 		}
 
 		// Test connection
@@ -70,7 +66,7 @@ func NewDB(ctx context.Context, cfg config.DatabaseConfig) (*DB, error) {
 				"attempt", retryCount,
 				"error", err,
 			)
-			return fmt.Errorf("failed to ping database: %w", err)
+			return nil, fmt.Errorf("failed to ping database: %w", err)
 		}
 
 		slog.Info("Database connection established",
@@ -78,11 +74,14 @@ func NewDB(ctx context.Context, cfg config.DatabaseConfig) (*DB, error) {
 			"max_conns", cfg.MaxConns,
 			"min_conns", cfg.MinConns,
 		)
-		return nil
+		return pool, nil
 	}
 
 	// Retry with exponential backoff
-	err = backoff.Retry(operation, backoffConfig)
+	pool, err := backoff.Retry(ctx, operation,
+		backoff.WithBackOff(backoffConfig),
+		backoff.WithMaxElapsedTime(2*time.Minute),
+	)
 	if err != nil {
 		if retryCount >= maxRetries {
 			return nil, fmt.Errorf("failed to connect after %d attempts: %w", maxRetries, err)
