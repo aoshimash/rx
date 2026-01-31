@@ -22,7 +22,7 @@ export type ExerciseFormData = z.infer<typeof exerciseCreateSchema>;
 export const workoutEntrySchema = z.object({
   exercise_id: z.string().uuid('Invalid exercise ID'),
   display_name: z.string().max(200, 'Display name too long').optional(),
-  entry_type: z.enum(['top', 'main', 'backoff', 'accessory'] as const),
+  entry_type: z.string().max(50, 'Entry type too long').nullable().optional(),
   sets: z.number().int().min(1, 'Must be at least 1'),
   reps: z.number().int().min(1, 'Must be at least 1'),
   load_kg: z.number().min(0, 'Must be non-negative'),

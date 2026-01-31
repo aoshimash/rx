@@ -59,21 +59,22 @@ func ValidateTimestamp(t time.Time) error {
 	return nil
 }
 
-// ValidateEntryType checks if entry_type is one of the valid values.
-func ValidateEntryType(entryType string) error {
-	validTypes := map[string]bool{
-		"top":       true,
-		"main":      true,
-		"backoff":   true,
-		"accessory": true,
+// ValidateEntryType checks if entry_type is valid (nullable, max 50 chars).
+// User-defined values are allowed.
+func ValidateEntryType(entryType *string) error {
+	// entry_type is nullable, so nil is valid
+	if entryType == nil {
+		return nil
 	}
-	if !validTypes[entryType] {
+
+	// Validate max length (50 characters)
+	if len(*entryType) > 50 {
 		return &DomainError{
 			Code:    ErrCodeInvalidEntryType,
-			Message: "Entry type must be one of: top, main, backoff, accessory",
+			Message: "Entry type must be at most 50 characters",
 			Details: map[string]interface{}{
-				"value":      entryType,
-				"validTypes": []string{"top", "main", "backoff", "accessory"},
+				"value":     *entryType,
+				"maxLength": 50,
 			},
 		}
 	}
@@ -151,12 +152,7 @@ func ValidateWorkoutEntry(e *WorkoutEntry) error {
 		}
 	}
 
-	// Validate required fields
-	if err := ValidateRequiredString("entry_type", e.EntryType); err != nil {
-		return err
-	}
-
-	// Validate entry_type enum
+	// Validate entry_type (nullable, max 50 chars)
 	if err := ValidateEntryType(e.EntryType); err != nil {
 		return err
 	}

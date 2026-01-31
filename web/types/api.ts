@@ -123,7 +123,11 @@ export interface WorkoutCreate {
 // WorkoutEntry
 // ============================================================================
 
-export type EntryType = 'top' | 'main' | 'backoff' | 'accessory';
+/**
+ * Entry type for workout entries.
+ * User-defined values are allowed, common values include: top, main, backoff, accessory.
+ */
+export type EntryType = string | null;
 
 export interface WorkoutEntry {
   id: string;
@@ -131,7 +135,7 @@ export interface WorkoutEntry {
   order: number;
   exercise_id: string;
   display_name?: string;
-  entry_type: EntryType;
+  entry_type?: EntryType;
   sets: number;
   reps: number;
   load_kg: number;
@@ -150,7 +154,7 @@ export interface WorkoutEntry {
 export interface WorkoutEntryCreate {
   exercise_id: string;
   display_name?: string;
-  entry_type: EntryType;
+  entry_type?: EntryType;
   sets: number;
   reps: number;
   load_kg: number;

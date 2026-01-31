@@ -5,7 +5,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import type { DiffStatus } from '@/lib/utils/diff';
-import type { ProgramNode, Workout, WorkoutEntry } from '@/types/api';
+import type { EntryType, ProgramNode, Workout, WorkoutEntry } from '@/types/api';
 import { ExerciseTable } from './ExerciseTable';
 import { StatusBadge } from './StatusBadge';
 
@@ -71,6 +71,7 @@ export function DayAccordion({ days }: DayAccordionProps) {
 function buildExerciseRows(day: DayData) {
   const rows: Array<{
     exerciseName: string;
+    entryType?: EntryType;
     plan: { sets?: number; reps?: number; load?: number; rpe?: number } | null;
     actual: { sets: number; reps: number; load: number; rpe: number } | null;
     entry?: WorkoutEntry;
@@ -93,6 +94,7 @@ function buildExerciseRows(day: DayData) {
 
     rows.push({
       exerciseName: node.name,
+      entryType: actual?.entry_type,
       plan: {
         sets: node.target_sets,
         reps: node.target_reps,
@@ -121,6 +123,7 @@ function buildExerciseRows(day: DayData) {
   for (const entry of actualMap.values()) {
     rows.push({
       exerciseName: entry.display_name || 'Unknown Exercise',
+      entryType: entry.entry_type,
       plan: null,
       actual: {
         sets: entry.sets,
