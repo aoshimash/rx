@@ -14,7 +14,11 @@ interface WorkoutModalProps {
   onOpenChange: (open: boolean) => void;
   dayNode?: ProgramNode;
   programContext?: string[];
-  onSave: (entries: WorkoutEntryCreate[], notes: string, programContext?: string[]) => Promise<void>;
+  onSave: (
+    entries: WorkoutEntryCreate[],
+    notes: string,
+    programContext?: string[]
+  ) => Promise<void>;
 }
 
 interface EntryInput {
