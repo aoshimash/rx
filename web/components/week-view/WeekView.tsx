@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { DiffStatus } from '@/lib/utils/diff';
 import { calculateDiff } from '@/lib/utils/diff';
+import { generateProgramContext } from '@/lib/utils/programContext';
 import type { DaySchedule } from '@/lib/utils/schedule';
 import { useScheduleStore } from '@/stores/schedule';
 import type { Program, ProgramNode, Workout } from '@/types/api';
@@ -69,12 +70,17 @@ export function WeekView({ program, workouts }: WeekViewProps) {
       // Calculate overall day status
       const status = calculateDayStatus(dayNode, workout);
 
+      // Get program context from workout or generate from program structure
+      const programContext =
+        workout?.program_context || generateProgramContext(dayNode.id, program);
+
       return {
         dayName: dayNode.name,
         date: scheduledDate,
         programNode: dayNode,
         workout,
         status,
+        programContext,
       };
     });
   }, [program, workouts, schedule]);

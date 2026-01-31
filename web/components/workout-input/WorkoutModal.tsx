@@ -13,7 +13,8 @@ interface WorkoutModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   dayNode?: ProgramNode;
-  onSave: (entries: WorkoutEntryCreate[], notes: string) => Promise<void>;
+  programContext?: string[];
+  onSave: (entries: WorkoutEntryCreate[], notes: string, programContext?: string[]) => Promise<void>;
 }
 
 interface EntryInput {
@@ -41,7 +42,13 @@ interface EntryInput {
  * Allows adding unplanned exercises
  * Includes session notes field
  */
-export function WorkoutModal({ open, onOpenChange, dayNode, onSave }: WorkoutModalProps) {
+export function WorkoutModal({
+  open,
+  onOpenChange,
+  dayNode,
+  programContext,
+  onSave,
+}: WorkoutModalProps) {
   const [entries, setEntries] = useState<EntryInput[]>([]);
   const [sessionNotes, setSessionNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -114,7 +121,7 @@ export function WorkoutModal({ open, onOpenChange, dayNode, onSave }: WorkoutMod
           : undefined,
       }));
 
-      await onSave(workoutEntries, sessionNotes);
+      await onSave(workoutEntries, sessionNotes, programContext);
       onOpenChange(false);
       setEntries([]);
       setSessionNotes('');
@@ -133,6 +140,9 @@ export function WorkoutModal({ open, onOpenChange, dayNode, onSave }: WorkoutMod
             Record Workout
             {dayNode && <span className="ml-2 text-muted-foreground">- {dayNode.name}</span>}
           </DialogTitle>
+          {programContext && programContext.length > 0 && (
+            <p className="text-sm text-muted-foreground">{programContext.join(' > ')}</p>
+          )}
         </DialogHeader>
 
         <div className="space-y-4">
