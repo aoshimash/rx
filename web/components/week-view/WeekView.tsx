@@ -90,8 +90,14 @@ export function WeekView({ program, workouts }: WeekViewProps) {
     if (!program) return workouts;
 
     // Collect day node IDs (workouts are linked to day nodes, not exercise nodes)
+    // Filter by node_type to match the days logic above
     const dayNodeIds = new Set(
-      program.root_nodes?.flatMap((week) => week.children?.map((day) => day.id) || []) || []
+      program.root_nodes
+        ?.filter((node) => node.node_type === 'week')
+        .flatMap(
+          (week) =>
+            week.children?.filter((node) => node.node_type === 'day').map((day) => day.id) || []
+        ) || []
     );
 
     return workouts.filter((w) => !w.program_node_id || !dayNodeIds.has(w.program_node_id));
