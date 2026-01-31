@@ -14,6 +14,7 @@ import { WeekView } from '@/components/week-view/WeekView';
 import { WorkoutModal } from '@/components/workout-input/WorkoutModal';
 import { useProgram, usePrograms } from '@/lib/hooks/usePrograms';
 import { useCreateWorkout, useWorkouts } from '@/lib/hooks/useWorkouts';
+import { generateProgramContext } from '@/lib/utils/programContext';
 import { useProgramStore } from '@/stores/program';
 import type { ProgramNode, WorkoutEntryCreate } from '@/types/api';
 import { Plus } from 'lucide-react';
@@ -44,12 +45,23 @@ export default function Home() {
     return firstWeek?.children?.find((n) => n.node_type === 'day');
   }, [program]);
 
-  const handleSaveWorkout = async (entries: WorkoutEntryCreate[], notes: string) => {
+  // Generate program context for the selected day node
+  const selectedProgramContext = useMemo(() => {
+    if (!selectedDayNode || !program) return undefined;
+    return generateProgramContext(selectedDayNode.id, program);
+  }, [selectedDayNode, program]);
+
+  const handleSaveWorkout = async (
+    entries: WorkoutEntryCreate[],
+    notes: string,
+    programContext?: string[]
+  ) => {
     await createWorkout.mutateAsync({
       timestamp: new Date().toISOString(),
       notes,
       entries,
       program_node_id: selectedDayNode?.id,
+      program_context: programContext,
     });
   };
 
@@ -128,6 +140,7 @@ export default function Home() {
         open={workoutModalOpen}
         onOpenChange={setWorkoutModalOpen}
         dayNode={selectedDayNode}
+        programContext={selectedProgramContext}
         onSave={handleSaveWorkout}
       />
     </main>

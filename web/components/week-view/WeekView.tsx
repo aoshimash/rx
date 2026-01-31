@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { DiffStatus } from '@/lib/utils/diff';
 import { calculateDiff } from '@/lib/utils/diff';
+import { generateProgramContext } from '@/lib/utils/programContext';
 import type { DaySchedule } from '@/lib/utils/schedule';
 import { useScheduleStore } from '@/stores/schedule';
 import type { Program, ProgramNode, Workout } from '@/types/api';
@@ -69,12 +70,17 @@ export function WeekView({ program, workouts }: WeekViewProps) {
       // Calculate overall day status
       const status = calculateDayStatus(dayNode, workout);
 
+      // Get program context from workout or generate from program structure
+      const programContext =
+        workout?.program_context || generateProgramContext(dayNode.id, program);
+
       return {
         dayName: dayNode.name,
         date: scheduledDate,
         programNode: dayNode,
         workout,
         status,
+        programContext,
       };
     });
   }, [program, workouts, schedule]);
@@ -83,13 +89,18 @@ export function WeekView({ program, workouts }: WeekViewProps) {
   const unplannedWorkouts = useMemo(() => {
     if (!program) return workouts;
 
-    const programNodeIds = new Set(
-      program.root_nodes?.flatMap(
-        (week) => week.children?.flatMap((day) => day.children?.map((ex) => ex.id)) || []
-      ) || []
+    // Collect day node IDs (workouts are linked to day nodes, not exercise nodes)
+    // Filter by node_type to match the days logic above
+    const dayNodeIds = new Set(
+      program.root_nodes
+        ?.filter((node) => node.node_type === 'week')
+        .flatMap(
+          (week) =>
+            week.children?.filter((node) => node.node_type === 'day').map((day) => day.id) || []
+        ) || []
     );
 
-    return workouts.filter((w) => !w.program_node_id || !programNodeIds.has(w.program_node_id));
+    return workouts.filter((w) => !w.program_node_id || !dayNodeIds.has(w.program_node_id));
   }, [program, workouts]);
 
   const handlePrevWeek = () => setWeekOffset((prev) => prev - 1);

@@ -5,6 +5,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import type { DiffStatus } from '@/lib/utils/diff';
+import { formatProgramContext } from '@/lib/utils/programContext';
 import type { EntryType, ProgramNode, Workout, WorkoutEntry } from '@/types/api';
 import { ExerciseTable } from './ExerciseTable';
 import { StatusBadge } from './StatusBadge';
@@ -15,6 +16,7 @@ interface DayData {
   programNode?: ProgramNode;
   workout?: Workout;
   status: DiffStatus;
+  programContext?: string[];
 }
 
 interface DayAccordionProps {
@@ -39,14 +41,21 @@ export function DayAccordion({ days }: DayAccordionProps) {
           <AccordionItem key={idx} value={`day-${idx}`}>
             <AccordionTrigger className="hover:no-underline">
               <div className="flex items-center justify-between w-full pr-4">
-                <div className="flex items-center gap-3">
-                  <span className="font-semibold">{day.dayName}</span>
-                  {day.date && (
-                    <span className="text-sm text-muted-foreground">
-                      {new Date(day.date).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                      })}
+                <div className="flex flex-col items-start gap-1">
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold">{day.dayName}</span>
+                    {day.date && (
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(day.date).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </span>
+                    )}
+                  </div>
+                  {day.programContext && day.programContext.length > 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      {formatProgramContext(day.programContext)}
                     </span>
                   )}
                 </div>
