@@ -89,13 +89,12 @@ export function WeekView({ program, workouts }: WeekViewProps) {
   const unplannedWorkouts = useMemo(() => {
     if (!program) return workouts;
 
-    const programNodeIds = new Set(
-      program.root_nodes?.flatMap(
-        (week) => week.children?.flatMap((day) => day.children?.map((ex) => ex.id)) || []
-      ) || []
+    // Collect day node IDs (workouts are linked to day nodes, not exercise nodes)
+    const dayNodeIds = new Set(
+      program.root_nodes?.flatMap((week) => week.children?.map((day) => day.id) || []) || []
     );
 
-    return workouts.filter((w) => !w.program_node_id || !programNodeIds.has(w.program_node_id));
+    return workouts.filter((w) => !w.program_node_id || !dayNodeIds.has(w.program_node_id));
   }, [program, workouts]);
 
   const handlePrevWeek = () => setWeekOffset((prev) => prev - 1);
