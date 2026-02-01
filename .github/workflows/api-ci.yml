@@ -81,9 +81,67 @@ jobs:
             exit 1
           fi
 
-  # Job 2: Tests (runs in parallel with lint)
-  test:
-    name: Test
+  # Job 2: Unit tests with coverage (runs in parallel with lint and integration tests)
+  test-unit:
+    name: Unit Test
+    runs-on: ubuntu-24.04
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+
+      - name: Cache Go modules
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Cache aqua tools
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5
+        with:
+          path: ~/.local/share/aquaproj-aqua
+          key: ${{ runner.os }}-aqua-v2.45.0-${{ hashFiles('aqua.yaml', '.github/workflows/api-ci.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-aqua-v2.45.0-
+            ${{ runner.os }}-aqua-
+
+      - name: Setup aqua
+        uses: aquaproj/aqua-installer@11dd79b4e498d471a9385aa9fb7f62bb5f52a73c # v4.0.4
+        with:
+          aqua_version: v2.45.0
+
+      - name: Install tools via aqua
+        run: |
+          if [ ! -f aqua.yaml ]; then
+            echo "Error: aqua.yaml not found"
+            exit 1
+          fi
+          aqua install
+
+      - name: Add aqua bin to PATH
+        run: echo "$HOME/.local/share/aquaproj-aqua/bin" >> $GITHUB_PATH
+
+      - name: Download dependencies
+        working-directory: api
+        run: task deps
+
+      - name: Test with coverage
+        working-directory: api
+        run: task test-coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
+        with:
+          files: ./api/coverage.out
+          flags: unittests
+          name: codecov-api
+          fail_ci_if_error: false
+
+  # Job 3: Integration tests (runs in parallel with lint and unit tests)
+  test-integration:
+    name: Integration Test
     runs-on: ubuntu-24.04
     
     steps:
@@ -148,10 +206,6 @@ jobs:
         working-directory: api
         run: task deps
 
-      - name: Test with coverage
-        working-directory: api
-        run: task test-coverage
-
       - name: Run integration tests
         working-directory: api
         env:
@@ -159,11 +213,3 @@ jobs:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
         run: task test-integration
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
-        with:
-          files: ./api/coverage.out
-          flags: unittests
-          name: codecov-api
-          fail_ci_if_error: false
