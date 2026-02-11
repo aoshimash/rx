@@ -89,7 +89,7 @@ importers:
         version: 4.1.18
       '@types/node':
         specifier: ^24.0.0
-        version: 24.10.9
+        version: 24.10.13
       '@types/react':
         specifier: ^19.0.8
         version: 19.2.10
@@ -885,8 +885,8 @@ packages:
     peerDependencies:
       react: ^18 || ^19
 
-  '@types/node@24.10.9':
-    resolution: {integrity: sha512-ne4A0IpG3+2ETuREInjPNhUGis1SFjv1d5asp8MzEAGtOZeTeHVDOYqOgqfhvseqg/iXty2hjBf1zAOb7RNiNw==}
+  '@types/node@24.10.13':
+    resolution: {integrity: sha512-oH72nZRfDv9lADUBSo104Aq7gPHpQZc4BTx38r9xf9pg5LfP6EzSyH2n7qFmmxRQXh7YlUXODcYsg6PuTDSxGg==}
 
   '@types/react-dom@19.2.3':
     resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
@@ -1891,7 +1891,7 @@ snapshots:
       '@tanstack/query-core': 5.90.20
       react: 19.2.4
 
-  '@types/node@24.10.9':
+  '@types/node@24.10.13':
     dependencies:
       undici-types: 7.16.0
 
