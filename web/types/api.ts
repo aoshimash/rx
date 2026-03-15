@@ -36,7 +36,7 @@ export interface Program {
   id: string;
   name: string;
   description?: string;
-  root_nodes?: ProgramNode[];
+  entries?: ProgramEntry[];
   created_at: string;
   updated_at: string;
 }
@@ -44,21 +44,19 @@ export interface Program {
 export interface ProgramCreate {
   name: string;
   description?: string;
-  root_nodes?: ProgramNodeCreate[];
+  entries?: ProgramEntryCreate[];
 }
 
 // ============================================================================
-// ProgramNode
+// ProgramEntry
 // ============================================================================
 
-export interface ProgramNode {
+export interface ProgramEntry {
   id: string;
   program_id: string;
-  parent_id?: string;
   name: string;
-  node_type: string;
   order: number;
-  children?: ProgramNode[];
+  metadata?: Record<string, unknown>;
   exercise_id?: string;
   target_sets?: number;
   target_reps?: number;
@@ -69,11 +67,10 @@ export interface ProgramNode {
   notes?: string;
 }
 
-export interface ProgramNodeCreate {
+export interface ProgramEntryCreate {
   name: string;
-  node_type: string;
   order: number;
-  children?: ProgramNodeCreate[];
+  metadata?: Record<string, unknown>;
   exercise_id?: string;
   target_sets?: number;
   target_reps?: number;

@@ -32,22 +32,19 @@ func TestProgramRepository_Create(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "create program with nodes",
+			name: "create program with entries",
 			program: &domain.Program{
-				Name:        "Program with Nodes",
+				Name:        "Program with Entries",
 				Description: stringPtr("Test description"),
-				RootNodes: []domain.ProgramNode{
+				Entries: []domain.ProgramEntry{
 					{
-						Name:     "Day 1",
-						NodeType: "day",
+						Name:     "Squat",
 						Order:    0,
-						Children: []domain.ProgramNode{
-							{
-								Name:     "Exercise 1",
-								NodeType: "exercise",
-								Order:    0,
-							},
-						},
+						Metadata: []byte(`{"week": "Week 1", "day": "Day 1"}`),
+					},
+					{
+						Name:  "Bench Press",
+						Order: 1,
 					},
 				},
 			},
@@ -90,11 +87,11 @@ func TestProgramRepository_GetByID(t *testing.T) {
 	program := &domain.Program{
 		Name:        "Test Program",
 		Description: stringPtr("Test description"),
-		RootNodes: []domain.ProgramNode{
+		Entries: []domain.ProgramEntry{
 			{
-				Name:     "Day 1",
-				NodeType: "day",
+				Name:     "Squat",
 				Order:    0,
+				Metadata: []byte(`{"week": "Week 1", "day": "Day 1"}`),
 			},
 		},
 	}
@@ -113,8 +110,8 @@ func TestProgramRepository_GetByID(t *testing.T) {
 	if got.Name != program.Name {
 		t.Errorf("GetByID() Name = %v, want %v", got.Name, program.Name)
 	}
-	if len(got.RootNodes) != 1 {
-		t.Errorf("GetByID() RootNodes length = %v, want 1", len(got.RootNodes))
+	if len(got.Entries) != 1 {
+		t.Errorf("GetByID() Entries length = %v, want 1", len(got.Entries))
 	}
 
 	// Test getting non-existent program
@@ -226,7 +223,7 @@ func TestProgramRepository_List(t *testing.T) {
 	}
 }
 
-func TestProgramRepository_List_WithRootNodes(t *testing.T) {
+func TestProgramRepository_List_WithEntries(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	pool, cleanup, err := setupTestDB(ctx)
@@ -237,34 +234,31 @@ func TestProgramRepository_List_WithRootNodes(t *testing.T) {
 
 	repo := NewProgramRepository(pool)
 
-	// Create a program with nodes
-	programWithNodes := &domain.Program{
-		Name: "Program With Nodes",
-		RootNodes: []domain.ProgramNode{
+	// Create a program with entries
+	programWithEntries := &domain.Program{
+		Name: "Program With Entries",
+		Entries: []domain.ProgramEntry{
 			{
-				Name:     "Day 1",
-				NodeType: "day",
+				Name:     "Squat",
 				Order:    0,
-				Children: []domain.ProgramNode{
-					{
-						Name:     "Exercise 1",
-						NodeType: "exercise",
-						Order:    0,
-					},
-				},
+				Metadata: []byte(`{"week": "Week 1", "day": "Day 1"}`),
+			},
+			{
+				Name:  "Bench Press",
+				Order: 1,
 			},
 		},
 	}
-	if err := repo.Create(ctx, programWithNodes); err != nil {
-		t.Fatalf("Failed to create program with nodes: %v", err)
+	if err := repo.Create(ctx, programWithEntries); err != nil {
+		t.Fatalf("Failed to create program with entries: %v", err)
 	}
 
-	// Create a program without nodes
-	programWithoutNodes := &domain.Program{
-		Name: "Program Without Nodes",
+	// Create a program without entries
+	programWithoutEntries := &domain.Program{
+		Name: "Program Without Entries",
 	}
-	if err := repo.Create(ctx, programWithoutNodes); err != nil {
-		t.Fatalf("Failed to create program without nodes: %v", err)
+	if err := repo.Create(ctx, programWithoutEntries); err != nil {
+		t.Fatalf("Failed to create program without entries: %v", err)
 	}
 
 	// List programs
@@ -277,31 +271,25 @@ func TestProgramRepository_List_WithRootNodes(t *testing.T) {
 		t.Fatalf("List() returned %d programs, want 2", len(programs))
 	}
 
-	// Find program with nodes and verify RootNodes are loaded
-	var foundProgramWithNodes *domain.Program
+	// Find program with entries and verify entries are loaded
+	var foundProgramWithEntries *domain.Program
 	for _, p := range programs {
-		if p.Name == "Program With Nodes" {
-			foundProgramWithNodes = p
+		if p.Name == "Program With Entries" {
+			foundProgramWithEntries = p
 			break
 		}
 	}
 
-	if foundProgramWithNodes == nil {
-		t.Fatal("Program With Nodes not found in list")
+	if foundProgramWithEntries == nil {
+		t.Fatal("Program With Entries not found in list")
 	}
 
-	// Verify RootNodes are loaded (consistent with memory store behavior)
-	if len(foundProgramWithNodes.RootNodes) != 1 {
-		t.Errorf("List() should load RootNodes, got %d, want 1", len(foundProgramWithNodes.RootNodes))
-	}
-
-	// Verify nested children are also loaded
-	if len(foundProgramWithNodes.RootNodes) > 0 && len(foundProgramWithNodes.RootNodes[0].Children) != 1 {
-		t.Errorf("List() should load nested children, got %d, want 1", len(foundProgramWithNodes.RootNodes[0].Children))
+	if len(foundProgramWithEntries.Entries) != 2 {
+		t.Errorf("List() should load Entries, got %d, want 2", len(foundProgramWithEntries.Entries))
 	}
 }
 
-func TestProgramRepository_GetByID_NestedTree(t *testing.T) {
+func TestProgramRepository_GetByID_WithMetadata(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	pool, cleanup, err := setupTestDB(ctx)
@@ -312,58 +300,25 @@ func TestProgramRepository_GetByID_NestedTree(t *testing.T) {
 
 	repo := NewProgramRepository(pool)
 
-	// Create a program with deeply nested structure: Program -> Week -> Day -> Exercise
+	// Create a program with entries containing metadata
 	program := &domain.Program{
-		Name:        "Deep Nested Program",
-		Description: stringPtr("Test nested tree structure"),
-		RootNodes: []domain.ProgramNode{
+		Name:        "Flat Program",
+		Description: stringPtr("Test flat structure"),
+		Entries: []domain.ProgramEntry{
 			{
-				Name:     "Week 1",
-				NodeType: "week",
+				Name:     "Squat",
 				Order:    0,
-				Children: []domain.ProgramNode{
-					{
-						Name:     "Day 1",
-						NodeType: "day",
-						Order:    0,
-						Children: []domain.ProgramNode{
-							{
-								Name:     "Exercise 1",
-								NodeType: "exercise",
-								Order:    0,
-							},
-							{
-								Name:     "Exercise 2",
-								NodeType: "exercise",
-								Order:    1,
-							},
-						},
-					},
-					{
-						Name:     "Day 2",
-						NodeType: "day",
-						Order:    1,
-						Children: []domain.ProgramNode{
-							{
-								Name:     "Exercise 3",
-								NodeType: "exercise",
-								Order:    0,
-							},
-						},
-					},
-				},
+				Metadata: []byte(`{"week": "Week 1", "day": "Day 1"}`),
 			},
 			{
-				Name:     "Week 2",
-				NodeType: "week",
+				Name:     "Bench Press",
 				Order:    1,
-				Children: []domain.ProgramNode{
-					{
-						Name:     "Day 3",
-						NodeType: "day",
-						Order:    0,
-					},
-				},
+				Metadata: []byte(`{"week": "Week 1", "day": "Day 1"}`),
+			},
+			{
+				Name:     "Deadlift",
+				Order:    2,
+				Metadata: []byte(`{"week": "Week 1", "day": "Day 2"}`),
 			},
 		},
 	}
@@ -372,60 +327,18 @@ func TestProgramRepository_GetByID_NestedTree(t *testing.T) {
 		t.Fatalf("Failed to create program: %v", err)
 	}
 
-	// Retrieve and verify nested structure
+	// Retrieve and verify flat structure
 	got, err := repo.GetByID(ctx, program.ID)
 	if err != nil {
 		t.Fatalf("GetByID() error = %v", err)
 	}
 
-	// Verify root level
-	if len(got.RootNodes) != 2 {
-		t.Fatalf("Expected 2 root nodes (weeks), got %d", len(got.RootNodes))
+	if len(got.Entries) != 3 {
+		t.Fatalf("Expected 3 entries, got %d", len(got.Entries))
 	}
 
-	// Find Week 1 (may be in any order due to UUID sorting)
-	var week1, week2 *domain.ProgramNode
-	for i := range got.RootNodes {
-		switch got.RootNodes[i].Name {
-		case "Week 1":
-			week1 = &got.RootNodes[i]
-		case "Week 2":
-			week2 = &got.RootNodes[i]
-		}
-	}
-
-	if week1 == nil {
-		t.Fatal("Week 1 not found in root nodes")
-	}
-	if week2 == nil {
-		t.Fatal("Week 2 not found in root nodes")
-	}
-
-	// Verify Week 1 has 2 days
-	if len(week1.Children) != 2 {
-		t.Errorf("Week 1 should have 2 children (days), got %d", len(week1.Children))
-	}
-
-	// Find Day 1 in Week 1
-	var day1 *domain.ProgramNode
-	for i := range week1.Children {
-		if week1.Children[i].Name == "Day 1" {
-			day1 = &week1.Children[i]
-			break
-		}
-	}
-
-	if day1 == nil {
-		t.Fatal("Day 1 not found in Week 1")
-	}
-
-	// Verify Day 1 has 2 exercises (the critical test for nested children)
-	if len(day1.Children) != 2 {
-		t.Errorf("Day 1 should have 2 children (exercises), got %d. Nested children may be lost!", len(day1.Children))
-	}
-
-	// Verify Week 2 has 1 day
-	if len(week2.Children) != 1 {
-		t.Errorf("Week 2 should have 1 child (day), got %d", len(week2.Children))
+	// Verify metadata is preserved
+	if string(got.Entries[0].Metadata) == "" {
+		t.Error("Entry 0 should have metadata")
 	}
 }

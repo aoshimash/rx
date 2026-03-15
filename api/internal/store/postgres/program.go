@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 
 	"github.com/aoshimash/optel-workout/api/internal/domain"
@@ -50,10 +51,9 @@ func (r *programRepository) Create(ctx context.Context, program *domain.Program)
 
 	program.ID = id
 
-	// Insert program nodes recursively
-	if len(program.RootNodes) > 0 {
-		err = r.insertNodes(ctx, tx, id, nil, program.RootNodes)
-		if err != nil {
+	// Insert entries
+	if len(program.Entries) > 0 {
+		if err = r.insertEntries(ctx, tx, id, program.Entries); err != nil {
 			return err
 		}
 	}
@@ -65,54 +65,44 @@ func (r *programRepository) Create(ctx context.Context, program *domain.Program)
 	return nil
 }
 
-func (r *programRepository) insertNodes(ctx context.Context, tx pgx.Tx, programID uuid.UUID, parentID *uuid.UUID, nodes []domain.ProgramNode) error {
-	for i := range nodes {
-		nodeID := uuid.New()
-		if nodes[i].ID != uuid.Nil {
-			nodeID = nodes[i].ID
+func (r *programRepository) insertEntries(ctx context.Context, tx pgx.Tx, programID uuid.UUID, entries []domain.ProgramEntry) error {
+	for i := range entries {
+		entryID := uuid.New()
+		if entries[i].ID != uuid.Nil {
+			entryID = entries[i].ID
 		}
 
 		query := `
-			INSERT INTO program_nodes (
-				id, program_id, parent_id, name, node_type, "order",
+			INSERT INTO program_entries (
+				id, program_id, name, "order", metadata,
 				exercise_id, target_sets, target_reps, target_rpe,
 				percent_1rm, planned_rest_seconds, muscle_groups, notes
 			)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		`
 
 		_, err := tx.Exec(ctx, query,
-			nodeID,
+			entryID,
 			programID,
-			parentID,
-			nodes[i].Name,
-			nodes[i].NodeType,
-			nodes[i].Order,
-			nodes[i].ExerciseID,
-			nodes[i].TargetSets,
-			nodes[i].TargetReps,
-			nodes[i].TargetRPE,
-			nodes[i].Percent1RM,
-			nodes[i].PlannedRestSeconds,
-			nodes[i].MuscleGroups,
-			nodes[i].Notes,
+			entries[i].Name,
+			entries[i].Order,
+			entries[i].Metadata,
+			entries[i].ExerciseID,
+			entries[i].TargetSets,
+			entries[i].TargetReps,
+			entries[i].TargetRPE,
+			entries[i].Percent1RM,
+			entries[i].PlannedRestSeconds,
+			entries[i].MuscleGroups,
+			entries[i].Notes,
 		)
 		if err != nil {
-			slog.Error("Failed to insert program node", "error", err)
+			slog.Error("Failed to insert program entry", "error", err)
 			return err
 		}
 
-		nodes[i].ID = nodeID
-		nodes[i].ProgramID = programID
-		nodes[i].ParentID = parentID
-
-		// Recursively insert children
-		if len(nodes[i].Children) > 0 {
-			err = r.insertNodes(ctx, tx, programID, &nodeID, nodes[i].Children)
-			if err != nil {
-				return err
-			}
-		}
+		entries[i].ID = entryID
+		entries[i].ProgramID = programID
 	}
 
 	return nil
@@ -143,95 +133,67 @@ func (r *programRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.
 		return nil, err
 	}
 
-	// Load root nodes for the program
-	rootNodes, err := r.getNodesForProgram(ctx, id)
+	// Load entries for the program
+	entries, err := r.getEntriesForProgram(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	program.RootNodes = rootNodes
+	program.Entries = entries
 
 	return &program, nil
 }
 
-// getNodesForProgram loads and builds the tree structure of nodes for a program
-func (r *programRepository) getNodesForProgram(ctx context.Context, programID uuid.UUID) ([]domain.ProgramNode, error) {
-	nodesQuery := `
-		SELECT id, program_id, parent_id, name, node_type, "order",
+// getEntriesForProgram loads all entries for a program ordered by "order"
+func (r *programRepository) getEntriesForProgram(ctx context.Context, programID uuid.UUID) ([]domain.ProgramEntry, error) {
+	query := `
+		SELECT id, program_id, name, "order", metadata,
 		       exercise_id, target_sets, target_reps, target_rpe,
 		       percent_1rm, planned_rest_seconds, muscle_groups, notes
-		FROM program_nodes
+		FROM program_entries
 		WHERE program_id = $1
 		ORDER BY "order" ASC
 	`
 
-	rows, err := r.pool.Query(ctx, nodesQuery, programID)
+	rows, err := r.pool.Query(ctx, query, programID)
 	if err != nil {
-		slog.Error("Failed to get program nodes", "programID", programID, "error", err)
+		slog.Error("Failed to get program entries", "programID", programID, "error", err)
 		return nil, err
 	}
 	defer rows.Close()
 
-	// Build node map and track parent-child relationships
-	nodeMap := make(map[uuid.UUID]*domain.ProgramNode)
-	childrenMap := make(map[uuid.UUID][]uuid.UUID) // parent ID -> child IDs
-	var rootNodeIDs []uuid.UUID
-
+	var entries []domain.ProgramEntry
 	for rows.Next() {
-		var node domain.ProgramNode
+		var entry domain.ProgramEntry
+		var metadataRaw []byte
 		err := rows.Scan(
-			&node.ID,
-			&node.ProgramID,
-			&node.ParentID,
-			&node.Name,
-			&node.NodeType,
-			&node.Order,
-			&node.ExerciseID,
-			&node.TargetSets,
-			&node.TargetReps,
-			&node.TargetRPE,
-			&node.Percent1RM,
-			&node.PlannedRestSeconds,
-			&node.MuscleGroups,
-			&node.Notes,
+			&entry.ID,
+			&entry.ProgramID,
+			&entry.Name,
+			&entry.Order,
+			&metadataRaw,
+			&entry.ExerciseID,
+			&entry.TargetSets,
+			&entry.TargetReps,
+			&entry.TargetRPE,
+			&entry.Percent1RM,
+			&entry.PlannedRestSeconds,
+			&entry.MuscleGroups,
+			&entry.Notes,
 		)
 		if err != nil {
 			return nil, err
 		}
-
-		nodeMap[node.ID] = &node
-
-		if node.ParentID == nil {
-			rootNodeIDs = append(rootNodeIDs, node.ID)
-		} else {
-			childrenMap[*node.ParentID] = append(childrenMap[*node.ParentID], node.ID)
+		if len(metadataRaw) > 0 {
+			entry.Metadata = json.RawMessage(metadataRaw)
 		}
+		entries = append(entries, entry)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
-	// Build tree structure recursively (bottom-up approach ensures all children are included)
-	var buildNode func(id uuid.UUID) domain.ProgramNode
-	buildNode = func(id uuid.UUID) domain.ProgramNode {
-		node := *nodeMap[id]
-		childIDs := childrenMap[id]
-		if len(childIDs) > 0 {
-			node.Children = make([]domain.ProgramNode, 0, len(childIDs))
-			for _, childID := range childIDs {
-				node.Children = append(node.Children, buildNode(childID))
-			}
-		}
-		return node
-	}
-
-	// Build root nodes with full tree structure
-	rootNodes := make([]domain.ProgramNode, 0, len(rootNodeIDs))
-	for _, rootID := range rootNodeIDs {
-		rootNodes = append(rootNodes, buildNode(rootID))
-	}
-
-	return rootNodes, nil
+	return entries, nil
 }
 
 func (r *programRepository) Update(ctx context.Context, program *domain.Program) error {
@@ -258,17 +220,16 @@ func (r *programRepository) Update(ctx context.Context, program *domain.Program)
 		return err
 	}
 
-	// Delete existing nodes (CASCADE will handle children)
-	_, err = tx.Exec(ctx, `DELETE FROM program_nodes WHERE program_id = $1`, program.ID)
+	// Delete existing entries
+	_, err = tx.Exec(ctx, `DELETE FROM program_entries WHERE program_id = $1`, program.ID)
 	if err != nil {
-		slog.Error("Failed to delete program nodes", "error", err)
+		slog.Error("Failed to delete program entries", "error", err)
 		return err
 	}
 
-	// Insert new nodes
-	if len(program.RootNodes) > 0 {
-		err = r.insertNodes(ctx, tx, program.ID, nil, program.RootNodes)
-		if err != nil {
+	// Insert new entries
+	if len(program.Entries) > 0 {
+		if err = r.insertEntries(ctx, tx, program.ID, program.Entries); err != nil {
 			return err
 		}
 	}
@@ -348,18 +309,17 @@ func (r *programRepository) List(ctx context.Context, limit int, after string) (
 		programs = programs[:limit]
 	}
 
-	// Load RootNodes for each program (consistent with memory store behavior)
+	// Load entries for each program
 	for _, program := range programs {
-		rootNodes, err := r.getNodesForProgram(ctx, program.ID)
+		entries, err := r.getEntriesForProgram(ctx, program.ID)
 		if err != nil {
 			return nil, "", false, err
 		}
-		program.RootNodes = rootNodes
+		program.Entries = entries
 	}
 
 	var nextCursor string
 	if hasMore && len(programs) > 0 {
-		// Use the last item in the returned set, not the extra item
 		nextCursor = encodeCursor(programs[len(programs)-1].ID)
 	}
 

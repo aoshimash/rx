@@ -7,12 +7,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { Exercise, ProgramNodeCreate } from '@/types/api';
+import type { Exercise } from '@/types/api';
 import { Plus, X } from 'lucide-react';
 import { DayAccordion } from './DayAccordion';
+import type { WeekGroup } from './types';
 
 interface WeekAccordionProps {
-  weeks: ProgramNodeCreate[];
+  weeks: WeekGroup[];
   availableExercises: Exercise[];
   onWeekNameChange: (weekIndex: number, name: string) => void;
   onDayNameChange: (weekIndex: number, dayIndex: number, name: string) => void;
@@ -83,7 +84,7 @@ export function WeekAccordion({
               <div className="space-y-2">
                 <Label>Days</Label>
                 <DayAccordion
-                  days={week.children || []}
+                  days={week.days}
                   availableExercises={availableExercises}
                   onDayNameChange={(dayIdx, name) => onDayNameChange(weekIdx, dayIdx, name)}
                   onExerciseChange={(dayIdx, exIdx, id) =>

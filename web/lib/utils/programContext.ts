@@ -1,47 +1,28 @@
-import type { Program, ProgramNode } from '@/types/api';
+import type { Program } from '@/types/api';
 
 /**
- * Generate program context (hierarchy path) from a day node
+ * Generate program context from a program entry's metadata.
  *
- * Traverses the program tree to find the path from root to the target day node.
- * Supports any hierarchy depth (e.g., cycle > block > week > day).
+ * Extracts week/day context from the entry's metadata field.
  *
- * @param dayNodeId - The ID of the day node
- * @param program - The program containing the node
- * @returns Array of node names from root to day (e.g., ["Week 1", "Day 1"])
+ * @param entryId - The ID of the program entry
+ * @param program - The program containing the entry
+ * @returns Array of context strings derived from metadata (e.g., ["Week 1", "Day 1"])
  */
-export function generateProgramContext(dayNodeId: string, program: Program): string[] {
-  if (!program.root_nodes) return [];
+export function generateProgramContext(entryId: string, program: Program): string[] {
+  const entry = program.entries?.find((e) => e.id === entryId);
+  if (!entry?.metadata) return [];
 
-  const path: string[] = [];
-
-  function findPath(nodes: ProgramNode[], targetId: string): boolean {
-    for (const node of nodes) {
-      path.push(node.name);
-
-      if (node.id === targetId) {
-        return true;
-      }
-
-      if (node.children && node.children.length > 0) {
-        if (findPath(node.children, targetId)) {
-          return true;
-        }
-      }
-
-      path.pop();
-    }
-    return false;
-  }
-
-  findPath(program.root_nodes, dayNodeId);
-  return path;
+  const context: string[] = [];
+  if (entry.metadata.week !== undefined) context.push(String(entry.metadata.week));
+  if (entry.metadata.day !== undefined) context.push(String(entry.metadata.day));
+  return context;
 }
 
 /**
  * Format program context as a breadcrumb string
  *
- * @param context - Array of node names
+ * @param context - Array of context strings
  * @param separator - Separator between levels (default: " > ")
  * @returns Formatted breadcrumb string (e.g., "Week 1 > Day 1")
  */

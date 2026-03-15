@@ -38,12 +38,11 @@ export function ScheduleModal({
   const [skipWeekends, setSkipWeekends] = useState(true);
   const [avoidConsecutive, setAvoidConsecutive] = useState(false);
 
-  // Count total days in program
-  const totalDays =
-    program.root_nodes?.reduce((count, week) => {
-      const days = week.children?.filter((child) => child.node_type === 'day') || [];
-      return count + days.length;
-    }, 0) || 0;
+  // Count unique training days from metadata.day
+  const entries = program.entries || [];
+  const totalDays = new Set(
+    entries.map((e) => e.metadata?.day).filter((d) => d !== undefined)
+  ).size || entries.length;
 
   const handleGenerate = () => {
     const options: ScheduleOptions = {

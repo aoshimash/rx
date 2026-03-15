@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { EntryType, ProgramNode, WorkoutEntryCreate } from '@/types/api';
+import type { EntryType, ProgramEntry, WorkoutEntryCreate } from '@/types/api';
 import { useEffect, useState } from 'react';
 import { AddExerciseButton } from './AddExerciseButton';
 import { ExerciseInputRow } from './ExerciseInputRow';
@@ -12,7 +12,7 @@ import { ExerciseInputRow } from './ExerciseInputRow';
 interface WorkoutModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  dayNode?: ProgramNode;
+  dayEntries?: ProgramEntry[];
   programContext?: string[];
   onSave: (
     entries: WorkoutEntryCreate[],
@@ -42,14 +42,14 @@ interface EntryInput {
 /**
  * Modal for recording workout results
  *
- * Pre-populates planned exercises from program node
+ * Pre-populates planned exercises from program entries
  * Allows adding unplanned exercises
  * Includes session notes field
  */
 export function WorkoutModal({
   open,
   onOpenChange,
-  dayNode,
+  dayEntries,
   programContext,
   onSave,
 }: WorkoutModalProps) {
@@ -57,33 +57,29 @@ export function WorkoutModal({
   const [sessionNotes, setSessionNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  // Initialize entries from day node when modal opens
+  // Initialize entries from day entries when modal opens
   useEffect(() => {
-    if (open && dayNode) {
-      const exerciseNodes =
-        dayNode.children?.filter((child) => child.node_type === 'exercise') || [];
-
-      const initialEntries: EntryInput[] = exerciseNodes.map((node, idx) => ({
-        id: `${node.id}-${idx}`,
-        exercise_id: node.exercise_id || '',
-        exercise_name: node.name,
+    if (open && dayEntries && dayEntries.length > 0) {
+      const initialEntries: EntryInput[] = dayEntries.map((entry, idx) => ({
+        id: `${entry.id}-${idx}`,
+        exercise_id: entry.exercise_id || '',
+        exercise_name: entry.name,
         entry_type: 'Main',
-        sets: node.target_sets || 3,
-        reps: node.target_reps || 10,
+        sets: entry.target_sets || 3,
+        reps: entry.target_reps || 10,
         load: 0,
-        rpe: node.target_rpe || 7,
-        program_node_id: node.id,
+        rpe: entry.target_rpe || 7,
+        program_node_id: entry.id,
         plan: {
-          sets: node.target_sets,
-          reps: node.target_reps,
+          sets: entry.target_sets,
+          reps: entry.target_reps,
           load: undefined,
-          rpe: node.target_rpe,
+          rpe: entry.target_rpe,
         },
       }));
-
       setEntries(initialEntries);
     }
-  }, [open, dayNode]);
+  }, [open, dayEntries]);
 
   const handleAddExercise = () => {
     const newEntry: EntryInput = {
@@ -136,13 +132,17 @@ export function WorkoutModal({
     }
   };
 
+  const dayName = dayEntries?.[0]
+    ? ((dayEntries[0].metadata?.day as string) || dayEntries[0].name)
+    : undefined;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             Record Workout
-            {dayNode && <span className="ml-2 text-muted-foreground">- {dayNode.name}</span>}
+            {dayName && <span className="ml-2 text-muted-foreground">- {dayName}</span>}
           </DialogTitle>
           {programContext && programContext.length > 0 && (
             <p className="text-sm text-muted-foreground">{programContext.join(' > ')}</p>

@@ -33,22 +33,17 @@ func (s *programStore) Create(ctx context.Context, program *domain.Program) erro
 	program.CreatedAt = now
 	program.UpdatedAt = now
 
-	// Generate IDs for nested ProgramNode records recursively
-	s.assignNodeIDs(program.ID, nil, program.RootNodes)
+	// Generate IDs for entries
+	s.assignEntryIDs(program.ID, program.Entries)
 
 	s.programs[program.ID] = program
 	return nil
 }
 
-func (s *programStore) assignNodeIDs(programID uuid.UUID, parentID *uuid.UUID, nodes []domain.ProgramNode) {
-	for i := range nodes {
-		nodes[i].ID = uuid.New()
-		nodes[i].ProgramID = programID
-		nodes[i].ParentID = parentID
-		if len(nodes[i].Children) > 0 {
-			parentID := &nodes[i].ID
-			s.assignNodeIDs(programID, parentID, nodes[i].Children)
-		}
+func (s *programStore) assignEntryIDs(programID uuid.UUID, entries []domain.ProgramEntry) {
+	for i := range entries {
+		entries[i].ID = uuid.New()
+		entries[i].ProgramID = programID
 	}
 }
 
@@ -61,29 +56,16 @@ func (s *programStore) GetByID(ctx context.Context, id uuid.UUID) (*domain.Progr
 		return nil, domain.ErrNotFound
 	}
 
-	// Return a deep copy to prevent external modifications
+	// Return a copy to prevent external modifications
 	result := s.copyProgram(program)
 	return result, nil
 }
 
 func (s *programStore) copyProgram(p *domain.Program) *domain.Program {
-	copy := *p
-	copy.RootNodes = make([]domain.ProgramNode, len(p.RootNodes))
-	for i := range p.RootNodes {
-		copy.RootNodes[i] = s.copyNode(p.RootNodes[i])
-	}
-	return &copy
-}
-
-func (s *programStore) copyNode(n domain.ProgramNode) domain.ProgramNode {
-	copy := n
-	if len(n.Children) > 0 {
-		copy.Children = make([]domain.ProgramNode, len(n.Children))
-		for i := range n.Children {
-			copy.Children[i] = s.copyNode(n.Children[i])
-		}
-	}
-	return copy
+	cp := *p
+	cp.Entries = make([]domain.ProgramEntry, len(p.Entries))
+	copy(cp.Entries, p.Entries)
+	return &cp
 }
 
 func (s *programStore) Update(ctx context.Context, program *domain.Program) error {
@@ -96,8 +78,8 @@ func (s *programStore) Update(ctx context.Context, program *domain.Program) erro
 
 	program.UpdatedAt = time.Now()
 
-	// Generate IDs for new ProgramNode records recursively
-	s.assignNodeIDs(program.ID, nil, program.RootNodes)
+	// Generate IDs for entries
+	s.assignEntryIDs(program.ID, program.Entries)
 
 	s.programs[program.ID] = program
 	return nil
@@ -111,7 +93,6 @@ func (s *programStore) Delete(ctx context.Context, id uuid.UUID) error {
 		return domain.ErrNotFound
 	}
 
-	// Cascade delete: ProgramNode records are deleted with the Program
 	delete(s.programs, id)
 	return nil
 }

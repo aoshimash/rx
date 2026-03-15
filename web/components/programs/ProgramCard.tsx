@@ -14,12 +14,21 @@ interface ProgramCardProps {
  * Program list item card
  */
 export function ProgramCard({ program, onSelect, isSelected }: ProgramCardProps) {
-  const weekCount = program.root_nodes?.filter((node) => node.node_type === 'week').length || 0;
-  const dayCount =
-    program.root_nodes?.reduce((count, week) => {
-      const days = week.children?.filter((child) => child.node_type === 'day') || [];
-      return count + days.length;
-    }, 0) || 0;
+  const entries = program.entries || [];
+
+  // Count unique weeks from metadata.week
+  const weekCount = new Set(
+    entries
+      .map((e) => e.metadata?.week)
+      .filter((w) => w !== undefined)
+  ).size;
+
+  // Count unique days from metadata.day
+  const dayCount = new Set(
+    entries
+      .map((e) => e.metadata?.day)
+      .filter((d) => d !== undefined)
+  ).size;
 
   return (
     <Card className={isSelected ? 'border-primary' : ''}>
@@ -40,13 +49,22 @@ export function ProgramCard({ program, onSelect, isSelected }: ProgramCardProps)
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <Calendar className="h-4 w-4" />
-            <span>{weekCount} weeks</span>
-          </div>
-          <div>
-            <span>{dayCount} training days</span>
-          </div>
+          {weekCount > 0 && (
+            <div className="flex items-center gap-1">
+              <Calendar className="h-4 w-4" />
+              <span>{weekCount} weeks</span>
+            </div>
+          )}
+          {dayCount > 0 && (
+            <div>
+              <span>{dayCount} training days</span>
+            </div>
+          )}
+          {weekCount === 0 && dayCount === 0 && entries.length > 0 && (
+            <div>
+              <span>{entries.length} entries</span>
+            </div>
+          )}
         </div>
         {onSelect && (
           <Button

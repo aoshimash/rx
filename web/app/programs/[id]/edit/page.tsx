@@ -4,7 +4,7 @@ import { ProgramForm } from '@/components/program-editor/ProgramForm';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useExercises } from '@/lib/hooks/useExercises';
 import { useDeleteProgram, useProgram, useUpdateProgram } from '@/lib/hooks/usePrograms';
-import type { ProgramNodeCreate } from '@/types/api';
+import type { ProgramEntryCreate } from '@/types/api';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -20,24 +20,21 @@ export default function EditProgramPage() {
 
   const [programName, setProgramName] = useState('');
   const [programDescription, setProgramDescription] = useState('');
-  const [weeks, setWeeks] = useState<ProgramNodeCreate[]>([]);
 
-  // Initialize form from loaded program
   useEffect(() => {
     if (program) {
       setProgramName(program.name);
       setProgramDescription(program.description || '');
-      setWeeks(program.root_nodes || []);
     }
   }, [program]);
 
-  const handleSave = async () => {
+  const handleSave = async (entries: ProgramEntryCreate[]) => {
     await updateProgram.mutateAsync({
       id: programId,
       data: {
         name: programName,
         description: programDescription,
-        root_nodes: weeks,
+        entries,
       },
     });
     router.push('/programs');
@@ -67,13 +64,13 @@ export default function EditProgramPage() {
       </div>
 
       <ProgramForm
+        key={programId}
         programName={programName}
         programDescription={programDescription}
-        weeks={weeks}
+        initialEntries={program?.entries}
         availableExercises={exercises}
         onNameChange={setProgramName}
         onDescriptionChange={setProgramDescription}
-        onWeeksChange={setWeeks}
         onSave={handleSave}
         onDelete={handleDelete}
         isSaving={updateProgram.isPending}

@@ -257,7 +257,7 @@ paths:
       tags: [Program]
       responses:
         '200':
-          description: Program found (includes full node tree)
+          description: Program found (includes all entries)
           content:
             application/json:
               schema:
@@ -295,7 +295,7 @@ paths:
       tags: [Program]
       responses:
         '204':
-          description: Program deleted (nodes cascade deleted)
+          description: Program deleted (entries cascade deleted)
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -1012,10 +1012,11 @@ components:
         description:
           type: string
           maxLength: 2000
-        root_nodes:
+        entries:
           type: array
           items:
-            $ref: '#/components/schemas/ProgramNode'
+            $ref: '#/components/schemas/ProgramEntry'
+          description: Flat list of training prescription entries
         created_at:
           type: string
           format: date-time
@@ -1035,21 +1036,21 @@ components:
         description:
           type: string
           maxLength: 2000
-        root_nodes:
+        entries:
           type: array
           items:
-            $ref: '#/components/schemas/ProgramNodeCreate'
+            $ref: '#/components/schemas/ProgramEntryCreate'
+          maxItems: 1000
 
     # ========================================
-    # ProgramNode
+    # ProgramEntry
     # ========================================
-    ProgramNode:
+    ProgramEntry:
       type: object
       required:
         - id
         - program_id
         - name
-        - node_type
         - order
       properties:
         id:
@@ -1058,27 +1059,22 @@ components:
         program_id:
           type: string
           format: uuid
-        parent_id:
-          type: string
-          format: uuid
-          description: Parent node (null for root)
         name:
           type: string
           minLength: 1
           maxLength: 200
-        node_type:
-          type: string
-          minLength: 1
-          maxLength: 50
-          description: User-defined type (cycle, week, day, block, exercise)
+          description: Entry label (e.g., "Squat - Top Set")
         order:
           type: integer
           minimum: 0
-          description: Order among siblings
-        children:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProgramNode'
+          description: Global position in program
+        metadata:
+          type: object
+          additionalProperties: true
+          description: |
+            Free-form JSON for contextual grouping.
+            Common keys: week (string), day (string).
+            Example: {"week": "Week 1", "day": "Day A"}
         exercise_id:
           type: string
           format: uuid
@@ -1108,28 +1104,25 @@ components:
           type: string
           maxLength: 2000
 
-    ProgramNodeCreate:
+    ProgramEntryCreate:
       type: object
       required:
         - name
-        - node_type
         - order
       properties:
         name:
           type: string
           minLength: 1
           maxLength: 200
-        node_type:
-          type: string
-          minLength: 1
-          maxLength: 50
         order:
           type: integer
           minimum: 0
-        children:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProgramNodeCreate'
+        metadata:
+          type: object
+          additionalProperties: true
+          description: |
+            Free-form JSON for contextual grouping.
+            Common keys: week (string), day (string).
         exercise_id:
           type: string
           format: uuid

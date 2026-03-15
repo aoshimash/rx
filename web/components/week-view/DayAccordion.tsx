@@ -6,14 +6,14 @@ import {
 } from '@/components/ui/accordion';
 import type { DiffStatus } from '@/lib/utils/diff';
 import { formatProgramContext } from '@/lib/utils/programContext';
-import type { EntryType, ProgramNode, Workout, WorkoutEntry } from '@/types/api';
+import type { EntryType, ProgramEntry, Workout, WorkoutEntry } from '@/types/api';
 import { ExerciseTable } from './ExerciseTable';
 import { StatusBadge } from './StatusBadge';
 
 interface DayData {
   dayName: string;
   date?: string;
-  programNode?: ProgramNode;
+  programEntries?: ProgramEntry[];
   workout?: Workout;
   status: DiffStatus;
   programContext?: string[];
@@ -75,7 +75,7 @@ export function DayAccordion({ days }: DayAccordionProps) {
 }
 
 /**
- * Build exercise rows from program node and workout data
+ * Build exercise rows from program entries and workout data
  */
 function buildExerciseRows(day: DayData) {
   const rows: Array<{
@@ -84,31 +84,29 @@ function buildExerciseRows(day: DayData) {
     plan: { sets?: number; reps?: number; load?: number; rpe?: number } | null;
     actual: { sets: number; reps: number; load: number; rpe: number } | null;
     entry?: WorkoutEntry;
-    node?: ProgramNode;
+    programEntry?: ProgramEntry;
   }> = [];
 
-  // Get planned exercises from program node
-  const plannedExercises =
-    day.programNode?.children?.filter((child) => child.node_type === 'exercise') || [];
-
-  // Get actual exercises from workout
+  const plannedEntries = day.programEntries || [];
   const actualEntries = day.workout?.entries || [];
 
   // Create a map of exercise_id to actual entries
   const actualMap = new Map(actualEntries.map((entry) => [entry.exercise_id, entry]));
 
-  // Add all planned exercises
-  for (const node of plannedExercises) {
-    const actual = node.exercise_id ? actualMap.get(node.exercise_id) : undefined;
+  // Add all planned entries
+  for (const programEntry of plannedEntries) {
+    const actual = programEntry.exercise_id
+      ? actualMap.get(programEntry.exercise_id)
+      : undefined;
 
     rows.push({
-      exerciseName: node.name,
+      exerciseName: programEntry.name,
       entryType: actual?.entry_type,
       plan: {
-        sets: node.target_sets,
-        reps: node.target_reps,
-        load: node.percent_1rm ? undefined : undefined, // Load calculation deferred
-        rpe: node.target_rpe,
+        sets: programEntry.target_sets,
+        reps: programEntry.target_reps,
+        load: undefined,
+        rpe: programEntry.target_rpe,
       },
       actual: actual
         ? {
@@ -119,12 +117,12 @@ function buildExerciseRows(day: DayData) {
           }
         : null,
       entry: actual,
-      node,
+      programEntry,
     });
 
     // Remove from map to track unplanned
-    if (node.exercise_id) {
-      actualMap.delete(node.exercise_id);
+    if (programEntry.exercise_id) {
+      actualMap.delete(programEntry.exercise_id);
     }
   }
 

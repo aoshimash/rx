@@ -370,33 +370,19 @@ func TestQuickstartExample5_CreateProgram(t *testing.T) {
 	}
 	exerciseID := exercise["id"].(string)
 
-	// Create program with nested nodes
+	// Create program with flat entries
 	programBody := map[string]interface{}{
 		"name":        "Strength Block",
 		"description": "4-week strength focus",
-		"root_nodes": []map[string]interface{}{
+		"entries": []map[string]interface{}{
 			{
-				"name":      "Week 1",
-				"node_type": "week",
-				"order":     0,
-				"children": []map[string]interface{}{
-					{
-						"name":      "Day 1 - Upper",
-						"node_type": "day",
-						"order":     0,
-						"children": []map[string]interface{}{
-							{
-								"name":        "Bench Press 4x8",
-								"node_type":   "exercise",
-								"order":       0,
-								"exercise_id": exerciseID,
-								"target_sets": 4,
-								"target_reps": 8,
-								"target_rpe":  8,
-							},
-						},
-					},
-				},
+				"name":        "Bench Press 4x8",
+				"order":       0,
+				"metadata":    map[string]interface{}{"week": "Week 1", "day": "Day 1 - Upper"},
+				"exercise_id": exerciseID,
+				"target_sets": 4,
+				"target_reps": 8,
+				"target_rpe":  8,
 			},
 		},
 	}
@@ -422,14 +408,14 @@ func TestQuickstartExample5_CreateProgram(t *testing.T) {
 		t.Errorf("program.name = %v, want Strength Block", program["name"])
 	}
 
-	rootNodes, ok := program["root_nodes"].([]interface{})
-	if !ok || len(rootNodes) != 1 {
-		t.Errorf("program.root_nodes = %v, want 1 root node", rootNodes)
+	entries, ok := program["entries"].([]interface{})
+	if !ok || len(entries) != 1 {
+		t.Errorf("program.entries = %v, want 1 entry", entries)
 	}
 
-	week1, ok := rootNodes[0].(map[string]interface{})
-	if !ok || week1["name"] != "Week 1" {
-		t.Errorf("Week 1 node name = %v, want Week 1", week1["name"])
+	entry1, ok := entries[0].(map[string]interface{})
+	if !ok || entry1["name"] != "Bench Press 4x8" {
+		t.Errorf("entry[0].name = %v, want Bench Press 4x8", entry1["name"])
 	}
 }
 

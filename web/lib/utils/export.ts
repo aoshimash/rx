@@ -108,26 +108,16 @@ export function exportProgramToCSV(program: Program): void {
   const headers = ['Week', 'Day', 'Exercise', 'Sets', 'Reps', 'RPE', 'Notes'];
   const rows: string[][] = [headers];
 
-  const weeks = program.root_nodes?.filter((node) => node.node_type === 'week') || [];
-
-  for (const week of weeks) {
-    const days = week.children?.filter((child) => child.node_type === 'day') || [];
-
-    for (const day of days) {
-      const exercises = day.children?.filter((child) => child.node_type === 'exercise') || [];
-
-      for (const exercise of exercises) {
-        rows.push([
-          week.name,
-          day.name,
-          exercise.name,
-          String(exercise.target_sets || ''),
-          String(exercise.target_reps || ''),
-          String(exercise.target_rpe || ''),
-          exercise.notes || '',
-        ]);
-      }
-    }
+  for (const entry of program.entries || []) {
+    rows.push([
+      (entry.metadata?.week as string) || '',
+      (entry.metadata?.day as string) || '',
+      entry.name,
+      String(entry.target_sets || ''),
+      String(entry.target_reps || ''),
+      String(entry.target_rpe || ''),
+      entry.notes || '',
+    ]);
   }
 
   const csv = arrayToCSV(rows);
