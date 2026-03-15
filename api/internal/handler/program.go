@@ -47,8 +47,8 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req struct {
-		Name        string               `json:"name"`
-		Description *string              `json:"description,omitempty"`
+		Name        string                `json:"name"`
+		Description *string               `json:"description,omitempty"`
 		Entries     []programEntryRequest `json:"entries,omitempty"`
 	}
 
@@ -180,8 +180,8 @@ func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		Name        string               `json:"name"`
-		Description *string              `json:"description,omitempty"`
+		Name        string                `json:"name"`
+		Description *string               `json:"description,omitempty"`
 		Entries     []programEntryRequest `json:"entries,omitempty"`
 	}
 

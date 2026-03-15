@@ -43,6 +43,7 @@ export default function Home() {
     const entries = program?.entries;
     if (!entries || entries.length === 0) return undefined;
     const firstEntry = entries[0];
+    if (!firstEntry) return undefined;
     const dayKey = firstEntry.metadata?.day;
     if (!dayKey) return [firstEntry];
     return entries.filter((e) => e.metadata?.day === dayKey);
