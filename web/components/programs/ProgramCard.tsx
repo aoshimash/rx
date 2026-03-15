@@ -21,8 +21,7 @@ export function ProgramCard({ program, onSelect, isSelected }: ProgramCardProps)
     .size;
 
   // Count unique days from metadata.day
-  const dayCount = new Set(entries.map((e) => e.metadata?.day).filter((d) => d !== undefined))
-    .size;
+  const dayCount = new Set(entries.map((e) => e.metadata?.day).filter((d) => d !== undefined)).size;
 
   return (
     <Card className={isSelected ? 'border-primary' : ''}>

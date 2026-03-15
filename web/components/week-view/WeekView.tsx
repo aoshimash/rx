@@ -62,7 +62,7 @@ export function WeekView({ program, workouts }: WeekViewProps) {
       const weekKey = entry.metadata?.week !== undefined ? String(entry.metadata.week) : null;
       if (weekKey !== null) {
         if (!weekGroups.has(weekKey)) weekGroups.set(weekKey, []);
-        weekGroups.get(weekKey)!.push(entry);
+        weekGroups.get(weekKey)?.push(entry);
       } else {
         ungroupedEntries.push(entry);
       }
@@ -82,7 +82,7 @@ export function WeekView({ program, workouts }: WeekViewProps) {
       const dayKey = entry.metadata?.day !== undefined ? String(entry.metadata.day) : null;
       if (dayKey !== null) {
         if (!dayGroups.has(dayKey)) dayGroups.set(dayKey, []);
-        dayGroups.get(dayKey)!.push(entry);
+        dayGroups.get(dayKey)?.push(entry);
       } else {
         ungroupedDayEntries.push(entry);
       }
