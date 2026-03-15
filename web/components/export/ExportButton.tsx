@@ -7,26 +7,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { exportProgramToCSV, exportWorkoutsToCSV } from '@/lib/utils/export';
-import type { Program, Workout } from '@/types/api';
+import { exportLogsToCSV, exportPlanToCSV } from '@/lib/utils/export';
+import type { Log, Plan } from '@/types/api';
 import { Download } from 'lucide-react';
 
 interface ExportButtonProps {
-  workouts: Workout[];
-  program: Program | null;
+  logs: Log[];
+  plan: Plan | null;
 }
 
-/**
- * Export button with options dropdown
- */
-export function ExportButton({ workouts, program }: ExportButtonProps) {
-  const handleExportWorkouts = (scope: 'all' | 'current-week') => {
-    exportWorkoutsToCSV(workouts, program || undefined, { scope });
+export function ExportButton({ logs, plan }: ExportButtonProps) {
+  const handleExportLogs = (scope: 'all' | 'current-week') => {
+    exportLogsToCSV(logs, plan || undefined, { scope });
   };
 
-  const handleExportProgram = () => {
-    if (program) {
-      exportProgramToCSV(program);
+  const handleExportPlan = () => {
+    if (plan) {
+      exportPlanToCSV(plan);
     }
   };
 
@@ -41,18 +38,14 @@ export function ExportButton({ workouts, program }: ExportButtonProps) {
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>Export Data</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => handleExportWorkouts('all')}>
-          All Workouts (CSV)
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleExportWorkouts('current-week')}>
+        <DropdownMenuItem onClick={() => handleExportLogs('all')}>All Logs (CSV)</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleExportLogs('current-week')}>
           Current Week (CSV)
         </DropdownMenuItem>
-        {program && (
+        {plan && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleExportProgram}>
-              Program Structure (CSV)
-            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleExportPlan}>Plan Structure (CSV)</DropdownMenuItem>
           </>
         )}
       </DropdownMenuContent>

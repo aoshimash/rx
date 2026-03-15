@@ -21,10 +21,10 @@ export function Header() {
                   Week View
                 </Button>
               </Link>
-              <Link href="/programs">
+              <Link href="/plans">
                 <Button variant="ghost" size="sm">
                   <Dumbbell className="h-4 w-4 mr-2" />
-                  Programs
+                  Plans
                 </Button>
               </Link>
             </nav>

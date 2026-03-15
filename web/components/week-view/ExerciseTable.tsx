@@ -6,39 +6,32 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { EntryTypeBadge } from '@/components/workout-input/EntryTypeBadge';
 import { calculateDiff } from '@/lib/utils/diff';
-import type { EntryType, WorkoutEntry } from '@/types/api';
+import type { LogEntry, PlanEntry } from '@/types/api';
 import { StatusBadge } from './StatusBadge';
 
 interface ExerciseRow {
   exerciseName: string;
-  entryType?: EntryType;
   plan: {
     sets?: number;
     reps?: number;
-    load?: number;
+    load_kg?: number;
     rpe?: number;
   } | null;
   actual: {
-    sets: number;
-    reps: number;
-    load: number;
-    rpe: number;
+    sets?: number;
+    reps?: number;
+    load_kg?: number;
+    rpe?: number;
   } | null;
-  entry?: WorkoutEntry;
+  planEntry?: PlanEntry;
+  logEntry?: LogEntry;
 }
 
 interface ExerciseTableProps {
   exercises: ExerciseRow[];
 }
 
-/**
- * Exercise table showing Plan/Actual/Diff columns
- *
- * Displays planned exercises from program nodes and actual workout entries
- * with diff status indicators.
- */
 export function ExerciseTable({ exercises }: ExerciseTableProps) {
   if (exercises.length === 0) {
     return (
@@ -60,32 +53,19 @@ export function ExerciseTable({ exercises }: ExerciseTableProps) {
       </TableHeader>
       <TableBody>
         {exercises.map((row, idx) => {
-          const planSnapshot = row.plan
-            ? {
-                target_sets: row.plan.sets,
-                target_reps: row.plan.reps,
-                target_load_kg: row.plan.load,
-                target_rpe: row.plan.rpe,
-              }
-            : null;
-
-          const diff = calculateDiff(planSnapshot, row.entry);
+          const diff = calculateDiff(row.planEntry, row.logEntry);
 
           return (
             <TableRow key={idx}>
-              <TableCell className="font-medium">
-                <div className="flex items-center gap-2">
-                  <span>{row.exerciseName}</span>
-                  <EntryTypeBadge entryType={row.entryType} />
-                </div>
-              </TableCell>
+              <TableCell className="font-medium">{row.exerciseName}</TableCell>
               <TableCell className="text-center">
                 {row.plan ? (
                   <div className="space-y-1 text-sm">
                     <div>
-                      {row.plan.sets}×{row.plan.reps} @ {row.plan.load}kg
+                      {row.plan.sets}x{row.plan.reps}
+                      {row.plan.load_kg !== undefined && ` @ ${row.plan.load_kg}kg`}
                     </div>
-                    {row.plan.rpe && (
+                    {row.plan.rpe !== undefined && (
                       <div className="text-xs text-muted-foreground">RPE {row.plan.rpe}</div>
                     )}
                   </div>
@@ -97,9 +77,10 @@ export function ExerciseTable({ exercises }: ExerciseTableProps) {
                 {row.actual ? (
                   <div className="space-y-1 text-sm">
                     <div>
-                      {row.actual.sets}×{row.actual.reps} @ {row.actual.load}kg
+                      {row.actual.sets}x{row.actual.reps}
+                      {row.actual.load_kg !== undefined && ` @ ${row.actual.load_kg}kg`}
                     </div>
-                    {row.actual.rpe && (
+                    {row.actual.rpe !== undefined && (
                       <div className="text-xs text-muted-foreground">RPE {row.actual.rpe}</div>
                     )}
                   </div>

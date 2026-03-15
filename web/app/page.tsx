@@ -1,6 +1,7 @@
 'use client';
 
 import { ExportButton } from '@/components/export/ExportButton';
+import { LogModal } from '@/components/log-input/LogModal';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -11,36 +12,31 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { WeekView } from '@/components/week-view/WeekView';
-import { WorkoutModal } from '@/components/workout-input/WorkoutModal';
-import { useProgram, usePrograms } from '@/lib/hooks/usePrograms';
-import { useCreateWorkout, useWorkouts } from '@/lib/hooks/useWorkouts';
-import { generateProgramContext } from '@/lib/utils/programContext';
-import { useProgramStore } from '@/stores/program';
-import type { ProgramEntry, WorkoutEntryCreate } from '@/types/api';
+import { useCreateLog, useLogs } from '@/lib/hooks/useLogs';
+import { usePlan, usePlans } from '@/lib/hooks/usePlans';
+import { generatePlanContext } from '@/lib/utils/planContext';
+import { usePlanStore } from '@/stores/plan';
+import type { LogEntryCreate, PlanEntry } from '@/types/api';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
 export default function Home() {
-  const [workoutModalOpen, setWorkoutModalOpen] = useState(false);
-  const [selectedDayEntries, setSelectedDayEntries] = useState<ProgramEntry[] | undefined>();
-  const { selectedProgramId, setSelectedProgram } = useProgramStore();
+  const [logModalOpen, setLogModalOpen] = useState(false);
+  const [selectedDayEntries, setSelectedDayEntries] = useState<PlanEntry[] | undefined>();
+  const { selectedPlanId, setSelectedPlan } = usePlanStore();
 
-  // Fetch programs and selected program details
-  const { data: programsData, isLoading: programsLoading } = usePrograms();
-  const { data: selectedProgram, isLoading: selectedProgramLoading } =
-    useProgram(selectedProgramId);
-  const { data: workoutsData, isLoading: workoutsLoading } = useWorkouts();
-  const createWorkout = useCreateWorkout();
+  const { data: plansData, isLoading: plansLoading } = usePlans();
+  const { data: selectedPlan, isLoading: selectedPlanLoading } = usePlan(selectedPlanId);
+  const { data: logsData, isLoading: logsLoading } = useLogs();
+  const createLog = useCreateLog();
 
-  // Use selected program or fall back to first program
-  const programs = programsData?.data || [];
-  const program = selectedProgram || (programs.length > 0 ? programs[0] : null);
-  const workouts = workoutsData?.data || [];
+  const plans = plansData?.data || [];
+  const plan = selectedPlan || (plans.length > 0 ? plans[0] : null);
+  const logs = logsData?.data || [];
 
-  // Get first day's entries for quick workout recording
   const firstDayEntries = useMemo(() => {
-    const entries = program?.entries;
+    const entries = plan?.entries;
     if (!entries || entries.length === 0) return undefined;
     const firstEntry = entries[0];
     if (!firstEntry) return undefined;
@@ -48,39 +44,33 @@ export default function Home() {
     const weekKey = firstEntry.metadata?.week;
     if (!dayKey) return [firstEntry];
     return entries.filter((e) => e.metadata?.day === dayKey && e.metadata?.week === weekKey);
-  }, [program]);
+  }, [plan]);
 
-  // Generate program context for the selected day entries
-  const selectedProgramContext = useMemo(() => {
+  const selectedPlanContext = useMemo(() => {
     const refEntry = selectedDayEntries?.[0];
-    if (!refEntry || !program) return undefined;
-    return generateProgramContext(refEntry.id, program);
-  }, [selectedDayEntries, program]);
+    if (!refEntry || !plan) return undefined;
+    return generatePlanContext(refEntry.id, plan);
+  }, [selectedDayEntries, plan]);
 
-  const handleSaveWorkout = async (
-    entries: WorkoutEntryCreate[],
-    notes: string,
-    programContext?: string[]
-  ) => {
-    await createWorkout.mutateAsync({
-      timestamp: new Date().toISOString(),
+  const handleSaveLog = async (entries: LogEntryCreate[], notes: string) => {
+    await createLog.mutateAsync({
+      performed_at: new Date().toISOString(),
+      plan_id: plan?.id,
       notes,
       entries,
-      program_node_id: selectedDayEntries?.[0]?.id,
-      program_context: programContext,
     });
   };
 
-  const handleProgramChange = (programId: string) => {
-    setSelectedProgram(programId);
+  const handlePlanChange = (planId: string) => {
+    setSelectedPlan(planId);
   };
 
-  const handleOpenWorkoutModal = () => {
+  const handleOpenLogModal = () => {
     setSelectedDayEntries(firstDayEntries);
-    setWorkoutModalOpen(true);
+    setLogModalOpen(true);
   };
 
-  if (programsLoading || selectedProgramLoading || workoutsLoading) {
+  if (plansLoading || selectedPlanLoading || logsLoading) {
     return (
       <main className="container mx-auto p-6 space-y-4">
         <Skeleton className="h-12 w-[300px]" />
@@ -89,18 +79,18 @@ export default function Home() {
     );
   }
 
-  if (programs.length === 0) {
+  if (plans.length === 0) {
     return (
       <main className="container mx-auto p-6">
         <div className="text-center py-12">
           <h1 className="text-3xl font-bold mb-4">Welcome to Rx</h1>
           <p className="text-muted-foreground mb-6">
-            Create your first training program to get started.
+            Create your first training plan to get started.
           </p>
-          <Link href="/programs/new">
+          <Link href="/plans/new">
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Create Program
+              Create Plan
             </Button>
           </Link>
         </div>
@@ -113,13 +103,13 @@ export default function Home() {
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold">Training Week</h1>
-          {programs.length > 1 && (
-            <Select value={program?.id || ''} onValueChange={handleProgramChange}>
+          {plans.length > 1 && (
+            <Select value={plan?.id || ''} onValueChange={handlePlanChange}>
               <SelectTrigger className="w-[250px]">
-                <SelectValue placeholder="Select program" />
+                <SelectValue placeholder="Select plan" />
               </SelectTrigger>
               <SelectContent>
-                {programs.map((p) => (
+                {plans.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
                     {p.name}
                   </SelectItem>
@@ -127,27 +117,25 @@ export default function Home() {
               </SelectContent>
             </Select>
           )}
-          {programs.length === 1 && program && (
-            <p className="text-muted-foreground">Program: {program.name}</p>
-          )}
+          {plans.length === 1 && plan && <p className="text-muted-foreground">Plan: {plan.name}</p>}
         </div>
         <div className="flex items-center gap-2">
-          <ExportButton workouts={workouts} program={program || null} />
-          <Button onClick={handleOpenWorkoutModal}>
+          <ExportButton logs={logs} plan={plan || null} />
+          <Button onClick={handleOpenLogModal}>
             <Plus className="h-4 w-4 mr-2" />
-            Record Workout
+            Record Log
           </Button>
         </div>
       </div>
 
-      <WeekView program={program || null} workouts={workouts} />
+      <WeekView plan={plan || null} logs={logs} />
 
-      <WorkoutModal
-        open={workoutModalOpen}
-        onOpenChange={setWorkoutModalOpen}
+      <LogModal
+        open={logModalOpen}
+        onOpenChange={setLogModalOpen}
         dayEntries={selectedDayEntries}
-        programContext={selectedProgramContext}
-        onSave={handleSaveWorkout}
+        planContext={selectedPlanContext}
+        onSave={handleSaveLog}
       />
     </main>
   );

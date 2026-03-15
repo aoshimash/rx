@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Rx API
-  version: 0.1.0
+  version: 0.2.0
 servers:
   - url: http://localhost:8080/api/v1
 
@@ -10,93 +10,80 @@ security:
   - bearerAuth: []
 
 paths:
-  /workouts:
+  /plans:
     get:
-      summary: List workouts
-      operationId: listWorkouts
-      tags: [Workout]
+      summary: List plans
+      operationId: listPlans
+      tags: [Plan]
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/After'
-        - name: timestamp_from
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Filter workouts at or after this timestamp
-        - name: timestamp_to
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Filter workouts before this timestamp
       responses:
         '200':
-          description: Paginated list of workouts
+          description: Paginated list of plans
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkoutListResponse'
+                $ref: '#/components/schemas/PlanListResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
     post:
-      summary: Create workout
-      operationId: createWorkout
-      tags: [Workout]
+      summary: Create plan
+      operationId: createPlan
+      tags: [Plan]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WorkoutCreate'
+              $ref: '#/components/schemas/PlanCreate'
       responses:
         '201':
-          description: Workout created
+          description: Plan created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Workout'
+                $ref: '#/components/schemas/Plan'
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /workouts/{id}:
+  /plans/{id}:
     parameters:
-      - $ref: '#/components/parameters/WorkoutId'
+      - $ref: '#/components/parameters/PlanId'
     get:
-      summary: Get workout by ID
-      operationId: getWorkout
-      tags: [Workout]
+      summary: Get plan by ID
+      operationId: getPlan
+      tags: [Plan]
       responses:
         '200':
-          description: Workout found (includes all entries)
+          description: Plan found (includes all entries)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Workout'
+                $ref: '#/components/schemas/Plan'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
     put:
-      summary: Update workout
-      operationId: updateWorkout
-      tags: [Workout]
+      summary: Update plan
+      operationId: updatePlan
+      tags: [Plan]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WorkoutCreate'
+              $ref: '#/components/schemas/PlanCreate'
       responses:
         '200':
-          description: Workout updated
+          description: Plan updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Workout'
+                $ref: '#/components/schemas/Plan'
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -104,104 +91,12 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
     delete:
-      summary: Delete workout
-      operationId: deleteWorkout
-      tags: [Workout]
+      summary: Delete plan
+      operationId: deletePlan
+      tags: [Plan]
       responses:
         '204':
-          description: Workout deleted (entries cascade deleted)
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /exercises:
-    get:
-      summary: List exercises
-      operationId: listExercises
-      tags: [Exercise]
-      parameters:
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/After'
-      responses:
-        '200':
-          description: Paginated list of exercises
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ExerciseListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-    post:
-      summary: Create exercise
-      operationId: createExercise
-      tags: [Exercise]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ExerciseCreate'
-      responses:
-        '201':
-          description: Exercise created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exercise'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  /exercises/{id}:
-    parameters:
-      - $ref: '#/components/parameters/ExerciseId'
-    get:
-      summary: Get exercise by ID
-      operationId: getExercise
-      tags: [Exercise]
-      responses:
-        '200':
-          description: Exercise found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exercise'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    put:
-      summary: Update exercise
-      operationId: updateExercise
-      tags: [Exercise]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ExerciseCreate'
-      responses:
-        '200':
-          description: Exercise updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exercise'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    delete:
-      summary: Delete exercise
-      operationId: deleteExercise
-      tags: [Exercise]
-      responses:
-        '204':
-          description: Exercise deleted
+          description: Plan deleted (entries cascade deleted)
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -209,80 +104,93 @@ paths:
         '409':
           $ref: '#/components/responses/Conflict'
 
-  /programs:
+  /logs:
     get:
-      summary: List programs
-      operationId: listPrograms
-      tags: [Program]
+      summary: List logs
+      operationId: listLogs
+      tags: [Log]
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/After'
+        - name: performed_at_from
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Filter logs at or after this timestamp
+        - name: performed_at_to
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Filter logs before this timestamp
       responses:
         '200':
-          description: Paginated list of programs
+          description: Paginated list of logs
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProgramListResponse'
+                $ref: '#/components/schemas/LogListResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
+
     post:
-      summary: Create program
-      operationId: createProgram
-      tags: [Program]
+      summary: Create log
+      operationId: createLog
+      tags: [Log]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ProgramCreate'
+              $ref: '#/components/schemas/LogCreate'
       responses:
         '201':
-          description: Program created
+          description: Log created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Program'
+                $ref: '#/components/schemas/Log'
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /programs/{id}:
+  /logs/{id}:
     parameters:
-      - $ref: '#/components/parameters/ProgramId'
+      - $ref: '#/components/parameters/LogId'
     get:
-      summary: Get program by ID
-      operationId: getProgram
-      tags: [Program]
+      summary: Get log by ID
+      operationId: getLog
+      tags: [Log]
       responses:
         '200':
-          description: Program found (includes all entries)
+          description: Log found (includes all entries)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Program'
+                $ref: '#/components/schemas/Log'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
     put:
-      summary: Update program
-      operationId: updateProgram
-      tags: [Program]
+      summary: Update log
+      operationId: updateLog
+      tags: [Log]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ProgramCreate'
+              $ref: '#/components/schemas/LogCreate'
       responses:
         '200':
-          description: Program updated
+          description: Log updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Program'
+                $ref: '#/components/schemas/Log'
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -290,123 +198,12 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
     delete:
-      summary: Delete program
-      operationId: deleteProgram
-      tags: [Program]
+      summary: Delete log
+      operationId: deleteLog
+      tags: [Log]
       responses:
         '204':
-          description: Program deleted (entries cascade deleted)
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-
-  /telemetry:
-    get:
-      summary: List telemetry points
-      operationId: listTelemetryPoints
-      tags: [Telemetry]
-      parameters:
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/After'
-        - name: metric_name
-          in: query
-          schema:
-            type: string
-          description: Filter by metric name
-        - name: timestamp_from
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Filter points at or after this timestamp
-        - name: timestamp_to
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Filter points before this timestamp
-      responses:
-        '200':
-          description: Paginated list of telemetry points
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TelemetryPointListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-    post:
-      summary: Create telemetry point
-      operationId: createTelemetryPoint
-      tags: [Telemetry]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TelemetryPointCreate'
-      responses:
-        '201':
-          description: Telemetry point created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TelemetryPoint'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  /telemetry/{id}:
-    parameters:
-      - $ref: '#/components/parameters/TelemetryPointId'
-    get:
-      summary: Get telemetry point by ID
-      operationId: getTelemetryPoint
-      tags: [Telemetry]
-      responses:
-        '200':
-          description: Telemetry point found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TelemetryPoint'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    put:
-      summary: Update telemetry point
-      operationId: updateTelemetryPoint
-      tags: [Telemetry]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TelemetryPointCreate'
-      responses:
-        '200':
-          description: Telemetry point updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TelemetryPoint'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    delete:
-      summary: Delete telemetry point
-      operationId: deleteTelemetryPoint
-      tags: [Telemetry]
-      responses:
-        '204':
-          description: Telemetry point deleted
+          description: Log deleted (entries cascade deleted)
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -418,7 +215,7 @@ paths:
       description: |
         Generates a pre-signed URL for uploading a video file directly to object storage.
         The client should use this URL to upload the video via HTTP PUT.
-        After successful upload, include the returned object_key in the WorkoutEntry.
+        After successful upload, include the returned object_key in the LogEntry.
       operationId: generateVideoUploadURL
       tags: [Video]
       requestBody:
@@ -516,41 +313,23 @@ components:
         type: string
       description: Cursor for pagination (from previous response)
 
-    ExerciseId:
+    PlanId:
       name: id
       in: path
       required: true
       schema:
         type: string
         format: uuid
-      description: Exercise ID
+      description: Plan ID
 
-    WorkoutId:
+    LogId:
       name: id
       in: path
       required: true
       schema:
         type: string
         format: uuid
-      description: Workout ID
-
-    ProgramId:
-      name: id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-      description: Program ID
-
-    TelemetryPointId:
-      name: id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-      description: Telemetry point ID
+      description: Log ID
 
   # ========================================
   # Responses
@@ -597,10 +376,10 @@ components:
             $ref: '#/components/schemas/Error'
           example:
             code: CONFLICT
-            message: Cannot delete exercise - referenced by workout entries
+            message: Cannot delete plan - referenced by logs
             details:
               blocking_references:
-                - type: workout_entry
+                - type: log
                   count: 5
 
   # ========================================
@@ -608,9 +387,9 @@ components:
   # ========================================
   schemas:
     # ========================================
-    # Exercise
+    # Plan
     # ========================================
-    Exercise:
+    Plan:
       type: object
       required:
         - id
@@ -621,32 +400,25 @@ components:
         id:
           type: string
           format: uuid
-          description: Unique identifier
         name:
           type: string
           minLength: 1
           maxLength: 200
-          description: Canonical exercise name
         description:
           type: string
           maxLength: 2000
-          description: Optional description
-        aliases:
+        notes:
+          type: string
+          maxLength: 5000
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Free-form JSON metadata
+        entries:
           type: array
           items:
-            type: string
-          description: Alternative names for matching
-        muscle_groups:
-          type: array
-          items:
-            type: string
-          description: Target muscle groups
-        load_increment:
-          type: number
-          format: double
-          minimum: 0
-          exclusiveMinimum: true
-          description: Minimum weight increment (kg)
+            $ref: '#/components/schemas/PlanEntry'
+          description: Training prescription entries
         created_at:
           type: string
           format: date-time
@@ -654,7 +426,7 @@ components:
           type: string
           format: date-time
 
-    ExerciseCreate:
+    PlanCreate:
       type: object
       required:
         - name
@@ -666,188 +438,47 @@ components:
         description:
           type: string
           maxLength: 2000
-        aliases:
-          type: array
-          items:
-            type: string
-        muscle_groups:
-          type: array
-          items:
-            type: string
-        load_increment:
-          type: number
-          format: double
-          minimum: 0
-          exclusiveMinimum: true
-
-    # ========================================
-    # Workout
-    # ========================================
-    Workout:
-      type: object
-      required:
-        - id
-        - timestamp
-        - entries
-        - created_at
-        - updated_at
-      properties:
-        id:
-          type: string
-          format: uuid
-        timestamp:
-          type: string
-          format: date-time
-          description: When the session occurred
-        session_start:
-          type: string
-          format: date-time
-          description: Precise start time
-        session_end:
-          type: string
-          format: date-time
-          description: Precise end time
-        body_weight_kg:
-          type: number
-          format: double
-          minimum: 0
-          exclusiveMinimum: true
-          description: Body weight at session (kg)
-        fatigue_level:
-          type: integer
-          minimum: 1
-          maximum: 5
-          description: Subjective fatigue (1=fresh, 5=very fatigued)
-        sleep_hours:
-          type: number
-          format: double
-          minimum: 0
-          maximum: 24
-          description: Sleep before session (hours)
-        condition_notes:
-          type: string
-          maxLength: 2000
-          description: Freeform condition notes
-        program_node_id:
-          type: string
-          format: uuid
-          description: Link to planned day/block
-        program_context:
-          type: array
-          items:
-            type: string
-          description: Hierarchy path snapshot (e.g., ["Cycle 1", "Week 3", "Day 2"])
         notes:
           type: string
           maxLength: 5000
-          description: General session notes
+        metadata:
+          type: object
+          additionalProperties: true
         entries:
           type: array
           items:
-            $ref: '#/components/schemas/WorkoutEntry'
-          minItems: 1
-          description: Performed entries (ordered)
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
+            $ref: '#/components/schemas/PlanEntryCreate'
+          maxItems: 1000
 
-    WorkoutCreate:
-      type: object
-      required:
-        - timestamp
-        - entries
-      properties:
-        timestamp:
-          type: string
-          format: date-time
-        session_start:
-          type: string
-          format: date-time
-        session_end:
-          type: string
-          format: date-time
-        body_weight_kg:
-          type: number
-          format: double
-          minimum: 0
-          exclusiveMinimum: true
-        fatigue_level:
-          type: integer
-          minimum: 1
-          maximum: 5
-        sleep_hours:
-          type: number
-          format: double
-          minimum: 0
-          maximum: 24
-        condition_notes:
-          type: string
-          maxLength: 2000
-        program_node_id:
-          type: string
-          format: uuid
-        program_context:
-          type: array
-          items:
-            type: string
-        notes:
-          type: string
-          maxLength: 5000
-        entries:
-          type: array
-          items:
-            $ref: '#/components/schemas/WorkoutEntryCreate'
-          minItems: 1
-
-    # ========================================
-    # WorkoutEntry
-    # ========================================
-    WorkoutEntry:
+    PlanEntry:
       type: object
       required:
         - id
-        - workout_id
+        - plan_id
         - order
-        - exercise_id
-        - sets
-        - reps
-        - load_kg
-        - rpe
+        - exercise_name
       properties:
         id:
           type: string
           format: uuid
-        workout_id:
+        plan_id:
           type: string
           format: uuid
         order:
           type: integer
           minimum: 0
-          description: Position in workout
-        exercise_id:
+          description: Position in plan
+        exercise_name:
           type: string
-          format: uuid
-          description: Exercise performed
-        display_name:
-          type: string
+          minLength: 1
           maxLength: 200
-          description: Override display name
-        entry_type:
-          type: string
-          maxLength: 50
-          nullable: true
-          description: Entry type (e.g., top, main, backoff). User-defined values allowed.
+          description: Exercise name (plain string)
         sets:
           type: integer
           minimum: 1
-          description: Number of sets performed
         reps:
           type: integer
           minimum: 1
-          description: Reps per set
         load_kg:
           type: number
           format: double
@@ -858,60 +489,27 @@ components:
           minimum: 1
           maximum: 10
           description: Rate of Perceived Exertion
-        entry_start:
-          type: string
-          format: date-time
-        entry_end:
-          type: string
-          format: date-time
-        planned_rest_seconds:
-          type: integer
-          minimum: 0
-          description: Planned rest between sets
-        performed_rest_seconds:
-          type: integer
-          minimum: 0
-          description: Actual rest between sets
-        per_set_rest_overrides:
-          type: array
-          items:
-            type: integer
-            minimum: 0
-          description: Per-set rest overrides (seconds)
-        program_node_id:
-          type: string
-          format: uuid
-          description: Link to prescription
-        plan_snapshot:
-          $ref: '#/components/schemas/PlanSnapshot'
         notes:
           type: string
           maxLength: 2000
-        video_object_key:
-          type: string
-          maxLength: 500
-          description: Object key for uploaded video in storage (from upload-url response)
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Free-form JSON metadata
 
-    WorkoutEntryCreate:
+    PlanEntryCreate:
       type: object
       required:
-        - exercise_id
-        - sets
-        - reps
-        - load_kg
-        - rpe
+        - exercise_name
+        - order
       properties:
-        exercise_id:
+        exercise_name:
           type: string
-          format: uuid
-        display_name:
-          type: string
+          minLength: 1
           maxLength: 200
-        entry_type:
-          type: string
-          maxLength: 50
-          nullable: true
-          description: Entry type (e.g., top, main, backoff). User-defined values allowed.
+        order:
+          type: integer
+          minimum: 0
         sets:
           type: integer
           minimum: 1
@@ -926,97 +524,50 @@ components:
           type: integer
           minimum: 1
           maximum: 10
-        entry_start:
-          type: string
-          format: date-time
-        entry_end:
-          type: string
-          format: date-time
-        planned_rest_seconds:
-          type: integer
-          minimum: 0
-        performed_rest_seconds:
-          type: integer
-          minimum: 0
-        per_set_rest_overrides:
-          type: array
-          items:
-            type: integer
-            minimum: 0
-        program_node_id:
-          type: string
-          format: uuid
-        plan_snapshot:
-          $ref: '#/components/schemas/PlanSnapshot'
         notes:
           type: string
           maxLength: 2000
-        video_object_key:
-          type: string
-          maxLength: 500
-          description: Object key for uploaded video in storage (from upload-url response)
+        metadata:
+          type: object
+          additionalProperties: true
 
     # ========================================
-    # PlanSnapshot
+    # Log
     # ========================================
-    PlanSnapshot:
-      type: object
-      description: Snapshot of planned values at execution time
-      properties:
-        program_node_id:
-          type: string
-          format: uuid
-          description: Reference to original prescription
-        target_sets:
-          type: integer
-          minimum: 1
-        target_reps:
-          type: integer
-          minimum: 1
-        target_rpe:
-          type: integer
-          minimum: 1
-          maximum: 10
-        target_load_kg:
-          type: number
-          format: double
-          minimum: 0
-        percent_1rm:
-          type: number
-          format: double
-          minimum: 0
-          maximum: 1
-          description: Target %1RM (0.0-1.0, e.g., 0.75 = 75%)
-        planned_rest_seconds:
-          type: integer
-          minimum: 0
-
-    # ========================================
-    # Program
-    # ========================================
-    Program:
+    Log:
       type: object
       required:
         - id
-        - name
+        - performed_at
+        - entries
         - created_at
         - updated_at
       properties:
         id:
           type: string
           format: uuid
-        name:
+        plan_id:
           type: string
-          minLength: 1
-          maxLength: 200
-        description:
+          format: uuid
+          description: Optional reference to the training plan
+        performed_at:
           type: string
-          maxLength: 2000
+          format: date-time
+          description: When the training was performed
+        notes:
+          type: string
+          maxLength: 5000
+          description: General session notes
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Free-form JSON metadata (e.g., body_weight_kg, fatigue_level)
         entries:
           type: array
           items:
-            $ref: '#/components/schemas/ProgramEntry'
-          description: Flat list of training prescription entries
+            $ref: '#/components/schemas/LogEntry'
+          minItems: 1
+          description: Performed entries (ordered)
         created_at:
           type: string
           format: date-time
@@ -1024,206 +575,118 @@ components:
           type: string
           format: date-time
 
-    ProgramCreate:
+    LogCreate:
       type: object
       required:
-        - name
+        - performed_at
+        - entries
       properties:
-        name:
+        plan_id:
           type: string
-          minLength: 1
-          maxLength: 200
-        description:
+          format: uuid
+        performed_at:
           type: string
-          maxLength: 2000
+          format: date-time
+        notes:
+          type: string
+          maxLength: 5000
+        metadata:
+          type: object
+          additionalProperties: true
         entries:
           type: array
           items:
-            $ref: '#/components/schemas/ProgramEntryCreate'
-          maxItems: 1000
+            $ref: '#/components/schemas/LogEntryCreate'
+          minItems: 1
 
-    # ========================================
-    # ProgramEntry
-    # ========================================
-    ProgramEntry:
+    LogEntry:
       type: object
       required:
         - id
-        - program_id
-        - name
+        - log_id
         - order
+        - exercise_name
       properties:
         id:
           type: string
           format: uuid
-        program_id:
+        log_id:
           type: string
           format: uuid
-        name:
-          type: string
-          minLength: 1
-          maxLength: 200
-          description: Entry label (e.g., "Squat - Top Set")
         order:
           type: integer
           minimum: 0
-          description: Global position in program
-        metadata:
-          type: object
-          additionalProperties: true
-          description: |
-            Free-form JSON for contextual grouping.
-            Common keys: week (string), day (string).
-            Example: {"week": "Week 1", "day": "Day A"}
-        exercise_id:
-          type: string
-          format: uuid
-        target_sets:
-          type: integer
-          minimum: 1
-        target_reps:
-          type: integer
-          minimum: 1
-        target_rpe:
-          type: integer
-          minimum: 1
-          maximum: 10
-        percent_1rm:
-          type: number
-          format: double
-          minimum: 0
-          maximum: 1
-        planned_rest_seconds:
-          type: integer
-          minimum: 0
-        muscle_groups:
-          type: array
-          items:
-            type: string
-        notes:
-          type: string
-          maxLength: 2000
-
-    ProgramEntryCreate:
-      type: object
-      required:
-        - name
-        - order
-      properties:
-        name:
+          description: Position in log
+        exercise_name:
           type: string
           minLength: 1
           maxLength: 200
-        order:
+          description: Exercise name (plain string)
+        sets:
           type: integer
+          minimum: 1
+        reps:
+          type: integer
+          minimum: 1
+        load_kg:
+          type: number
+          format: double
           minimum: 0
-        metadata:
-          type: object
-          additionalProperties: true
-          description: |
-            Free-form JSON for contextual grouping.
-            Common keys: week (string), day (string).
-        exercise_id:
-          type: string
-          format: uuid
-        target_sets:
-          type: integer
-          minimum: 1
-        target_reps:
-          type: integer
-          minimum: 1
-        target_rpe:
+          description: Weight in kilograms (0.1 precision)
+        rpe:
           type: integer
           minimum: 1
           maximum: 10
-        percent_1rm:
-          type: number
-          format: double
-          minimum: 0
-          maximum: 1
-        planned_rest_seconds:
-          type: integer
-          minimum: 0
-        muscle_groups:
-          type: array
-          items:
-            type: string
+          description: Rate of Perceived Exertion
         notes:
           type: string
           maxLength: 2000
+        video_object_key:
+          type: string
+          maxLength: 500
+          description: Object key for uploaded video in storage (from upload-url response)
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Free-form JSON metadata
 
-    # ========================================
-    # TelemetryPoint
-    # ========================================
-    TelemetryPoint:
+    LogEntryCreate:
       type: object
       required:
-        - id
-        - timestamp
-        - metric_name
-        - value
-        - unit
-        - created_at
+        - exercise_name
       properties:
-        id:
-          type: string
-          format: uuid
-        timestamp:
-          type: string
-          format: date-time
-          description: When metric was recorded
-        metric_name:
+        exercise_name:
           type: string
           minLength: 1
-          maxLength: 100
-          description: Metric identifier
-        value:
+          maxLength: 200
+        sets:
+          type: integer
+          minimum: 1
+        reps:
+          type: integer
+          minimum: 1
+        load_kg:
           type: number
           format: double
-          description: Numeric value
-        unit:
+          minimum: 0
+        rpe:
+          type: integer
+          minimum: 1
+          maximum: 10
+        notes:
           type: string
-          minLength: 1
-          maxLength: 50
-          description: Unit of measurement
-        workout_id:
+          maxLength: 2000
+        video_object_key:
           type: string
-          format: uuid
-          description: Optional workout link
-        created_at:
-          type: string
-          format: date-time
-
-    TelemetryPointCreate:
-      type: object
-      required:
-        - timestamp
-        - metric_name
-        - value
-        - unit
-      properties:
-        timestamp:
-          type: string
-          format: date-time
-        metric_name:
-          type: string
-          minLength: 1
-          maxLength: 100
-        value:
-          type: number
-          format: double
-        unit:
-          type: string
-          minLength: 1
-          maxLength: 50
-        workout_id:
-          type: string
-          format: uuid
+          maxLength: 500
+        metadata:
+          type: object
+          additionalProperties: true
 
     # ========================================
     # Pagination Response Types
     # ========================================
-    ExerciseListResponse:
+    PlanListResponse:
       type: object
       required:
         - data
@@ -1232,14 +695,14 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/Exercise'
+            $ref: '#/components/schemas/Plan'
         next_cursor:
           type: string
           nullable: true
         has_more:
           type: boolean
 
-    WorkoutListResponse:
+    LogListResponse:
       type: object
       required:
         - data
@@ -1248,39 +711,7 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/Workout'
-        next_cursor:
-          type: string
-          nullable: true
-        has_more:
-          type: boolean
-
-    ProgramListResponse:
-      type: object
-      required:
-        - data
-        - has_more
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Program'
-        next_cursor:
-          type: string
-          nullable: true
-        has_more:
-          type: boolean
-
-    TelemetryPointListResponse:
-      type: object
-      required:
-        - data
-        - has_more
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/TelemetryPoint'
+            $ref: '#/components/schemas/Log'
         next_cursor:
           type: string
           nullable: true
@@ -1326,7 +757,7 @@ components:
           description: Pre-signed URL for uploading the video via HTTP PUT
         object_key:
           type: string
-          description: Object key to be stored in WorkoutEntry.video_object_key after successful upload
+          description: Object key to be stored in LogEntry.video_object_key after successful upload
         expires_in:
           type: integer
           description: Seconds until the upload URL expires
@@ -1340,7 +771,7 @@ components:
         object_key:
           type: string
           maxLength: 500
-          description: Object key from WorkoutEntry.video_object_key
+          description: Object key from LogEntry.video_object_key
 
     VideoDownloadURLResponse:
       type: object
