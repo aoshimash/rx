@@ -1,10 +1,8 @@
 # Rx Philosophy - Detailed Reference
 
-## The "Dumb Backend" Principle (Extended)
+## What the Backend Does
 
-### What It Means
-
-Rx is a telemetry backend for physical exertion data. It stores and retrieves workout records without business logic for health calculations or recommendations.
+Rx is a plan-driven training management system. The backend stores programs (plans) and workouts (actuals), and exposes them via API and CLI for both human clients and AI agents.
 
 ### Prohibited Features
 
@@ -15,17 +13,27 @@ The backend MUST NOT:
 3. Make recommendations about training intensity
 4. Compare users or create leaderboards
 5. Implement gamification (streaks, badges, achievements)
-6. Store or process subjective feelings (mood, energy level)
 
 ### Permitted Features
 
 The backend MAY:
 
-1. Store raw telemetry data (intensity, volume, duration, timestamp)
-2. Provide CRUD operations for workout records
-3. Expose time-series data for external analysis
-4. Implement filtering and aggregation queries
-5. Serve data to AI Agents for analysis (via MCP)
+1. Store and retrieve Programs (training plans)
+2. Store and retrieve Workouts (actual execution records)
+3. Provide CRUD operations for all resources
+4. Expose time-series telemetry data for external analysis
+5. Implement filtering and aggregation queries
+6. Serve data to AI Agents for analysis (via API or CLI)
+
+### Interface Requirements
+
+Rx is a full-stack project. All of the following are first-class interfaces:
+- **Web** — Full-featured browser client
+- **Mobile** — Full-featured native mobile client
+- **REST API** — For AI agents and automation
+- **CLI** — For scripting and local automation
+
+Every feature MUST be accessible via API (and ideally CLI). Web and Mobile may provide richer UX on top of that.
 
 ## Terminology Glossary
 
