@@ -6,8 +6,8 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/aoshimash/optel-workout/api/internal/domain"
-	"github.com/aoshimash/optel-workout/api/internal/middleware"
+	"github.com/aoshimash/rx/api/internal/domain"
+	"github.com/aoshimash/rx/api/internal/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )

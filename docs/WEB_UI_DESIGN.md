@@ -1,6 +1,6 @@
 # Web UI Design
 
-This document describes the UI design for OPTel Workout web application.
+This document describes the UI design for Rx web application.
 
 **Created**: 2026-01-30  
 **Status**: Draft

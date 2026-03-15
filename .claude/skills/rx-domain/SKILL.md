@@ -1,9 +1,9 @@
 ---
-name: optel-domain
-description: Domain models for OPTel project. Covers Workout, Program, and Telemetry entities with validation rules and relationships. Use when implementing entities, designing database schemas, writing API handlers, or when the code references Workout, Program, or Telemetry types.
+name: rx-domain
+description: Domain models for Rx project. Covers Workout, Program, and Telemetry entities with validation rules and relationships. Use when implementing entities, designing database schemas, writing API handlers, or when the code references Workout, Program, or Telemetry types.
 ---
 
-# OPTel Domain Models
+# Rx Domain Models
 
 ## Core Entities
 

@@ -1,10 +1,10 @@
 # Frontend Architecture
 
-This document describes the architecture decisions for OPTel Workout frontend applications.
+This document describes the architecture decisions for Rx frontend applications.
 
 ## Overview
 
-OPTel Workout has two frontend applications with distinct purposes:
+Rx has two frontend applications with distinct purposes:
 
 | Application | Purpose | Priority |
 |-------------|---------|----------|
@@ -82,7 +82,7 @@ packages/
 ## Project Structure
 
 ```
-optel-workout/
+rx/
 ├── api/                    # Go REST API (existing)
 ├── web/                    # Next.js Web application
 │   ├── app/                # App Router pages
@@ -127,7 +127,7 @@ optel-workout/
                            │ HTTP (Bearer Token)
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    OPTel Workout API                         │
+│                    Rx API                         │
 │                  http://localhost:8080/api/v1               │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -174,5 +174,5 @@ AI analysis will be integrated in phases:
 ## Related Documents
 
 - [AGENTS.md](../AGENTS.md) - AI agent guidance
-- [optel-frontend-standards](../.claude/skills/optel-frontend-standards/) - Coding standards
+- [rx-frontend-standards](../.claude/skills/rx-frontend-standards/) - Coding standards
 - [ARCHITECTURE.md](ARCHITECTURE.md) - Overall system architecture

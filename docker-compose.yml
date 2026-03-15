@@ -1,17 +1,17 @@
 services:
   postgres:
     image: postgres:18
-    container_name: optel-workout-postgres
+    container_name: rx-postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-optel}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-optel}
-      POSTGRES_DB: ${POSTGRES_DB:-optel_workout}
+      POSTGRES_USER: ${POSTGRES_USER:-rx}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rx}
+      POSTGRES_DB: ${POSTGRES_DB:-rx_workout}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-optel}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-rx}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,7 +21,7 @@ services:
     build:
       context: ./api
       dockerfile: Dockerfile
-    container_name: optel-workout-api
+    container_name: rx-api
     environment:
       - PORT=${PORT:-8080}
       - LOG_LEVEL=${LOG_LEVEL:-info}
@@ -31,7 +31,7 @@ services:
 
   minio:
     image: minio/minio:latest
-    container_name: optel-workout-minio
+    container_name: rx-minio
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
@@ -50,7 +50,7 @@ services:
 
   api-docs:
     image: scalarapi/api-reference:latest
-    container_name: optel-workout-api-docs
+    container_name: rx-api-docs
     ports:
       - "${API_DOCS_PORT:-8081}:8080"
     volumes:

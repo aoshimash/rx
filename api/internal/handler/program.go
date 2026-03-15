@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/aoshimash/optel-workout/api/internal/domain"
-	"github.com/aoshimash/optel-workout/api/internal/middleware"
-	"github.com/aoshimash/optel-workout/api/internal/repository"
+	"github.com/aoshimash/rx/api/internal/domain"
+	"github.com/aoshimash/rx/api/internal/middleware"
+	"github.com/aoshimash/rx/api/internal/repository"
 	"github.com/google/uuid"
 )
 

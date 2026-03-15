@@ -53,9 +53,9 @@ docker compose ps
 PostgreSQL connection details:
 - Host: `localhost`
 - Port: `5432` (configurable via `POSTGRES_PORT` environment variable)
-- User: `optel` (configurable via `POSTGRES_USER`)
-- Password: `optel` (configurable via `POSTGRES_PASSWORD`)
-- Database: `optel_workout` (configurable via `POSTGRES_DB`)
+- User: `rx` (configurable via `POSTGRES_USER`)
+- Password: `rx` (configurable via `POSTGRES_PASSWORD`)
+- Database: `rx_workout` (configurable via `POSTGRES_DB`)
 
 ### 4. Development Workflow
 
@@ -199,7 +199,7 @@ The "Try it" feature sends requests directly from your browser to the API server
 
 **Key Design:**
 - MCP Server runs on user's local machine (not on the backend server)
-- Communicates with OPTel API via HTTP
+- Communicates with Rx API via HTTP
 - Backend remains a pure REST API with no MCP-specific logic
 
 ## Workflow
@@ -265,7 +265,7 @@ When modifying domain models or OpenAPI specs:
 - [ ] Update tests
 - [ ] Run validation (`task validate-openapi`)
 
-**Note:** The domain reference (`.claude/skills/optel-domain/reference.md`) shows the **target state** or **reference implementation**, not a requirement to implement everything upfront. Use it as inspiration, but feel free to start simpler and build up.
+**Note:** The domain reference (`.claude/skills/rx-domain/reference.md`) shows the **target state** or **reference implementation**, not a requirement to implement everything upfront. Use it as inspiration, but feel free to start simpler and build up.
 
 ### Development Cycle
 
@@ -290,7 +290,7 @@ Start with the absolute minimum - just the OpenAPI info and a single endpoint:
 ```yaml
 openapi: 3.1.0
 info:
-  title: OPTel Workout API
+  title: Rx API
   version: 0.1.0
 servers:
   - url: http://localhost:8080/api/v1
@@ -815,7 +815,7 @@ go test -v ./internal/domain/...
 
 ### Writing Tests
 
-All tests must be table-driven. See `.claude/skills/optel-go-standards/reference.md` for examples.
+All tests must be table-driven. See `.claude/skills/rx-go-standards/reference.md` for examples.
 
 ## Docker
 
@@ -851,9 +851,9 @@ Docker Compose provides two services:
 - Image: `postgres:17`
 - Default port: `5432` (configurable via `POSTGRES_PORT`)
 - Environment variables:
-  - `POSTGRES_USER` (default: `optel`)
-  - `POSTGRES_PASSWORD` (default: `optel`)
-  - `POSTGRES_DB` (default: `optel_workout`)
+  - `POSTGRES_USER` (default: `rx`)
+  - `POSTGRES_PASSWORD` (default: `rx`)
+  - `POSTGRES_DB` (default: `rx_workout`)
 - Volume: `postgres_data` (persistent data storage)
 
 **Usage:**
@@ -915,13 +915,13 @@ HOST_PORT=8081 docker compose up -d api
 
 ```bash
 # Build production image (from api/ directory)
-docker build -t optel-workout:latest -f Dockerfile api
+docker build -t rx:latest -f Dockerfile api
 
 # Run production container
 docker run -p 8080:8080 \
   -e PORT=8080 \
   -e LOG_LEVEL=info \
-  optel-workout:latest
+  rx:latest
 
 # Test production container
 curl http://localhost:8080/api/v1/workouts
@@ -946,25 +946,25 @@ After building the production image, verify it works correctly:
 
 ```bash
 # Build the image
-docker build -t optel-workout:latest -f Dockerfile api
+docker build -t rx:latest -f Dockerfile api
 
 # Run the container
 docker run -d -p 8080:8080 \
   -e PORT=8080 \
   -e LOG_LEVEL=info \
-  --name optel-test \
-  optel-workout:latest
+  --name rx-test \
+  rx:latest
 
 # Wait a few seconds for startup, then test
 sleep 3
 curl http://localhost:8080/api/v1/workouts
 
 # Check logs
-docker logs optel-test
+docker logs rx-test
 
 # Clean up
-docker stop optel-test
-docker rm optel-test
+docker stop rx-test
+docker rm rx-test
 ```
 
 ## Troubleshooting

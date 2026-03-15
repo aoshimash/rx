@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aoshimash/optel-workout/api/internal/middleware"
-	"github.com/aoshimash/optel-workout/api/internal/storage"
+	"github.com/aoshimash/rx/api/internal/middleware"
+	"github.com/aoshimash/rx/api/internal/storage"
 )
 
 // mockStorageProvider implements storage.Provider for tests (storage configured but no real calls).

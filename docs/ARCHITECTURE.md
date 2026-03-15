@@ -2,7 +2,7 @@
 
 ## Overview
 
-OPTel Workout is an agent-native telemetry backend for workout (physical exertion) data. It follows Clean Architecture principles with a Schema-First API approach.
+Rx is an agent-native telemetry backend for workout (physical exertion) data. It follows Clean Architecture principles with a Schema-First API approach.
 
 ## System Context
 
@@ -19,7 +19,7 @@ OPTel Workout is an agent-native telemetry backend for workout (physical exertio
 ┌─────────────────────────────────────────────────────────────┐
 │                        Remote Server                         │
 │  ┌─────────────────────────────────────────────────────┐    │
-│  │              OPTel Workout API (REST)              │    │
+│  │              Rx API (REST)              │    │
 │  │              - Pure API, no MCP logic               │    │
 │  └──────────────────────────┬──────────────────────────┘    │
 │                             │                                │
@@ -63,7 +63,7 @@ OPTel Workout is an agent-native telemetry backend for workout (physical exertio
 ## Directory Structure
 
 ```
-optel-workout/
+rx/
 ├── api/                          # REST API (Go)
 │   ├── cmd/
 │   │   └── server/
@@ -149,7 +149,7 @@ optel-workout/
 
 - **Runs on user's local machine** (not on the backend server)
 - Distributed as Docker image or Python script
-- Communicates with the OPTel API via HTTP
+- Communicates with the Rx API via HTTP
 - Provides tools for AI agents to query and record workouts
 - Backend remains a pure REST API with no MCP-specific logic
 

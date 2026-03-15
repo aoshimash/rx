@@ -1,9 +1,9 @@
 ---
-name: optel-philosophy
-description: Core philosophy and constraints for OPTel project. Use when writing code, designing APIs, or making architectural decisions. Enforces "Dumb Backend" principle.
+name: rx-philosophy
+description: Core philosophy and constraints for Rx project. Use when writing code, designing APIs, or making architectural decisions. Enforces "Dumb Backend" principle.
 ---
 
-# OPTel Philosophy
+# Rx Philosophy
 
 ## Core Principles
 

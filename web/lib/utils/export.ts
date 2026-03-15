@@ -97,7 +97,7 @@ export function exportWorkoutsToCSV(
   }
 
   const csv = arrayToCSV(rows);
-  const filename = `optel-workouts-${new Date().toISOString().split('T')[0]}.csv`;
+  const filename = `rx-workouts-${new Date().toISOString().split('T')[0]}.csv`;
   downloadCSV(filename, csv);
 }
 
@@ -121,6 +121,6 @@ export function exportProgramToCSV(program: Program): void {
   }
 
   const csv = arrayToCSV(rows);
-  const filename = `optel-program-${program.name.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.csv`;
+  const filename = `rx-program-${program.name.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.csv`;
   downloadCSV(filename, csv);
 }

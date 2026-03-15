@@ -1,4 +1,4 @@
-# OPTel Frontend Standards - Detailed Reference
+# Rx Frontend Standards - Detailed Reference
 
 ## Web Directory Structure
 

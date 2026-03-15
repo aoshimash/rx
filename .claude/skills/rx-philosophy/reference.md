@@ -1,10 +1,10 @@
-# OPTel Philosophy - Detailed Reference
+# Rx Philosophy - Detailed Reference
 
 ## The "Dumb Backend" Principle (Extended)
 
 ### What It Means
 
-OPTel is a telemetry backend for physical exertion data. It stores and retrieves workout records without business logic for health calculations or recommendations.
+Rx is a telemetry backend for physical exertion data. It stores and retrieves workout records without business logic for health calculations or recommendations.
 
 ### Prohibited Features
 

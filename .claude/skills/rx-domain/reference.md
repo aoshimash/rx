@@ -1,4 +1,4 @@
-# OPTel Domain Models - Detailed Reference
+# Rx Domain Models - Detailed Reference
 
 ## Workout Entity
 

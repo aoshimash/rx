@@ -1,6 +1,6 @@
-# OPTel Workout Web Frontend
+# Rx Web Frontend
 
-Web application for OPTel Workout - training program planning, workout management, and data visualization.
+Web application for Rx - training program planning, workout management, and data visualization.
 
 ## Technology Stack
 
@@ -78,7 +78,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
 
 ## Conventions
 
-See [.claude/skills/optel-frontend-standards/](../.claude/skills/optel-frontend-standards/) for coding standards.
+See [.claude/skills/rx-frontend-standards/](../.claude/skills/rx-frontend-standards/) for coding standards.
 
 ## Related Documentation
 

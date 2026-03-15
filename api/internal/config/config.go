@@ -4,7 +4,7 @@ import (
 	"os"
 	"strconv"
 
-	s3storage "github.com/aoshimash/optel-workout/api/internal/storage/s3"
+	s3storage "github.com/aoshimash/rx/api/internal/storage/s3"
 )
 
 // Config holds application configuration
@@ -146,9 +146,9 @@ func loadDatabaseConfig() DatabaseConfig {
 	return DatabaseConfig{
 		Host:        getEnvOrDefault("DB_HOST", "localhost"),
 		Port:        getEnvOrDefaultInt("DB_PORT", 5432),
-		User:        getEnvOrDefault("DB_USER", "optel"),
-		Password:    getEnvOrDefault("DB_PASSWORD", "optel"),
-		Name:        getEnvOrDefault("DB_NAME", "optel_workout"),
+		User:        getEnvOrDefault("DB_USER", "rx"),
+		Password:    getEnvOrDefault("DB_PASSWORD", "rx"),
+		Name:        getEnvOrDefault("DB_NAME", "rx_workout"),
 		SSLMode:     getEnvOrDefault("DB_SSLMODE", "disable"),
 		MaxConns:    getEnvOrDefaultInt("DB_MAX_CONNS", 10),
 		MinConns:    getEnvOrDefaultInt("DB_MIN_CONNS", 2),

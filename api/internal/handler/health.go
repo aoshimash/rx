@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/aoshimash/optel-workout/api/internal/repository"
+	"github.com/aoshimash/rx/api/internal/repository"
 )
 
 // HealthHandler handles health check requests
