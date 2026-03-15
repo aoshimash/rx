@@ -40,16 +40,18 @@ export function ScheduleModal({
 
   // Count unique training days using composite week::day key to handle multi-week programs
   const entries = program.entries || [];
-  const totalDays =
-    new Set(
-      entries
-        .map((e) => {
-          const w = e.metadata?.week;
-          const d = e.metadata?.day;
-          return w !== undefined && d !== undefined ? `${w}::${d}` : undefined;
-        })
-        .filter((k): k is string => k !== undefined)
-    ).size || entries.length;
+  const weekDayCount = new Set(
+    entries
+      .map((e) => {
+        const w = e.metadata?.week;
+        const d = e.metadata?.day;
+        return w !== undefined && d !== undefined ? `${w}::${d}` : undefined;
+      })
+      .filter((k): k is string => k !== undefined)
+  ).size;
+  const dayOnlyCount = new Set(entries.map((e) => e.metadata?.day).filter((d) => d !== undefined))
+    .size;
+  const totalDays = weekDayCount || dayOnlyCount;
 
   const handleGenerate = () => {
     const options: ScheduleOptions = {

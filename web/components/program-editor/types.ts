@@ -19,7 +19,7 @@ export function weekGroupsToEntries(weekGroups: WeekGroup[]): ProgramEntryCreate
         entries.push({
           ...ex,
           order: order++,
-          metadata: { week: week.name, day: day.name },
+          metadata: { ...ex.metadata, week: week.name, day: day.name },
         });
       }
     }
