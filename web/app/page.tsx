@@ -45,8 +45,9 @@ export default function Home() {
     const firstEntry = entries[0];
     if (!firstEntry) return undefined;
     const dayKey = firstEntry.metadata?.day;
+    const weekKey = firstEntry.metadata?.week;
     if (!dayKey) return [firstEntry];
-    return entries.filter((e) => e.metadata?.day === dayKey);
+    return entries.filter((e) => e.metadata?.day === dayKey && e.metadata?.week === weekKey);
   }, [program]);
 
   // Generate program context for the selected day entries

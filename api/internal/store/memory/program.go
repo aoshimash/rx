@@ -64,7 +64,17 @@ func (s *programStore) GetByID(ctx context.Context, id uuid.UUID) (*domain.Progr
 func (s *programStore) copyProgram(p *domain.Program) *domain.Program {
 	cp := *p
 	cp.Entries = make([]domain.ProgramEntry, len(p.Entries))
-	copy(cp.Entries, p.Entries)
+	for i, e := range p.Entries {
+		cp.Entries[i] = e
+		if e.Metadata != nil {
+			cp.Entries[i].Metadata = make([]byte, len(e.Metadata))
+			copy(cp.Entries[i].Metadata, e.Metadata)
+		}
+		if e.MuscleGroups != nil {
+			cp.Entries[i].MuscleGroups = make([]string, len(e.MuscleGroups))
+			copy(cp.Entries[i].MuscleGroups, e.MuscleGroups)
+		}
+	}
 	return &cp
 }
 

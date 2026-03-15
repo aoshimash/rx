@@ -40,7 +40,8 @@ WITH RECURSIVE node_ancestors AS (
         muscle_groups,
         notes,
         NULL::text AS week_name,
-        NULL::text AS day_name
+        NULL::text AS day_name,
+        LPAD("order"::text, 10, '0') AS sort_path
     FROM program_nodes
     WHERE parent_id IS NULL
 
@@ -62,7 +63,8 @@ WITH RECURSIVE node_ancestors AS (
         pn.muscle_groups,
         pn.notes,
         CASE WHEN na.node_type = 'week' THEN na.name ELSE na.week_name END AS week_name,
-        CASE WHEN na.node_type = 'day'  THEN na.name ELSE na.day_name  END AS day_name
+        CASE WHEN na.node_type = 'day'  THEN na.name ELSE na.day_name  END AS day_name,
+        na.sort_path || '/' || LPAD(pn."order"::text, 10, '0') AS sort_path
     FROM program_nodes pn
     JOIN node_ancestors na ON na.id = pn.parent_id
 ),
@@ -83,7 +85,7 @@ SELECT
     id,
     program_id,
     name,
-    (ROW_NUMBER() OVER (PARTITION BY program_id ORDER BY "order" ASC, id ASC) - 1)::integer AS "order",
+    (ROW_NUMBER() OVER (PARTITION BY program_id ORDER BY sort_path ASC) - 1)::integer AS "order",
     CASE
         WHEN week_name IS NOT NULL OR day_name IS NOT NULL
             THEN jsonb_strip_nulls(jsonb_build_object('week', week_name, 'day', day_name))
