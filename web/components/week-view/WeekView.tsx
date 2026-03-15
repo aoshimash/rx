@@ -8,7 +8,7 @@ import { calculateDiff } from '@/lib/utils/diff';
 import { generateProgramContext } from '@/lib/utils/programContext';
 import type { DaySchedule } from '@/lib/utils/schedule';
 import { useScheduleStore } from '@/stores/schedule';
-import type { Program, ProgramNode, Workout } from '@/types/api';
+import type { Program, ProgramEntry, Workout } from '@/types/api';
 import { addWeeks, endOfWeek, format, startOfWeek } from 'date-fns';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -25,8 +25,8 @@ interface WeekViewProps {
  *
  * Shows:
  * - Week navigation (Prev/Next)
- * - Collapsible days with exercise tables
- * - Unplanned workouts section
+ * - Entries grouped by metadata.week, then by metadata.day
+ * - Ungrouped entries (no metadata.week) shown in a separate section
  * - Schedule configuration
  */
 export function WeekView({ program, workouts }: WeekViewProps) {
@@ -47,60 +47,98 @@ export function WeekView({ program, workouts }: WeekViewProps) {
   // Get schedule for current program
   const schedule = program ? getSchedule(program.id) : undefined;
 
-  // Build day data from program and workouts
+  // Build day data from program entries and workouts
   const days = useMemo(() => {
     if (!program) return [];
 
-    // Get week nodes from program
-    const weekNodes = program.root_nodes?.filter((node) => node.node_type === 'week') || [];
+    const entries = program.entries || [];
 
-    // For now, show first week's days (multi-week support is future work)
-    const firstWeek = weekNodes[0];
-    if (!firstWeek) return [];
+    // Group entries by metadata.week, then by metadata.day
+    // For the week view, we show the first week group (or all ungrouped)
+    const weekGroups = new Map<string, ProgramEntry[]>();
+    const ungroupedEntries: ProgramEntry[] = [];
 
-    const dayNodes = firstWeek.children?.filter((node) => node.node_type === 'day') || [];
+    for (const entry of entries) {
+      const weekKey = entry.metadata?.week !== undefined ? String(entry.metadata.week) : null;
+      if (weekKey !== null) {
+        if (!weekGroups.has(weekKey)) weekGroups.set(weekKey, []);
+        weekGroups.get(weekKey)?.push(entry);
+      } else {
+        ungroupedEntries.push(entry);
+      }
+    }
 
-    return dayNodes.map((dayNode, idx) => {
-      // Find workout for this day (matching by program_node_id)
-      const workout = workouts.find((w) => w.program_node_id === dayNode.id);
+    // Show the first week group's days
+    const firstWeekEntries =
+      weekGroups.size > 0 ? weekGroups.values().next().value : ungroupedEntries;
+
+    if (!firstWeekEntries || firstWeekEntries.length === 0) return [];
+
+    // Group this week's entries by metadata.day
+    const dayGroups = new Map<string, ProgramEntry[]>();
+    const ungroupedDayEntries: ProgramEntry[] = [];
+
+    for (const entry of firstWeekEntries) {
+      const dayKey = entry.metadata?.day !== undefined ? String(entry.metadata.day) : null;
+      if (dayKey !== null) {
+        if (!dayGroups.has(dayKey)) dayGroups.set(dayKey, []);
+        dayGroups.get(dayKey)?.push(entry);
+      } else {
+        ungroupedDayEntries.push(entry);
+      }
+    }
+
+    // Build day data from day groups
+    const result = [...dayGroups.entries()].map(([dayName, dayEntries], idx) => {
+      // Find workout for this day (matching first entry's program_node_id)
+      const firstEntry = dayEntries[0];
+      const workout = workouts.find((w) => w.program_node_id === firstEntry?.id);
 
       // Get scheduled date if available
       const scheduledDate = schedule?.find((s) => s.dayIndex === idx)?.date;
 
       // Calculate overall day status
-      const status = calculateDayStatus(dayNode, workout);
+      const status = calculateDayStatus(dayEntries, workout);
 
-      // Get program context from workout or generate from program structure
+      // Get program context from workout or generate from first entry
       const programContext =
-        workout?.program_context || generateProgramContext(dayNode.id, program);
+        workout?.program_context ||
+        (firstEntry ? generateProgramContext(firstEntry.id, program) : []);
 
       return {
-        dayName: dayNode.name,
+        dayName,
         date: scheduledDate,
-        programNode: dayNode,
+        programEntries: dayEntries,
         workout,
         status,
         programContext,
       };
     });
+
+    // Add ungrouped entries as a single "day" if any exist
+    if (ungroupedDayEntries.length > 0) {
+      const workout = workouts.find((w) =>
+        ungroupedDayEntries.some((e) => w.program_node_id === e.id)
+      );
+      result.push({
+        dayName: 'Ungrouped',
+        date: undefined,
+        programEntries: ungroupedDayEntries,
+        workout,
+        status: calculateDayStatus(ungroupedDayEntries, workout),
+        programContext: [],
+      });
+    }
+
+    return result;
   }, [program, workouts, schedule]);
 
-  // Get unplanned workouts (no program_node_id or node not in current program)
+  // Get unplanned workouts (not linked to any program entry)
   const unplannedWorkouts = useMemo(() => {
     if (!program) return workouts;
 
-    // Collect day node IDs (workouts are linked to day nodes, not exercise nodes)
-    // Filter by node_type to match the days logic above
-    const dayNodeIds = new Set(
-      program.root_nodes
-        ?.filter((node) => node.node_type === 'week')
-        .flatMap(
-          (week) =>
-            week.children?.filter((node) => node.node_type === 'day').map((day) => day.id) || []
-        ) || []
-    );
-
-    return workouts.filter((w) => !w.program_node_id || !dayNodeIds.has(w.program_node_id));
+    const entryIds = new Set((program.entries || []).map((e) => e.id));
+    return workouts.filter((w) => !w.program_node_id || !entryIds.has(w.program_node_id));
   }, [program, workouts]);
 
   const handlePrevWeek = () => setWeekOffset((prev) => prev - 1);
@@ -168,30 +206,28 @@ export function WeekView({ program, workouts }: WeekViewProps) {
 }
 
 /**
- * Calculate overall status for a day based on its exercises
+ * Calculate overall status for a day based on its entries
  */
-function calculateDayStatus(dayNode: ProgramNode, workout?: Workout): DiffStatus {
+function calculateDayStatus(entries: ProgramEntry[], workout?: Workout): DiffStatus {
   if (!workout) return 'pending';
 
-  const exerciseNodes = dayNode.children?.filter((child) => child.node_type === 'exercise') || [];
-
-  if (exerciseNodes.length === 0) {
+  if (entries.length === 0) {
     return workout.entries.length > 0 ? 'unplanned' : 'pending';
   }
 
   let hasMatch = false;
   let hasDiff = false;
 
-  for (const node of exerciseNodes) {
-    const entry = workout.entries.find((e) => e.program_node_id === node.id);
+  for (const entry of entries) {
+    const actual = workout.entries.find((e) => e.program_node_id === entry.id);
     const planSnapshot = {
-      target_sets: node.target_sets,
-      target_reps: node.target_reps,
-      target_load_kg: undefined, // Load calculation deferred
-      target_rpe: node.target_rpe,
+      target_sets: entry.target_sets,
+      target_reps: entry.target_reps,
+      target_load_kg: undefined,
+      target_rpe: entry.target_rpe,
     };
 
-    const diff = calculateDiff(planSnapshot, entry);
+    const diff = calculateDiff(planSnapshot, actual);
 
     if (diff.status === 'match') hasMatch = true;
     if (diff.status === 'diff') hasDiff = true;

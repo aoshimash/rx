@@ -37,23 +37,18 @@ func TestProgramHandler_Create(t *testing.T) {
 
 	body := map[string]interface{}{
 		"name": "Test Program",
-		"root_nodes": []map[string]interface{}{
+		"entries": []map[string]interface{}{
 			{
-				"name":      "Week 1",
-				"node_type": "week",
-				"order":     0,
-				"children": []map[string]interface{}{
-					{
-						"name":      "Day 1",
-						"node_type": "day",
-						"order":     0,
-					},
-					{
-						"name":      "Day 2",
-						"node_type": "day",
-						"order":     1,
-					},
-				},
+				"name":        "Squat",
+				"order":       0,
+				"metadata":    map[string]interface{}{"week": 1, "day": 1},
+				"target_sets": 3,
+				"target_reps": 5,
+			},
+			{
+				"name":     "Bench Press",
+				"order":    1,
+				"metadata": map[string]interface{}{"week": 1, "day": 1},
 			},
 		},
 	}
@@ -80,9 +75,9 @@ func TestProgramHandler_Create(t *testing.T) {
 		t.Error("CreateProgram() did not return ID")
 	}
 
-	rootNodes, ok := program["root_nodes"].([]interface{})
-	if !ok || len(rootNodes) != 1 {
-		t.Errorf("CreateProgram() got %d root nodes, want 1", len(rootNodes))
+	entries, ok := program["entries"].([]interface{})
+	if !ok || len(entries) != 2 {
+		t.Errorf("CreateProgram() got %d entries, want 2", len(entries))
 	}
 }
 
@@ -91,8 +86,8 @@ func TestProgramHandler_GetByID(t *testing.T) {
 
 	// Create a program first
 	body := map[string]interface{}{
-		"name":       "Test Program",
-		"root_nodes": []map[string]interface{}{},
+		"name":    "Test Program",
+		"entries": []map[string]interface{}{},
 	}
 	bodyBytes, _ := json.Marshal(body)
 	createReq := httptest.NewRequest(http.MethodPost, "/api/v1/programs", bytes.NewReader(bodyBytes))

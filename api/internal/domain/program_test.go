@@ -7,53 +7,48 @@ import (
 	"github.com/google/uuid"
 )
 
-func TestValidateProgramNode(t *testing.T) {
+func TestValidateProgramEntry(t *testing.T) {
 	programID := uuid.New()
-	parentID := uuid.New()
 	exerciseID := uuid.New()
 
 	tests := []struct {
 		name    string
-		node    *ProgramNode
+		entry   *ProgramEntry
 		wantErr bool
 		errCode string
 	}{
 		{
-			name:    "nil node",
-			node:    nil,
+			name:    "nil entry",
+			entry:   nil,
 			wantErr: true,
 		},
 		{
-			name: "valid node with minimal fields",
-			node: &ProgramNode{
+			name: "valid entry with minimal fields",
+			entry: &ProgramEntry{
 				ID:        uuid.New(),
 				ProgramID: programID,
-				Name:      "Week 1",
-				NodeType:  "week",
+				Name:      "Bench Press",
 				Order:     0,
 			},
 			wantErr: false,
 		},
 		{
-			name: "valid node with parent",
-			node: &ProgramNode{
+			name: "valid entry with metadata",
+			entry: &ProgramEntry{
 				ID:        uuid.New(),
 				ProgramID: programID,
-				ParentID:  &parentID,
-				Name:      "Day 1",
-				NodeType:  "day",
-				Order:     0,
+				Name:      "Squat",
+				Order:     1,
+				Metadata:  []byte(`{"week": 1, "day": 2}`),
 			},
 			wantErr: false,
 		},
 		{
-			name: "valid leaf node with prescription fields",
-			node: &ProgramNode{
+			name: "valid entry with all prescription fields",
+			entry: &ProgramEntry{
 				ID:                 uuid.New(),
 				ProgramID:          programID,
-				ParentID:           &parentID,
 				Name:               "Bench Press",
-				NodeType:           "exercise",
 				Order:              0,
 				ExerciseID:         &exerciseID,
 				TargetSets:         intPtr(5),
@@ -68,11 +63,10 @@ func TestValidateProgramNode(t *testing.T) {
 		},
 		{
 			name: "empty name",
-			node: &ProgramNode{
+			entry: &ProgramEntry{
 				ID:        uuid.New(),
 				ProgramID: programID,
 				Name:      "",
-				NodeType:  "week",
 				Order:     0,
 			},
 			wantErr: true,
@@ -80,45 +74,30 @@ func TestValidateProgramNode(t *testing.T) {
 		},
 		{
 			name: "name too long",
-			node: &ProgramNode{
+			entry: &ProgramEntry{
 				ID:        uuid.New(),
 				ProgramID: programID,
 				Name:      stringWithLength(201),
-				NodeType:  "week",
 				Order:     0,
 			},
 			wantErr: true,
-		},
-		{
-			name: "empty node_type",
-			node: &ProgramNode{
-				ID:        uuid.New(),
-				ProgramID: programID,
-				Name:      "Node",
-				NodeType:  "",
-				Order:     0,
-			},
-			wantErr: true,
-			errCode: ErrCodeMissingRequiredField,
 		},
 		{
 			name: "order negative",
-			node: &ProgramNode{
+			entry: &ProgramEntry{
 				ID:        uuid.New(),
 				ProgramID: programID,
-				Name:      "Node",
-				NodeType:  "week",
+				Name:      "Exercise",
 				Order:     -1,
 			},
 			wantErr: true,
 		},
 		{
 			name: "target_sets zero",
-			node: &ProgramNode{
+			entry: &ProgramEntry{
 				ID:         uuid.New(),
 				ProgramID:  programID,
 				Name:       "Exercise",
-				NodeType:   "exercise",
 				Order:      0,
 				TargetSets: intPtr(0),
 			},
@@ -126,11 +105,10 @@ func TestValidateProgramNode(t *testing.T) {
 		},
 		{
 			name: "target_reps zero",
-			node: &ProgramNode{
+			entry: &ProgramEntry{
 				ID:         uuid.New(),
 				ProgramID:  programID,
 				Name:       "Exercise",
-				NodeType:   "exercise",
 				Order:      0,
 				TargetReps: intPtr(0),
 			},
@@ -138,11 +116,10 @@ func TestValidateProgramNode(t *testing.T) {
 		},
 		{
 			name: "target_rpe invalid",
-			node: &ProgramNode{
+			entry: &ProgramEntry{
 				ID:        uuid.New(),
 				ProgramID: programID,
 				Name:      "Exercise",
-				NodeType:  "exercise",
 				Order:     0,
 				TargetRPE: intPtr(11),
 			},
@@ -151,11 +128,10 @@ func TestValidateProgramNode(t *testing.T) {
 		},
 		{
 			name: "percent_1rm too low",
-			node: &ProgramNode{
+			entry: &ProgramEntry{
 				ID:         uuid.New(),
 				ProgramID:  programID,
 				Name:       "Exercise",
-				NodeType:   "exercise",
 				Order:      0,
 				Percent1RM: float64Ptr(-0.1),
 			},
@@ -163,11 +139,10 @@ func TestValidateProgramNode(t *testing.T) {
 		},
 		{
 			name: "percent_1rm too high",
-			node: &ProgramNode{
+			entry: &ProgramEntry{
 				ID:         uuid.New(),
 				ProgramID:  programID,
 				Name:       "Exercise",
-				NodeType:   "exercise",
 				Order:      0,
 				Percent1RM: float64Ptr(1.1),
 			},
@@ -175,11 +150,10 @@ func TestValidateProgramNode(t *testing.T) {
 		},
 		{
 			name: "planned_rest_seconds negative",
-			node: &ProgramNode{
+			entry: &ProgramEntry{
 				ID:                 uuid.New(),
 				ProgramID:          programID,
 				Name:               "Exercise",
-				NodeType:           "exercise",
 				Order:              0,
 				PlannedRestSeconds: intPtr(-1),
 			},
@@ -187,33 +161,12 @@ func TestValidateProgramNode(t *testing.T) {
 		},
 		{
 			name: "notes too long",
-			node: &ProgramNode{
+			entry: &ProgramEntry{
 				ID:        uuid.New(),
 				ProgramID: programID,
-				Name:      "Node",
-				NodeType:  "week",
+				Name:      "Exercise",
 				Order:     0,
 				Notes:     stringPtr(stringWithLength(2001)),
-			},
-			wantErr: true,
-		},
-		{
-			name: "recursive children validation",
-			node: &ProgramNode{
-				ID:        uuid.New(),
-				ProgramID: programID,
-				Name:      "Cycle 1",
-				NodeType:  "cycle",
-				Order:     0,
-				Children: []ProgramNode{
-					{
-						ID:        uuid.New(),
-						ProgramID: programID,
-						Name:      "", // Invalid: empty name
-						NodeType:  "week",
-						Order:     0,
-					},
-				},
 			},
 			wantErr: true,
 		},
@@ -221,15 +174,15 @@ func TestValidateProgramNode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ValidateProgramNode(tt.node)
+			err := ValidateProgramEntry(tt.entry)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("ValidateProgramNode() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ValidateProgramEntry() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if tt.wantErr && tt.errCode != "" {
 				if domainErr, ok := err.(*DomainError); ok {
 					if domainErr.Code != tt.errCode {
-						t.Errorf("ValidateProgramNode() error code = %v, want %v", domainErr.Code, tt.errCode)
+						t.Errorf("ValidateProgramEntry() error code = %v, want %v", domainErr.Code, tt.errCode)
 					}
 				}
 			}
@@ -263,52 +216,41 @@ func TestValidateProgram(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "valid program with empty root_nodes",
+			name: "valid program with empty entries",
 			program: &Program{
 				ID:        uuid.New(),
 				Name:      "Program",
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
-				RootNodes: []ProgramNode{},
+				Entries:   []ProgramEntry{},
 			},
 			wantErr: false,
 		},
 		{
-			name: "valid program with root nodes",
+			name: "valid program with entries",
 			program: &Program{
 				ID:        uuid.New(),
 				Name:      "Program",
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
-				RootNodes: []ProgramNode{
+				Entries: []ProgramEntry{
+					{
+						ID:         uuid.New(),
+						ProgramID:  programID,
+						Name:       "Squat",
+						Order:      0,
+						Metadata:   []byte(`{"week": 1, "day": 1}`),
+						ExerciseID: &exerciseID,
+						TargetSets: intPtr(5),
+						TargetReps: intPtr(5),
+						TargetRPE:  intPtr(7),
+					},
 					{
 						ID:        uuid.New(),
 						ProgramID: programID,
-						Name:      "Cycle 1",
-						NodeType:  "cycle",
-						Order:     0,
-						Children: []ProgramNode{
-							{
-								ID:        uuid.New(),
-								ProgramID: programID,
-								Name:      "Week 1",
-								NodeType:  "week",
-								Order:     0,
-								Children: []ProgramNode{
-									{
-										ID:         uuid.New(),
-										ProgramID:  programID,
-										Name:       "Day 1",
-										NodeType:   "day",
-										Order:      0,
-										ExerciseID: &exerciseID,
-										TargetSets: intPtr(5),
-										TargetReps: intPtr(5),
-										TargetRPE:  intPtr(7),
-									},
-								},
-							},
-						},
+						Name:      "Bench Press",
+						Order:     1,
+						Metadata:  []byte(`{"week": 1, "day": 1}`),
 					},
 				},
 			},
@@ -347,18 +289,17 @@ func TestValidateProgram(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "invalid root node",
+			name: "invalid entry",
 			program: &Program{
 				ID:        uuid.New(),
 				Name:      "Program",
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
-				RootNodes: []ProgramNode{
+				Entries: []ProgramEntry{
 					{
 						ID:        uuid.New(),
 						ProgramID: programID,
 						Name:      "", // Invalid
-						NodeType:  "week",
 						Order:     0,
 					},
 				},

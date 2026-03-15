@@ -7,12 +7,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { Exercise, ProgramNodeCreate } from '@/types/api';
+import type { Exercise } from '@/types/api';
 import { X } from 'lucide-react';
 import { ExerciseTable } from './ExerciseTable';
+import type { DayGroup } from './types';
 
 interface DayAccordionProps {
-  days: ProgramNodeCreate[];
+  days: DayGroup[];
   availableExercises: Exercise[];
   onDayNameChange: (dayIndex: number, name: string) => void;
   onExerciseChange: (dayIndex: number, exerciseIndex: number, exerciseId: string) => void;
@@ -72,7 +73,7 @@ export function DayAccordion({
               <div className="space-y-2">
                 <Label>Exercises</Label>
                 <ExerciseTable
-                  exercises={day.children || []}
+                  exercises={day.exercises}
                   availableExercises={availableExercises}
                   onExerciseChange={(exIdx, id) => onExerciseChange(dayIdx, exIdx, id)}
                   onSetsChange={(exIdx, value) => onSetsChange(dayIdx, exIdx, value)}

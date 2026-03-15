@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/table';
 import { EntryTypeBadge } from '@/components/workout-input/EntryTypeBadge';
 import { calculateDiff } from '@/lib/utils/diff';
-import type { EntryType, ProgramNode, WorkoutEntry } from '@/types/api';
+import type { EntryType, WorkoutEntry } from '@/types/api';
 import { StatusBadge } from './StatusBadge';
 
 interface ExerciseRow {
@@ -27,7 +27,6 @@ interface ExerciseRow {
     rpe: number;
   } | null;
   entry?: WorkoutEntry;
-  node?: ProgramNode;
 }
 
 interface ExerciseTableProps {

@@ -16,14 +16,14 @@ import { useProgram, usePrograms } from '@/lib/hooks/usePrograms';
 import { useCreateWorkout, useWorkouts } from '@/lib/hooks/useWorkouts';
 import { generateProgramContext } from '@/lib/utils/programContext';
 import { useProgramStore } from '@/stores/program';
-import type { ProgramNode, WorkoutEntryCreate } from '@/types/api';
+import type { ProgramEntry, WorkoutEntryCreate } from '@/types/api';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
 export default function Home() {
   const [workoutModalOpen, setWorkoutModalOpen] = useState(false);
-  const [selectedDayNode, setSelectedDayNode] = useState<ProgramNode | undefined>();
+  const [selectedDayEntries, setSelectedDayEntries] = useState<ProgramEntry[] | undefined>();
   const { selectedProgramId, setSelectedProgram } = useProgramStore();
 
   // Fetch programs and selected program details
@@ -38,18 +38,24 @@ export default function Home() {
   const program = selectedProgram || (programs.length > 0 ? programs[0] : null);
   const workouts = workoutsData?.data || [];
 
-  // Get first day node for quick workout recording
-  const firstDayNode = useMemo(() => {
-    if (!program) return undefined;
-    const firstWeek = program.root_nodes?.find((n) => n.node_type === 'week');
-    return firstWeek?.children?.find((n) => n.node_type === 'day');
+  // Get first day's entries for quick workout recording
+  const firstDayEntries = useMemo(() => {
+    const entries = program?.entries;
+    if (!entries || entries.length === 0) return undefined;
+    const firstEntry = entries[0];
+    if (!firstEntry) return undefined;
+    const dayKey = firstEntry.metadata?.day;
+    const weekKey = firstEntry.metadata?.week;
+    if (!dayKey) return [firstEntry];
+    return entries.filter((e) => e.metadata?.day === dayKey && e.metadata?.week === weekKey);
   }, [program]);
 
-  // Generate program context for the selected day node
+  // Generate program context for the selected day entries
   const selectedProgramContext = useMemo(() => {
-    if (!selectedDayNode || !program) return undefined;
-    return generateProgramContext(selectedDayNode.id, program);
-  }, [selectedDayNode, program]);
+    const refEntry = selectedDayEntries?.[0];
+    if (!refEntry || !program) return undefined;
+    return generateProgramContext(refEntry.id, program);
+  }, [selectedDayEntries, program]);
 
   const handleSaveWorkout = async (
     entries: WorkoutEntryCreate[],
@@ -60,7 +66,7 @@ export default function Home() {
       timestamp: new Date().toISOString(),
       notes,
       entries,
-      program_node_id: selectedDayNode?.id,
+      program_node_id: selectedDayEntries?.[0]?.id,
       program_context: programContext,
     });
   };
@@ -70,7 +76,7 @@ export default function Home() {
   };
 
   const handleOpenWorkoutModal = () => {
-    setSelectedDayNode(firstDayNode);
+    setSelectedDayEntries(firstDayEntries);
     setWorkoutModalOpen(true);
   };
 
@@ -139,7 +145,7 @@ export default function Home() {
       <WorkoutModal
         open={workoutModalOpen}
         onOpenChange={setWorkoutModalOpen}
-        dayNode={selectedDayNode}
+        dayEntries={selectedDayEntries}
         programContext={selectedProgramContext}
         onSave={handleSaveWorkout}
       />

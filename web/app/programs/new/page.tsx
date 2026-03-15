@@ -4,7 +4,7 @@ import { ProgramForm } from '@/components/program-editor/ProgramForm';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useExercises } from '@/lib/hooks/useExercises';
 import { useCreateProgram } from '@/lib/hooks/usePrograms';
-import type { ProgramNodeCreate } from '@/types/api';
+import type { ProgramEntryCreate } from '@/types/api';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -15,20 +15,12 @@ export default function NewProgramPage() {
 
   const [programName, setProgramName] = useState('');
   const [programDescription, setProgramDescription] = useState('');
-  const [weeks, setWeeks] = useState<ProgramNodeCreate[]>([
-    {
-      name: 'Week 1',
-      node_type: 'week',
-      order: 0,
-      children: [],
-    },
-  ]);
 
-  const handleSave = async () => {
+  const handleSave = async (entries: ProgramEntryCreate[]) => {
     await createProgram.mutateAsync({
       name: programName,
       description: programDescription,
-      root_nodes: weeks,
+      entries,
     });
     router.push('/programs');
   };
@@ -54,11 +46,9 @@ export default function NewProgramPage() {
       <ProgramForm
         programName={programName}
         programDescription={programDescription}
-        weeks={weeks}
         availableExercises={exercises}
         onNameChange={setProgramName}
         onDescriptionChange={setProgramDescription}
-        onWeeksChange={setWeeks}
         onSave={handleSave}
         isSaving={createProgram.isPending}
       />

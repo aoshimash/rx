@@ -23,17 +23,12 @@ func TestProgramRepository_Create(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "create program with root nodes",
+			name: "create program with entries",
 			program: &domain.Program{
 				Name: "Test Program",
-				RootNodes: []domain.ProgramNode{
-					{
-						Name: "Week 1",
-						Children: []domain.ProgramNode{
-							{Name: "Day 1"},
-							{Name: "Day 2"},
-						},
-					},
+				Entries: []domain.ProgramEntry{
+					{Name: "Squat", Order: 0},
+					{Name: "Bench Press", Order: 1},
 				},
 			},
 			wantErr: false,
@@ -58,14 +53,9 @@ func TestProgramRepository_Create(t *testing.T) {
 				if tt.program.CreatedAt.IsZero() {
 					t.Error("Create() did not set CreatedAt")
 				}
-				if len(tt.program.RootNodes) > 0 {
-					if tt.program.RootNodes[0].ID == uuid.Nil {
-						t.Error("Create() did not generate RootNode ID")
-					}
-					if len(tt.program.RootNodes[0].Children) > 0 {
-						if tt.program.RootNodes[0].Children[0].ID == uuid.Nil {
-							t.Error("Create() did not generate Child Node ID")
-						}
+				if len(tt.program.Entries) > 0 {
+					if tt.program.Entries[0].ID == uuid.Nil {
+						t.Error("Create() did not generate Entry ID")
 					}
 				}
 			}
@@ -81,14 +71,9 @@ func TestProgramRepository_GetByID(t *testing.T) {
 	program := &domain.Program{
 		ID:   id,
 		Name: "Test Program",
-		RootNodes: []domain.ProgramNode{
-			{
-				ID:   uuid.New(),
-				Name: "Week 1",
-				Children: []domain.ProgramNode{
-					{ID: uuid.New(), Name: "Day 1"},
-				},
-			},
+		Entries: []domain.ProgramEntry{
+			{ID: uuid.New(), Name: "Squat", Order: 0},
+			{ID: uuid.New(), Name: "Bench Press", Order: 1},
 		},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -103,19 +88,16 @@ func TestProgramRepository_GetByID(t *testing.T) {
 	if got.ID != id {
 		t.Errorf("GetByID() got ID = %v, want %v", got.ID, id)
 	}
-	if len(got.RootNodes) != 1 {
-		t.Errorf("GetByID() got %d root nodes, want 1", len(got.RootNodes))
-	}
-	if len(got.RootNodes[0].Children) != 1 {
-		t.Errorf("GetByID() got %d children, want 1", len(got.RootNodes[0].Children))
+	if len(got.Entries) != 2 {
+		t.Errorf("GetByID() got %d entries, want 2", len(got.Entries))
 	}
 
-	// Verify it's a deep copy
-	originalName := got.RootNodes[0].Name
-	got.RootNodes[0].Name = "Modified"
+	// Verify it's a copy
+	originalName := got.Entries[0].Name
+	got.Entries[0].Name = "Modified"
 	recheck, _ := repo.GetByID(ctx, id)
-	if recheck.RootNodes[0].Name != originalName {
-		t.Error("GetByID() did not return a deep copy")
+	if recheck.Entries[0].Name != originalName {
+		t.Error("GetByID() did not return a copy")
 	}
 }
 

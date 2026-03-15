@@ -362,32 +362,28 @@ func ValidateTelemetryPoint(t *TelemetryPoint) error {
 	return nil
 }
 
-// ValidateProgramNode validates a ProgramNode entity.
-func ValidateProgramNode(n *ProgramNode) error {
-	if n == nil {
+// ValidateProgramEntry validates a ProgramEntry entity.
+// Metadata contents are not validated (free-form JSON).
+func ValidateProgramEntry(e *ProgramEntry) error {
+	if e == nil {
 		return &ValidationError{
-			Field:   "program_node",
-			Message: "program_node cannot be nil",
+			Field:   "program_entry",
+			Message: "program_entry cannot be nil",
 		}
 	}
 
 	// Validate required fields
-	if err := ValidateRequiredString("name", n.Name); err != nil {
+	if err := ValidateRequiredString("name", e.Name); err != nil {
 		return err
 	}
 
 	// Validate name length
-	if err := ValidateStringLength("name", n.Name, 1, 200); err != nil {
-		return err
-	}
-
-	// Validate node_type
-	if err := ValidateRequiredString("node_type", n.NodeType); err != nil {
+	if err := ValidateStringLength("name", e.Name, 1, 200); err != nil {
 		return err
 	}
 
 	// Validate order
-	if n.Order < 0 {
+	if e.Order < 0 {
 		return &ValidationError{
 			Field:   "order",
 			Message: "order must be greater than or equal to 0",
@@ -395,28 +391,28 @@ func ValidateProgramNode(n *ProgramNode) error {
 	}
 
 	// Validate prescription fields if provided
-	if n.TargetSets != nil && *n.TargetSets <= 0 {
+	if e.TargetSets != nil && *e.TargetSets <= 0 {
 		return &ValidationError{
 			Field:   "target_sets",
 			Message: "target_sets must be greater than 0",
 		}
 	}
 
-	if n.TargetReps != nil && *n.TargetReps <= 0 {
+	if e.TargetReps != nil && *e.TargetReps <= 0 {
 		return &ValidationError{
 			Field:   "target_reps",
 			Message: "target_reps must be greater than 0",
 		}
 	}
 
-	if n.TargetRPE != nil {
-		if err := ValidateRPE(*n.TargetRPE); err != nil {
+	if e.TargetRPE != nil {
+		if err := ValidateRPE(*e.TargetRPE); err != nil {
 			return err
 		}
 	}
 
-	if n.Percent1RM != nil {
-		if *n.Percent1RM < 0 || *n.Percent1RM > 1 {
+	if e.Percent1RM != nil {
+		if *e.Percent1RM < 0 || *e.Percent1RM > 1 {
 			return &ValidationError{
 				Field:   "percent_1rm",
 				Message: "percent_1rm must be between 0.0 and 1.0",
@@ -424,7 +420,7 @@ func ValidateProgramNode(n *ProgramNode) error {
 		}
 	}
 
-	if n.PlannedRestSeconds != nil && *n.PlannedRestSeconds < 0 {
+	if e.PlannedRestSeconds != nil && *e.PlannedRestSeconds < 0 {
 		return &ValidationError{
 			Field:   "planned_rest_seconds",
 			Message: "planned_rest_seconds must be greater than or equal to 0",
@@ -432,20 +428,9 @@ func ValidateProgramNode(n *ProgramNode) error {
 	}
 
 	// Validate notes length if provided
-	if n.Notes != nil {
-		if err := ValidateStringLength("notes", *n.Notes, 0, 2000); err != nil {
+	if e.Notes != nil {
+		if err := ValidateStringLength("notes", *e.Notes, 0, 2000); err != nil {
 			return err
-		}
-	}
-
-	// Recursively validate children
-	// Use index-based loop to allow validation to modify original children
-	for i := range n.Children {
-		if err := ValidateProgramNode(&n.Children[i]); err != nil {
-			return &ValidationError{
-				Field:   fmt.Sprintf("children[%d]", i),
-				Message: err.Error(),
-			}
 		}
 	}
 
@@ -478,34 +463,18 @@ func ValidateProgram(p *Program) error {
 		}
 	}
 
-	// Validate root nodes recursively
-	// Use index-based loop to allow validation to modify original nodes
-	// Count total nodes (max 1000 per FR-017, FR-018)
-	var totalNodeCount int
-	var countNodes func(nodes []ProgramNode)
-	countNodes = func(nodes []ProgramNode) {
-		for i := range nodes {
-			totalNodeCount++
-			if totalNodeCount > 1000 {
-				return
-			}
-			if len(nodes[i].Children) > 0 {
-				countNodes(nodes[i].Children)
-			}
-		}
-	}
-	countNodes(p.RootNodes)
-	if totalNodeCount > 1000 {
+	// Validate entries (max 1000)
+	if len(p.Entries) > 1000 {
 		return &ValidationError{
-			Field:   "root_nodes",
-			Message: "program cannot have more than 1000 nodes (entire tree)",
+			Field:   "entries",
+			Message: "program cannot have more than 1000 entries",
 		}
 	}
 
-	for i := range p.RootNodes {
-		if err := ValidateProgramNode(&p.RootNodes[i]); err != nil {
+	for i := range p.Entries {
+		if err := ValidateProgramEntry(&p.Entries[i]); err != nil {
 			return &ValidationError{
-				Field:   fmt.Sprintf("root_nodes[%d]", i),
+				Field:   fmt.Sprintf("entries[%d]", i),
 				Message: err.Error(),
 			}
 		}

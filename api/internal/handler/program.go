@@ -11,20 +11,19 @@ import (
 	"github.com/google/uuid"
 )
 
-// programNodeRequest represents a program node in the request body
-type programNodeRequest struct {
-	Name               string            `json:"name"`
-	NodeType           string            `json:"node_type"`
-	Order              int               `json:"order"`
-	Children           []json.RawMessage `json:"children,omitempty"`
-	ExerciseID         *string           `json:"exercise_id,omitempty"`
-	TargetSets         *int              `json:"target_sets,omitempty"`
-	TargetReps         *int              `json:"target_reps,omitempty"`
-	TargetRPE          *int              `json:"target_rpe,omitempty"`
-	Percent1RM         *float64          `json:"percent_1rm,omitempty"`
-	PlannedRestSeconds *int              `json:"planned_rest_seconds,omitempty"`
-	MuscleGroups       []string          `json:"muscle_groups,omitempty"`
-	Notes              *string           `json:"notes,omitempty"`
+// programEntryRequest represents a program entry in the request body
+type programEntryRequest struct {
+	Name               string          `json:"name"`
+	Order              int             `json:"order"`
+	Metadata           json.RawMessage `json:"metadata,omitempty"`
+	ExerciseID         *string         `json:"exercise_id,omitempty"`
+	TargetSets         *int            `json:"target_sets,omitempty"`
+	TargetReps         *int            `json:"target_reps,omitempty"`
+	TargetRPE          *int            `json:"target_rpe,omitempty"`
+	Percent1RM         *float64        `json:"percent_1rm,omitempty"`
+	PlannedRestSeconds *int            `json:"planned_rest_seconds,omitempty"`
+	MuscleGroups       []string        `json:"muscle_groups,omitempty"`
+	Notes              *string         `json:"notes,omitempty"`
 }
 
 // ProgramHandler handles Program-related HTTP requests
@@ -47,11 +46,10 @@ func NewProgramHandler(repo repository.ProgramRepository, exerciseRepo repositor
 func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// Decode request body (OpenAPI ProgramCreate type)
 	var req struct {
-		Name        string               `json:"name"`
-		Description *string              `json:"description,omitempty"`
-		RootNodes   []programNodeRequest `json:"root_nodes,omitempty"`
+		Name        string                `json:"name"`
+		Description *string               `json:"description,omitempty"`
+		Entries     []programEntryRequest `json:"entries,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -65,21 +63,20 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 	program := &domain.Program{
 		Name:        req.Name,
 		Description: req.Description,
-		RootNodes:   make([]domain.ProgramNode, len(req.RootNodes)),
+		Entries:     make([]domain.ProgramEntry, len(req.Entries)),
 	}
 
-	// Convert root nodes recursively
-	for i, nodeReq := range req.RootNodes {
-		node, err := h.convertNode(ctx, nodeReq, nil)
+	for i, entryReq := range req.Entries {
+		entry, err := h.convertEntry(ctx, entryReq)
 		if err != nil {
-			middleware.WriteValidationError(w, "Invalid program node", map[string]interface{}{
-				"field": "root_nodes",
+			middleware.WriteValidationError(w, "Invalid program entry", map[string]interface{}{
+				"field": "entries",
 				"index": i,
 				"error": err.Error(),
 			})
 			return
 		}
-		program.RootNodes[i] = *node
+		program.Entries[i] = *entry
 	}
 
 	// Validate
@@ -103,25 +100,24 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, program)
 }
 
-// convertNode converts a JSON node request to a domain ProgramNode recursively
-func (h *ProgramHandler) convertNode(ctx context.Context, nodeReq programNodeRequest, parentID *uuid.UUID) (*domain.ProgramNode, error) {
-	node := &domain.ProgramNode{
-		Name:               nodeReq.Name,
-		NodeType:           nodeReq.NodeType,
-		Order:              nodeReq.Order,
-		ParentID:           parentID,
-		TargetSets:         nodeReq.TargetSets,
-		TargetReps:         nodeReq.TargetReps,
-		TargetRPE:          nodeReq.TargetRPE,
-		Percent1RM:         nodeReq.Percent1RM,
-		PlannedRestSeconds: nodeReq.PlannedRestSeconds,
-		MuscleGroups:       nodeReq.MuscleGroups,
-		Notes:              nodeReq.Notes,
+// convertEntry converts a request entry to a domain ProgramEntry
+func (h *ProgramHandler) convertEntry(ctx context.Context, entryReq programEntryRequest) (*domain.ProgramEntry, error) {
+	entry := &domain.ProgramEntry{
+		Name:               entryReq.Name,
+		Order:              entryReq.Order,
+		Metadata:           entryReq.Metadata,
+		TargetSets:         entryReq.TargetSets,
+		TargetReps:         entryReq.TargetReps,
+		TargetRPE:          entryReq.TargetRPE,
+		Percent1RM:         entryReq.Percent1RM,
+		PlannedRestSeconds: entryReq.PlannedRestSeconds,
+		MuscleGroups:       entryReq.MuscleGroups,
+		Notes:              entryReq.Notes,
 	}
 
 	// Parse exercise_id if provided
-	if nodeReq.ExerciseID != nil {
-		exerciseID, err := uuid.Parse(*nodeReq.ExerciseID)
+	if entryReq.ExerciseID != nil {
+		exerciseID, err := uuid.Parse(*entryReq.ExerciseID)
 		if err != nil {
 			return nil, err
 		}
@@ -129,29 +125,10 @@ func (h *ProgramHandler) convertNode(ctx context.Context, nodeReq programNodeReq
 		if _, err := h.exerciseRepo.GetByID(ctx, exerciseID); err != nil {
 			return nil, err
 		}
-		node.ExerciseID = &exerciseID
+		entry.ExerciseID = &exerciseID
 	}
 
-	// Convert children recursively
-	// Note: ParentID is set here but will be reassigned by repository.assignNodeIDs.
-	// The repository is responsible for all ID assignment to ensure consistency.
-	if len(nodeReq.Children) > 0 {
-		node.Children = make([]domain.ProgramNode, len(nodeReq.Children))
-		for i, childJSON := range nodeReq.Children {
-			var childReq programNodeRequest
-			if err := json.Unmarshal(childJSON, &childReq); err != nil {
-				return nil, err
-			}
-			// Pass &node.ID as parentID (will be zero UUID at this point, but repository will reassign)
-			child, err := h.convertNode(ctx, childReq, &node.ID)
-			if err != nil {
-				return nil, err
-			}
-			node.Children[i] = *child
-		}
-	}
-
-	return node, nil
+	return entry, nil
 }
 
 // GetProgram handles GET /programs/{id}
@@ -202,11 +179,10 @@ func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Decode request body (full replacement, same structure as Create)
 	var req struct {
-		Name        string               `json:"name"`
-		Description *string              `json:"description,omitempty"`
-		RootNodes   []programNodeRequest `json:"root_nodes,omitempty"`
+		Name        string                `json:"name"`
+		Description *string               `json:"description,omitempty"`
+		Entries     []programEntryRequest `json:"entries,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -219,20 +195,19 @@ func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
 	// Update existing program (full replacement)
 	existing.Name = req.Name
 	existing.Description = req.Description
-	existing.RootNodes = make([]domain.ProgramNode, len(req.RootNodes))
+	existing.Entries = make([]domain.ProgramEntry, len(req.Entries))
 
-	// Convert root nodes recursively
-	for i, nodeReq := range req.RootNodes {
-		node, err := h.convertNode(ctx, nodeReq, nil)
+	for i, entryReq := range req.Entries {
+		entry, err := h.convertEntry(ctx, entryReq)
 		if err != nil {
-			middleware.WriteValidationError(w, "Invalid program node", map[string]interface{}{
-				"field": "root_nodes",
+			middleware.WriteValidationError(w, "Invalid program entry", map[string]interface{}{
+				"field": "entries",
 				"index": i,
 				"error": err.Error(),
 			})
 			return
 		}
-		existing.RootNodes[i] = *node
+		existing.Entries[i] = *entry
 	}
 
 	// Validate
@@ -283,22 +258,8 @@ func (h *ProgramHandler) DeleteProgram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check for referential integrity: Program referenced by Workout (FR-026)
-	// We need to check all ProgramNodes in the tree
-	var programNodeIDs []uuid.UUID
-	var collectNodeIDs func(nodes []domain.ProgramNode)
-	collectNodeIDs = func(nodes []domain.ProgramNode) {
-		for _, node := range nodes {
-			programNodeIDs = append(programNodeIDs, node.ID)
-			if len(node.Children) > 0 {
-				collectNodeIDs(node.Children)
-			}
-		}
-	}
-	collectNodeIDs(program.RootNodes)
-
-	// Check if any Workout references any ProgramNode in this Program
-	for _, nodeID := range programNodeIDs {
-		referencingWorkouts, err := h.workoutRepo.ListByProgramNodeID(ctx, nodeID)
+	for _, entry := range program.Entries {
+		referencingWorkouts, err := h.workoutRepo.ListByProgramNodeID(ctx, entry.ID)
 		if err != nil {
 			middleware.WriteInternalError(w, "Failed to check references")
 			return
@@ -316,7 +277,7 @@ func (h *ProgramHandler) DeleteProgram(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Delete (cascades to ProgramNode records per FR-026)
+	// Delete (cascades to ProgramEntry records)
 	if err := h.repo.Delete(ctx, id); err != nil {
 		if err == domain.ErrNotFound {
 			middleware.WriteNotFoundError(w, "Program not found")

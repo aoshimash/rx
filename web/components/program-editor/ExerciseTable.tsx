@@ -1,10 +1,10 @@
 import { Button } from '@/components/ui/button';
-import type { Exercise, ProgramNodeCreate } from '@/types/api';
+import type { Exercise, ProgramEntryCreate } from '@/types/api';
 import { Plus } from 'lucide-react';
 import { ExerciseRow } from './ExerciseRow';
 
 interface ExerciseTableProps {
-  exercises: ProgramNodeCreate[];
+  exercises: ProgramEntryCreate[];
   availableExercises: Exercise[];
   onExerciseChange: (index: number, exerciseId: string) => void;
   onSetsChange: (index: number, value: number) => void;

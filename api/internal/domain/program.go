@@ -1,20 +1,21 @@
 package domain
 
 import (
-	"github.com/google/uuid"
+	"encoding/json"
 	"time"
+
+	"github.com/google/uuid"
 )
 
-// ProgramNode represents a node in the program tree (cycle, week, day, block, or exercise prescription).
-type ProgramNode struct {
-	ID        uuid.UUID     `json:"id"`
-	ProgramID uuid.UUID     `json:"program_id"`
-	ParentID  *uuid.UUID    `json:"parent_id,omitempty"`
-	Name      string        `json:"name"`
-	NodeType  string        `json:"node_type"`
-	Order     int           `json:"order"`
-	Children  []ProgramNode `json:"children,omitempty"`
-	// Prescription fields (for leaf nodes)
+// ProgramEntry represents a flat training prescription entry in a program.
+// It carries a free-form metadata field for contextual grouping (e.g., week/day).
+type ProgramEntry struct {
+	ID        uuid.UUID       `json:"id"`
+	ProgramID uuid.UUID       `json:"program_id"`
+	Name      string          `json:"name"`
+	Order     int             `json:"order"`
+	Metadata  json.RawMessage `json:"metadata,omitempty"`
+	// Prescription fields
 	ExerciseID         *uuid.UUID `json:"exercise_id,omitempty"`
 	TargetSets         *int       `json:"target_sets,omitempty"`
 	TargetReps         *int       `json:"target_reps,omitempty"`
@@ -25,12 +26,12 @@ type ProgramNode struct {
 	Notes              *string    `json:"notes,omitempty"`
 }
 
-// Program represents a training program containing a recursive tree of nodes.
+// Program represents a training program containing a flat list of entries.
 type Program struct {
-	ID          uuid.UUID     `json:"id"`
-	Name        string        `json:"name"`
-	Description *string       `json:"description,omitempty"`
-	CreatedAt   time.Time     `json:"created_at"`
-	UpdatedAt   time.Time     `json:"updated_at"`
-	RootNodes   []ProgramNode `json:"root_nodes,omitempty"`
+	ID          uuid.UUID      `json:"id"`
+	Name        string         `json:"name"`
+	Description *string        `json:"description,omitempty"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	Entries     []ProgramEntry `json:"entries,omitempty"`
 }

@@ -4,153 +4,143 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { Exercise, ProgramNodeCreate } from '@/types/api';
+import type { Exercise, ProgramEntryCreate } from '@/types/api';
 import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { DeleteConfirmDialog } from './DeleteConfirmDialog';
 import { WeekAccordion } from './WeekAccordion';
+import { type DayGroup, type WeekGroup, entriesToWeekGroups, weekGroupsToEntries } from './types';
 
 interface ProgramFormProps {
   programName: string;
   programDescription: string;
-  weeks: ProgramNodeCreate[];
+  initialEntries?: ProgramEntryCreate[];
   availableExercises: Exercise[];
   onNameChange: (name: string) => void;
   onDescriptionChange: (description: string) => void;
-  onWeeksChange: (weeks: ProgramNodeCreate[]) => void;
-  onSave: () => void;
+  onSave: (entries: ProgramEntryCreate[]) => void;
   onDelete?: () => void;
   isSaving?: boolean;
   isEditing?: boolean;
 }
 
 /**
- * Full hierarchical program editor form
+ * Full hierarchical program editor form.
+ * Manages week/day/exercise tree internally and converts to flat entries on save.
  */
 export function ProgramForm({
   programName,
   programDescription,
-  weeks,
+  initialEntries,
   availableExercises,
   onNameChange,
   onDescriptionChange,
-  onWeeksChange,
   onSave,
   onDelete,
   isSaving,
   isEditing,
 }: ProgramFormProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [weekGroups, setWeekGroups] = useState<WeekGroup[]>(() =>
+    initialEntries && initialEntries.length > 0
+      ? entriesToWeekGroups(initialEntries)
+      : [{ name: 'Week 1', days: [] }]
+  );
 
   const handleAddWeek = () => {
-    const newWeek: ProgramNodeCreate = {
-      name: `Week ${weeks.length + 1}`,
-      node_type: 'week',
-      order: weeks.length,
-      children: [],
+    const newWeek: WeekGroup = {
+      name: `Week ${weekGroups.length + 1}`,
+      days: [],
     };
-    onWeeksChange([...weeks, newWeek]);
+    setWeekGroups([...weekGroups, newWeek]);
   };
 
   const handleRemoveWeek = (weekIdx: number) => {
-    const updated = weeks.filter((_, idx) => idx !== weekIdx);
-    onWeeksChange(updated.map((w, idx) => ({ ...w, order: idx })));
+    setWeekGroups(weekGroups.filter((_, idx) => idx !== weekIdx));
   };
 
   const handleWeekNameChange = (weekIdx: number, name: string) => {
-    const updated = [...weeks];
-    updated[weekIdx] = { ...updated[weekIdx], name } as ProgramNodeCreate;
-    onWeeksChange(updated);
+    const updated = [...weekGroups];
+    const week = updated[weekIdx];
+    if (!week) return;
+    updated[weekIdx] = { ...week, name };
+    setWeekGroups(updated);
   };
 
   const handleAddDay = (weekIdx: number) => {
-    const updated = [...weeks];
+    const updated = [...weekGroups];
     const week = updated[weekIdx];
     if (!week) return;
 
-    const currentDays = week.children || [];
-    const newDay: ProgramNodeCreate = {
-      name: `Day ${currentDays.length + 1}`,
-      node_type: 'day',
-      order: currentDays.length,
-      children: [],
+    const newDay: DayGroup = {
+      name: `Day ${week.days.length + 1}`,
+      exercises: [],
     };
-    updated[weekIdx] = {
-      ...week,
-      children: [...currentDays, newDay],
-    } as ProgramNodeCreate;
-    onWeeksChange(updated);
+    updated[weekIdx] = { ...week, days: [...week.days, newDay] };
+    setWeekGroups(updated);
   };
 
   const handleRemoveDay = (weekIdx: number, dayIdx: number) => {
-    const updated = [...weeks];
+    const updated = [...weekGroups];
     const week = updated[weekIdx];
     if (!week) return;
 
-    const days = week.children || [];
-    updated[weekIdx] = {
-      ...week,
-      children: days.filter((_, idx) => idx !== dayIdx).map((d, idx) => ({ ...d, order: idx })),
-    } as ProgramNodeCreate;
-    onWeeksChange(updated);
+    updated[weekIdx] = { ...week, days: week.days.filter((_, idx) => idx !== dayIdx) };
+    setWeekGroups(updated);
   };
 
   const handleDayNameChange = (weekIdx: number, dayIdx: number, name: string) => {
-    const updated = [...weeks];
+    const updated = [...weekGroups];
     const week = updated[weekIdx];
     if (!week) return;
 
-    const days = [...(week.children || [])];
+    const days = [...week.days];
     const day = days[dayIdx];
     if (!day) return;
 
-    days[dayIdx] = { ...day, name } as ProgramNodeCreate;
-    updated[weekIdx] = { ...week, children: days } as ProgramNodeCreate;
-    onWeeksChange(updated);
+    days[dayIdx] = { ...day, name };
+    updated[weekIdx] = { ...week, days };
+    setWeekGroups(updated);
   };
 
   const handleAddExercise = (weekIdx: number, dayIdx: number) => {
-    const updated = [...weeks];
+    const updated = [...weekGroups];
     const week = updated[weekIdx];
     if (!week) return;
 
-    const days = [...(week.children || [])];
+    const days = [...week.days];
     const day = days[dayIdx];
     if (!day) return;
 
-    const exercises = day.children || [];
-    const newExercise: ProgramNodeCreate = {
+    const newExercise: ProgramEntryCreate = {
       name: 'Exercise',
-      node_type: 'exercise',
-      order: exercises.length,
+      order: day.exercises.length,
       target_sets: 3,
       target_reps: 10,
       target_rpe: 7,
     };
-    days[dayIdx] = {
-      ...day,
-      children: [...exercises, newExercise],
-    } as ProgramNodeCreate;
-    updated[weekIdx] = { ...week, children: days } as ProgramNodeCreate;
-    onWeeksChange(updated);
+    days[dayIdx] = { ...day, exercises: [...day.exercises, newExercise] };
+    updated[weekIdx] = { ...week, days };
+    setWeekGroups(updated);
   };
 
   const handleRemoveExercise = (weekIdx: number, dayIdx: number, exIdx: number) => {
-    const updated = [...weeks];
+    const updated = [...weekGroups];
     const week = updated[weekIdx];
     if (!week) return;
 
-    const days = [...(week.children || [])];
+    const days = [...week.days];
     const day = days[dayIdx];
     if (!day) return;
 
-    const exercises = day.children || [];
     days[dayIdx] = {
       ...day,
-      children: exercises.filter((_, idx) => idx !== exIdx).map((e, idx) => ({ ...e, order: idx })),
-    } as ProgramNodeCreate;
-    updated[weekIdx] = { ...week, children: days } as ProgramNodeCreate;
-    onWeeksChange(updated);
+      exercises: day.exercises
+        .filter((_, idx) => idx !== exIdx)
+        .map((e, idx) => ({ ...e, order: idx })),
+    };
+    updated[weekIdx] = { ...week, days };
+    setWeekGroups(updated);
   };
 
   const handleExerciseChange = (
@@ -159,84 +149,80 @@ export function ProgramForm({
     exIdx: number,
     exerciseId: string
   ) => {
-    const updated = [...weeks];
+    const updated = [...weekGroups];
     const week = updated[weekIdx];
     if (!week) return;
 
-    const days = [...(week.children || [])];
+    const days = [...week.days];
     const day = days[dayIdx];
     if (!day) return;
 
-    const exercises = [...(day.children || [])];
-    const exerciseNode = exercises[exIdx];
-    if (!exerciseNode) return;
+    const exercises = [...day.exercises];
+    const ex = exercises[exIdx];
+    if (!ex) return;
 
     const exercise = availableExercises.find((e) => e.id === exerciseId);
-    exercises[exIdx] = {
-      ...exerciseNode,
-      exercise_id: exerciseId,
-      name: exercise?.name || 'Exercise',
-    } as ProgramNodeCreate;
-    days[dayIdx] = { ...day, children: exercises } as ProgramNodeCreate;
-    updated[weekIdx] = { ...week, children: days } as ProgramNodeCreate;
-    onWeeksChange(updated);
+    exercises[exIdx] = { ...ex, exercise_id: exerciseId, name: exercise?.name || 'Exercise' };
+    days[dayIdx] = { ...day, exercises };
+    updated[weekIdx] = { ...week, days };
+    setWeekGroups(updated);
   };
 
   const handleSetsChange = (weekIdx: number, dayIdx: number, exIdx: number, value: number) => {
-    const updated = [...weeks];
+    const updated = [...weekGroups];
     const week = updated[weekIdx];
     if (!week) return;
 
-    const days = [...(week.children || [])];
+    const days = [...week.days];
     const day = days[dayIdx];
     if (!day) return;
 
-    const exercises = [...(day.children || [])];
-    const exerciseNode = exercises[exIdx];
-    if (!exerciseNode) return;
+    const exercises = [...day.exercises];
+    const ex = exercises[exIdx];
+    if (!ex) return;
 
-    exercises[exIdx] = { ...exerciseNode, target_sets: value } as ProgramNodeCreate;
-    days[dayIdx] = { ...day, children: exercises } as ProgramNodeCreate;
-    updated[weekIdx] = { ...week, children: days } as ProgramNodeCreate;
-    onWeeksChange(updated);
+    exercises[exIdx] = { ...ex, target_sets: value };
+    days[dayIdx] = { ...day, exercises };
+    updated[weekIdx] = { ...week, days };
+    setWeekGroups(updated);
   };
 
   const handleRepsChange = (weekIdx: number, dayIdx: number, exIdx: number, value: number) => {
-    const updated = [...weeks];
+    const updated = [...weekGroups];
     const week = updated[weekIdx];
     if (!week) return;
 
-    const days = [...(week.children || [])];
+    const days = [...week.days];
     const day = days[dayIdx];
     if (!day) return;
 
-    const exercises = [...(day.children || [])];
-    const exerciseNode = exercises[exIdx];
-    if (!exerciseNode) return;
+    const exercises = [...day.exercises];
+    const ex = exercises[exIdx];
+    if (!ex) return;
 
-    exercises[exIdx] = { ...exerciseNode, target_reps: value } as ProgramNodeCreate;
-    days[dayIdx] = { ...day, children: exercises } as ProgramNodeCreate;
-    updated[weekIdx] = { ...week, children: days } as ProgramNodeCreate;
-    onWeeksChange(updated);
+    exercises[exIdx] = { ...ex, target_reps: value };
+    days[dayIdx] = { ...day, exercises };
+    updated[weekIdx] = { ...week, days };
+    setWeekGroups(updated);
   };
 
   const handleRpeChange = (weekIdx: number, dayIdx: number, exIdx: number, value: number) => {
-    const updated = [...weeks];
+    const updated = [...weekGroups];
     const week = updated[weekIdx];
     if (!week) return;
 
-    const days = [...(week.children || [])];
+    const days = [...week.days];
     const day = days[dayIdx];
     if (!day) return;
 
-    const exercises = [...(day.children || [])];
-    const exerciseNode = exercises[exIdx];
-    if (!exerciseNode) return;
+    const exercises = [...day.exercises];
+    const ex = exercises[exIdx];
+    if (!ex) return;
 
-    exercises[exIdx] = { ...exerciseNode, target_rpe: value } as ProgramNodeCreate;
-    days[dayIdx] = { ...day, children: exercises } as ProgramNodeCreate;
-    updated[weekIdx] = { ...week, children: days } as ProgramNodeCreate;
-    onWeeksChange(updated);
+    exercises[exIdx] = { ...ex, target_rpe: value };
+    days[dayIdx] = { ...day, exercises };
+    updated[weekIdx] = { ...week, days };
+    setWeekGroups(updated);
   };
 
   return (
@@ -273,7 +259,7 @@ export function ProgramForm({
         </CardHeader>
         <CardContent className="space-y-4">
           <WeekAccordion
-            weeks={weeks}
+            weeks={weekGroups}
             availableExercises={availableExercises}
             onWeekNameChange={handleWeekNameChange}
             onDayNameChange={handleDayNameChange}
@@ -302,7 +288,7 @@ export function ProgramForm({
           </Button>
         )}
         <Button
-          onClick={onSave}
+          onClick={() => onSave(weekGroupsToEntries(weekGroups))}
           disabled={isSaving || !programName}
           className={!isEditing ? 'ml-auto' : ''}
         >
