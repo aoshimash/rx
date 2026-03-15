@@ -21,6 +21,7 @@ CREATE INDEX idx_program_entries_metadata ON program_entries USING GIN(metadata)
 
 -- Migrate exercise-level nodes from program_nodes to program_entries.
 -- Uses a recursive CTE to propagate week/day ancestor names into metadata.
+-- Assigns globally unique order values per program using ROW_NUMBER().
 WITH RECURSIVE node_ancestors AS (
     -- Base: root nodes (no parent)
     SELECT
@@ -64,6 +65,14 @@ WITH RECURSIVE node_ancestors AS (
         CASE WHEN na.node_type = 'day'  THEN na.name ELSE na.day_name  END AS day_name
     FROM program_nodes pn
     JOIN node_ancestors na ON na.id = pn.parent_id
+),
+exercise_nodes AS (
+    SELECT *
+    FROM node_ancestors
+    WHERE node_type = 'exercise'
+       OR (node_type IS NULL AND NOT EXISTS (
+           SELECT 1 FROM program_nodes child WHERE child.parent_id = node_ancestors.id
+       ))
 )
 INSERT INTO program_entries (
     id, program_id, name, "order", metadata,
@@ -74,7 +83,7 @@ SELECT
     id,
     program_id,
     name,
-    "order",
+    (ROW_NUMBER() OVER (PARTITION BY program_id ORDER BY "order" ASC, id ASC) - 1)::integer AS "order",
     CASE
         WHEN week_name IS NOT NULL OR day_name IS NOT NULL
             THEN jsonb_strip_nulls(jsonb_build_object('week', week_name, 'day', day_name))
@@ -88,11 +97,7 @@ SELECT
     planned_rest_seconds,
     muscle_groups,
     notes
-FROM node_ancestors
-WHERE node_type = 'exercise'
-   OR (node_type IS NULL AND NOT EXISTS (
-       SELECT 1 FROM program_nodes child WHERE child.parent_id = node_ancestors.id
-   ));
+FROM exercise_nodes;
 
 -- Update workouts: point program_node_id FK to program_entries.
 -- Day-level nodes are not migrated, so set those references to NULL first.
@@ -107,7 +112,12 @@ ALTER TABLE workouts
     ADD CONSTRAINT workouts_program_entry_id_fkey
     FOREIGN KEY (program_node_id) REFERENCES program_entries(id) ON DELETE SET NULL;
 
--- Update workout_entries: exercise-level nodes were migrated with same IDs, so FK remains valid.
+-- Update workout_entries: clean up references to non-exercise nodes, then re-point FK.
+UPDATE workout_entries
+SET program_node_id = NULL
+WHERE program_node_id IS NOT NULL
+  AND program_node_id NOT IN (SELECT id FROM program_entries);
+
 ALTER TABLE workout_entries
     DROP CONSTRAINT IF EXISTS workout_entries_program_node_id_fkey;
 ALTER TABLE workout_entries

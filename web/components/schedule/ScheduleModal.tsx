@@ -38,11 +38,18 @@ export function ScheduleModal({
   const [skipWeekends, setSkipWeekends] = useState(true);
   const [avoidConsecutive, setAvoidConsecutive] = useState(false);
 
-  // Count unique training days from metadata.day
+  // Count unique training days using composite week::day key to handle multi-week programs
   const entries = program.entries || [];
-  const totalDays = new Set(
-    entries.map((e) => e.metadata?.day).filter((d) => d !== undefined)
-  ).size || entries.length;
+  const totalDays =
+    new Set(
+      entries
+        .map((e) => {
+          const w = e.metadata?.week;
+          const d = e.metadata?.day;
+          return w !== undefined && d !== undefined ? `${w}::${d}` : undefined;
+        })
+        .filter((k): k is string => k !== undefined)
+    ).size || entries.length;
 
   const handleGenerate = () => {
     const options: ScheduleOptions = {
