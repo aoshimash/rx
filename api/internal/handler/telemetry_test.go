@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aoshimash/optel-workout/api/internal/middleware"
-	"github.com/aoshimash/optel-workout/api/internal/store/memory"
+	"github.com/aoshimash/rx/api/internal/middleware"
+	"github.com/aoshimash/rx/api/internal/store/memory"
 	"github.com/go-chi/chi/v5"
 )
 

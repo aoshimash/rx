@@ -15,7 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
 
-	"github.com/aoshimash/optel-workout/api/internal/storage"
+	"github.com/aoshimash/rx/api/internal/storage"
 )
 
 func TestIntegration_GenerateUploadURL_Success(t *testing.T) {

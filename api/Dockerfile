@@ -1,4 +1,4 @@
-# Production Dockerfile for OPTel Workout API
+# Production Dockerfile for RX API
 # Multi-stage build: Ubuntu-based builder + distroless runtime
 # Distroless provides minimal attack surface (no shell, no package manager)
 

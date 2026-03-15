@@ -199,7 +199,7 @@ The "Try it" feature sends requests directly from your browser to the API server
 
 **Key Design:**
 - MCP Server runs on user's local machine (not on the backend server)
-- Communicates with OPTel API via HTTP
+- Communicates with Rx API via HTTP
 - Backend remains a pure REST API with no MCP-specific logic
 
 ## Workflow
@@ -290,7 +290,7 @@ Start with the absolute minimum - just the OpenAPI info and a single endpoint:
 ```yaml
 openapi: 3.1.0
 info:
-  title: OPTel Workout API
+  title: Rx API
   version: 0.1.0
 servers:
   - url: http://localhost:8080/api/v1
@@ -915,13 +915,13 @@ HOST_PORT=8081 docker compose up -d api
 
 ```bash
 # Build production image (from api/ directory)
-docker build -t optel-workout:latest -f Dockerfile api
+docker build -t rx:latest -f Dockerfile api
 
 # Run production container
 docker run -p 8080:8080 \
   -e PORT=8080 \
   -e LOG_LEVEL=info \
-  optel-workout:latest
+  rx:latest
 
 # Test production container
 curl http://localhost:8080/api/v1/workouts
@@ -946,14 +946,14 @@ After building the production image, verify it works correctly:
 
 ```bash
 # Build the image
-docker build -t optel-workout:latest -f Dockerfile api
+docker build -t rx:latest -f Dockerfile api
 
 # Run the container
 docker run -d -p 8080:8080 \
   -e PORT=8080 \
   -e LOG_LEVEL=info \
   --name optel-test \
-  optel-workout:latest
+  rx:latest
 
 # Wait a few seconds for startup, then test
 sleep 3

@@ -5,8 +5,8 @@ import (
 	"encoding/base64"
 	"log/slog"
 
-	"github.com/aoshimash/optel-workout/api/internal/domain"
-	"github.com/aoshimash/optel-workout/api/internal/repository"
+	"github.com/aoshimash/rx/api/internal/domain"
+	"github.com/aoshimash/rx/api/internal/repository"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"

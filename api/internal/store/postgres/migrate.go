@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"path/filepath"
 
-	"github.com/aoshimash/optel-workout/api/internal/config"
+	"github.com/aoshimash/rx/api/internal/config"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/jackc/pgx/v5/pgxpool"

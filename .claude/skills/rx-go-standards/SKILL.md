@@ -1,9 +1,9 @@
 ---
-name: optel-go-standards
-description: Go coding standards for OPTel project. Covers project structure, error handling, testing, logging, and linting configuration. Use when writing Go code, creating new files in api/, reviewing PRs, setting up packages, or configuring golangci-lint.
+name: rx-go-standards
+description: Go coding standards for Rx project. Covers project structure, error handling, testing, logging, and linting configuration. Use when writing Go code, creating new files in api/, reviewing PRs, setting up packages, or configuring golangci-lint.
 ---
 
-# OPTel Go Standards
+# Rx Go Standards
 
 ## Technology Stack
 

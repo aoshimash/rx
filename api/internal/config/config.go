@@ -4,7 +4,7 @@ import (
 	"os"
 	"strconv"
 
-	s3storage "github.com/aoshimash/optel-workout/api/internal/storage/s3"
+	s3storage "github.com/aoshimash/rx/api/internal/storage/s3"
 )
 
 // Config holds application configuration

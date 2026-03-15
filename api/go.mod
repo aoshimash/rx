@@ -1,4 +1,4 @@
-module github.com/aoshimash/optel-workout/api
+module github.com/aoshimash/rx/api
 
 go 1.25.5
 

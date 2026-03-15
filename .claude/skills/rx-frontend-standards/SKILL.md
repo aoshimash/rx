@@ -1,9 +1,9 @@
 ---
-name: optel-frontend-standards
-description: Frontend coding standards for OPTel project (Web and Mobile). Covers technology stack, project structure, naming conventions, and API communication patterns. Use when writing React/React Native code, creating new files in web/ or mobile/, or setting up frontend components.
+name: rx-frontend-standards
+description: Frontend coding standards for Rx project (Web and Mobile). Covers technology stack, project structure, naming conventions, and API communication patterns. Use when writing React/React Native code, creating new files in web/ or mobile/, or setting up frontend components.
 ---
 
-# OPTel Frontend Standards
+# Rx Frontend Standards
 
 ## Technology Stack
 
@@ -33,7 +33,7 @@ description: Frontend coding standards for OPTel project (Web and Mobile). Cover
 ## Project Structure
 
 ```
-optel-workout/
+rx/
 ├── api/              # REST API (Go) - existing
 ├── web/              # Web frontend (Next.js)
 ├── mobile/           # Mobile app (React Native + Expo)

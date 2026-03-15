@@ -4,21 +4,21 @@ This file provides guidance for AI coding agents working on this repository.
 
 ## Project Overview
 
-**OPTel (Open Physical Telemetry)** - An observability stack for the human physical layer.
+**Rx** - A program-first workout tracking system.
 
-This repository (`optel-workout`) is the **Workout Management** component. It manages "Workouts" (physical exertion records) as an agent-native telemetry backend.
+This repository (`rx`) manages Programs and Workouts with a program-first philosophy.
 
 ## Key Principles
 
 1. **"Dumb Backend"** - No business logic for "health." Strictly stores and retrieves telemetry data.
 2. **Domain-Driven Schema-First** - Domain models define business logic, OpenAPI spec defines API contract. Code is generated from OpenAPI spec.
 
-For details, see `.claude/skills/optel-philosophy/`.
+For details, see `.claude/skills/rx-philosophy/`.
 
 ## Project Structure
 
 ```
-optel-workout/
+rx/
 ├── api/                  # REST API (Go)
 ├── web/                  # Web frontend (Next.js + React)
 ├── mobile/               # Mobile app (React Native + Expo) - future
@@ -34,10 +34,10 @@ optel-workout/
 
 | Skill | Description |
 |-------|-------------|
-| [optel-philosophy](.claude/skills/optel-philosophy/) | Core philosophy and constraints |
-| [optel-domain](.claude/skills/optel-domain/) | Domain models (Workout, Program, Telemetry) |
-| [optel-go-standards](.claude/skills/optel-go-standards/) | Go coding standards (API) |
-| [optel-frontend-standards](.claude/skills/optel-frontend-standards/) | Frontend coding standards (Web/Mobile) |
+| [rx-philosophy](.claude/skills/rx-philosophy/) | Core philosophy and constraints |
+| [rx-domain](.claude/skills/rx-domain/) | Domain models (Workout, Program, Telemetry) |
+| [rx-go-standards](.claude/skills/rx-go-standards/) | Go coding standards (API) |
+| [rx-frontend-standards](.claude/skills/rx-frontend-standards/) | Frontend coding standards (Web/Mobile) |
 
 ## Quick Reference
 

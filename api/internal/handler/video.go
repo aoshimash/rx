@@ -6,9 +6,9 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/aoshimash/optel-workout/api/internal/middleware"
-	"github.com/aoshimash/optel-workout/api/internal/storage"
-	"github.com/aoshimash/optel-workout/api/pkg/openapi"
+	"github.com/aoshimash/rx/api/internal/middleware"
+	"github.com/aoshimash/rx/api/internal/storage"
+	"github.com/aoshimash/rx/api/pkg/openapi"
 )
 
 // VideoHandler handles video upload/download URL generation

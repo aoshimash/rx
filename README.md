@@ -1,10 +1,10 @@
-# optel-workout
+# Rx
 
-An agent-native telemetry backend to monitor physical exertion. Part of Open Physical Telemetry (OPTel).
+A program-first workout tracking system. Define your training program, then execute it.
 
 ## Overview
 
-OPTel (Open Physical Telemetry) is an observability stack for the human physical layer. This repository manages **Workouts** - records of physical exertion.
+Rx is a program-first workout tracking system. Programs are the manifest; workouts are their execution results.
 
 No fitness tracking, no motivation scores - just data.
 
@@ -62,13 +62,13 @@ Build a production-ready container image:
 
 ```bash
 # From repository root
-docker build -t optel-workout:latest -f api/Dockerfile api
+docker build -t rx:latest -f api/Dockerfile api
 
 # Run the image
 docker run -p 8080:8080 \
   -e PORT=8080 \
   -e LOG_LEVEL=info \
-  optel-workout:latest
+  rx:latest
 
 # Test
 curl http://localhost:8080/api/v1/workouts
@@ -95,7 +95,7 @@ See [Development Guide](docs/DEVELOPMENT.md) for details.
 ## Project Structure
 
 ```
-optel-workout/
+rx/
 ├── api/              # REST API (Go)
 ├── mcp/              # MCP Server (runs on user's local machine)
 ├── frontend/         # Frontend (future)
