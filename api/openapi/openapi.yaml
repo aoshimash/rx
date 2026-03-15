@@ -10,6 +10,98 @@ security:
   - bearerAuth: []
 
 paths:
+  /programs:
+    get:
+      summary: List programs
+      operationId: listPrograms
+      tags: [Program]
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/After'
+      responses:
+        '200':
+          description: Paginated list of programs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      summary: Create program
+      operationId: createProgram
+      tags: [Program]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramCreate'
+      responses:
+        '201':
+          description: Program created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Program'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /programs/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ProgramId'
+    get:
+      summary: Get program by ID
+      operationId: getProgram
+      tags: [Program]
+      responses:
+        '200':
+          description: Program found (includes all entries)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Program'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Update program
+      operationId: updateProgram
+      tags: [Program]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramCreate'
+      responses:
+        '200':
+          description: Program updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Program'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete program
+      operationId: deleteProgram
+      tags: [Program]
+      responses:
+        '204':
+          description: Program deleted (entries cascade deleted)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /plans:
     get:
       summary: List plans
@@ -48,6 +140,34 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '401':
           $ref: '#/components/responses/Unauthorized'
+
+  /plans/from-program:
+    post:
+      summary: Convert a program into a plan
+      description: |
+        Creates a new Plan from an existing Program by calculating working weights
+        from RPE/percent_1rm values and target weights, rounded to equipment increments.
+      operationId: convertProgramToPlan
+      tags: [Plan]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConvertProgramToPlanRequest'
+      responses:
+        '201':
+          description: Plan created from program
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /plans/{id}:
     parameters:
@@ -313,6 +433,15 @@ components:
         type: string
       description: Cursor for pagination (from previous response)
 
+    ProgramId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Program ID
+
     PlanId:
       name: id
       in: path
@@ -387,6 +516,201 @@ components:
   # ========================================
   schemas:
     # ========================================
+    # Program
+    # ========================================
+    Program:
+      type: object
+      required:
+        - id
+        - name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        notes:
+          type: string
+          maxLength: 5000
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Free-form JSON metadata
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProgramEntry'
+          description: Exercise prescription entries (RPE-based, no absolute weights)
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ProgramCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        notes:
+          type: string
+          maxLength: 5000
+        metadata:
+          type: object
+          additionalProperties: true
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProgramEntryCreate'
+          maxItems: 1000
+
+    ProgramEntry:
+      type: object
+      required:
+        - id
+        - program_id
+        - order
+        - exercise_name
+      properties:
+        id:
+          type: string
+          format: uuid
+        program_id:
+          type: string
+          format: uuid
+        order:
+          type: integer
+          minimum: 0
+          description: Position in program
+        exercise_name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Exercise name (plain string)
+        sets:
+          type: integer
+          minimum: 1
+        reps:
+          type: integer
+          minimum: 1
+        rpe:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Target Rate of Perceived Exertion
+        percent_1rm:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Percentage of 1RM (0.0 to 1.0) for weight calculation
+        notes:
+          type: string
+          maxLength: 2000
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Free-form JSON metadata
+
+    ProgramEntryCreate:
+      type: object
+      required:
+        - exercise_name
+        - order
+      properties:
+        exercise_name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        order:
+          type: integer
+          minimum: 0
+        sets:
+          type: integer
+          minimum: 1
+        reps:
+          type: integer
+          minimum: 1
+        rpe:
+          type: integer
+          minimum: 1
+          maximum: 10
+        percent_1rm:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+        notes:
+          type: string
+          maxLength: 2000
+        metadata:
+          type: object
+          additionalProperties: true
+
+    ProgramListResponse:
+      type: object
+      required:
+        - data
+        - has_more
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Program'
+        next_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+
+    ConvertProgramToPlanRequest:
+      type: object
+      required:
+        - program_id
+        - target_weights
+      properties:
+        program_id:
+          type: string
+          format: uuid
+          description: ID of the program to convert
+        name:
+          type: string
+          maxLength: 200
+          description: Name for the created plan (defaults to program name)
+        target_weights:
+          type: object
+          additionalProperties:
+            type: number
+            format: double
+          description: |
+            Map of exercise_name to target weight in kg.
+            For entries with percent_1rm: load_kg = percent_1rm * target_weight.
+            For entries without percent_1rm: load_kg = target_weight (direct copy).
+        load_increments:
+          type: object
+          additionalProperties:
+            type: number
+            format: double
+          description: |
+            Map of exercise_name to weight increment in kg for rounding.
+            If not specified, weights are rounded to 0.1 kg precision.
+
+    # ========================================
     # Plan
     # ========================================
     Plan:
@@ -400,6 +724,10 @@ components:
         id:
           type: string
           format: uuid
+        program_id:
+          type: string
+          format: uuid
+          description: Optional reference to the source program template
         name:
           type: string
           minLength: 1
@@ -431,6 +759,9 @@ components:
       required:
         - name
       properties:
+        program_id:
+          type: string
+          format: uuid
         name:
           type: string
           minLength: 1
@@ -468,6 +799,10 @@ components:
           type: integer
           minimum: 0
           description: Position in plan
+        date:
+          type: string
+          format: date
+          description: Optional date for this entry (YYYY-MM-DD)
         exercise_name:
           type: string
           minLength: 1
@@ -510,6 +845,10 @@ components:
         order:
           type: integer
           minimum: 0
+        date:
+          type: string
+          format: date
+          description: Optional date for this entry (YYYY-MM-DD)
         sets:
           type: integer
           minimum: 1

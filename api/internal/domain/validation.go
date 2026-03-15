@@ -183,6 +183,122 @@ func ValidatePlan(p *Plan) error {
 	return nil
 }
 
+// ValidateProgramEntry validates a ProgramEntry entity.
+// Metadata contents are not validated (free-form JSON).
+func ValidateProgramEntry(e *ProgramEntry) error {
+	if e == nil {
+		return &ValidationError{
+			Field:   "program_entry",
+			Message: "program_entry cannot be nil",
+		}
+	}
+
+	// Validate exercise_name
+	if err := ValidateRequiredString("exercise_name", e.ExerciseName); err != nil {
+		return err
+	}
+	if err := ValidateStringLength("exercise_name", e.ExerciseName, 1, 200); err != nil {
+		return err
+	}
+
+	// Validate order
+	if e.Order < 0 {
+		return &ValidationError{
+			Field:   "order",
+			Message: "order must be greater than or equal to 0",
+		}
+	}
+
+	// Validate optional fields
+	if e.Sets != nil && *e.Sets <= 0 {
+		return &ValidationError{
+			Field:   "sets",
+			Message: "sets must be greater than 0",
+		}
+	}
+
+	if e.Reps != nil && *e.Reps <= 0 {
+		return &ValidationError{
+			Field:   "reps",
+			Message: "reps must be greater than 0",
+		}
+	}
+
+	if e.RPE != nil {
+		if err := ValidateRPE(*e.RPE); err != nil {
+			return err
+		}
+	}
+
+	if e.Percent1RM != nil {
+		if *e.Percent1RM < 0 || *e.Percent1RM > 1 {
+			return &ValidationError{
+				Field:   "percent_1rm",
+				Message: "percent_1rm must be between 0.0 and 1.0",
+			}
+		}
+	}
+
+	if e.Notes != nil {
+		if err := ValidateStringLength("notes", *e.Notes, 0, 2000); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ValidateProgram validates a Program entity.
+func ValidateProgram(p *Program) error {
+	if p == nil {
+		return &ValidationError{
+			Field:   "program",
+			Message: "program cannot be nil",
+		}
+	}
+
+	// Validate required fields
+	if err := ValidateRequiredString("name", p.Name); err != nil {
+		return err
+	}
+	if err := ValidateStringLength("name", p.Name, 1, 200); err != nil {
+		return err
+	}
+
+	// Validate description length if provided
+	if p.Description != nil {
+		if err := ValidateStringLength("description", *p.Description, 0, 2000); err != nil {
+			return err
+		}
+	}
+
+	// Validate notes length if provided
+	if p.Notes != nil {
+		if err := ValidateStringLength("notes", *p.Notes, 0, 5000); err != nil {
+			return err
+		}
+	}
+
+	// Validate entries (max 1000)
+	if len(p.Entries) > 1000 {
+		return &ValidationError{
+			Field:   "entries",
+			Message: "program cannot have more than 1000 entries",
+		}
+	}
+
+	for i := range p.Entries {
+		if err := ValidateProgramEntry(&p.Entries[i]); err != nil {
+			return &ValidationError{
+				Field:   fmt.Sprintf("entries[%d]", i),
+				Message: err.Error(),
+			}
+		}
+	}
+
+	return nil
+}
+
 // ValidateLogEntry validates a LogEntry entity.
 func ValidateLogEntry(e *LogEntry) error {
 	if e == nil {
