@@ -61,7 +61,9 @@ export function ProgramForm({
 
   const handleWeekNameChange = (weekIdx: number, name: string) => {
     const updated = [...weekGroups];
-    updated[weekIdx] = { ...updated[weekIdx], name };
+    const week = updated[weekIdx];
+    if (!week) return;
+    updated[weekIdx] = { ...week, name };
     setWeekGroups(updated);
   };
 

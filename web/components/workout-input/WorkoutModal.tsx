@@ -133,7 +133,7 @@ export function WorkoutModal({
   };
 
   const dayName = dayEntries?.[0]
-    ? ((dayEntries[0].metadata?.day as string) || dayEntries[0].name)
+    ? (dayEntries[0].metadata?.day as string) || dayEntries[0].name
     : undefined;
 
   return (

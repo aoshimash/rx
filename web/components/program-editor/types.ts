@@ -45,19 +45,20 @@ export function entriesToWeekGroups(entries: ProgramEntryCreate[]): WeekGroup[] 
       weekOrder.push(weekName);
       dayOrderMap.set(weekName, []);
     }
-    const weekDays = weekMap.get(weekName)!;
+    const weekDays = weekMap.get(weekName);
+    if (!weekDays) continue;
     if (!weekDays.has(dayName)) {
       weekDays.set(dayName, []);
-      dayOrderMap.get(weekName)!.push(dayName);
+      dayOrderMap.get(weekName)?.push(dayName);
     }
-    weekDays.get(dayName)!.push({ ...entry });
+    weekDays.get(dayName)?.push({ ...entry });
   }
 
   return weekOrder.map((weekName) => ({
     name: weekName,
     days: (dayOrderMap.get(weekName) || []).map((dayName) => ({
       name: dayName,
-      exercises: weekMap.get(weekName)!.get(dayName) || [],
+      exercises: weekMap.get(weekName)?.get(dayName) || [],
     })),
   }));
 }
