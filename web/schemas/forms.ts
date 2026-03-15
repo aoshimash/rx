@@ -60,7 +60,7 @@ export type WorkoutFormData = z.infer<typeof workoutCreateSchema>;
 export const programEntrySchema: z.ZodType<ProgramEntryCreate> = z.object({
   name: z.string().min(1, 'Name is required').max(200, 'Name too long'),
   order: z.number().int().min(0, 'Order must be non-negative'),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   exercise_id: z.string().uuid('Invalid exercise ID').optional(),
   target_sets: z.number().int().min(1, 'Must be at least 1').optional(),
   target_reps: z.number().int().min(1, 'Must be at least 1').optional(),

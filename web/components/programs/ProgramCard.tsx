@@ -17,18 +17,12 @@ export function ProgramCard({ program, onSelect, isSelected }: ProgramCardProps)
   const entries = program.entries || [];
 
   // Count unique weeks from metadata.week
-  const weekCount = new Set(
-    entries
-      .map((e) => e.metadata?.week)
-      .filter((w) => w !== undefined)
-  ).size;
+  const weekCount = new Set(entries.map((e) => e.metadata?.week).filter((w) => w !== undefined))
+    .size;
 
   // Count unique days from metadata.day
-  const dayCount = new Set(
-    entries
-      .map((e) => e.metadata?.day)
-      .filter((d) => d !== undefined)
-  ).size;
+  const dayCount = new Set(entries.map((e) => e.metadata?.day).filter((d) => d !== undefined))
+    .size;
 
   return (
     <Card className={isSelected ? 'border-primary' : ''}>

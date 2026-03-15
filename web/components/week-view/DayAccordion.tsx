@@ -95,9 +95,7 @@ function buildExerciseRows(day: DayData) {
 
   // Add all planned entries
   for (const programEntry of plannedEntries) {
-    const actual = programEntry.exercise_id
-      ? actualMap.get(programEntry.exercise_id)
-      : undefined;
+    const actual = programEntry.exercise_id ? actualMap.get(programEntry.exercise_id) : undefined;
 
     rows.push({
       exerciseName: programEntry.name,

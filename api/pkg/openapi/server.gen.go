@@ -85,19 +85,64 @@ type PlanSnapshot struct {
 
 // Program defines model for Program.
 type Program struct {
-	CreatedAt   time.Time          `json:"created_at"`
-	Description *string            `json:"description,omitempty"`
-	Id          openapi_types.UUID `json:"id"`
-	Name        string             `json:"name"`
-	RootNodes   *[]ProgramNode     `json:"root_nodes,omitempty"`
-	UpdatedAt   time.Time          `json:"updated_at"`
+	CreatedAt   time.Time `json:"created_at"`
+	Description *string   `json:"description,omitempty"`
+
+	// Entries Flat list of training prescription entries
+	Entries   *[]ProgramEntry    `json:"entries,omitempty"`
+	Id        openapi_types.UUID `json:"id"`
+	Name      string             `json:"name"`
+	UpdatedAt time.Time          `json:"updated_at"`
 }
 
 // ProgramCreate defines model for ProgramCreate.
 type ProgramCreate struct {
-	Description *string              `json:"description,omitempty"`
-	Name        string               `json:"name"`
-	RootNodes   *[]ProgramNodeCreate `json:"root_nodes,omitempty"`
+	Description *string               `json:"description,omitempty"`
+	Entries     *[]ProgramEntryCreate `json:"entries,omitempty"`
+	Name        string                `json:"name"`
+}
+
+// ProgramEntry defines model for ProgramEntry.
+type ProgramEntry struct {
+	ExerciseId *openapi_types.UUID `json:"exercise_id,omitempty"`
+	Id         openapi_types.UUID  `json:"id"`
+
+	// Metadata Free-form JSON for contextual grouping.
+	// Common keys: week (string), day (string).
+	// Example: {"week": "Week 1", "day": "Day A"}
+	Metadata     *map[string]interface{} `json:"metadata,omitempty"`
+	MuscleGroups *[]string               `json:"muscle_groups,omitempty"`
+
+	// Name Entry label (e.g., "Squat - Top Set")
+	Name  string  `json:"name"`
+	Notes *string `json:"notes,omitempty"`
+
+	// Order Global position in program
+	Order              int                `json:"order"`
+	Percent1rm         *float64           `json:"percent_1rm,omitempty"`
+	PlannedRestSeconds *int               `json:"planned_rest_seconds,omitempty"`
+	ProgramId          openapi_types.UUID `json:"program_id"`
+	TargetReps         *int               `json:"target_reps,omitempty"`
+	TargetRpe          *int               `json:"target_rpe,omitempty"`
+	TargetSets         *int               `json:"target_sets,omitempty"`
+}
+
+// ProgramEntryCreate defines model for ProgramEntryCreate.
+type ProgramEntryCreate struct {
+	ExerciseId *openapi_types.UUID `json:"exercise_id,omitempty"`
+
+	// Metadata Free-form JSON for contextual grouping.
+	// Common keys: week (string), day (string).
+	Metadata           *map[string]interface{} `json:"metadata,omitempty"`
+	MuscleGroups       *[]string               `json:"muscle_groups,omitempty"`
+	Name               string                  `json:"name"`
+	Notes              *string                 `json:"notes,omitempty"`
+	Order              int                     `json:"order"`
+	Percent1rm         *float64                `json:"percent_1rm,omitempty"`
+	PlannedRestSeconds *int                    `json:"planned_rest_seconds,omitempty"`
+	TargetReps         *int                    `json:"target_reps,omitempty"`
+	TargetRpe          *int                    `json:"target_rpe,omitempty"`
+	TargetSets         *int                    `json:"target_sets,omitempty"`
 }
 
 // ProgramListResponse defines model for ProgramListResponse.
@@ -105,47 +150,6 @@ type ProgramListResponse struct {
 	Data       []Program `json:"data"`
 	HasMore    bool      `json:"has_more"`
 	NextCursor *string   `json:"next_cursor"`
-}
-
-// ProgramNode defines model for ProgramNode.
-type ProgramNode struct {
-	Children     *[]ProgramNode      `json:"children,omitempty"`
-	ExerciseId   *openapi_types.UUID `json:"exercise_id,omitempty"`
-	Id           openapi_types.UUID  `json:"id"`
-	MuscleGroups *[]string           `json:"muscle_groups,omitempty"`
-	Name         string              `json:"name"`
-
-	// NodeType User-defined type (cycle, week, day, block, exercise)
-	NodeType string  `json:"node_type"`
-	Notes    *string `json:"notes,omitempty"`
-
-	// Order Order among siblings
-	Order int `json:"order"`
-
-	// ParentId Parent node (null for root)
-	ParentId           *openapi_types.UUID `json:"parent_id,omitempty"`
-	Percent1rm         *float64            `json:"percent_1rm,omitempty"`
-	PlannedRestSeconds *int                `json:"planned_rest_seconds,omitempty"`
-	ProgramId          openapi_types.UUID  `json:"program_id"`
-	TargetReps         *int                `json:"target_reps,omitempty"`
-	TargetRpe          *int                `json:"target_rpe,omitempty"`
-	TargetSets         *int                `json:"target_sets,omitempty"`
-}
-
-// ProgramNodeCreate defines model for ProgramNodeCreate.
-type ProgramNodeCreate struct {
-	Children           *[]ProgramNodeCreate `json:"children,omitempty"`
-	ExerciseId         *openapi_types.UUID  `json:"exercise_id,omitempty"`
-	MuscleGroups       *[]string            `json:"muscle_groups,omitempty"`
-	Name               string               `json:"name"`
-	NodeType           string               `json:"node_type"`
-	Notes              *string              `json:"notes,omitempty"`
-	Order              int                  `json:"order"`
-	Percent1rm         *float64             `json:"percent_1rm,omitempty"`
-	PlannedRestSeconds *int                 `json:"planned_rest_seconds,omitempty"`
-	TargetReps         *int                 `json:"target_reps,omitempty"`
-	TargetRpe          *int                 `json:"target_rpe,omitempty"`
-	TargetSets         *int                 `json:"target_sets,omitempty"`
 }
 
 // TelemetryPoint defines model for TelemetryPoint.
