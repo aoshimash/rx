@@ -27,6 +27,7 @@ func main() {
 	cfg := config.Load()
 
 	// Initialize repositories based on storage type
+	var programRepo repository.ProgramRepository
 	var planRepo repository.PlanRepository
 	var logRepo repository.LogRepository
 
@@ -42,10 +43,12 @@ func main() {
 		defer db.Close()
 
 		slog.Info("Using PostgreSQL storage backend")
+		programRepo = postgresstore.NewProgramRepository(db.Pool())
 		planRepo = postgresstore.NewPlanRepository(db.Pool())
 		logRepo = postgresstore.NewLogRepository(db.Pool())
 	} else {
 		slog.Info("Using in-memory storage backend")
+		programRepo = memory.NewProgramRepository()
 		planRepo = memory.NewPlanRepository()
 		logRepo = memory.NewLogRepository()
 	}
@@ -75,6 +78,7 @@ func main() {
 	}
 
 	// Initialize handlers
+	programHandler := handler.NewProgramHandler(programRepo, planRepo)
 	planHandler := handler.NewPlanHandler(planRepo, logRepo)
 	logHandler := handler.NewLogHandler(logRepo)
 	videoHandler := handler.NewVideoHandler(storageProvider, logger)
@@ -116,8 +120,16 @@ func main() {
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Use(middleware.AuthMiddleware(authProvider))
 
+		// Program routes
+		r.Post("/programs", programHandler.CreateProgram)
+		r.Get("/programs", programHandler.ListPrograms)
+		r.Get("/programs/{id}", programHandler.GetProgram)
+		r.Put("/programs/{id}", programHandler.UpdateProgram)
+		r.Delete("/programs/{id}", programHandler.DeleteProgram)
+
 		// Plan routes
 		r.Post("/plans", planHandler.CreatePlan)
+		r.Post("/plans/from-program", programHandler.ConvertToPlan)
 		r.Get("/plans", planHandler.ListPlans)
 		r.Get("/plans/{id}", planHandler.GetPlan)
 		r.Put("/plans/{id}", planHandler.UpdatePlan)

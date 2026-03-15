@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"time"
 
 	"github.com/aoshimash/rx/api/internal/domain"
 	"github.com/aoshimash/rx/api/internal/repository"
@@ -35,12 +36,12 @@ func (r *planRepository) Create(ctx context.Context, plan *domain.Plan) error {
 	}
 
 	query := `
-		INSERT INTO plans (id, name, description, notes, metadata, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+		INSERT INTO plans (id, program_id, name, description, notes, metadata, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
 		RETURNING created_at, updated_at
 	`
 
-	err = tx.QueryRow(ctx, query, id, plan.Name, plan.Description, plan.Notes, plan.Metadata).Scan(
+	err = tx.QueryRow(ctx, query, id, plan.ProgramID, plan.Name, plan.Description, plan.Notes, plan.Metadata).Scan(
 		&plan.CreatedAt, &plan.UpdatedAt,
 	)
 	if err != nil {
@@ -66,18 +67,24 @@ func (r *planRepository) insertEntries(ctx context.Context, tx pgx.Tx, planID uu
 			entryID = entries[i].ID
 		}
 
+		var dateVal interface{}
+		if entries[i].Date != nil {
+			dateVal = time.Time(*entries[i].Date)
+		}
+
 		query := `
 			INSERT INTO plan_entries (
-				id, plan_id, "order", exercise_name,
+				id, plan_id, "order", date, exercise_name,
 				sets, reps, load_kg, rpe, notes, metadata
 			)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 		`
 
 		_, err := tx.Exec(ctx, query,
 			entryID,
 			planID,
 			entries[i].Order,
+			dateVal,
 			entries[i].ExerciseName,
 			entries[i].Sets,
 			entries[i].Reps,
@@ -100,7 +107,7 @@ func (r *planRepository) insertEntries(ctx context.Context, tx pgx.Tx, planID uu
 
 func (r *planRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Plan, error) {
 	query := `
-		SELECT id, name, description, notes, metadata, created_at, updated_at
+		SELECT id, program_id, name, description, notes, metadata, created_at, updated_at
 		FROM plans
 		WHERE id = $1
 	`
@@ -109,6 +116,7 @@ func (r *planRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Pla
 	var metadataRaw []byte
 	err := r.pool.QueryRow(ctx, query, id).Scan(
 		&plan.ID,
+		&plan.ProgramID,
 		&plan.Name,
 		&plan.Description,
 		&plan.Notes,
@@ -140,7 +148,7 @@ func (r *planRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Pla
 
 func (r *planRepository) getEntriesForPlan(ctx context.Context, planID uuid.UUID) ([]domain.PlanEntry, error) {
 	query := `
-		SELECT id, plan_id, "order", exercise_name,
+		SELECT id, plan_id, "order", date, exercise_name,
 		       sets, reps, load_kg, rpe, notes, metadata
 		FROM plan_entries
 		WHERE plan_id = $1
@@ -158,10 +166,12 @@ func (r *planRepository) getEntriesForPlan(ctx context.Context, planID uuid.UUID
 	for rows.Next() {
 		var entry domain.PlanEntry
 		var metadataRaw []byte
+		var dateVal *time.Time
 		err := rows.Scan(
 			&entry.ID,
 			&entry.PlanID,
 			&entry.Order,
+			&dateVal,
 			&entry.ExerciseName,
 			&entry.Sets,
 			&entry.Reps,
@@ -172,6 +182,10 @@ func (r *planRepository) getEntriesForPlan(ctx context.Context, planID uuid.UUID
 		)
 		if err != nil {
 			return nil, err
+		}
+		if dateVal != nil {
+			d := domain.DateOnly(*dateVal)
+			entry.Date = &d
 		}
 		if len(metadataRaw) > 0 {
 			entry.Metadata = json.RawMessage(metadataRaw)
@@ -191,12 +205,12 @@ func (r *planRepository) Update(ctx context.Context, plan *domain.Plan) error {
 
 	query := `
 		UPDATE plans
-		SET name = $2, description = $3, notes = $4, metadata = $5, updated_at = NOW()
+		SET program_id = $2, name = $3, description = $4, notes = $5, metadata = $6, updated_at = NOW()
 		WHERE id = $1
 		RETURNING updated_at
 	`
 
-	err = tx.QueryRow(ctx, query, plan.ID, plan.Name, plan.Description, plan.Notes, plan.Metadata).Scan(&plan.UpdatedAt)
+	err = tx.QueryRow(ctx, query, plan.ID, plan.ProgramID, plan.Name, plan.Description, plan.Notes, plan.Metadata).Scan(&plan.UpdatedAt)
 	if err == pgx.ErrNoRows {
 		return domain.ErrNotFound
 	}
@@ -245,7 +259,7 @@ func (r *planRepository) List(ctx context.Context, limit int, after string) ([]*
 	}
 
 	query := `
-		SELECT id, name, description, notes, metadata, created_at, updated_at
+		SELECT id, program_id, name, description, notes, metadata, created_at, updated_at
 		FROM plans
 		WHERE ($1::uuid IS NULL OR id > $1)
 		ORDER BY id ASC
@@ -266,6 +280,7 @@ func (r *planRepository) List(ctx context.Context, limit int, after string) ([]*
 		var metadataRaw []byte
 		err := rows.Scan(
 			&plan.ID,
+			&plan.ProgramID,
 			&plan.Name,
 			&plan.Description,
 			&plan.Notes,

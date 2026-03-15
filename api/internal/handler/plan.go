@@ -7,18 +7,20 @@ import (
 	"github.com/aoshimash/rx/api/internal/domain"
 	"github.com/aoshimash/rx/api/internal/middleware"
 	"github.com/aoshimash/rx/api/internal/repository"
+	"github.com/google/uuid"
 )
 
 // planEntryRequest represents a plan entry in the request body
 type planEntryRequest struct {
-	ExerciseName string          `json:"exercise_name"`
-	Order        int             `json:"order"`
-	Sets         *int            `json:"sets,omitempty"`
-	Reps         *int            `json:"reps,omitempty"`
-	LoadKg       *float64        `json:"load_kg,omitempty"`
-	RPE          *int            `json:"rpe,omitempty"`
-	Notes        *string         `json:"notes,omitempty"`
-	Metadata     json.RawMessage `json:"metadata,omitempty"`
+	ExerciseName string           `json:"exercise_name"`
+	Order        int              `json:"order"`
+	Date         *domain.DateOnly `json:"date,omitempty"`
+	Sets         *int             `json:"sets,omitempty"`
+	Reps         *int             `json:"reps,omitempty"`
+	LoadKg       *float64         `json:"load_kg,omitempty"`
+	RPE          *int             `json:"rpe,omitempty"`
+	Notes        *string          `json:"notes,omitempty"`
+	Metadata     json.RawMessage  `json:"metadata,omitempty"`
 }
 
 // PlanHandler handles Plan-related HTTP requests
@@ -40,6 +42,7 @@ func (h *PlanHandler) CreatePlan(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req struct {
+		ProgramID   *string            `json:"program_id,omitempty"`
 		Name        string             `json:"name"`
 		Description *string            `json:"description,omitempty"`
 		Notes       *string            `json:"notes,omitempty"`
@@ -60,6 +63,15 @@ func (h *PlanHandler) CreatePlan(w http.ResponseWriter, r *http.Request) {
 		Notes:       req.Notes,
 		Metadata:    req.Metadata,
 		Entries:     make([]domain.PlanEntry, len(req.Entries)),
+	}
+
+	if req.ProgramID != nil {
+		programID, err := uuid.Parse(*req.ProgramID)
+		if err != nil {
+			middleware.WriteValidationError(w, "Invalid program_id format", nil)
+			return
+		}
+		plan.ProgramID = &programID
 	}
 
 	for i, entryReq := range req.Entries {
@@ -88,6 +100,7 @@ func convertPlanEntry(req planEntryRequest) domain.PlanEntry {
 	return domain.PlanEntry{
 		ExerciseName: req.ExerciseName,
 		Order:        req.Order,
+		Date:         req.Date,
 		Sets:         req.Sets,
 		Reps:         req.Reps,
 		LoadKg:       req.LoadKg,
