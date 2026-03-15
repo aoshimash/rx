@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS log_entries;
+DROP TABLE IF EXISTS logs;
+DROP TABLE IF EXISTS plan_entries;
+DROP TABLE IF EXISTS plans;

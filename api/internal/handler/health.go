@@ -11,13 +11,13 @@ import (
 
 // HealthHandler handles health check requests
 type HealthHandler struct {
-	exerciseRepo repository.ExerciseRepository
+	planRepo repository.PlanRepository
 }
 
 // NewHealthHandler creates a new health handler
-func NewHealthHandler(exerciseRepo repository.ExerciseRepository) *HealthHandler {
+func NewHealthHandler(planRepo repository.PlanRepository) *HealthHandler {
 	return &HealthHandler{
-		exerciseRepo: exerciseRepo,
+		planRepo: planRepo,
 	}
 }
 
@@ -27,8 +27,7 @@ func (h *HealthHandler) Health(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	// Check database connectivity by attempting a simple query
-	// We use List with limit 1 as a lightweight health check
-	_, _, _, err := h.exerciseRepo.List(ctx, 1, "")
+	_, _, _, err := h.planRepo.List(ctx, 1, "")
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusServiceUnavailable)

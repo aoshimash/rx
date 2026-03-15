@@ -27,10 +27,8 @@ func main() {
 	cfg := config.Load()
 
 	// Initialize repositories based on storage type
-	var exerciseRepo repository.ExerciseRepository
-	var workoutRepo repository.WorkoutRepository
-	var programRepo repository.ProgramRepository
-	var telemetryRepo repository.TelemetryPointRepository
+	var planRepo repository.PlanRepository
+	var logRepo repository.LogRepository
 
 	ctx := context.Background()
 
@@ -44,16 +42,12 @@ func main() {
 		defer db.Close()
 
 		slog.Info("Using PostgreSQL storage backend")
-		exerciseRepo = postgresstore.NewExerciseRepository(db.Pool())
-		workoutRepo = postgresstore.NewWorkoutRepository(db.Pool())
-		programRepo = postgresstore.NewProgramRepository(db.Pool())
-		telemetryRepo = postgresstore.NewTelemetryPointRepository(db.Pool())
+		planRepo = postgresstore.NewPlanRepository(db.Pool())
+		logRepo = postgresstore.NewLogRepository(db.Pool())
 	} else {
 		slog.Info("Using in-memory storage backend")
-		exerciseRepo = memory.NewExerciseRepository()
-		workoutRepo = memory.NewWorkoutRepository()
-		programRepo = memory.NewProgramRepository()
-		telemetryRepo = memory.NewTelemetryPointRepository()
+		planRepo = memory.NewPlanRepository()
+		logRepo = memory.NewLogRepository()
 	}
 
 	// Initialize storage provider (optional)
@@ -81,12 +75,10 @@ func main() {
 	}
 
 	// Initialize handlers
-	exerciseHandler := handler.NewExerciseHandler(exerciseRepo, workoutRepo)
-	workoutHandler := handler.NewWorkoutHandler(workoutRepo, exerciseRepo, programRepo)
-	programHandler := handler.NewProgramHandler(programRepo, exerciseRepo, workoutRepo)
-	telemetryHandler := handler.NewTelemetryHandler(telemetryRepo, workoutRepo)
+	planHandler := handler.NewPlanHandler(planRepo, logRepo)
+	logHandler := handler.NewLogHandler(logRepo)
 	videoHandler := handler.NewVideoHandler(storageProvider, logger)
-	healthHandler := handler.NewHealthHandler(exerciseRepo)
+	healthHandler := handler.NewHealthHandler(planRepo)
 
 	// Initialize authentication provider based on config
 	var authProvider middleware.AuthProvider
@@ -112,7 +104,7 @@ func main() {
 
 	// Add middleware
 	r.Use(middleware.CORSMiddleware(middleware.DefaultCORSConfig())) // CORS
-	r.Use(middleware.RequestID)                                      // Custom request ID middleware (replaces chi's RequestID to add X-Request-ID header)
+	r.Use(middleware.RequestID)                                      // Custom request ID middleware
 	r.Use(chiMiddleware.RealIP)
 	r.Use(chiMiddleware.Logger)
 	r.Use(chiMiddleware.Recoverer)
@@ -123,33 +115,20 @@ func main() {
 	// API routes require authentication
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Use(middleware.AuthMiddleware(authProvider))
-		// Exercise routes
-		r.Post("/exercises", exerciseHandler.CreateExercise)
-		r.Get("/exercises", exerciseHandler.ListExercises)
-		r.Get("/exercises/{id}", exerciseHandler.GetExercise)
-		r.Put("/exercises/{id}", exerciseHandler.UpdateExercise)
-		r.Delete("/exercises/{id}", exerciseHandler.DeleteExercise)
 
-		// Workout routes
-		r.Post("/workouts", workoutHandler.CreateWorkout)
-		r.Get("/workouts", workoutHandler.ListWorkouts)
-		r.Get("/workouts/{id}", workoutHandler.GetWorkout)
-		r.Put("/workouts/{id}", workoutHandler.UpdateWorkout)
-		r.Delete("/workouts/{id}", workoutHandler.DeleteWorkout)
+		// Plan routes
+		r.Post("/plans", planHandler.CreatePlan)
+		r.Get("/plans", planHandler.ListPlans)
+		r.Get("/plans/{id}", planHandler.GetPlan)
+		r.Put("/plans/{id}", planHandler.UpdatePlan)
+		r.Delete("/plans/{id}", planHandler.DeletePlan)
 
-		// Program routes
-		r.Post("/programs", programHandler.CreateProgram)
-		r.Get("/programs", programHandler.ListPrograms)
-		r.Get("/programs/{id}", programHandler.GetProgram)
-		r.Put("/programs/{id}", programHandler.UpdateProgram)
-		r.Delete("/programs/{id}", programHandler.DeleteProgram)
-
-		// Telemetry routes
-		r.Post("/telemetry", telemetryHandler.CreateTelemetryPoint)
-		r.Get("/telemetry", telemetryHandler.ListTelemetryPoints)
-		r.Get("/telemetry/{id}", telemetryHandler.GetTelemetryPoint)
-		r.Put("/telemetry/{id}", telemetryHandler.UpdateTelemetryPoint)
-		r.Delete("/telemetry/{id}", telemetryHandler.DeleteTelemetryPoint)
+		// Log routes
+		r.Post("/logs", logHandler.CreateLog)
+		r.Get("/logs", logHandler.ListLogs)
+		r.Get("/logs/{id}", logHandler.GetLog)
+		r.Put("/logs/{id}", logHandler.UpdateLog)
+		r.Delete("/logs/{id}", logHandler.DeleteLog)
 
 		// Video routes
 		r.Post("/videos/upload-url", videoHandler.GenerateVideoUploadURL)

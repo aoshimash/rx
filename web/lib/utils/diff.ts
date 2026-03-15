@@ -1,63 +1,57 @@
-import type { PlanSnapshot, WorkoutEntry } from '@/types/api';
+import type { LogEntry, PlanEntry } from '@/types/api';
 
 /**
  * Diff status indicator
- * - match: Plan and actual values match (✓)
- * - diff: Plan and actual values differ (≠)
- * - pending: Planned but no actual workout yet (○)
- * - unplanned: No plan exists (workout was unplanned)
+ * - match: Plan and actual values match
+ * - diff: Plan and actual values differ
+ * - pending: Planned but no actual log yet
+ * - unplanned: No plan exists (log was unplanned)
  */
 export type DiffStatus = 'match' | 'diff' | 'pending' | 'unplanned';
 
-/**
- * Diff calculation result
- */
 export interface DiffResult {
   status: DiffStatus;
   differences: string[];
 }
 
 /**
- * Calculate diff between plan and actual workout
+ * Calculate diff between a plan entry and an actual log entry.
  *
- * Per spec: Only Sets, Reps, and Load are considered for diff.
+ * Only Sets, Reps, and Load are considered for diff.
  * RPE differences do NOT count as diff.
  */
 export function calculateDiff(
-  plan: PlanSnapshot | null | undefined,
-  actual: WorkoutEntry | null | undefined
+  plan: PlanEntry | null | undefined,
+  actual: LogEntry | null | undefined
 ): DiffResult {
-  // No plan = unplanned workout
   if (!plan) {
     return { status: 'unplanned', differences: [] };
   }
 
-  // Plan exists but no actual workout = pending
   if (!actual) {
     return { status: 'pending', differences: [] };
   }
 
   const diffs: string[] = [];
 
-  // Compare sets
-  if (plan.target_sets !== undefined && plan.target_sets !== actual.sets) {
-    const delta = actual.sets - plan.target_sets;
+  if (plan.sets !== undefined && actual.sets !== undefined && plan.sets !== actual.sets) {
+    const delta = actual.sets - plan.sets;
     diffs.push(`Sets ${delta > 0 ? '+' : ''}${delta}`);
   }
 
-  // Compare reps
-  if (plan.target_reps !== undefined && plan.target_reps !== actual.reps) {
-    const delta = actual.reps - plan.target_reps;
+  if (plan.reps !== undefined && actual.reps !== undefined && plan.reps !== actual.reps) {
+    const delta = actual.reps - plan.reps;
     diffs.push(`Reps ${delta > 0 ? '+' : ''}${delta}`);
   }
 
-  // Compare load
-  if (plan.target_load_kg !== undefined && plan.target_load_kg !== actual.load_kg) {
-    const delta = actual.load_kg - plan.target_load_kg;
+  if (
+    plan.load_kg !== undefined &&
+    actual.load_kg !== undefined &&
+    plan.load_kg !== actual.load_kg
+  ) {
+    const delta = actual.load_kg - plan.load_kg;
     diffs.push(`Load ${delta > 0 ? '+' : ''}${delta}kg`);
   }
-
-  // Note: RPE is NOT included in diff calculation per spec
 
   return {
     status: diffs.length > 0 ? 'diff' : 'match',
@@ -65,9 +59,6 @@ export function calculateDiff(
   };
 }
 
-/**
- * Get status icon for diff result
- */
 export function getStatusIcon(status: DiffStatus): string {
   switch (status) {
     case 'match':
@@ -81,20 +72,17 @@ export function getStatusIcon(status: DiffStatus): string {
   }
 }
 
-/**
- * Get status color variant for Badge component
- */
 export function getStatusVariant(
   status: DiffStatus
 ): 'default' | 'secondary' | 'destructive' | 'outline' {
   switch (status) {
     case 'match':
-      return 'default'; // green
+      return 'default';
     case 'diff':
-      return 'destructive'; // red/yellow
+      return 'destructive';
     case 'pending':
-      return 'secondary'; // gray
+      return 'secondary';
     case 'unplanned':
-      return 'outline'; // outlined
+      return 'outline';
   }
 }

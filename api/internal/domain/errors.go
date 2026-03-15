@@ -25,9 +25,7 @@ func (e *DomainError) Error() string {
 const (
 	ErrCodeInvalidTimestamp     = "INVALID_TIMESTAMP"
 	ErrCodeInvalidRPE           = "INVALID_RPE"
-	ErrCodeInvalidFatigueLevel  = "INVALID_FATIGUE_LEVEL"
 	ErrCodeMissingRequiredField = "MISSING_REQUIRED_FIELD"
-	ErrCodeInvalidEntryType     = "INVALID_ENTRY_TYPE"
 )
 
 // Predefined domain errors
@@ -38,7 +36,7 @@ var (
 	}
 )
 
-// Error codes for HTTP responses (FR-018)
+// Error codes for HTTP responses
 const (
 	ErrorCodeUnauthorized    = "UNAUTHORIZED"
 	ErrorCodeValidationError = "VALIDATION_ERROR"

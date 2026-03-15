@@ -7,7 +7,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Rx',
-  description: 'Program-first workout tracking system',
+  description: 'Plan-first training log system',
 };
 
 export default function RootLayout({

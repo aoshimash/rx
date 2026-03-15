@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import type { DaySchedule } from '@/lib/utils/schedule';
 import { type ScheduleOptions, generateSchedule } from '@/lib/utils/schedule';
-import type { Program } from '@/types/api';
+import type { Plan } from '@/types/api';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { useState } from 'react';
@@ -16,30 +16,21 @@ import { useState } from 'react';
 interface ScheduleModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  program: Program;
+  plan: Plan;
   onScheduleGenerated: (schedule: DaySchedule[]) => void;
 }
 
-/**
- * Modal for configuring schedule settings
- *
- * Allows setting:
- * - Start date
- * - Skip weekends option
- * - Avoid consecutive days option
- */
 export function ScheduleModal({
   open,
   onOpenChange,
-  program,
+  plan,
   onScheduleGenerated,
 }: ScheduleModalProps) {
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [skipWeekends, setSkipWeekends] = useState(true);
   const [avoidConsecutive, setAvoidConsecutive] = useState(false);
 
-  // Count unique training days using composite week::day key to handle multi-week programs
-  const entries = program.entries || [];
+  const entries = plan.entries || [];
   const weekDayCount = new Set(
     entries
       .map((e) => {
@@ -104,7 +95,7 @@ export function ScheduleModal({
               <div className="space-y-0.5">
                 <Label>Skip Weekends</Label>
                 <div className="text-sm text-muted-foreground">
-                  Avoid scheduling workouts on Saturday/Sunday
+                  Avoid scheduling on Saturday/Sunday
                 </div>
               </div>
               <input
@@ -118,7 +109,7 @@ export function ScheduleModal({
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label>Avoid Consecutive Days</Label>
-                <div className="text-sm text-muted-foreground">Add rest day between workouts</div>
+                <div className="text-sm text-muted-foreground">Add rest day between sessions</div>
               </div>
               <input
                 type="checkbox"

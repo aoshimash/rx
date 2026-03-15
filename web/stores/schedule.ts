@@ -3,34 +3,29 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 interface ScheduleState {
-  schedules: Record<string, DaySchedule[]>; // programId -> schedule
-  setSchedule: (programId: string, schedule: DaySchedule[]) => void;
-  getSchedule: (programId: string) => DaySchedule[] | undefined;
-  clearSchedule: (programId: string) => void;
+  schedules: Record<string, DaySchedule[]>; // planId -> schedule
+  setSchedule: (planId: string, schedule: DaySchedule[]) => void;
+  getSchedule: (planId: string) => DaySchedule[] | undefined;
+  clearSchedule: (planId: string) => void;
 }
 
-/**
- * Schedule store for client-side schedule persistence
- *
- * Stores schedule assignments per program
- */
 export const useScheduleStore = create<ScheduleState>()(
   persist(
     (set, get) => ({
       schedules: {},
-      setSchedule: (programId, schedule) =>
+      setSchedule: (planId, schedule) =>
         set((state) => ({
-          schedules: { ...state.schedules, [programId]: schedule },
+          schedules: { ...state.schedules, [planId]: schedule },
         })),
-      getSchedule: (programId) => get().schedules[programId],
-      clearSchedule: (programId) =>
+      getSchedule: (planId) => get().schedules[planId],
+      clearSchedule: (planId) =>
         set((state) => {
-          const { [programId]: _, ...rest } = state.schedules;
+          const { [planId]: _, ...rest } = state.schedules;
           return { schedules: rest };
         }),
     }),
     {
-      name: 'optel-schedule-storage',
+      name: 'rx-schedule-storage',
     }
   )
 );

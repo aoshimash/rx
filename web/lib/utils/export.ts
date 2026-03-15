@@ -1,17 +1,10 @@
-import type { Program, Workout } from '@/types/api';
-
-/**
- * CSV export utility with UTF-8 BOM
- */
+import type { Log, Plan } from '@/types/api';
 
 interface ExportOptions {
   includeHeaders?: boolean;
   delimiter?: string;
 }
 
-/**
- * Convert data to CSV format
- */
 function arrayToCSV(data: string[][], options: ExportOptions = {}): string {
   const { delimiter = ',' } = options;
 
@@ -19,7 +12,6 @@ function arrayToCSV(data: string[][], options: ExportOptions = {}): string {
     .map((row) =>
       row
         .map((cell) => {
-          // Escape quotes and wrap in quotes if contains delimiter, quotes, or newlines
           const cellStr = String(cell);
           if (cellStr.includes(delimiter) || cellStr.includes('"') || cellStr.includes('\n')) {
             return `"${cellStr.replace(/"/g, '""')}"`;
@@ -31,11 +23,7 @@ function arrayToCSV(data: string[][], options: ExportOptions = {}): string {
     .join('\n');
 }
 
-/**
- * Download CSV file with UTF-8 BOM
- */
 function downloadCSV(filename: string, csv: string): void {
-  // Add UTF-8 BOM for Excel compatibility
   const BOM = '\uFEFF';
   const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
@@ -51,76 +39,59 @@ function downloadCSV(filename: string, csv: string): void {
   }
 }
 
-/**
- * Export workouts to CSV
- */
-export function exportWorkoutsToCSV(
-  workouts: Workout[],
-  program?: Program,
+export function exportLogsToCSV(
+  logs: Log[],
+  plan?: Plan,
   _options: { scope: 'all' | 'current-week' } = { scope: 'all' }
 ): void {
-  const headers = [
-    'Date',
-    'Time',
-    'Program',
-    'Exercise',
-    'Sets',
-    'Reps',
-    'Load (kg)',
-    'RPE',
-    'Entry Type',
-    'Notes',
-  ];
+  const headers = ['Date', 'Time', 'Plan', 'Exercise', 'Sets', 'Reps', 'Load (kg)', 'RPE', 'Notes'];
 
   const rows: string[][] = [headers];
 
-  for (const workout of workouts) {
-    const date = new Date(workout.timestamp);
+  for (const log of logs) {
+    const date = new Date(log.performed_at);
     const dateStr = date.toLocaleDateString('en-US');
     const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    const programName = program?.name || 'No Program';
+    const planName = plan?.name || 'No Plan';
 
-    for (const entry of workout.entries) {
+    for (const entry of log.entries) {
       rows.push([
         dateStr,
         timeStr,
-        programName,
-        entry.display_name || 'Unknown Exercise',
-        String(entry.sets),
-        String(entry.reps),
-        String(entry.load_kg),
-        String(entry.rpe),
-        entry.entry_type || '',
+        planName,
+        entry.exercise_name,
+        String(entry.sets ?? ''),
+        String(entry.reps ?? ''),
+        String(entry.load_kg ?? ''),
+        String(entry.rpe ?? ''),
         entry.notes || '',
       ]);
     }
   }
 
   const csv = arrayToCSV(rows);
-  const filename = `rx-workouts-${new Date().toISOString().split('T')[0]}.csv`;
+  const filename = `rx-logs-${new Date().toISOString().split('T')[0]}.csv`;
   downloadCSV(filename, csv);
 }
 
-/**
- * Export program structure to CSV
- */
-export function exportProgramToCSV(program: Program): void {
-  const headers = ['Week', 'Day', 'Exercise', 'Sets', 'Reps', 'RPE', 'Notes'];
+export function exportPlanToCSV(plan: Plan): void {
+  const headers = ['Week', 'Day', 'Exercise', 'Sets', 'Reps', 'Load (kg)', 'RPE', 'Notes'];
   const rows: string[][] = [headers];
 
-  for (const entry of program.entries || []) {
+  for (const entry of plan.entries || []) {
     rows.push([
       (entry.metadata?.week as string) || '',
       (entry.metadata?.day as string) || '',
-      entry.name,
-      String(entry.target_sets || ''),
-      String(entry.target_reps || ''),
-      String(entry.target_rpe || ''),
+      entry.exercise_name,
+      String(entry.sets ?? ''),
+      String(entry.reps ?? ''),
+      String(entry.load_kg ?? ''),
+      String(entry.rpe ?? ''),
       entry.notes || '',
     ]);
   }
 
   const csv = arrayToCSV(rows);
-  const filename = `rx-program-${program.name.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.csv`;
+  const filename = `rx-plan-${plan.name.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.csv`;
   downloadCSV(filename, csv);
 }

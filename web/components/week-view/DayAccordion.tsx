@@ -5,32 +5,24 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import type { DiffStatus } from '@/lib/utils/diff';
-import { formatProgramContext } from '@/lib/utils/programContext';
-import type { EntryType, ProgramEntry, Workout, WorkoutEntry } from '@/types/api';
+import { formatPlanContext } from '@/lib/utils/planContext';
+import type { Log, LogEntry, PlanEntry } from '@/types/api';
 import { ExerciseTable } from './ExerciseTable';
 import { StatusBadge } from './StatusBadge';
 
 interface DayData {
   dayName: string;
   date?: string;
-  programEntries?: ProgramEntry[];
-  workout?: Workout;
+  planEntries?: PlanEntry[];
+  log?: Log;
   status: DiffStatus;
-  programContext?: string[];
+  planContext?: string[];
 }
 
 interface DayAccordionProps {
   days: DayData[];
 }
 
-/**
- * Collapsible day accordion for Week View
- *
- * Each day shows:
- * - Day name and date (if scheduled)
- * - Overall status badge
- * - Exercise table with Plan/Actual/Diff
- */
 export function DayAccordion({ days }: DayAccordionProps) {
   return (
     <Accordion type="multiple" className="w-full">
@@ -53,9 +45,9 @@ export function DayAccordion({ days }: DayAccordionProps) {
                       </span>
                     )}
                   </div>
-                  {day.programContext && day.programContext.length > 0 && (
+                  {day.planContext && day.planContext.length > 0 && (
                     <span className="text-xs text-muted-foreground">
-                      {formatProgramContext(day.programContext)}
+                      {formatPlanContext(day.planContext)}
                     </span>
                   )}
                 </div>
@@ -74,69 +66,59 @@ export function DayAccordion({ days }: DayAccordionProps) {
   );
 }
 
-/**
- * Build exercise rows from program entries and workout data
- */
 function buildExerciseRows(day: DayData) {
   const rows: Array<{
     exerciseName: string;
-    entryType?: EntryType;
-    plan: { sets?: number; reps?: number; load?: number; rpe?: number } | null;
-    actual: { sets: number; reps: number; load: number; rpe: number } | null;
-    entry?: WorkoutEntry;
-    programEntry?: ProgramEntry;
+    plan: { sets?: number; reps?: number; load_kg?: number; rpe?: number } | null;
+    actual: { sets?: number; reps?: number; load_kg?: number; rpe?: number } | null;
+    planEntry?: PlanEntry;
+    logEntry?: LogEntry;
   }> = [];
 
-  const plannedEntries = day.programEntries || [];
-  const actualEntries = day.workout?.entries || [];
+  const plannedEntries = day.planEntries || [];
+  const actualEntries = day.log?.entries || [];
 
-  // Create a map of exercise_id to actual entries
-  const actualMap = new Map(actualEntries.map((entry) => [entry.exercise_id, entry]));
+  // Map actual entries by exercise_name
+  const actualMap = new Map(actualEntries.map((entry) => [entry.exercise_name, entry]));
 
-  // Add all planned entries
-  for (const programEntry of plannedEntries) {
-    const actual = programEntry.exercise_id ? actualMap.get(programEntry.exercise_id) : undefined;
+  for (const planEntry of plannedEntries) {
+    const actual = actualMap.get(planEntry.exercise_name);
 
     rows.push({
-      exerciseName: programEntry.name,
-      entryType: actual?.entry_type,
+      exerciseName: planEntry.exercise_name,
       plan: {
-        sets: programEntry.target_sets,
-        reps: programEntry.target_reps,
-        load: undefined,
-        rpe: programEntry.target_rpe,
+        sets: planEntry.sets,
+        reps: planEntry.reps,
+        load_kg: planEntry.load_kg,
+        rpe: planEntry.rpe,
       },
       actual: actual
         ? {
             sets: actual.sets,
             reps: actual.reps,
-            load: actual.load_kg,
+            load_kg: actual.load_kg,
             rpe: actual.rpe,
           }
         : null,
-      entry: actual,
-      programEntry,
+      planEntry,
+      logEntry: actual,
     });
 
-    // Remove from map to track unplanned
-    if (programEntry.exercise_id) {
-      actualMap.delete(programEntry.exercise_id);
-    }
+    actualMap.delete(planEntry.exercise_name);
   }
 
-  // Add unplanned exercises (remaining in actualMap)
+  // Add unplanned exercises
   for (const entry of actualMap.values()) {
     rows.push({
-      exerciseName: entry.display_name || 'Unknown Exercise',
-      entryType: entry.entry_type,
+      exerciseName: entry.exercise_name,
       plan: null,
       actual: {
         sets: entry.sets,
         reps: entry.reps,
-        load: entry.load_kg,
+        load_kg: entry.load_kg,
         rpe: entry.rpe,
       },
-      entry,
+      logEntry: entry,
     });
   }
 

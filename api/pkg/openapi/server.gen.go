@@ -30,168 +30,152 @@ type Error struct {
 	Message string `json:"message"`
 }
 
-// Exercise defines model for Exercise.
-type Exercise struct {
-	// Aliases Alternative names for matching
-	Aliases   *[]string `json:"aliases,omitempty"`
+// Log defines model for Log.
+type Log struct {
 	CreatedAt time.Time `json:"created_at"`
 
-	// Description Optional description
-	Description *string `json:"description,omitempty"`
+	// Entries Performed entries (ordered)
+	Entries []LogEntry         `json:"entries"`
+	Id      openapi_types.UUID `json:"id"`
 
-	// Id Unique identifier
-	Id openapi_types.UUID `json:"id"`
+	// Metadata Free-form JSON metadata (e.g., body_weight_kg, fatigue_level)
+	Metadata *map[string]interface{} `json:"metadata,omitempty"`
 
-	// LoadIncrement Minimum weight increment (kg)
-	LoadIncrement *float64 `json:"load_increment,omitempty"`
+	// Notes General session notes
+	Notes *string `json:"notes,omitempty"`
 
-	// MuscleGroups Target muscle groups
-	MuscleGroups *[]string `json:"muscle_groups,omitempty"`
+	// PerformedAt When the training was performed
+	PerformedAt time.Time `json:"performed_at"`
 
-	// Name Canonical exercise name
-	Name      string    `json:"name"`
-	UpdatedAt time.Time `json:"updated_at"`
+	// PlanId Optional reference to the training plan
+	PlanId    *openapi_types.UUID `json:"plan_id,omitempty"`
+	UpdatedAt time.Time           `json:"updated_at"`
 }
 
-// ExerciseCreate defines model for ExerciseCreate.
-type ExerciseCreate struct {
-	Aliases       *[]string `json:"aliases,omitempty"`
-	Description   *string   `json:"description,omitempty"`
-	LoadIncrement *float64  `json:"load_increment,omitempty"`
-	MuscleGroups  *[]string `json:"muscle_groups,omitempty"`
-	Name          string    `json:"name"`
+// LogCreate defines model for LogCreate.
+type LogCreate struct {
+	Entries     []LogEntryCreate        `json:"entries"`
+	Metadata    *map[string]interface{} `json:"metadata,omitempty"`
+	Notes       *string                 `json:"notes,omitempty"`
+	PerformedAt time.Time               `json:"performed_at"`
+	PlanId      *openapi_types.UUID     `json:"plan_id,omitempty"`
 }
 
-// ExerciseListResponse defines model for ExerciseListResponse.
-type ExerciseListResponse struct {
-	Data       []Exercise `json:"data"`
-	HasMore    bool       `json:"has_more"`
-	NextCursor *string    `json:"next_cursor"`
+// LogEntry defines model for LogEntry.
+type LogEntry struct {
+	// ExerciseName Exercise name (plain string)
+	ExerciseName string             `json:"exercise_name"`
+	Id           openapi_types.UUID `json:"id"`
+
+	// LoadKg Weight in kilograms (0.1 precision)
+	LoadKg *float64           `json:"load_kg,omitempty"`
+	LogId  openapi_types.UUID `json:"log_id"`
+
+	// Metadata Free-form JSON metadata
+	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	Notes    *string                 `json:"notes,omitempty"`
+
+	// Order Position in log
+	Order int  `json:"order"`
+	Reps  *int `json:"reps,omitempty"`
+
+	// Rpe Rate of Perceived Exertion
+	Rpe  *int `json:"rpe,omitempty"`
+	Sets *int `json:"sets,omitempty"`
+
+	// VideoObjectKey Object key for uploaded video in storage (from upload-url response)
+	VideoObjectKey *string `json:"video_object_key,omitempty"`
 }
 
-// PlanSnapshot Snapshot of planned values at execution time
-type PlanSnapshot struct {
-	// Percent1rm Target %1RM (0.0-1.0, e.g., 0.75 = 75%)
-	Percent1rm         *float64 `json:"percent_1rm,omitempty"`
-	PlannedRestSeconds *int     `json:"planned_rest_seconds,omitempty"`
-
-	// ProgramNodeId Reference to original prescription
-	ProgramNodeId *openapi_types.UUID `json:"program_node_id,omitempty"`
-	TargetLoadKg  *float64            `json:"target_load_kg,omitempty"`
-	TargetReps    *int                `json:"target_reps,omitempty"`
-	TargetRpe     *int                `json:"target_rpe,omitempty"`
-	TargetSets    *int                `json:"target_sets,omitempty"`
+// LogEntryCreate defines model for LogEntryCreate.
+type LogEntryCreate struct {
+	ExerciseName   string                  `json:"exercise_name"`
+	LoadKg         *float64                `json:"load_kg,omitempty"`
+	Metadata       *map[string]interface{} `json:"metadata,omitempty"`
+	Notes          *string                 `json:"notes,omitempty"`
+	Reps           *int                    `json:"reps,omitempty"`
+	Rpe            *int                    `json:"rpe,omitempty"`
+	Sets           *int                    `json:"sets,omitempty"`
+	VideoObjectKey *string                 `json:"video_object_key,omitempty"`
 }
 
-// Program defines model for Program.
-type Program struct {
+// LogListResponse defines model for LogListResponse.
+type LogListResponse struct {
+	Data       []Log   `json:"data"`
+	HasMore    bool    `json:"has_more"`
+	NextCursor *string `json:"next_cursor"`
+}
+
+// Plan defines model for Plan.
+type Plan struct {
 	CreatedAt   time.Time `json:"created_at"`
 	Description *string   `json:"description,omitempty"`
 
-	// Entries Flat list of training prescription entries
-	Entries   *[]ProgramEntry    `json:"entries,omitempty"`
-	Id        openapi_types.UUID `json:"id"`
-	Name      string             `json:"name"`
-	UpdatedAt time.Time          `json:"updated_at"`
+	// Entries Training prescription entries
+	Entries *[]PlanEntry       `json:"entries,omitempty"`
+	Id      openapi_types.UUID `json:"id"`
+
+	// Metadata Free-form JSON metadata
+	Metadata  *map[string]interface{} `json:"metadata,omitempty"`
+	Name      string                  `json:"name"`
+	Notes     *string                 `json:"notes,omitempty"`
+	UpdatedAt time.Time               `json:"updated_at"`
 }
 
-// ProgramCreate defines model for ProgramCreate.
-type ProgramCreate struct {
-	Description *string               `json:"description,omitempty"`
-	Entries     *[]ProgramEntryCreate `json:"entries,omitempty"`
-	Name        string                `json:"name"`
+// PlanCreate defines model for PlanCreate.
+type PlanCreate struct {
+	Description *string                 `json:"description,omitempty"`
+	Entries     *[]PlanEntryCreate      `json:"entries,omitempty"`
+	Metadata    *map[string]interface{} `json:"metadata,omitempty"`
+	Name        string                  `json:"name"`
+	Notes       *string                 `json:"notes,omitempty"`
 }
 
-// ProgramEntry defines model for ProgramEntry.
-type ProgramEntry struct {
-	ExerciseId *openapi_types.UUID `json:"exercise_id,omitempty"`
-	Id         openapi_types.UUID  `json:"id"`
+// PlanEntry defines model for PlanEntry.
+type PlanEntry struct {
+	// ExerciseName Exercise name (plain string)
+	ExerciseName string             `json:"exercise_name"`
+	Id           openapi_types.UUID `json:"id"`
 
-	// Metadata Free-form JSON for contextual grouping.
-	// Common keys: week (string), day (string).
-	// Example: {"week": "Week 1", "day": "Day A"}
+	// LoadKg Weight in kilograms (0.1 precision)
+	LoadKg *float64 `json:"load_kg,omitempty"`
+
+	// Metadata Free-form JSON metadata
+	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	Notes    *string                 `json:"notes,omitempty"`
+
+	// Order Position in plan
+	Order  int                `json:"order"`
+	PlanId openapi_types.UUID `json:"plan_id"`
+	Reps   *int               `json:"reps,omitempty"`
+
+	// Rpe Rate of Perceived Exertion
+	Rpe  *int `json:"rpe,omitempty"`
+	Sets *int `json:"sets,omitempty"`
+}
+
+// PlanEntryCreate defines model for PlanEntryCreate.
+type PlanEntryCreate struct {
+	ExerciseName string                  `json:"exercise_name"`
+	LoadKg       *float64                `json:"load_kg,omitempty"`
 	Metadata     *map[string]interface{} `json:"metadata,omitempty"`
-	MuscleGroups *[]string               `json:"muscle_groups,omitempty"`
-
-	// Name Entry label (e.g., "Squat - Top Set")
-	Name  string  `json:"name"`
-	Notes *string `json:"notes,omitempty"`
-
-	// Order Global position in program
-	Order              int                `json:"order"`
-	Percent1rm         *float64           `json:"percent_1rm,omitempty"`
-	PlannedRestSeconds *int               `json:"planned_rest_seconds,omitempty"`
-	ProgramId          openapi_types.UUID `json:"program_id"`
-	TargetReps         *int               `json:"target_reps,omitempty"`
-	TargetRpe          *int               `json:"target_rpe,omitempty"`
-	TargetSets         *int               `json:"target_sets,omitempty"`
+	Notes        *string                 `json:"notes,omitempty"`
+	Order        int                     `json:"order"`
+	Reps         *int                    `json:"reps,omitempty"`
+	Rpe          *int                    `json:"rpe,omitempty"`
+	Sets         *int                    `json:"sets,omitempty"`
 }
 
-// ProgramEntryCreate defines model for ProgramEntryCreate.
-type ProgramEntryCreate struct {
-	ExerciseId *openapi_types.UUID `json:"exercise_id,omitempty"`
-
-	// Metadata Free-form JSON for contextual grouping.
-	// Common keys: week (string), day (string).
-	Metadata           *map[string]interface{} `json:"metadata,omitempty"`
-	MuscleGroups       *[]string               `json:"muscle_groups,omitempty"`
-	Name               string                  `json:"name"`
-	Notes              *string                 `json:"notes,omitempty"`
-	Order              int                     `json:"order"`
-	Percent1rm         *float64                `json:"percent_1rm,omitempty"`
-	PlannedRestSeconds *int                    `json:"planned_rest_seconds,omitempty"`
-	TargetReps         *int                    `json:"target_reps,omitempty"`
-	TargetRpe          *int                    `json:"target_rpe,omitempty"`
-	TargetSets         *int                    `json:"target_sets,omitempty"`
-}
-
-// ProgramListResponse defines model for ProgramListResponse.
-type ProgramListResponse struct {
-	Data       []Program `json:"data"`
-	HasMore    bool      `json:"has_more"`
-	NextCursor *string   `json:"next_cursor"`
-}
-
-// TelemetryPoint defines model for TelemetryPoint.
-type TelemetryPoint struct {
-	CreatedAt time.Time          `json:"created_at"`
-	Id        openapi_types.UUID `json:"id"`
-
-	// MetricName Metric identifier
-	MetricName string `json:"metric_name"`
-
-	// Timestamp When metric was recorded
-	Timestamp time.Time `json:"timestamp"`
-
-	// Unit Unit of measurement
-	Unit string `json:"unit"`
-
-	// Value Numeric value
-	Value float64 `json:"value"`
-
-	// WorkoutId Optional workout link
-	WorkoutId *openapi_types.UUID `json:"workout_id,omitempty"`
-}
-
-// TelemetryPointCreate defines model for TelemetryPointCreate.
-type TelemetryPointCreate struct {
-	MetricName string              `json:"metric_name"`
-	Timestamp  time.Time           `json:"timestamp"`
-	Unit       string              `json:"unit"`
-	Value      float64             `json:"value"`
-	WorkoutId  *openapi_types.UUID `json:"workout_id,omitempty"`
-}
-
-// TelemetryPointListResponse defines model for TelemetryPointListResponse.
-type TelemetryPointListResponse struct {
-	Data       []TelemetryPoint `json:"data"`
-	HasMore    bool             `json:"has_more"`
-	NextCursor *string          `json:"next_cursor"`
+// PlanListResponse defines model for PlanListResponse.
+type PlanListResponse struct {
+	Data       []Plan  `json:"data"`
+	HasMore    bool    `json:"has_more"`
+	NextCursor *string `json:"next_cursor"`
 }
 
 // VideoDownloadURLRequest defines model for VideoDownloadURLRequest.
 type VideoDownloadURLRequest struct {
-	// ObjectKey Object key from WorkoutEntry.video_object_key
+	// ObjectKey Object key from LogEntry.video_object_key
 	ObjectKey string `json:"object_key"`
 }
 
@@ -221,167 +205,24 @@ type VideoUploadURLResponse struct {
 	// ExpiresIn Seconds until the upload URL expires
 	ExpiresIn int `json:"expires_in"`
 
-	// ObjectKey Object key to be stored in WorkoutEntry.video_object_key after successful upload
+	// ObjectKey Object key to be stored in LogEntry.video_object_key after successful upload
 	ObjectKey string `json:"object_key"`
 
 	// UploadUrl Pre-signed URL for uploading the video via HTTP PUT
 	UploadUrl string `json:"upload_url"`
 }
 
-// Workout defines model for Workout.
-type Workout struct {
-	// BodyWeightKg Body weight at session (kg)
-	BodyWeightKg *float64 `json:"body_weight_kg,omitempty"`
-
-	// ConditionNotes Freeform condition notes
-	ConditionNotes *string   `json:"condition_notes,omitempty"`
-	CreatedAt      time.Time `json:"created_at"`
-
-	// Entries Performed entries (ordered)
-	Entries []WorkoutEntry `json:"entries"`
-
-	// FatigueLevel Subjective fatigue (1=fresh, 5=very fatigued)
-	FatigueLevel *int               `json:"fatigue_level,omitempty"`
-	Id           openapi_types.UUID `json:"id"`
-
-	// Notes General session notes
-	Notes *string `json:"notes,omitempty"`
-
-	// ProgramContext Hierarchy path snapshot (e.g., ["Cycle 1", "Week 3", "Day 2"])
-	ProgramContext *[]string `json:"program_context,omitempty"`
-
-	// ProgramNodeId Link to planned day/block
-	ProgramNodeId *openapi_types.UUID `json:"program_node_id,omitempty"`
-
-	// SessionEnd Precise end time
-	SessionEnd *time.Time `json:"session_end,omitempty"`
-
-	// SessionStart Precise start time
-	SessionStart *time.Time `json:"session_start,omitempty"`
-
-	// SleepHours Sleep before session (hours)
-	SleepHours *float64 `json:"sleep_hours,omitempty"`
-
-	// Timestamp When the session occurred
-	Timestamp time.Time `json:"timestamp"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
-// WorkoutCreate defines model for WorkoutCreate.
-type WorkoutCreate struct {
-	BodyWeightKg   *float64             `json:"body_weight_kg,omitempty"`
-	ConditionNotes *string              `json:"condition_notes,omitempty"`
-	Entries        []WorkoutEntryCreate `json:"entries"`
-	FatigueLevel   *int                 `json:"fatigue_level,omitempty"`
-	Notes          *string              `json:"notes,omitempty"`
-	ProgramContext *[]string            `json:"program_context,omitempty"`
-	ProgramNodeId  *openapi_types.UUID  `json:"program_node_id,omitempty"`
-	SessionEnd     *time.Time           `json:"session_end,omitempty"`
-	SessionStart   *time.Time           `json:"session_start,omitempty"`
-	SleepHours     *float64             `json:"sleep_hours,omitempty"`
-	Timestamp      time.Time            `json:"timestamp"`
-}
-
-// WorkoutEntry defines model for WorkoutEntry.
-type WorkoutEntry struct {
-	// DisplayName Override display name
-	DisplayName *string    `json:"display_name,omitempty"`
-	EntryEnd    *time.Time `json:"entry_end,omitempty"`
-	EntryStart  *time.Time `json:"entry_start,omitempty"`
-
-	// EntryType Entry type (e.g., top, main, backoff). User-defined values allowed.
-	EntryType *string `json:"entry_type"`
-
-	// ExerciseId Exercise performed
-	ExerciseId openapi_types.UUID `json:"exercise_id"`
-	Id         openapi_types.UUID `json:"id"`
-
-	// LoadKg Weight in kilograms (0.1 precision)
-	LoadKg float64 `json:"load_kg"`
-	Notes  *string `json:"notes,omitempty"`
-
-	// Order Position in workout
-	Order int `json:"order"`
-
-	// PerSetRestOverrides Per-set rest overrides (seconds)
-	PerSetRestOverrides *[]int `json:"per_set_rest_overrides,omitempty"`
-
-	// PerformedRestSeconds Actual rest between sets
-	PerformedRestSeconds *int `json:"performed_rest_seconds,omitempty"`
-
-	// PlanSnapshot Snapshot of planned values at execution time
-	PlanSnapshot *PlanSnapshot `json:"plan_snapshot,omitempty"`
-
-	// PlannedRestSeconds Planned rest between sets
-	PlannedRestSeconds *int `json:"planned_rest_seconds,omitempty"`
-
-	// ProgramNodeId Link to prescription
-	ProgramNodeId *openapi_types.UUID `json:"program_node_id,omitempty"`
-
-	// Reps Reps per set
-	Reps int `json:"reps"`
-
-	// Rpe Rate of Perceived Exertion
-	Rpe int `json:"rpe"`
-
-	// Sets Number of sets performed
-	Sets int `json:"sets"`
-
-	// VideoObjectKey Object key for uploaded video in storage (from upload-url response)
-	VideoObjectKey *string            `json:"video_object_key,omitempty"`
-	WorkoutId      openapi_types.UUID `json:"workout_id"`
-}
-
-// WorkoutEntryCreate defines model for WorkoutEntryCreate.
-type WorkoutEntryCreate struct {
-	DisplayName *string    `json:"display_name,omitempty"`
-	EntryEnd    *time.Time `json:"entry_end,omitempty"`
-	EntryStart  *time.Time `json:"entry_start,omitempty"`
-
-	// EntryType Entry type (e.g., top, main, backoff). User-defined values allowed.
-	EntryType            *string            `json:"entry_type"`
-	ExerciseId           openapi_types.UUID `json:"exercise_id"`
-	LoadKg               float64            `json:"load_kg"`
-	Notes                *string            `json:"notes,omitempty"`
-	PerSetRestOverrides  *[]int             `json:"per_set_rest_overrides,omitempty"`
-	PerformedRestSeconds *int               `json:"performed_rest_seconds,omitempty"`
-
-	// PlanSnapshot Snapshot of planned values at execution time
-	PlanSnapshot       *PlanSnapshot       `json:"plan_snapshot,omitempty"`
-	PlannedRestSeconds *int                `json:"planned_rest_seconds,omitempty"`
-	ProgramNodeId      *openapi_types.UUID `json:"program_node_id,omitempty"`
-	Reps               int                 `json:"reps"`
-	Rpe                int                 `json:"rpe"`
-	Sets               int                 `json:"sets"`
-
-	// VideoObjectKey Object key for uploaded video in storage (from upload-url response)
-	VideoObjectKey *string `json:"video_object_key,omitempty"`
-}
-
-// WorkoutListResponse defines model for WorkoutListResponse.
-type WorkoutListResponse struct {
-	Data       []Workout `json:"data"`
-	HasMore    bool      `json:"has_more"`
-	NextCursor *string   `json:"next_cursor"`
-}
-
 // After defines model for After.
 type After = string
-
-// ExerciseId defines model for ExerciseId.
-type ExerciseId = openapi_types.UUID
 
 // Limit defines model for Limit.
 type Limit = int
 
-// ProgramId defines model for ProgramId.
-type ProgramId = openapi_types.UUID
+// LogId defines model for LogId.
+type LogId = openapi_types.UUID
 
-// TelemetryPointId defines model for TelemetryPointId.
-type TelemetryPointId = openapi_types.UUID
-
-// WorkoutId defines model for WorkoutId.
-type WorkoutId = openapi_types.UUID
+// PlanId defines model for PlanId.
+type PlanId = openapi_types.UUID
 
 // Conflict defines model for Conflict.
 type Conflict = Error
@@ -395,8 +236,23 @@ type Unauthorized = Error
 // ValidationError defines model for ValidationError.
 type ValidationError = Error
 
-// ListExercisesParams defines parameters for ListExercises.
-type ListExercisesParams struct {
+// ListLogsParams defines parameters for ListLogs.
+type ListLogsParams struct {
+	// Limit Maximum number of items to return
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// After Cursor for pagination (from previous response)
+	After *After `form:"after,omitempty" json:"after,omitempty"`
+
+	// PerformedAtFrom Filter logs at or after this timestamp
+	PerformedAtFrom *time.Time `form:"performed_at_from,omitempty" json:"performed_at_from,omitempty"`
+
+	// PerformedAtTo Filter logs before this timestamp
+	PerformedAtTo *time.Time `form:"performed_at_to,omitempty" json:"performed_at_to,omitempty"`
+}
+
+// ListPlansParams defines parameters for ListPlans.
+type ListPlansParams struct {
 	// Limit Maximum number of items to return
 	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
 
@@ -404,65 +260,17 @@ type ListExercisesParams struct {
 	After *After `form:"after,omitempty" json:"after,omitempty"`
 }
 
-// ListProgramsParams defines parameters for ListPrograms.
-type ListProgramsParams struct {
-	// Limit Maximum number of items to return
-	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+// CreateLogJSONRequestBody defines body for CreateLog for application/json ContentType.
+type CreateLogJSONRequestBody = LogCreate
 
-	// After Cursor for pagination (from previous response)
-	After *After `form:"after,omitempty" json:"after,omitempty"`
-}
+// UpdateLogJSONRequestBody defines body for UpdateLog for application/json ContentType.
+type UpdateLogJSONRequestBody = LogCreate
 
-// ListTelemetryPointsParams defines parameters for ListTelemetryPoints.
-type ListTelemetryPointsParams struct {
-	// Limit Maximum number of items to return
-	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+// CreatePlanJSONRequestBody defines body for CreatePlan for application/json ContentType.
+type CreatePlanJSONRequestBody = PlanCreate
 
-	// After Cursor for pagination (from previous response)
-	After *After `form:"after,omitempty" json:"after,omitempty"`
-
-	// MetricName Filter by metric name
-	MetricName *string `form:"metric_name,omitempty" json:"metric_name,omitempty"`
-
-	// TimestampFrom Filter points at or after this timestamp
-	TimestampFrom *time.Time `form:"timestamp_from,omitempty" json:"timestamp_from,omitempty"`
-
-	// TimestampTo Filter points before this timestamp
-	TimestampTo *time.Time `form:"timestamp_to,omitempty" json:"timestamp_to,omitempty"`
-}
-
-// ListWorkoutsParams defines parameters for ListWorkouts.
-type ListWorkoutsParams struct {
-	// Limit Maximum number of items to return
-	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
-
-	// After Cursor for pagination (from previous response)
-	After *After `form:"after,omitempty" json:"after,omitempty"`
-
-	// TimestampFrom Filter workouts at or after this timestamp
-	TimestampFrom *time.Time `form:"timestamp_from,omitempty" json:"timestamp_from,omitempty"`
-
-	// TimestampTo Filter workouts before this timestamp
-	TimestampTo *time.Time `form:"timestamp_to,omitempty" json:"timestamp_to,omitempty"`
-}
-
-// CreateExerciseJSONRequestBody defines body for CreateExercise for application/json ContentType.
-type CreateExerciseJSONRequestBody = ExerciseCreate
-
-// UpdateExerciseJSONRequestBody defines body for UpdateExercise for application/json ContentType.
-type UpdateExerciseJSONRequestBody = ExerciseCreate
-
-// CreateProgramJSONRequestBody defines body for CreateProgram for application/json ContentType.
-type CreateProgramJSONRequestBody = ProgramCreate
-
-// UpdateProgramJSONRequestBody defines body for UpdateProgram for application/json ContentType.
-type UpdateProgramJSONRequestBody = ProgramCreate
-
-// CreateTelemetryPointJSONRequestBody defines body for CreateTelemetryPoint for application/json ContentType.
-type CreateTelemetryPointJSONRequestBody = TelemetryPointCreate
-
-// UpdateTelemetryPointJSONRequestBody defines body for UpdateTelemetryPoint for application/json ContentType.
-type UpdateTelemetryPointJSONRequestBody = TelemetryPointCreate
+// UpdatePlanJSONRequestBody defines body for UpdatePlan for application/json ContentType.
+type UpdatePlanJSONRequestBody = PlanCreate
 
 // GenerateVideoDownloadURLJSONRequestBody defines body for GenerateVideoDownloadURL for application/json ContentType.
 type GenerateVideoDownloadURLJSONRequestBody = VideoDownloadURLRequest
@@ -470,173 +278,107 @@ type GenerateVideoDownloadURLJSONRequestBody = VideoDownloadURLRequest
 // GenerateVideoUploadURLJSONRequestBody defines body for GenerateVideoUploadURL for application/json ContentType.
 type GenerateVideoUploadURLJSONRequestBody = VideoUploadURLRequest
 
-// CreateWorkoutJSONRequestBody defines body for CreateWorkout for application/json ContentType.
-type CreateWorkoutJSONRequestBody = WorkoutCreate
-
-// UpdateWorkoutJSONRequestBody defines body for UpdateWorkout for application/json ContentType.
-type UpdateWorkoutJSONRequestBody = WorkoutCreate
-
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// List exercises
-	// (GET /exercises)
-	ListExercises(w http.ResponseWriter, r *http.Request, params ListExercisesParams)
-	// Create exercise
-	// (POST /exercises)
-	CreateExercise(w http.ResponseWriter, r *http.Request)
-	// Delete exercise
-	// (DELETE /exercises/{id})
-	DeleteExercise(w http.ResponseWriter, r *http.Request, id ExerciseId)
-	// Get exercise by ID
-	// (GET /exercises/{id})
-	GetExercise(w http.ResponseWriter, r *http.Request, id ExerciseId)
-	// Update exercise
-	// (PUT /exercises/{id})
-	UpdateExercise(w http.ResponseWriter, r *http.Request, id ExerciseId)
-	// List programs
-	// (GET /programs)
-	ListPrograms(w http.ResponseWriter, r *http.Request, params ListProgramsParams)
-	// Create program
-	// (POST /programs)
-	CreateProgram(w http.ResponseWriter, r *http.Request)
-	// Delete program
-	// (DELETE /programs/{id})
-	DeleteProgram(w http.ResponseWriter, r *http.Request, id ProgramId)
-	// Get program by ID
-	// (GET /programs/{id})
-	GetProgram(w http.ResponseWriter, r *http.Request, id ProgramId)
-	// Update program
-	// (PUT /programs/{id})
-	UpdateProgram(w http.ResponseWriter, r *http.Request, id ProgramId)
-	// List telemetry points
-	// (GET /telemetry)
-	ListTelemetryPoints(w http.ResponseWriter, r *http.Request, params ListTelemetryPointsParams)
-	// Create telemetry point
-	// (POST /telemetry)
-	CreateTelemetryPoint(w http.ResponseWriter, r *http.Request)
-	// Delete telemetry point
-	// (DELETE /telemetry/{id})
-	DeleteTelemetryPoint(w http.ResponseWriter, r *http.Request, id TelemetryPointId)
-	// Get telemetry point by ID
-	// (GET /telemetry/{id})
-	GetTelemetryPoint(w http.ResponseWriter, r *http.Request, id TelemetryPointId)
-	// Update telemetry point
-	// (PUT /telemetry/{id})
-	UpdateTelemetryPoint(w http.ResponseWriter, r *http.Request, id TelemetryPointId)
+	// List logs
+	// (GET /logs)
+	ListLogs(w http.ResponseWriter, r *http.Request, params ListLogsParams)
+	// Create log
+	// (POST /logs)
+	CreateLog(w http.ResponseWriter, r *http.Request)
+	// Delete log
+	// (DELETE /logs/{id})
+	DeleteLog(w http.ResponseWriter, r *http.Request, id LogId)
+	// Get log by ID
+	// (GET /logs/{id})
+	GetLog(w http.ResponseWriter, r *http.Request, id LogId)
+	// Update log
+	// (PUT /logs/{id})
+	UpdateLog(w http.ResponseWriter, r *http.Request, id LogId)
+	// List plans
+	// (GET /plans)
+	ListPlans(w http.ResponseWriter, r *http.Request, params ListPlansParams)
+	// Create plan
+	// (POST /plans)
+	CreatePlan(w http.ResponseWriter, r *http.Request)
+	// Delete plan
+	// (DELETE /plans/{id})
+	DeletePlan(w http.ResponseWriter, r *http.Request, id PlanId)
+	// Get plan by ID
+	// (GET /plans/{id})
+	GetPlan(w http.ResponseWriter, r *http.Request, id PlanId)
+	// Update plan
+	// (PUT /plans/{id})
+	UpdatePlan(w http.ResponseWriter, r *http.Request, id PlanId)
 	// Generate pre-signed URL for video download
 	// (POST /videos/download-url)
 	GenerateVideoDownloadURL(w http.ResponseWriter, r *http.Request)
 	// Generate pre-signed URL for video upload
 	// (POST /videos/upload-url)
 	GenerateVideoUploadURL(w http.ResponseWriter, r *http.Request)
-	// List workouts
-	// (GET /workouts)
-	ListWorkouts(w http.ResponseWriter, r *http.Request, params ListWorkoutsParams)
-	// Create workout
-	// (POST /workouts)
-	CreateWorkout(w http.ResponseWriter, r *http.Request)
-	// Delete workout
-	// (DELETE /workouts/{id})
-	DeleteWorkout(w http.ResponseWriter, r *http.Request, id WorkoutId)
-	// Get workout by ID
-	// (GET /workouts/{id})
-	GetWorkout(w http.ResponseWriter, r *http.Request, id WorkoutId)
-	// Update workout
-	// (PUT /workouts/{id})
-	UpdateWorkout(w http.ResponseWriter, r *http.Request, id WorkoutId)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
 
 type Unimplemented struct{}
 
-// List exercises
-// (GET /exercises)
-func (_ Unimplemented) ListExercises(w http.ResponseWriter, r *http.Request, params ListExercisesParams) {
+// List logs
+// (GET /logs)
+func (_ Unimplemented) ListLogs(w http.ResponseWriter, r *http.Request, params ListLogsParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Create exercise
-// (POST /exercises)
-func (_ Unimplemented) CreateExercise(w http.ResponseWriter, r *http.Request) {
+// Create log
+// (POST /logs)
+func (_ Unimplemented) CreateLog(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Delete exercise
-// (DELETE /exercises/{id})
-func (_ Unimplemented) DeleteExercise(w http.ResponseWriter, r *http.Request, id ExerciseId) {
+// Delete log
+// (DELETE /logs/{id})
+func (_ Unimplemented) DeleteLog(w http.ResponseWriter, r *http.Request, id LogId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Get exercise by ID
-// (GET /exercises/{id})
-func (_ Unimplemented) GetExercise(w http.ResponseWriter, r *http.Request, id ExerciseId) {
+// Get log by ID
+// (GET /logs/{id})
+func (_ Unimplemented) GetLog(w http.ResponseWriter, r *http.Request, id LogId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Update exercise
-// (PUT /exercises/{id})
-func (_ Unimplemented) UpdateExercise(w http.ResponseWriter, r *http.Request, id ExerciseId) {
+// Update log
+// (PUT /logs/{id})
+func (_ Unimplemented) UpdateLog(w http.ResponseWriter, r *http.Request, id LogId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// List programs
-// (GET /programs)
-func (_ Unimplemented) ListPrograms(w http.ResponseWriter, r *http.Request, params ListProgramsParams) {
+// List plans
+// (GET /plans)
+func (_ Unimplemented) ListPlans(w http.ResponseWriter, r *http.Request, params ListPlansParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Create program
-// (POST /programs)
-func (_ Unimplemented) CreateProgram(w http.ResponseWriter, r *http.Request) {
+// Create plan
+// (POST /plans)
+func (_ Unimplemented) CreatePlan(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Delete program
-// (DELETE /programs/{id})
-func (_ Unimplemented) DeleteProgram(w http.ResponseWriter, r *http.Request, id ProgramId) {
+// Delete plan
+// (DELETE /plans/{id})
+func (_ Unimplemented) DeletePlan(w http.ResponseWriter, r *http.Request, id PlanId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Get program by ID
-// (GET /programs/{id})
-func (_ Unimplemented) GetProgram(w http.ResponseWriter, r *http.Request, id ProgramId) {
+// Get plan by ID
+// (GET /plans/{id})
+func (_ Unimplemented) GetPlan(w http.ResponseWriter, r *http.Request, id PlanId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Update program
-// (PUT /programs/{id})
-func (_ Unimplemented) UpdateProgram(w http.ResponseWriter, r *http.Request, id ProgramId) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// List telemetry points
-// (GET /telemetry)
-func (_ Unimplemented) ListTelemetryPoints(w http.ResponseWriter, r *http.Request, params ListTelemetryPointsParams) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Create telemetry point
-// (POST /telemetry)
-func (_ Unimplemented) CreateTelemetryPoint(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Delete telemetry point
-// (DELETE /telemetry/{id})
-func (_ Unimplemented) DeleteTelemetryPoint(w http.ResponseWriter, r *http.Request, id TelemetryPointId) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Get telemetry point by ID
-// (GET /telemetry/{id})
-func (_ Unimplemented) GetTelemetryPoint(w http.ResponseWriter, r *http.Request, id TelemetryPointId) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Update telemetry point
-// (PUT /telemetry/{id})
-func (_ Unimplemented) UpdateTelemetryPoint(w http.ResponseWriter, r *http.Request, id TelemetryPointId) {
+// Update plan
+// (PUT /plans/{id})
+func (_ Unimplemented) UpdatePlan(w http.ResponseWriter, r *http.Request, id PlanId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -652,36 +394,6 @@ func (_ Unimplemented) GenerateVideoUploadURL(w http.ResponseWriter, r *http.Req
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// List workouts
-// (GET /workouts)
-func (_ Unimplemented) ListWorkouts(w http.ResponseWriter, r *http.Request, params ListWorkoutsParams) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Create workout
-// (POST /workouts)
-func (_ Unimplemented) CreateWorkout(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Delete workout
-// (DELETE /workouts/{id})
-func (_ Unimplemented) DeleteWorkout(w http.ResponseWriter, r *http.Request, id WorkoutId) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Get workout by ID
-// (GET /workouts/{id})
-func (_ Unimplemented) GetWorkout(w http.ResponseWriter, r *http.Request, id WorkoutId) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Update workout
-// (PUT /workouts/{id})
-func (_ Unimplemented) UpdateWorkout(w http.ResponseWriter, r *http.Request, id WorkoutId) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler            ServerInterface
@@ -691,8 +403,8 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
-// ListExercises operation middleware
-func (siw *ServerInterfaceWrapper) ListExercises(w http.ResponseWriter, r *http.Request) {
+// ListLogs operation middleware
+func (siw *ServerInterfaceWrapper) ListLogs(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
@@ -703,7 +415,177 @@ func (siw *ServerInterfaceWrapper) ListExercises(w http.ResponseWriter, r *http.
 	r = r.WithContext(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
-	var params ListExercisesParams
+	var params ListLogsParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "after" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "after", r.URL.Query(), &params.After)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "after", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "performed_at_from" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "performed_at_from", r.URL.Query(), &params.PerformedAtFrom)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "performed_at_from", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "performed_at_to" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "performed_at_to", r.URL.Query(), &params.PerformedAtTo)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "performed_at_to", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListLogs(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateLog operation middleware
+func (siw *ServerInterfaceWrapper) CreateLog(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateLog(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteLog operation middleware
+func (siw *ServerInterfaceWrapper) DeleteLog(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id LogId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteLog(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetLog operation middleware
+func (siw *ServerInterfaceWrapper) GetLog(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id LogId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetLog(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateLog operation middleware
+func (siw *ServerInterfaceWrapper) UpdateLog(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id LogId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateLog(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListPlans operation middleware
+func (siw *ServerInterfaceWrapper) ListPlans(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListPlansParams
 
 	// ------------- Optional query parameter "limit" -------------
 
@@ -722,7 +604,7 @@ func (siw *ServerInterfaceWrapper) ListExercises(w http.ResponseWriter, r *http.
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListExercises(w, r, params)
+		siw.Handler.ListPlans(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -732,8 +614,8 @@ func (siw *ServerInterfaceWrapper) ListExercises(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r)
 }
 
-// CreateExercise operation middleware
-func (siw *ServerInterfaceWrapper) CreateExercise(w http.ResponseWriter, r *http.Request) {
+// CreatePlan operation middleware
+func (siw *ServerInterfaceWrapper) CreatePlan(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
@@ -742,7 +624,7 @@ func (siw *ServerInterfaceWrapper) CreateExercise(w http.ResponseWriter, r *http
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreateExercise(w, r)
+		siw.Handler.CreatePlan(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -752,13 +634,13 @@ func (siw *ServerInterfaceWrapper) CreateExercise(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
-// DeleteExercise operation middleware
-func (siw *ServerInterfaceWrapper) DeleteExercise(w http.ResponseWriter, r *http.Request) {
+// DeletePlan operation middleware
+func (siw *ServerInterfaceWrapper) DeletePlan(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
 	// ------------- Path parameter "id" -------------
-	var id ExerciseId
+	var id PlanId
 
 	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
@@ -773,7 +655,7 @@ func (siw *ServerInterfaceWrapper) DeleteExercise(w http.ResponseWriter, r *http
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteExercise(w, r, id)
+		siw.Handler.DeletePlan(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -783,13 +665,13 @@ func (siw *ServerInterfaceWrapper) DeleteExercise(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
-// GetExercise operation middleware
-func (siw *ServerInterfaceWrapper) GetExercise(w http.ResponseWriter, r *http.Request) {
+// GetPlan operation middleware
+func (siw *ServerInterfaceWrapper) GetPlan(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
 	// ------------- Path parameter "id" -------------
-	var id ExerciseId
+	var id PlanId
 
 	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
@@ -804,7 +686,7 @@ func (siw *ServerInterfaceWrapper) GetExercise(w http.ResponseWriter, r *http.Re
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetExercise(w, r, id)
+		siw.Handler.GetPlan(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -814,13 +696,13 @@ func (siw *ServerInterfaceWrapper) GetExercise(w http.ResponseWriter, r *http.Re
 	handler.ServeHTTP(w, r)
 }
 
-// UpdateExercise operation middleware
-func (siw *ServerInterfaceWrapper) UpdateExercise(w http.ResponseWriter, r *http.Request) {
+// UpdatePlan operation middleware
+func (siw *ServerInterfaceWrapper) UpdatePlan(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
 	// ------------- Path parameter "id" -------------
-	var id ExerciseId
+	var id PlanId
 
 	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
@@ -835,339 +717,7 @@ func (siw *ServerInterfaceWrapper) UpdateExercise(w http.ResponseWriter, r *http
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateExercise(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// ListPrograms operation middleware
-func (siw *ServerInterfaceWrapper) ListPrograms(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params ListProgramsParams
-
-	// ------------- Optional query parameter "limit" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "after" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "after", r.URL.Query(), &params.After)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "after", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListPrograms(w, r, params)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// CreateProgram operation middleware
-func (siw *ServerInterfaceWrapper) CreateProgram(w http.ResponseWriter, r *http.Request) {
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreateProgram(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// DeleteProgram operation middleware
-func (siw *ServerInterfaceWrapper) DeleteProgram(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id ProgramId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteProgram(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// GetProgram operation middleware
-func (siw *ServerInterfaceWrapper) GetProgram(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id ProgramId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetProgram(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// UpdateProgram operation middleware
-func (siw *ServerInterfaceWrapper) UpdateProgram(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id ProgramId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateProgram(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// ListTelemetryPoints operation middleware
-func (siw *ServerInterfaceWrapper) ListTelemetryPoints(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params ListTelemetryPointsParams
-
-	// ------------- Optional query parameter "limit" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "after" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "after", r.URL.Query(), &params.After)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "after", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "metric_name" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "metric_name", r.URL.Query(), &params.MetricName)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "metric_name", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "timestamp_from" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "timestamp_from", r.URL.Query(), &params.TimestampFrom)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "timestamp_from", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "timestamp_to" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "timestamp_to", r.URL.Query(), &params.TimestampTo)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "timestamp_to", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListTelemetryPoints(w, r, params)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// CreateTelemetryPoint operation middleware
-func (siw *ServerInterfaceWrapper) CreateTelemetryPoint(w http.ResponseWriter, r *http.Request) {
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreateTelemetryPoint(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// DeleteTelemetryPoint operation middleware
-func (siw *ServerInterfaceWrapper) DeleteTelemetryPoint(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id TelemetryPointId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteTelemetryPoint(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// GetTelemetryPoint operation middleware
-func (siw *ServerInterfaceWrapper) GetTelemetryPoint(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id TelemetryPointId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetTelemetryPoint(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// UpdateTelemetryPoint operation middleware
-func (siw *ServerInterfaceWrapper) UpdateTelemetryPoint(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id TelemetryPointId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateTelemetryPoint(w, r, id)
+		siw.Handler.UpdatePlan(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1208,176 +758,6 @@ func (siw *ServerInterfaceWrapper) GenerateVideoUploadURL(w http.ResponseWriter,
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GenerateVideoUploadURL(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// ListWorkouts operation middleware
-func (siw *ServerInterfaceWrapper) ListWorkouts(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params ListWorkoutsParams
-
-	// ------------- Optional query parameter "limit" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "after" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "after", r.URL.Query(), &params.After)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "after", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "timestamp_from" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "timestamp_from", r.URL.Query(), &params.TimestampFrom)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "timestamp_from", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "timestamp_to" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "timestamp_to", r.URL.Query(), &params.TimestampTo)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "timestamp_to", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListWorkouts(w, r, params)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// CreateWorkout operation middleware
-func (siw *ServerInterfaceWrapper) CreateWorkout(w http.ResponseWriter, r *http.Request) {
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreateWorkout(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// DeleteWorkout operation middleware
-func (siw *ServerInterfaceWrapper) DeleteWorkout(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id WorkoutId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteWorkout(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// GetWorkout operation middleware
-func (siw *ServerInterfaceWrapper) GetWorkout(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id WorkoutId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetWorkout(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// UpdateWorkout operation middleware
-func (siw *ServerInterfaceWrapper) UpdateWorkout(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id WorkoutId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateWorkout(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1501,70 +881,40 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/exercises", wrapper.ListExercises)
+		r.Get(options.BaseURL+"/logs", wrapper.ListLogs)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/exercises", wrapper.CreateExercise)
+		r.Post(options.BaseURL+"/logs", wrapper.CreateLog)
 	})
 	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/exercises/{id}", wrapper.DeleteExercise)
+		r.Delete(options.BaseURL+"/logs/{id}", wrapper.DeleteLog)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/exercises/{id}", wrapper.GetExercise)
+		r.Get(options.BaseURL+"/logs/{id}", wrapper.GetLog)
 	})
 	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/exercises/{id}", wrapper.UpdateExercise)
+		r.Put(options.BaseURL+"/logs/{id}", wrapper.UpdateLog)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/programs", wrapper.ListPrograms)
+		r.Get(options.BaseURL+"/plans", wrapper.ListPlans)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/programs", wrapper.CreateProgram)
+		r.Post(options.BaseURL+"/plans", wrapper.CreatePlan)
 	})
 	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/programs/{id}", wrapper.DeleteProgram)
+		r.Delete(options.BaseURL+"/plans/{id}", wrapper.DeletePlan)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/programs/{id}", wrapper.GetProgram)
+		r.Get(options.BaseURL+"/plans/{id}", wrapper.GetPlan)
 	})
 	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/programs/{id}", wrapper.UpdateProgram)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/telemetry", wrapper.ListTelemetryPoints)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/telemetry", wrapper.CreateTelemetryPoint)
-	})
-	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/telemetry/{id}", wrapper.DeleteTelemetryPoint)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/telemetry/{id}", wrapper.GetTelemetryPoint)
-	})
-	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/telemetry/{id}", wrapper.UpdateTelemetryPoint)
+		r.Put(options.BaseURL+"/plans/{id}", wrapper.UpdatePlan)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/videos/download-url", wrapper.GenerateVideoDownloadURL)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/videos/upload-url", wrapper.GenerateVideoUploadURL)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/workouts", wrapper.ListWorkouts)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/workouts", wrapper.CreateWorkout)
-	})
-	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/workouts/{id}", wrapper.DeleteWorkout)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/workouts/{id}", wrapper.GetWorkout)
-	})
-	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/workouts/{id}", wrapper.UpdateWorkout)
 	})
 
 	return r

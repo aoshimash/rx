@@ -6,178 +6,106 @@
  */
 
 // ============================================================================
-// Exercise
+// Plan
 // ============================================================================
 
-export interface Exercise {
+export interface Plan {
   id: string;
   name: string;
   description?: string;
-  aliases?: string[];
-  muscle_groups?: string[];
-  load_increment?: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ExerciseCreate {
-  name: string;
-  description?: string;
-  aliases?: string[];
-  muscle_groups?: string[];
-  load_increment?: number;
-}
-
-// ============================================================================
-// Program
-// ============================================================================
-
-export interface Program {
-  id: string;
-  name: string;
-  description?: string;
-  entries?: ProgramEntry[];
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ProgramCreate {
-  name: string;
-  description?: string;
-  entries?: ProgramEntryCreate[];
-}
-
-// ============================================================================
-// ProgramEntry
-// ============================================================================
-
-export interface ProgramEntry {
-  id: string;
-  program_id: string;
-  name: string;
-  order: number;
+  notes?: string;
   metadata?: Record<string, unknown>;
-  exercise_id?: string;
-  target_sets?: number;
-  target_reps?: number;
-  target_rpe?: number;
-  percent_1rm?: number;
-  planned_rest_seconds?: number;
-  muscle_groups?: string[];
-  notes?: string;
-}
-
-export interface ProgramEntryCreate {
-  name: string;
-  order: number;
-  metadata?: Record<string, unknown>;
-  exercise_id?: string;
-  target_sets?: number;
-  target_reps?: number;
-  target_rpe?: number;
-  percent_1rm?: number;
-  planned_rest_seconds?: number;
-  muscle_groups?: string[];
-  notes?: string;
-}
-
-// ============================================================================
-// Workout
-// ============================================================================
-
-export interface Workout {
-  id: string;
-  timestamp: string;
-  session_start?: string;
-  session_end?: string;
-  body_weight_kg?: number;
-  fatigue_level?: number;
-  sleep_hours?: number;
-  condition_notes?: string;
-  program_node_id?: string;
-  program_context?: string[];
-  notes?: string;
-  entries: WorkoutEntry[];
+  entries?: PlanEntry[];
   created_at: string;
   updated_at: string;
 }
 
-export interface WorkoutCreate {
-  timestamp: string;
-  session_start?: string;
-  session_end?: string;
-  body_weight_kg?: number;
-  fatigue_level?: number;
-  sleep_hours?: number;
-  condition_notes?: string;
-  program_node_id?: string;
-  program_context?: string[];
+export interface PlanCreate {
+  name: string;
+  description?: string;
   notes?: string;
-  entries: WorkoutEntryCreate[];
+  metadata?: Record<string, unknown>;
+  entries?: PlanEntryCreate[];
 }
 
 // ============================================================================
-// WorkoutEntry
+// PlanEntry
 // ============================================================================
 
-/**
- * Entry type for workout entries.
- * User-defined values are allowed, common values include: top, main, backoff, accessory.
- */
-export type EntryType = string | null;
-
-export interface WorkoutEntry {
+export interface PlanEntry {
   id: string;
-  workout_id: string;
+  plan_id: string;
+  exercise_name: string;
   order: number;
-  exercise_id: string;
-  display_name?: string;
-  entry_type?: EntryType;
-  sets: number;
-  reps: number;
-  load_kg: number;
-  rpe: number;
-  entry_start?: string;
-  entry_end?: string;
-  planned_rest_seconds?: number;
-  performed_rest_seconds?: number;
-  per_set_rest_overrides?: number[];
-  program_node_id?: string;
-  plan_snapshot?: PlanSnapshot;
+  sets?: number;
+  reps?: number;
+  load_kg?: number;
+  rpe?: number;
+  notes?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface PlanEntryCreate {
+  exercise_name: string;
+  order: number;
+  sets?: number;
+  reps?: number;
+  load_kg?: number;
+  rpe?: number;
+  notes?: string;
+  metadata?: Record<string, unknown>;
+}
+
+// ============================================================================
+// Log
+// ============================================================================
+
+export interface Log {
+  id: string;
+  plan_id?: string;
+  performed_at: string;
+  notes?: string;
+  metadata?: Record<string, unknown>;
+  entries: LogEntry[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LogCreate {
+  plan_id?: string;
+  performed_at: string;
+  notes?: string;
+  metadata?: Record<string, unknown>;
+  entries: LogEntryCreate[];
+}
+
+// ============================================================================
+// LogEntry
+// ============================================================================
+
+export interface LogEntry {
+  id: string;
+  log_id: string;
+  exercise_name: string;
+  order: number;
+  sets?: number;
+  reps?: number;
+  load_kg?: number;
+  rpe?: number;
   notes?: string;
   video_object_key?: string;
+  metadata?: Record<string, unknown>;
 }
 
-export interface WorkoutEntryCreate {
-  exercise_id: string;
-  display_name?: string;
-  entry_type?: EntryType;
-  sets: number;
-  reps: number;
-  load_kg: number;
-  rpe: number;
-  entry_start?: string;
-  entry_end?: string;
-  planned_rest_seconds?: number;
-  performed_rest_seconds?: number;
-  per_set_rest_overrides?: number[];
-  program_node_id?: string;
-  plan_snapshot?: PlanSnapshot;
+export interface LogEntryCreate {
+  exercise_name: string;
+  sets?: number;
+  reps?: number;
+  load_kg?: number;
+  rpe?: number;
   notes?: string;
-}
-
-// ============================================================================
-// PlanSnapshot
-// ============================================================================
-
-export interface PlanSnapshot {
-  program_node_id?: string;
-  target_sets?: number;
-  target_reps?: number;
-  target_rpe?: number;
-  target_load_kg?: number;
-  percent_1rm?: number;
-  planned_rest_seconds?: number;
+  video_object_key?: string;
+  metadata?: Record<string, unknown>;
 }
 
 // ============================================================================
@@ -190,9 +118,8 @@ export interface PaginatedResponse<T> {
   has_more: boolean;
 }
 
-export type ExerciseListResponse = PaginatedResponse<Exercise>;
-export type WorkoutListResponse = PaginatedResponse<Workout>;
-export type ProgramListResponse = PaginatedResponse<Program>;
+export type PlanListResponse = PaginatedResponse<Plan>;
+export type LogListResponse = PaginatedResponse<Log>;
 
 // ============================================================================
 // Error
