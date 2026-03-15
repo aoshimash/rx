@@ -6,8 +6,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'OPTel Workout',
-  description: 'Workout management for the human physical layer',
+  title: 'Rx',
+  description: 'Program-first workout tracking system',
 };
 
 export default function RootLayout({

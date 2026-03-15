@@ -174,5 +174,5 @@ AI analysis will be integrated in phases:
 ## Related Documents
 
 - [AGENTS.md](../AGENTS.md) - AI agent guidance
-- [optel-frontend-standards](../.claude/skills/optel-frontend-standards/) - Coding standards
+- [rx-frontend-standards](../.claude/skills/rx-frontend-standards/) - Coding standards
 - [ARCHITECTURE.md](ARCHITECTURE.md) - Overall system architecture

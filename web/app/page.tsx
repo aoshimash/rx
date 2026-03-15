@@ -93,7 +93,7 @@ export default function Home() {
     return (
       <main className="container mx-auto p-6">
         <div className="text-center py-12">
-          <h1 className="text-3xl font-bold mb-4">Welcome to OPTel Workout</h1>
+          <h1 className="text-3xl font-bold mb-4">Welcome to Rx</h1>
           <p className="text-muted-foreground mb-6">
             Create your first training program to get started.
           </p>

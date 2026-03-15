@@ -12,7 +12,7 @@ export function Header() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href="/" className="text-xl font-bold">
-              OPTel Workout
+              Rx
             </Link>
             <nav className="flex items-center gap-2">
               <Link href="/">
