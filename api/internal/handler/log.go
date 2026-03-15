@@ -13,11 +13,11 @@ import (
 
 // logRequest represents the request body for creating/updating a log
 type logRequest struct {
-	PlanID      *string            `json:"plan_id,omitempty"`
-	PerformedAt string             `json:"performed_at"`
-	Notes       *string            `json:"notes,omitempty"`
-	Metadata    json.RawMessage    `json:"metadata,omitempty"`
-	Entries     []logEntryRequest  `json:"entries"`
+	PlanID      *string           `json:"plan_id,omitempty"`
+	PerformedAt string            `json:"performed_at"`
+	Notes       *string           `json:"notes,omitempty"`
+	Metadata    json.RawMessage   `json:"metadata,omitempty"`
+	Entries     []logEntryRequest `json:"entries"`
 }
 
 // logEntryRequest represents a log entry in the request body

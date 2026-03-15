@@ -40,10 +40,10 @@ func (h *PlanHandler) CreatePlan(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req struct {
-		Name        string            `json:"name"`
-		Description *string           `json:"description,omitempty"`
-		Notes       *string           `json:"notes,omitempty"`
-		Metadata    json.RawMessage   `json:"metadata,omitempty"`
+		Name        string             `json:"name"`
+		Description *string            `json:"description,omitempty"`
+		Notes       *string            `json:"notes,omitempty"`
+		Metadata    json.RawMessage    `json:"metadata,omitempty"`
 		Entries     []planEntryRequest `json:"entries,omitempty"`
 	}
 
@@ -141,10 +141,10 @@ func (h *PlanHandler) UpdatePlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		Name        string            `json:"name"`
-		Description *string           `json:"description,omitempty"`
-		Notes       *string           `json:"notes,omitempty"`
-		Metadata    json.RawMessage   `json:"metadata,omitempty"`
+		Name        string             `json:"name"`
+		Description *string            `json:"description,omitempty"`
+		Notes       *string            `json:"notes,omitempty"`
+		Metadata    json.RawMessage    `json:"metadata,omitempty"`
 		Entries     []planEntryRequest `json:"entries,omitempty"`
 	}
 
