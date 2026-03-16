@@ -265,7 +265,7 @@ When modifying domain models or OpenAPI specs:
 - [ ] Update tests
 - [ ] Run validation (`task validate-openapi`)
 
-**Note:** The domain reference (`.claude/skills/rx-domain/reference.md`) shows the **target state** or **reference implementation**, not a requirement to implement everything upfront. Use it as inspiration, but feel free to start simpler and build up.
+**Note:** The domain model ([docs/DOMAIN_MODEL.md](DOMAIN_MODEL.md)) shows the **target state** or **reference implementation**, not a requirement to implement everything upfront. Use it as inspiration, but feel free to start simpler and build up.
 
 ### Development Cycle
 
@@ -815,7 +815,7 @@ go test -v ./internal/domain/...
 
 ### Writing Tests
 
-All tests must be table-driven. See `.claude/skills/rx-go-standards/reference.md` for examples.
+All tests must be table-driven. See [docs/GO_STANDARDS.md](GO_STANDARDS.md) for examples.
 
 ## Docker
 
