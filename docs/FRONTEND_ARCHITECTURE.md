@@ -1,7 +1,5 @@
 # Frontend Architecture
 
-This document describes the architecture decisions for Rx frontend applications.
-
 ## Overview
 
 Rx has two frontend applications with distinct purposes:
@@ -9,7 +7,7 @@ Rx has two frontend applications with distinct purposes:
 | Application | Purpose | Priority |
 |-------------|---------|----------|
 | **Web** | Planning, analysis, full management | First |
-| **Mobile** | Gym-side workout logging, plan viewing | Second |
+| **Mobile** | Gym-side training logging, plan viewing | Second |
 
 ## Design Principles
 
@@ -19,26 +17,20 @@ Everything possible on Mobile should also be possible on Web. Mobile has a focus
 
 ### 2. React Shared Mental Model
 
-Both Web and Mobile use React (React/Next.js for Web, React Native/Expo for Mobile), enabling:
-- Shared knowledge and patterns
-- Potential code sharing (types, API clients, validation)
-- Consistent development experience
+Both Web and Mobile use React (Next.js for Web, React Native/Expo for Mobile), enabling shared knowledge, patterns, and potential code sharing.
 
 ### 3. AI-Friendly Development
 
-Technology choices prioritize:
-- Large community and documentation (better AI training data)
-- Simple configuration (less boilerplate)
-- Type safety (fewer AI mistakes)
-- Consistent patterns (predictable code generation)
+Technology choices prioritize large communities, simple configuration, type safety, and consistent patterns.
 
 ## Feature Scope
 
 | Feature | Web | Mobile |
 |---------|-----|--------|
 | **Program** | Full CRUD | Read-only |
-| **Workout** | Full CRUD | Create + Read (optimized UI) |
-| **Exercise** | Full CRUD | Read-only (via workout) |
+| **Plan** | Full CRUD | Read-only |
+| **Log** | Full CRUD | Create + Read (optimized UI) |
+| **Exercise** | Full CRUD | Read-only (via log) |
 | **Telemetry** | View + Visualize | Not available |
 | **Video** | Upload/Download | Upload (WiFi only) |
 | **AI Analysis** | Future | Not planned |
@@ -69,110 +61,74 @@ Technology choices prioritize:
 | State Management | TanStack Query | Consistent with Web |
 | Navigation | Expo Router | File-based routing like Next.js |
 
-### Shared (Future)
-
-```
-packages/
-└── shared/
-    ├── types/          # TypeScript type definitions
-    ├── schemas/        # Zod validation schemas
-    └── api/            # API client functions
-```
-
 ## Project Structure
 
 ```
 rx/
-├── api/                    # Go REST API (existing)
-├── web/                    # Next.js Web application
-│   ├── app/                # App Router pages
-│   ├── components/
-│   │   ├── ui/             # shadcn/ui components
-│   │   └── features/       # Feature-specific components
-│   ├── lib/
-│   │   ├── api/            # API client
-│   │   └── hooks/          # TanStack Query hooks
-│   ├── types/              # Type definitions
-│   └── schemas/            # Zod schemas
-├── mobile/                 # React Native + Expo (future)
-├── packages/               # Shared packages (future)
-│   └── shared/
-└── docs/                   # Documentation
+├── api/        # Go REST API
+├── web/        # Next.js (app/, components/, lib/, types/, schemas/)
+├── mobile/     # React Native + Expo (future)
+└── packages/   # Shared types, schemas, API client (future)
 ```
 
 ## Data Flow
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                         Frontend                             │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │                    Components                         │    │
-│  │  ┌─────────┐  ┌─────────┐  ┌─────────┐             │    │
-│  │  │  Page   │  │ Feature │  │   UI    │             │    │
-│  │  │         │──│Component│──│Component│             │    │
-│  │  └────┬────┘  └────┬────┘  └─────────┘             │    │
-│  │       │            │                                 │    │
-│  └───────┼────────────┼─────────────────────────────────┘    │
-│          │            │                                       │
-│  ┌───────▼────────────▼─────────────────────────────────┐    │
-│  │              TanStack Query Hooks                      │    │
-│  │  useWorkouts(), useCreateWorkout(), useExercises()   │    │
-│  └───────────────────────┬───────────────────────────────┘    │
-│                          │                                     │
-│  ┌───────────────────────▼───────────────────────────────┐    │
-│  │                   API Client (ky)                       │    │
-│  │  workoutsApi.list(), workoutsApi.create(), ...        │    │
-│  └───────────────────────┬───────────────────────────────┘    │
-└──────────────────────────┼────────────────────────────────────┘
-                           │ HTTP (Bearer Token)
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    Rx API                         │
-│                  http://localhost:8080/api/v1               │
-└─────────────────────────────────────────────────────────────┘
+Page → Feature Component → TanStack Query Hook → API Client (ky) → Rx API
 ```
+
+Components never call the API directly. All server state goes through TanStack Query.
+
+## Coding Standards
+
+### Component Separation
+
+| Type | Location | Role |
+|------|----------|------|
+| **Page** | `app/**/page.tsx` | Data fetching, layout composition |
+| **Feature Component** | `components/features/` | Feature-specific UI + logic |
+| **UI Component** | `components/ui/` | Reusable presentational |
+
+### Naming Conventions
+
+- **Files**: kebab-case (`program-list.tsx`, `use-programs.ts`)
+- **Components**: PascalCase (`ProgramList`, `LogEntryCard`)
+- **Props types**: `ComponentNameProps`
+- **Variables/functions**: camelCase
+- **Event handlers**: `handle` + action (`handleSubmit`, `handleProgramCreate`)
+- **Booleans**: `is`/`has`/`should` prefix (`isLoading`, `hasError`)
+- **API objects**: `{resource}Api` with `list`, `get`, `create`, `update`, `delete` methods
+
+### TypeScript Policy
+
+- TypeScript everywhere (`.ts`/`.tsx`). JavaScript only for config files.
+- No `any` — use `unknown` or proper types
+- No `// @ts-ignore` — fix the type issue
+
+### Linting
+
+Use Biome for linting and formatting (no ESLint/Prettier). Run `pnpm check` before committing.
 
 ## Authentication
 
-### Current (PoC)
+**Current (PoC):** Bearer token stored in localStorage, manually provided by user.
 
-- Bearer token authentication
-- Token stored in localStorage
-- Token manually provided by user (no login UI)
-- Backend accepts any non-empty token for MVP
+**Future:** OAuth2 / JWT with proper login UI and multi-user support.
 
-### Future
+## Offline Support (Mobile, Future)
 
-- OAuth2 / JWT authentication
-- Proper login/logout UI
-- Token refresh mechanism
-- Multi-user support (coach/athlete sharing)
-
-## Offline Support (Mobile)
-
-### Requirements
-
-- View cached workout plans offline
-- Record workouts offline
-- Sync when connection available
+- View cached plans offline
+- Record training sessions offline, sync when reconnected
 - Video upload only on WiFi
-
-### Implementation (Future)
-
-- TanStack Query persistence
-- Optimistic updates
-- Background sync with Expo
 
 ## AI Integration (Future)
 
-AI analysis will be integrated in phases:
-
-1. **Phase 1 (Current)**: External agents (Cursor + MCP Server)
+1. **Phase 1 (Current)**: External agents via MCP Server
 2. **Phase 2**: Web-embedded AI chat/analysis
 3. **Phase 3**: AI-powered recommendations
 
 ## Related Documents
 
-- [AGENTS.md](../AGENTS.md) - AI agent guidance
-- [rx-frontend-standards](../.claude/skills/rx-frontend-standards/) - Coding standards
-- [ARCHITECTURE.md](ARCHITECTURE.md) - Overall system architecture
+- [DOMAIN_MODEL.md](DOMAIN_MODEL.md) — Domain model (Program, Plan, Log)
+- [ARCHITECTURE.md](ARCHITECTURE.md) — Overall system architecture
+- [PHILOSOPHY.md](PHILOSOPHY.md) — Core product philosophy

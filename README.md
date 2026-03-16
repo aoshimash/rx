@@ -88,7 +88,7 @@ rx/
 ├── specs/              # Phase-based specifications
 ├── docs/               # Architecture & design docs
 ├── scripts/            # Utility scripts
-└── .claude/skills/     # AI agent skills
+└── .claude/            # AI agent skills (gh-cli)
 ```
 
 ## API Endpoints
@@ -134,9 +134,12 @@ Run `./scripts/setup-githooks.sh` to enable automatic format, lint, and test che
 
 ## Documentation
 
+- [Philosophy](docs/PHILOSOPHY.md) — Core principles and constraints
+- [Domain Model](docs/DOMAIN_MODEL.md) — Program / Plan / Log lifecycle
+- [Go Standards](docs/GO_STANDARDS.md) — Go coding standards
+- [Frontend Architecture](docs/FRONTEND_ARCHITECTURE.md) — Web/Mobile architecture and coding standards
 - [Architecture](docs/ARCHITECTURE.md) — System design and layer structure
 - [Development Guide](docs/DEVELOPMENT.md) — Detailed setup and workflow
-- [Frontend Architecture](docs/FRONTEND_ARCHITECTURE.md) — Web/Mobile architecture decisions
 - [Web UI Design](docs/WEB_UI_DESIGN.md) — Screen designs and interaction patterns
 - [AGENTS.md](AGENTS.md) — AI agent guidance
 

@@ -87,7 +87,7 @@ rx/
 │   ├── helm/
 │   └── terraform/
 ├── docs/                         # Documentation
-└── .claude/skills/               # AI agent skills
+└── .claude/                      # AI agent context (gh-cli)
 ```
 
 ## Data Flow
