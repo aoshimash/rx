@@ -62,17 +62,11 @@ export default function ProgramsPage() {
 
   return (
     <main className="container mx-auto p-6">
-      <div className="mb-6 flex items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Programs</h1>
-          <p className="text-muted-foreground mt-1">
-            Reusable training templates. Convert to a Plan with target weights.
-          </p>
-        </div>
-        <Button onClick={() => setOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Program
-        </Button>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Programs</h1>
+        <p className="text-muted-foreground mt-1">
+          Reusable training templates. Convert to a Plan with target weights.
+        </p>
       </div>
 
       {programs.length === 0 ? (

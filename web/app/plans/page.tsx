@@ -69,15 +69,9 @@ export default function PlansPage() {
 
   return (
     <main className="container mx-auto p-6">
-      <div className="mb-6 flex items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Training Plans</h1>
-          <p className="text-muted-foreground mt-1">Manage your training plans</p>
-        </div>
-        <Button onClick={() => setOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Plan
-        </Button>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Training Plans</h1>
+        <p className="text-muted-foreground mt-1">Manage your training plans</p>
       </div>
 
       {plans.length === 0 ? (

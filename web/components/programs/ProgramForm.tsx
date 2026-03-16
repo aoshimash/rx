@@ -8,7 +8,6 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { ProgramEntryCreate } from '@/types/api';
@@ -267,108 +266,99 @@ export function ProgramForm({
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Program Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="program-name">Program Name</Label>
-            <Input
-              id="program-name"
-              value={programName}
-              onChange={(e) => onNameChange(e.target.value)}
-              placeholder="e.g., 5/3/1 BBB, GZCL"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="program-description">Description</Label>
-            <Input
-              id="program-description"
-              value={programDescription}
-              onChange={(e) => onDescriptionChange(e.target.value)}
-              placeholder="Brief description of the program"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="program-notes">Notes</Label>
-            <Input
-              id="program-notes"
-              value={programNotes}
-              onChange={(e) => onNotesChange(e.target.value)}
-              placeholder="Additional notes"
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="program-name">Program Name</Label>
+          <Input
+            id="program-name"
+            value={programName}
+            onChange={(e) => onNameChange(e.target.value)}
+            placeholder="e.g., 5/3/1 BBB, GZCL"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="program-description">Description</Label>
+          <Input
+            id="program-description"
+            value={programDescription}
+            onChange={(e) => onDescriptionChange(e.target.value)}
+            placeholder="Brief description of the program"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="program-notes">Notes</Label>
+          <Input
+            id="program-notes"
+            value={programNotes}
+            onChange={(e) => onNotesChange(e.target.value)}
+            placeholder="Additional notes"
+          />
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Sessions</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Accordion type="multiple" className="w-full">
-            {sessions.map((session, sessionIdx) => (
-              <AccordionItem key={sessionIdx} value={`session-${sessionIdx}`}>
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center justify-between w-full pr-4">
-                    <span className="font-semibold">
-                      {session.name || `Session ${sessionIdx + 1}`}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveSession(sessionIdx);
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+      <div className="space-y-4">
+        <p className="text-sm font-semibold">Sessions</p>
+        <Accordion type="multiple" className="w-full">
+          {sessions.map((session, sessionIdx) => (
+            <AccordionItem key={sessionIdx} value={`session-${sessionIdx}`}>
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center justify-between w-full pr-4">
+                  <span className="font-semibold">
+                    {session.name || `Session ${sessionIdx + 1}`}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveSession(sessionIdx);
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <Label>Session Name</Label>
+                    <Input
+                      value={session.name}
+                      onChange={(e) => handleSessionNameChange(sessionIdx, e.target.value)}
+                      placeholder="e.g., Upper Body, Lower Body"
+                    />
                   </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-4 pt-4">
-                    <div className="space-y-2">
-                      <Label>Session Name</Label>
-                      <Input
-                        value={session.name}
-                        onChange={(e) => handleSessionNameChange(sessionIdx, e.target.value)}
-                        placeholder="e.g., Upper Body, Lower Body"
+
+                  <div className="space-y-3">
+                    {session.exercises.map((exercise, exIdx) => (
+                      <ProgramExerciseRow
+                        key={exIdx}
+                        exercise={exercise}
+                        onChange={(updated) => handleExerciseChange(sessionIdx, exIdx, updated)}
+                        onRemove={() => handleRemoveExercise(sessionIdx, exIdx)}
                       />
-                    </div>
-
-                    <div className="space-y-3">
-                      {session.exercises.map((exercise, exIdx) => (
-                        <ProgramExerciseRow
-                          key={exIdx}
-                          exercise={exercise}
-                          onChange={(updated) => handleExerciseChange(sessionIdx, exIdx, updated)}
-                          onRemove={() => handleRemoveExercise(sessionIdx, exIdx)}
-                        />
-                      ))}
-                    </div>
-
-                    <Button
-                      variant="outline"
-                      onClick={() => handleAddExercise(sessionIdx)}
-                      className="w-full"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Exercise
-                    </Button>
+                    ))}
                   </div>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
 
-          <Button variant="outline" onClick={handleAddSession} className="w-full">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Session
-          </Button>
-        </CardContent>
-      </Card>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleAddExercise(sessionIdx)}
+                    className="w-full"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Exercise
+                  </Button>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+
+        <Button variant="outline" onClick={handleAddSession} className="w-full">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Session
+        </Button>
+      </div>
 
       <div className="flex justify-between">
         {isEditing && onDelete && (
