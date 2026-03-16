@@ -56,7 +56,7 @@ export default function EditPlanPage() {
     <main className="container mx-auto p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Edit Training Plan</h1>
-        <p className="text-muted-foreground mt-1">Modify weeks, days, and exercise prescriptions</p>
+        <p className="text-muted-foreground mt-1">Modify sessions and exercise prescriptions</p>
       </div>
 
       <PlanForm

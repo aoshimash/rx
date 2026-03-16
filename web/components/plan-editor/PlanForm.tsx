@@ -8,8 +8,8 @@ import type { PlanEntryCreate } from '@/types/api';
 import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { DeleteConfirmDialog } from './DeleteConfirmDialog';
-import { WeekAccordion } from './WeekAccordion';
-import { type DayGroup, type WeekGroup, entriesToWeekGroups, weekGroupsToEntries } from './types';
+import { SessionAccordion } from './SessionAccordion';
+import { type SessionGroup, entriesToSessionGroups, sessionGroupsToEntries } from './types';
 
 interface PlanFormProps {
   planName: string;
@@ -35,206 +35,28 @@ export function PlanForm({
   isEditing,
 }: PlanFormProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [weekGroups, setWeekGroups] = useState<WeekGroup[]>(() =>
+  const [sessions, setSessions] = useState<SessionGroup[]>(() =>
     initialEntries && initialEntries.length > 0
-      ? entriesToWeekGroups(initialEntries)
-      : [{ name: 'Week 1', days: [] }]
+      ? entriesToSessionGroups(initialEntries)
+      : [{ name: 'Day 1', exercises: [] }]
   );
 
-  const handleAddWeek = () => {
-    const newWeek: WeekGroup = {
-      name: `Week ${weekGroups.length + 1}`,
-      days: [],
-    };
-    setWeekGroups([...weekGroups, newWeek]);
-  };
-
-  const handleRemoveWeek = (weekIdx: number) => {
-    setWeekGroups(weekGroups.filter((_, idx) => idx !== weekIdx));
-  };
-
-  const handleWeekNameChange = (weekIdx: number, name: string) => {
-    const updated = [...weekGroups];
-    const week = updated[weekIdx];
-    if (!week) return;
-    updated[weekIdx] = { ...week, name };
-    setWeekGroups(updated);
-  };
-
-  const handleAddDay = (weekIdx: number) => {
-    const updated = [...weekGroups];
-    const week = updated[weekIdx];
-    if (!week) return;
-
-    const newDay: DayGroup = {
-      name: `Day ${week.days.length + 1}`,
+  const handleAddSession = () => {
+    const newSession: SessionGroup = {
+      name: `Day ${sessions.length + 1}`,
       exercises: [],
     };
-    updated[weekIdx] = { ...week, days: [...week.days, newDay] };
-    setWeekGroups(updated);
+    setSessions([...sessions, newSession]);
   };
 
-  const handleRemoveDay = (weekIdx: number, dayIdx: number) => {
-    const updated = [...weekGroups];
-    const week = updated[weekIdx];
-    if (!week) return;
-
-    updated[weekIdx] = { ...week, days: week.days.filter((_, idx) => idx !== dayIdx) };
-    setWeekGroups(updated);
+  const handleSessionChange = (index: number, updated: SessionGroup) => {
+    const newSessions = [...sessions];
+    newSessions[index] = updated;
+    setSessions(newSessions);
   };
 
-  const handleDayNameChange = (weekIdx: number, dayIdx: number, name: string) => {
-    const updated = [...weekGroups];
-    const week = updated[weekIdx];
-    if (!week) return;
-
-    const days = [...week.days];
-    const day = days[dayIdx];
-    if (!day) return;
-
-    days[dayIdx] = { ...day, name };
-    updated[weekIdx] = { ...week, days };
-    setWeekGroups(updated);
-  };
-
-  const handleAddExercise = (weekIdx: number, dayIdx: number) => {
-    const updated = [...weekGroups];
-    const week = updated[weekIdx];
-    if (!week) return;
-
-    const days = [...week.days];
-    const day = days[dayIdx];
-    if (!day) return;
-
-    const newExercise: PlanEntryCreate = {
-      exercise_name: 'Exercise',
-      order: day.exercises.length,
-      sets: 3,
-      reps: 10,
-      rpe: 7,
-    };
-    days[dayIdx] = { ...day, exercises: [...day.exercises, newExercise] };
-    updated[weekIdx] = { ...week, days };
-    setWeekGroups(updated);
-  };
-
-  const handleRemoveExercise = (weekIdx: number, dayIdx: number, exIdx: number) => {
-    const updated = [...weekGroups];
-    const week = updated[weekIdx];
-    if (!week) return;
-
-    const days = [...week.days];
-    const day = days[dayIdx];
-    if (!day) return;
-
-    days[dayIdx] = {
-      ...day,
-      exercises: day.exercises
-        .filter((_, idx) => idx !== exIdx)
-        .map((e, idx) => ({ ...e, order: idx })),
-    };
-    updated[weekIdx] = { ...week, days };
-    setWeekGroups(updated);
-  };
-
-  const handleExerciseNameChange = (
-    weekIdx: number,
-    dayIdx: number,
-    exIdx: number,
-    name: string
-  ) => {
-    const updated = [...weekGroups];
-    const week = updated[weekIdx];
-    if (!week) return;
-
-    const days = [...week.days];
-    const day = days[dayIdx];
-    if (!day) return;
-
-    const exercises = [...day.exercises];
-    const ex = exercises[exIdx];
-    if (!ex) return;
-
-    exercises[exIdx] = { ...ex, exercise_name: name };
-    days[dayIdx] = { ...day, exercises };
-    updated[weekIdx] = { ...week, days };
-    setWeekGroups(updated);
-  };
-
-  const handleSetsChange = (weekIdx: number, dayIdx: number, exIdx: number, value: number) => {
-    const updated = [...weekGroups];
-    const week = updated[weekIdx];
-    if (!week) return;
-
-    const days = [...week.days];
-    const day = days[dayIdx];
-    if (!day) return;
-
-    const exercises = [...day.exercises];
-    const ex = exercises[exIdx];
-    if (!ex) return;
-
-    exercises[exIdx] = { ...ex, sets: value };
-    days[dayIdx] = { ...day, exercises };
-    updated[weekIdx] = { ...week, days };
-    setWeekGroups(updated);
-  };
-
-  const handleRepsChange = (weekIdx: number, dayIdx: number, exIdx: number, value: number) => {
-    const updated = [...weekGroups];
-    const week = updated[weekIdx];
-    if (!week) return;
-
-    const days = [...week.days];
-    const day = days[dayIdx];
-    if (!day) return;
-
-    const exercises = [...day.exercises];
-    const ex = exercises[exIdx];
-    if (!ex) return;
-
-    exercises[exIdx] = { ...ex, reps: value };
-    days[dayIdx] = { ...day, exercises };
-    updated[weekIdx] = { ...week, days };
-    setWeekGroups(updated);
-  };
-
-  const handleLoadKgChange = (weekIdx: number, dayIdx: number, exIdx: number, value: number) => {
-    const updated = [...weekGroups];
-    const week = updated[weekIdx];
-    if (!week) return;
-
-    const days = [...week.days];
-    const day = days[dayIdx];
-    if (!day) return;
-
-    const exercises = [...day.exercises];
-    const ex = exercises[exIdx];
-    if (!ex) return;
-
-    exercises[exIdx] = { ...ex, load_kg: value };
-    days[dayIdx] = { ...day, exercises };
-    updated[weekIdx] = { ...week, days };
-    setWeekGroups(updated);
-  };
-
-  const handleRpeChange = (weekIdx: number, dayIdx: number, exIdx: number, value: number) => {
-    const updated = [...weekGroups];
-    const week = updated[weekIdx];
-    if (!week) return;
-
-    const days = [...week.days];
-    const day = days[dayIdx];
-    if (!day) return;
-
-    const exercises = [...day.exercises];
-    const ex = exercises[exIdx];
-    if (!ex) return;
-
-    exercises[exIdx] = { ...ex, rpe: value };
-    days[dayIdx] = { ...day, exercises };
-    updated[weekIdx] = { ...week, days };
-    setWeekGroups(updated);
+  const handleSessionDelete = (index: number) => {
+    setSessions(sessions.filter((_, idx) => idx !== index));
   };
 
   return (
@@ -267,27 +89,17 @@ export function PlanForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>Training Weeks</CardTitle>
+          <CardTitle>Training Sessions</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <WeekAccordion
-            weeks={weekGroups}
-            onWeekNameChange={handleWeekNameChange}
-            onDayNameChange={handleDayNameChange}
-            onExerciseNameChange={handleExerciseNameChange}
-            onSetsChange={handleSetsChange}
-            onRepsChange={handleRepsChange}
-            onLoadKgChange={handleLoadKgChange}
-            onRpeChange={handleRpeChange}
-            onRemoveExercise={handleRemoveExercise}
-            onAddExercise={handleAddExercise}
-            onRemoveDay={handleRemoveDay}
-            onAddDay={handleAddDay}
-            onRemoveWeek={handleRemoveWeek}
+          <SessionAccordion
+            sessions={sessions}
+            onChange={handleSessionChange}
+            onDelete={handleSessionDelete}
           />
-          <Button variant="outline" onClick={handleAddWeek} className="w-full">
+          <Button variant="outline" onClick={handleAddSession} className="w-full">
             <Plus className="h-4 w-4 mr-2" />
-            Add Week
+            Add Session
           </Button>
         </CardContent>
       </Card>
@@ -300,7 +112,7 @@ export function PlanForm({
           </Button>
         )}
         <Button
-          onClick={() => onSave(weekGroupsToEntries(weekGroups))}
+          onClick={() => onSave(sessionGroupsToEntries(sessions))}
           disabled={isSaving || !planName}
           className={!isEditing ? 'ml-auto' : ''}
         >

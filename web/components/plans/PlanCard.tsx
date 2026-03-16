@@ -13,17 +13,8 @@ interface PlanCardProps {
 export function PlanCard({ plan, onSelect, isSelected }: PlanCardProps) {
   const entries = plan.entries || [];
 
-  const weekCount = new Set(entries.map((e) => e.metadata?.week).filter((w) => w !== undefined))
-    .size;
-
-  const dayCount = new Set(
-    entries
-      .map((e) => {
-        const w = e.metadata?.week;
-        const d = e.metadata?.day;
-        return w !== undefined && d !== undefined ? `${w}::${d}` : String(d);
-      })
-      .filter((k) => k !== 'undefined')
+  const sessionCount = new Set(
+    entries.map((e) => e.metadata?.session).filter((s) => s !== undefined)
   ).size;
 
   return (
@@ -45,20 +36,19 @@ export function PlanCard({ plan, onSelect, isSelected }: PlanCardProps) {
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          {weekCount > 0 && (
+          {sessionCount > 0 && (
             <div className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />
-              <span>{weekCount} weeks</span>
+              <span>
+                {sessionCount} {sessionCount === 1 ? 'session' : 'sessions'}
+              </span>
             </div>
           )}
-          {dayCount > 0 && (
+          {entries.length > 0 && (
             <div>
-              <span>{dayCount} training days</span>
-            </div>
-          )}
-          {weekCount === 0 && dayCount === 0 && entries.length > 0 && (
-            <div>
-              <span>{entries.length} entries</span>
+              <span>
+                {entries.length} {entries.length === 1 ? 'exercise' : 'exercises'}
+              </span>
             </div>
           )}
         </div>
