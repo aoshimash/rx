@@ -1,4 +1,4 @@
-import type { PlanEntryCreate } from '@/types/api';
+import type { PlanEntryCreate, ProgramEntryCreate } from '@/types/api';
 import { z } from 'zod';
 
 // ============================================================================
@@ -60,14 +60,31 @@ export const planCreateSchema = z.object({
 export type PlanFormData = z.infer<typeof planCreateSchema>;
 
 // ============================================================================
-// Schedule Forms
+// Program Entry Forms
 // ============================================================================
 
-export const scheduleSettingsSchema = z.object({
-  planId: z.string().uuid('Invalid plan ID'),
-  startDate: z.string().datetime('Invalid start date'),
-  skipWeekends: z.boolean(),
-  avoidConsecutive: z.boolean(),
+export const programEntrySchema: z.ZodType<ProgramEntryCreate> = z.object({
+  exercise_name: z.string().min(1, 'Exercise name is required').max(200, 'Name too long'),
+  order: z.number().int().min(0, 'Order must be non-negative'),
+  sets: z.number().int().min(1, 'Must be at least 1').optional(),
+  reps: z.number().int().min(1, 'Must be at least 1').optional(),
+  rpe: z.number().int().min(1).max(10).optional(),
+  percent_1rm: z.number().min(0).max(1).optional(),
+  notes: z.string().max(2000, 'Notes too long').optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type ScheduleSettingsFormData = z.infer<typeof scheduleSettingsSchema>;
+export type ProgramEntryFormData = z.infer<typeof programEntrySchema>;
+
+// ============================================================================
+// Program Forms
+// ============================================================================
+
+export const programCreateSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(200, 'Name too long'),
+  description: z.string().max(2000, 'Description too long').optional(),
+  notes: z.string().max(5000, 'Notes too long').optional(),
+  entries: z.array(programEntrySchema).max(1000, 'Too many entries').optional(),
+});
+
+export type ProgramFormData = z.infer<typeof programCreateSchema>;

@@ -1,0 +1,63 @@
+import { programsApi } from '@/lib/api/programs';
+import type { ConvertProgramToPlanRequest, ProgramCreate } from '@/types/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+export function usePrograms() {
+  return useQuery({
+    queryKey: ['programs'],
+    queryFn: () => programsApi.list({ limit: 100 }),
+  });
+}
+
+export function useProgram(id: string | null) {
+  return useQuery({
+    queryKey: ['programs', id],
+    queryFn: () => programsApi.get(id!),
+    enabled: !!id,
+  });
+}
+
+export function useCreateProgram() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: ProgramCreate) => programsApi.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['programs'] });
+    },
+  });
+}
+
+export function useUpdateProgram() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: ProgramCreate }) => programsApi.update(id, data),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['programs'] });
+      queryClient.invalidateQueries({ queryKey: ['programs', variables.id] });
+    },
+  });
+}
+
+export function useDeleteProgram() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => programsApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['programs'] });
+    },
+  });
+}
+
+export function useConvertProgramToPlan() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: ConvertProgramToPlanRequest) => programsApi.convertToPlan(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['plans'] });
+    },
+  });
+}

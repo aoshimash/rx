@@ -1,6 +1,6 @@
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { TokenInputModal } from '@/components/auth/TokenInputModal';
-import { Header } from '@/components/layout/Header';
+import { Sidebar } from '@/components/layout/Sidebar';
 import { QueryProvider } from '@/components/providers/QueryProvider';
 import type { Metadata } from 'next';
 import './globals.css';
@@ -20,8 +20,10 @@ export default function RootLayout({
       <body>
         <ErrorBoundary>
           <QueryProvider>
-            <Header />
-            {children}
+            <div className="flex min-h-screen">
+              <Sidebar />
+              <main className="flex-1 overflow-auto">{children}</main>
+            </div>
             <TokenInputModal />
           </QueryProvider>
         </ErrorBoundary>

@@ -26,7 +26,7 @@ export default function NewPlanPage() {
     <main className="container mx-auto p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Create Training Plan</h1>
-        <p className="text-muted-foreground mt-1">Define weeks, days, and exercise prescriptions</p>
+        <p className="text-muted-foreground mt-1">Define sessions and exercise prescriptions</p>
       </div>
 
       <PlanForm

@@ -109,6 +109,64 @@ export interface LogEntryCreate {
 }
 
 // ============================================================================
+// Program
+// ============================================================================
+
+export interface Program {
+  id: string;
+  name: string;
+  description?: string;
+  notes?: string;
+  metadata?: Record<string, unknown>;
+  entries?: ProgramEntry[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProgramCreate {
+  name: string;
+  description?: string;
+  notes?: string;
+  metadata?: Record<string, unknown>;
+  entries?: ProgramEntryCreate[];
+}
+
+// ============================================================================
+// ProgramEntry
+// ============================================================================
+
+export interface ProgramEntry {
+  id: string;
+  program_id: string;
+  order: number;
+  exercise_name: string;
+  sets?: number;
+  reps?: number;
+  rpe?: number;
+  percent_1rm?: number;
+  notes?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ProgramEntryCreate {
+  exercise_name: string;
+  order: number;
+  sets?: number;
+  reps?: number;
+  rpe?: number;
+  percent_1rm?: number;
+  notes?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ConvertProgramToPlanRequest {
+  program_id: string;
+  name?: string;
+  target_weights: Record<string, number>;
+  load_increments?: Record<string, number>;
+}
+
+// ============================================================================
 // Pagination
 // ============================================================================
 
@@ -120,6 +178,7 @@ export interface PaginatedResponse<T> {
 
 export type PlanListResponse = PaginatedResponse<Plan>;
 export type LogListResponse = PaginatedResponse<Log>;
+export type ProgramListResponse = PaginatedResponse<Program>;
 
 // ============================================================================
 // Error
