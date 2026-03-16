@@ -21,7 +21,7 @@ const (
 	defaultMinIOEndpoint = "http://localhost:9000"
 	defaultMinIOUser     = "minioadmin"
 	defaultMinIOPassword = "minioadmin"
-	defaultTestBucket    = "optel-test-videos"
+	defaultTestBucket    = "rx-test-videos"
 	defaultRegion        = "us-east-1"
 	connectionTimeout    = 2 * time.Second
 )

@@ -1,6 +1,6 @@
 # Domain Models
 
-This package contains the core domain entities for OPTel Workout.
+This package contains the core domain entities for Rx.
 
 ## Entities
 
@@ -80,8 +80,3 @@ Run tests:
 go test ./internal/domain/...
 ```
 
-## References
-
-- [Data Model Specification](../../../specs/001-data-structure/data-model.md)
-- [Feature Specification](../../../specs/001-data-structure/spec.md)
-- [Implementation Plan](../../../specs/001-data-structure/plan.md)

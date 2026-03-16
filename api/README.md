@@ -1,4 +1,4 @@
-# OPTel Workout API
+# Rx API
 
 REST API for managing workout data (Workouts, Exercises, Programs, and Telemetry).
 
@@ -320,7 +320,7 @@ task test-integration  # Runs tests with -tags=integration
 
 **Test Behavior:**
 - Tests automatically skip if MinIO is unavailable (no failures)
-- Tests use fixed bucket name `optel-test-videos`
+- Tests use fixed bucket name `rx-test-videos`
 - Test objects are automatically cleaned up via `t.Cleanup()`
 
 **Environment Variables:**
