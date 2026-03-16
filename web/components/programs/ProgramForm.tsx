@@ -303,13 +303,13 @@ export function ProgramForm({
             <AccordionItem key={sessionIdx} value={`session-${sessionIdx}`}>
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center justify-between w-full pr-4">
-                  <span
-                    className={
-                      session.name ? 'font-semibold' : 'font-semibold text-muted-foreground'
-                    }
-                  >
-                    {session.name || 'Untitled'}
-                  </span>
+                  <Input
+                    value={session.name}
+                    onChange={(e) => handleSessionNameChange(sessionIdx, e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    placeholder="e.g., Block1 Week2 Day3, Week1 Day2"
+                    className="font-semibold border-none shadow-none p-0 h-auto focus-visible:ring-0 bg-transparent"
+                  />
                   <Button
                     variant="ghost"
                     size="sm"
@@ -324,15 +324,6 @@ export function ProgramForm({
               </AccordionTrigger>
               <AccordionContent>
                 <div className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label>Session Name</Label>
-                    <Input
-                      value={session.name}
-                      onChange={(e) => handleSessionNameChange(sessionIdx, e.target.value)}
-                      placeholder="e.g., Block1 Week2 Day3, Week1 Day2"
-                    />
-                  </div>
-
                   <div className="space-y-3">
                     {session.exercises.map((exercise, exIdx) => (
                       <ProgramExerciseRow
