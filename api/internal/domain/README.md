@@ -1,6 +1,6 @@
 # Domain Models
 
-This package contains the core domain entities for OPTel Workout.
+This package contains the core domain entities for Rx.
 
 ## Entities
 

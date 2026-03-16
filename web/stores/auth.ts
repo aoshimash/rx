@@ -5,7 +5,7 @@
  * Token is requested lazily when API operations are attempted.
  */
 
-const TOKEN_KEY = 'optel_token';
+const TOKEN_KEY = 'rx_token';
 
 export const authStore = {
   /**

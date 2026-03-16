@@ -11,13 +11,13 @@ Templates requiring updates:
   ⚠ pending - checklist-template.md (no constitution references found)
   ⚠ pending - agent-file-template.md (no constitution references found)
 Skills integration:
-  ✅ optel-philosophy - Updated (removed immutable logs)
-  ✅ optel-domain - Updated (removed immutable constraint)
-  ✅ optel-go-standards - Referenced in Testing, Code Quality, Error Handling, Compliance Review
+  ✅ rx-philosophy - Updated (removed immutable logs)
+  ✅ rx-domain - Updated (removed immutable constraint)
+  ✅ rx-go-standards - Referenced in Testing, Code Quality, Error Handling, Compliance Review
 Follow-up TODOs: None
 -->
 
-# OPTel Workout Constitution
+# Rx Constitution
 
 ## Core Principles
 
@@ -27,7 +27,7 @@ The backend MUST store and retrieve telemetry data only. No business logic for "
 
 **Rationale**: This ensures the system remains a pure telemetry backend, allowing analysis and interpretation to happen at the consumer level. It prevents coupling between data storage and business logic, maintaining flexibility for future analysis tools.
 
-**Implementation Details**: For prohibited/permitted features list and detailed examples, see `.claude/skills/optel-philosophy/reference.md`.
+**Implementation Details**: For prohibited/permitted features list and detailed examples, see `.claude/skills/rx-philosophy/reference.md`.
 
 ### II. Domain-Driven Schema-First Development (NON-NEGOTIABLE)
 
@@ -46,8 +46,8 @@ Development follows a **Domain-Driven Schema-First** approach:
 - Code is generated from OpenAPI spec using `oapi-codegen`
 - Handlers convert between OpenAPI types and domain models
 - API versioning uses URL path pattern `/api/v1/`
-- For domain model details (Workout, Program, Telemetry), see `.claude/skills/optel-domain/`
-- For Go code generation patterns, see `.claude/skills/optel-go-standards/`
+- For domain model details (Workout, Program, Telemetry), see `.claude/skills/rx-domain/`
+- For Go code generation patterns, see `.claude/skills/rx-go-standards/`
 - For development workflow, see `docs/DEVELOPMENT.md`
 
 ### III. Terminology - Use Intuitive Physical Terms
@@ -56,7 +56,7 @@ Use intuitive, commonly understood physical and fitness terminology. The system 
 
 **Rationale**: Intuitive terminology improves developer understanding and reduces cognitive overhead. The system remains a "dumb backend" that stores data without business logic, regardless of terminology choices.
 
-**Implementation Details**: See `.claude/skills/optel-philosophy/reference.md` for terminology glossary and API design guidelines (resource naming, response structure).
+**Implementation Details**: See `.claude/skills/rx-philosophy/reference.md` for terminology glossary and API design guidelines (resource naming, response structure).
 
 ### IV. Clean Architecture & Repository Pattern
 
@@ -92,7 +92,7 @@ This repository is a monorepo containing multiple components (api, mcp, frontend
 
 - Each component MUST have its own test suite
 - API component: Unit tests for domain logic, integration tests for repositories, contract tests for endpoints
-  - Table-driven tests are mandatory for API component (see `.claude/skills/optel-go-standards/`)
+  - Table-driven tests are mandatory for API component (see `.claude/skills/rx-go-standards/`)
 - Other components: Component-appropriate testing (e.g., unit tests, integration tests, E2E tests)
 - Tests MUST be runnable in containerized environments where applicable
 - Cross-component integration tests SHOULD be defined when components interact
@@ -100,7 +100,7 @@ This repository is a monorepo containing multiple components (api, mcp, frontend
 ### Code Quality
 
 - Each component MUST have appropriate linting/formatting tools configured
-- API component: golangci-lint with strict configuration (see `.claude/skills/optel-go-standards/` for details)
+- API component: golangci-lint with strict configuration (see `.claude/skills/rx-go-standards/` for details)
 - Other components: Component-appropriate linting tools (e.g., ESLint for frontend, pylint for Python)
 - All code MUST pass linting before commit
 - Structured logging preferred across all components
@@ -110,7 +110,7 @@ This repository is a monorepo containing multiple components (api, mcp, frontend
 - Domain errors MUST be defined in the domain layer
 - HTTP handlers translate domain errors to appropriate HTTP status codes
 - Errors MUST be logged with structured logging
-- For detailed error handling patterns, see `.claude/skills/optel-go-standards/`
+- For detailed error handling patterns, see `.claude/skills/rx-go-standards/`
 
 ## Technology Constraints
 
@@ -161,9 +161,9 @@ Each component in the monorepo MAY use different technologies appropriate to its
 - Constitution Check section in implementation plans MUST be validated
 - Complexity violations MUST be justified in plan.md Complexity Tracking section
 - For detailed implementation guidelines, refer to AGENTS.md and `.claude/skills/`:
-  - **optel-philosophy**: Dumb Backend principle details, terminology glossary, API design guidelines
-  - **optel-domain**: Domain models (Workout, Program, Telemetry), validation rules, entity relationships
-  - **optel-go-standards**: Go project structure, error handling patterns, testing standards, linting configuration
+  - **rx-philosophy**: Dumb Backend principle details, terminology glossary, API design guidelines
+  - **rx-domain**: Domain models (Workout, Program, Telemetry), validation rules, entity relationships
+  - **rx-go-standards**: Go project structure, error handling patterns, testing standards, linting configuration
 
 ### Supremacy
 

@@ -31,7 +31,7 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-Verify compliance with OPTel Workout Constitution principles:
+Verify compliance with Rx Constitution principles:
 
 - **Dumb Backend**: No health calculations or business logic in backend - only data storage/retrieval
 - **Domain-Driven Schema-First**: Domain models define business logic, OpenAPI spec defines API contract. Code generated from OpenAPI spec.

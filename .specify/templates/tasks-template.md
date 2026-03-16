@@ -23,7 +23,7 @@ description: "Task list template for feature implementation"
 - **Single project**: `src/`, `tests/` at repository root
 - **Web app**: `backend/src/`, `frontend/src/`
 - **Mobile**: `api/src/`, `ios/src/` or `android/src/`
-- **Monorepo (OPTel)**: Component-specific paths:
+- **Monorepo (Rx)**: Component-specific paths:
   - API: `api/internal/`, `api/pkg/`, `api/cmd/`
   - MCP: `mcp/`
   - Frontend: `frontend/src/`
