@@ -1,5 +1,19 @@
 # Rx Philosophy
 
+## Why Rx Exists
+
+Existing training apps share common problems that make them frustrating for serious, data-driven trainees:
+
+1. **Data is hard to get in and hard to get out** — Proprietary formats and closed APIs make it difficult to export data for external analysis. Your training history is locked inside the app.
+
+2. **Plans and logs are disconnected** — Most apps treat programming and logging as separate concerns. This means you re-enter planned sets manually during a session, adding friction where there should be none.
+
+3. **Missing data fields** — Apps designed for general fitness lack fields that matter for strength training: RPE, tempo prescriptions, rest periods, and other training variables are either absent or bolted on as notes.
+
+4. **No RPE-to-load conversion** — Programs designed with RPE targets require manual calculation to determine actual working weights based on current 1RM. This mental math between sets is unnecessary friction.
+
+Rx is built to solve these problems directly. Every design decision traces back to eliminating one of these pain points.
+
 ## What Rx Is
 
 Rx is a **training data backend**. The core loop is:
