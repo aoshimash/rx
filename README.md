@@ -4,15 +4,17 @@
 
 ## Overview
 
-Rx is a plan-driven workout tracking system for powerlifters. Plans are the manifest; logs are their execution results. No fitness tracking, no motivation scores — just data.
+Rx is a training data backend. **Planning and analysis happen outside Rx** — by humans with spreadsheets, AI agents like Claude Code, or any script you write. Rx does one thing: make it as easy as possible to store and retrieve structured training data.
+
+The Web UI is optimized for frictionless data entry, not for discovery or engagement. Everything in the UI is equally accessible via REST API and CLI — so AI agents, scripts, and automation tools are first-class citizens alongside human users.
 
 ### Key Principles
 
-- **Plan-Driven** — Plans define what to do; logs record what actually happened. Compare intent vs execution.
-- **Dumb Backend** — Stores and retrieves data. No health scores, no motivation, no gamification.
-- **Schema-First** — Domain models drive OpenAPI spec, code generated from spec.
-- **Full-Stack, Multi-Interface** — Web, Mobile, REST API, and CLI are all first-class interfaces.
-- **Agent-Native** — Designed for AI agents (MCP) and analysis tools, not just human UIs.
+- **Bring Your Own Planning** — Planning and analysis are done externally — by humans, AI agents (e.g., Claude Code), or scripts. Rx stores and serves data; it does not interpret it.
+- **Frictionless Data Entry** — The Web UI exists to make entering training data as fast and low-friction as possible.
+- **Dumb Backend** — No health scores, no recommendations, no gamification. Raw data in, raw data out.
+- **API-First** — Every feature is accessible via REST API. Web and CLI are clients of the same API.
+- **Schema-First** — Domain models drive the OpenAPI spec; code is generated from the spec.
 
 ## Tech Stack
 

@@ -2,27 +2,29 @@
 
 ## What Rx Is
 
-Rx is a **plan-driven training management system**. The core loop is:
+Rx is a **training data backend**. The core loop is:
 
-1. **Plan** — AI creates a training program (via API or CLI)
+1. **Plan** — An external tool (AI agent, script, or human) creates a training program and registers it via API or CLI
 2. **Execute** — User records actual training sessions (via Web, Mobile, API, or CLI)
-3. **Review** — AI or user analyzes the results
+3. **Review** — An external tool (AI agent, script, or human) reads the data and analyzes it
 
-This is **not a simple training log**. The plan is a first-class concept, and AI is the primary planner.
+**Rx itself provides no AI features, no planning logic, and no analysis.** It is a structured data store that makes it easy for external tools to read and write training data.
+
+The Web UI exists to make data entry as frictionless as possible. It is a client of the same API available to external tools.
 
 ## Core Principles
 
-### 1. API-First, Multi-Client
+### 1. Planning and Analysis are External
+
+- **Planning and analysis happen outside Rx** — humans, AI agents (e.g., Claude Code), or scripts use the API/CLI to create plans and interpret results
+- **Rx stores and serves data without interpreting it** — no recommendations, no scoring, no judgment
+- **The backend is a tool, not an actor** — it responds to requests; it never initiates
+
+### 2. API-First, Multi-Client
 
 - **API and CLI are required** — AI agents and automation tools interact via API or CLI
 - **Web and Mobile are first-class clients** — Full-featured interfaces, not samples or demos
 - **No features that only exist in UI** — Every action available in Web/Mobile must also be accessible via API
-
-### 2. AI as Planner
-
-- AI creates and manages Programs (training templates)
-- Humans execute and record the actual training sessions as Logs
-- The backend stores both Plans and Logs without judging the gap between them
 
 ### 3. No Opinionated Health Logic
 
