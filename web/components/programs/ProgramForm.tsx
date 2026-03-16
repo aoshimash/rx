@@ -298,54 +298,56 @@ export function ProgramForm({
 
       <div className="space-y-4">
         <p className="text-sm font-semibold">Sessions</p>
-        <Accordion type="multiple" className="w-full">
+        <Accordion type="multiple" className="w-full space-y-3">
           {sessions.map((session, sessionIdx) => (
-            <AccordionItem key={sessionIdx} value={`session-${sessionIdx}`}>
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center justify-between w-full pr-4">
-                  <Input
-                    value={session.name}
-                    onChange={(e) => handleSessionNameChange(sessionIdx, e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                    placeholder="e.g., Block1 Week2 Day3, Week1 Day2"
-                    className="font-semibold border-none shadow-none p-0 h-auto focus-visible:ring-0 bg-transparent"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemoveSession(sessionIdx);
-                    }}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-4 pt-4">
-                  <div className="space-y-3">
-                    {session.exercises.map((exercise, exIdx) => (
-                      <ProgramExerciseRow
-                        key={exIdx}
-                        exercise={exercise}
-                        onChange={(updated) => handleExerciseChange(sessionIdx, exIdx, updated)}
-                        onRemove={() => handleRemoveExercise(sessionIdx, exIdx)}
-                      />
-                    ))}
+            <div key={sessionIdx} className="border rounded-lg px-4">
+              <AccordionItem value={`session-${sessionIdx}`} className="border-0">
+                <AccordionTrigger className="hover:no-underline">
+                  <div className="flex items-center justify-between w-full pr-4">
+                    <Input
+                      value={session.name}
+                      onChange={(e) => handleSessionNameChange(sessionIdx, e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      placeholder="e.g., Block1 Week2 Day3, Week1 Day2"
+                      className="font-semibold border-none shadow-none p-0 h-auto focus-visible:ring-0 bg-transparent"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveSession(sessionIdx);
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="space-y-4 pt-4">
+                    <div className="space-y-3">
+                      {session.exercises.map((exercise, exIdx) => (
+                        <ProgramExerciseRow
+                          key={exIdx}
+                          exercise={exercise}
+                          onChange={(updated) => handleExerciseChange(sessionIdx, exIdx, updated)}
+                          onRemove={() => handleRemoveExercise(sessionIdx, exIdx)}
+                        />
+                      ))}
+                    </div>
 
-                  <Button
-                    variant="outline"
-                    onClick={() => handleAddExercise(sessionIdx)}
-                    className="w-full"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Exercise
-                  </Button>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleAddExercise(sessionIdx)}
+                      className="w-full"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Exercise
+                    </Button>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </div>
           ))}
         </Accordion>
 

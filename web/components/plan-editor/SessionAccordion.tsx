@@ -97,66 +97,68 @@ export function SessionAccordion({ sessions, onChange, onDelete }: SessionAccord
 
   return (
     <>
-      <Accordion type="multiple" className="w-full">
+      <Accordion type="multiple" className="w-full space-y-3">
         {sessions.map((session, sessionIdx) => (
-          <AccordionItem key={sessionIdx} value={`session-${sessionIdx}`}>
-            <AccordionTrigger className="hover:no-underline">
-              <div className="flex items-center justify-between w-full pr-4">
-                <Input
-                  value={session.name}
-                  onChange={(e) => onChange(sessionIdx, { ...session, name: e.target.value })}
-                  onClick={(e) => e.stopPropagation()}
-                  placeholder="e.g., Block1 Week2 Day3, Week1 Day2"
-                  className="font-semibold border-none shadow-none p-0 h-auto focus-visible:ring-0 bg-transparent"
-                />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setDeleteTarget(sessionIdx);
-                  }}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-4 pt-4">
-                <div className="grid gap-4 sm:grid-cols-2">
+          <div key={sessionIdx} className="border rounded-lg px-4">
+            <AccordionItem value={`session-${sessionIdx}`} className="border-0">
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center justify-between w-full pr-4">
+                  <Input
+                    value={session.name}
+                    onChange={(e) => onChange(sessionIdx, { ...session, name: e.target.value })}
+                    onClick={(e) => e.stopPropagation()}
+                    placeholder="e.g., Block1 Week2 Day3, Week1 Day2"
+                    className="font-semibold border-none shadow-none p-0 h-auto focus-visible:ring-0 bg-transparent"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteTarget(sessionIdx);
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-4 pt-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Date (optional)</Label>
+                      <Input
+                        type="date"
+                        value={session.date || ''}
+                        onChange={(e) =>
+                          onChange(sessionIdx, {
+                            ...session,
+                            date: e.target.value || undefined,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
-                    <Label>Date (optional)</Label>
-                    <Input
-                      type="date"
-                      value={session.date || ''}
-                      onChange={(e) =>
-                        onChange(sessionIdx, {
-                          ...session,
-                          date: e.target.value || undefined,
-                        })
+                    <Label>Exercises</Label>
+                    <ExerciseTable
+                      exercises={session.exercises}
+                      onExerciseNameChange={(idx, name) =>
+                        handleExerciseNameChange(sessionIdx, idx, name)
                       }
+                      onSetsChange={(idx, value) => handleSetsChange(sessionIdx, idx, value)}
+                      onRepsChange={(idx, value) => handleRepsChange(sessionIdx, idx, value)}
+                      onLoadKgChange={(idx, value) => handleLoadKgChange(sessionIdx, idx, value)}
+                      onRpeChange={(idx, value) => handleRpeChange(sessionIdx, idx, value)}
+                      onRemove={(idx) => handleRemoveExercise(sessionIdx, idx)}
+                      onAdd={() => handleAddExercise(sessionIdx)}
                     />
                   </div>
                 </div>
-
-                <div className="space-y-2">
-                  <Label>Exercises</Label>
-                  <ExerciseTable
-                    exercises={session.exercises}
-                    onExerciseNameChange={(idx, name) =>
-                      handleExerciseNameChange(sessionIdx, idx, name)
-                    }
-                    onSetsChange={(idx, value) => handleSetsChange(sessionIdx, idx, value)}
-                    onRepsChange={(idx, value) => handleRepsChange(sessionIdx, idx, value)}
-                    onLoadKgChange={(idx, value) => handleLoadKgChange(sessionIdx, idx, value)}
-                    onRpeChange={(idx, value) => handleRpeChange(sessionIdx, idx, value)}
-                    onRemove={(idx) => handleRemoveExercise(sessionIdx, idx)}
-                    onAdd={() => handleAddExercise(sessionIdx)}
-                  />
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+              </AccordionContent>
+            </AccordionItem>
+          </div>
         ))}
       </Accordion>
 
