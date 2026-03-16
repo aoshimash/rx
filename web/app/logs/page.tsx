@@ -53,8 +53,8 @@ export default function LogsPage() {
     <main className="container mx-auto p-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Training Logs</h1>
-          <p className="text-muted-foreground mt-1">View and record your training sessions</p>
+          <h1 className="text-3xl font-bold">Logs</h1>
+          <p className="text-muted-foreground mt-1">View and record your sessions</p>
         </div>
         <ExportButton logs={logs} plan={null} />
       </div>

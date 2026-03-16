@@ -70,8 +70,8 @@ export default function PlansPage() {
   return (
     <main className="container mx-auto p-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Training Plans</h1>
-        <p className="text-muted-foreground mt-1">Manage your training plans</p>
+        <h1 className="text-3xl font-bold">Plans</h1>
+        <p className="text-muted-foreground mt-1">Manage your plans</p>
       </div>
 
       {plans.length === 0 ? (
@@ -100,7 +100,7 @@ export default function PlansPage() {
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Create Training Plan</DialogTitle>
+            <DialogTitle>Create Plan</DialogTitle>
             <DialogDescription>Define sessions and exercise prescriptions</DialogDescription>
           </DialogHeader>
           <PlanForm

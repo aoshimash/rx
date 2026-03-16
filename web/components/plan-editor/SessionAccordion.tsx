@@ -123,7 +123,7 @@ export function SessionAccordion({ sessions, onChange, onDelete }: SessionAccord
                     <Input
                       value={session.name}
                       onChange={(e) => onChange(sessionIdx, { ...session, name: e.target.value })}
-                      placeholder="e.g., Day 1, Upper Body"
+                      placeholder="e.g., Block1 Week2 Day3, Week1 Day2"
                     />
                   </div>
                   <div className="space-y-2">

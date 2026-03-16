@@ -325,7 +325,7 @@ export function ProgramForm({
                     <Input
                       value={session.name}
                       onChange={(e) => handleSessionNameChange(sessionIdx, e.target.value)}
-                      placeholder="e.g., Upper Body, Lower Body"
+                      placeholder="e.g., Block1 Week2 Day3, Week1 Day2"
                     />
                   </div>
 

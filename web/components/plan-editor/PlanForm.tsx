@@ -37,7 +37,7 @@ export function PlanForm({
   const [sessions, setSessions] = useState<SessionGroup[]>(() =>
     initialEntries && initialEntries.length > 0
       ? entriesToSessionGroups(initialEntries)
-      : [{ name: 'Day 1', exercises: [] }]
+      : [{ name: 'Session 1', exercises: [] }]
   );
 
   const handleAddSession = () => {
@@ -82,7 +82,7 @@ export function PlanForm({
       </div>
 
       <div className="space-y-4">
-        <p className="text-sm font-semibold">Training Sessions</p>
+        <p className="text-sm font-semibold">Sessions</p>
         <SessionAccordion
           sessions={sessions}
           onChange={handleSessionChange}
