@@ -39,12 +39,6 @@ This is **not a simple training log**. The plan is a first-class concept, and AI
 - **Handlers bridge the gap** — convert between OpenAPI types and domain models
 - **Keep them synchronized** — domain models and OpenAPI specs must stay in sync
 
-**Workflow:**
-1. Define domain model with business rules
-2. Create OpenAPI spec referencing domain model
-3. Generate code from OpenAPI spec
-4. Implement handlers that convert between types
-
 ## What the Backend Does
 
 ### Prohibited Features
@@ -61,28 +55,24 @@ The backend MUST NOT:
 
 The backend MAY:
 
-1. Store and retrieve Programs (training templates)
-2. Store and retrieve Plans (concrete training schedules)
-3. Store and retrieve Logs (actual training records)
-4. Provide CRUD operations for all resources
-5. Expose time-series telemetry data for external analysis
-6. Implement filtering and aggregation queries
-7. Serve data to AI Agents for analysis (via API or CLI)
+1. Store and retrieve Programs, Plans, and Logs
+2. Provide CRUD operations for all resources
+3. Expose time-series telemetry data for external analysis
+4. Implement filtering and aggregation queries
+5. Serve data to AI Agents for analysis (via API or CLI)
 
 ### Interface Requirements
 
-Rx is a full-stack project. All of the following are first-class interfaces:
+All of the following are first-class interfaces:
 
 - **Web** — Full-featured browser client
 - **Mobile** — Full-featured native mobile client
 - **REST API** — For AI agents and automation
 - **CLI** — For scripting and local automation
 
-Every feature MUST be accessible via API (and ideally CLI). Web and Mobile may provide richer UX on top of that.
+Every feature MUST be accessible via API (and ideally CLI).
 
 ## Terminology
-
-Use intuitive, commonly understood physical and fitness terminology.
 
 | Term | Description |
 |------|-------------|
@@ -95,82 +85,3 @@ Use intuitive, commonly understood physical and fitness terminology.
 | RPE | Rate of Perceived Exertion (1–10 scale) |
 | 1RM | One-rep max: maximum weight for a single repetition |
 | load_kg | Weight used for an exercise, in kilograms |
-
-## Comment Style
-
-Write clear, descriptive comments that explain what the code does.
-
-### API Handler Comments
-
-```go
-// ✅ GOOD
-// CreateLog handles POST requests to create a new training log.
-// Records actual training data: exercises performed, sets, reps, load, and RPE.
-
-// ✅ GOOD
-// ListLogs retrieves training log records with optional filtering.
-```
-
-### Domain Model Comments
-
-```go
-// ✅ GOOD
-// Log represents a record of actual training performed.
-// Links to the Plan being executed (optional) and contains LogEntry items.
-
-// ✅ GOOD
-// Program represents a reusable, RPE-based training template.
-// It contains no dates and no absolute weights.
-```
-
-### Error Comments
-
-```go
-// ✅ GOOD
-// Returns ErrInvalidInput if log data fails validation.
-// Returns ErrNotFound if the specified log ID does not exist.
-```
-
-## API Design Guidelines
-
-### Resource Naming
-
-```
-✅ /api/v1/programs
-✅ /api/v1/programs/{id}
-✅ /api/v1/plans
-✅ /api/v1/plans/{id}
-✅ /api/v1/plans/from-program
-✅ /api/v1/logs
-✅ /api/v1/logs/{id}
-```
-
-### Response Structure
-
-Responses should be data-centric, not user-centric:
-
-```json
-// ✅ GOOD
-{
-  "id": "...",
-  "performed_at": "2026-01-24T10:00:00Z",
-  "plan_id": "...",
-  "entries": [
-    {
-      "exercise_name": "Squat",
-      "sets": 3,
-      "reps": 5,
-      "load_kg": 100.0,
-      "rpe": 8
-    }
-  ]
-}
-
-// ❌ BAD
-{
-  "log_id": "...",
-  "user_message": "Great session! You squatted 100kg!",
-  "achievements": ["personal_record"],
-  "streak_count": 5
-}
-```
