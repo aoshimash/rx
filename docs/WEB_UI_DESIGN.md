@@ -347,5 +347,3 @@ web/
 ## Related Documents
 
 - [FRONTEND_ARCHITECTURE.md](FRONTEND_ARCHITECTURE.md) - Technology stack and patterns
-- [rx-domain](.claude/skills/rx-domain/) - Domain model definitions
-- [specs/001-data-structure/](../specs/001-data-structure/) - Data structure specification
