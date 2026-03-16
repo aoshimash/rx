@@ -8,7 +8,6 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { ProgramEntryCreate } from '@/types/api';
@@ -214,11 +213,11 @@ export function ProgramForm({
   const [sessions, setSessions] = useState<SessionGroup[]>(() =>
     initialEntries && initialEntries.length > 0
       ? entriesToSessionGroups(initialEntries)
-      : [{ name: 'Session 1', exercises: [] }]
+      : [{ name: '', exercises: [] }]
   );
 
   const handleAddSession = () => {
-    setSessions([...sessions, { name: `Session ${sessions.length + 1}`, exercises: [] }]);
+    setSessions([...sessions, { name: '', exercises: [] }]);
   };
 
   const handleRemoveSession = (idx: number) => {
@@ -267,54 +266,51 @@ export function ProgramForm({
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Program Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="program-name">Program Name</Label>
-            <Input
-              id="program-name"
-              value={programName}
-              onChange={(e) => onNameChange(e.target.value)}
-              placeholder="e.g., 5/3/1 BBB, GZCL"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="program-description">Description</Label>
-            <Input
-              id="program-description"
-              value={programDescription}
-              onChange={(e) => onDescriptionChange(e.target.value)}
-              placeholder="Brief description of the program"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="program-notes">Notes</Label>
-            <Input
-              id="program-notes"
-              value={programNotes}
-              onChange={(e) => onNotesChange(e.target.value)}
-              placeholder="Additional notes"
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="program-name">Program Name</Label>
+          <Input
+            id="program-name"
+            value={programName}
+            onChange={(e) => onNameChange(e.target.value)}
+            placeholder="e.g., 5/3/1 BBB, GZCL"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="program-description">Description</Label>
+          <Input
+            id="program-description"
+            value={programDescription}
+            onChange={(e) => onDescriptionChange(e.target.value)}
+            placeholder="Brief description of the program"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="program-notes">Notes</Label>
+          <Input
+            id="program-notes"
+            value={programNotes}
+            onChange={(e) => onNotesChange(e.target.value)}
+            placeholder="Additional notes"
+          />
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Sessions</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Accordion type="multiple" className="w-full">
-            {sessions.map((session, sessionIdx) => (
-              <AccordionItem key={sessionIdx} value={`session-${sessionIdx}`}>
+      <div className="space-y-4">
+        <p className="text-sm font-semibold">Sessions</p>
+        <Accordion type="multiple" className="w-full space-y-3">
+          {sessions.map((session, sessionIdx) => (
+            <div key={sessionIdx} className="border rounded-lg px-4">
+              <AccordionItem value={`session-${sessionIdx}`} className="border-0">
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center justify-between w-full pr-4">
-                    <span className="font-semibold">
-                      {session.name || `Session ${sessionIdx + 1}`}
-                    </span>
+                    <Input
+                      value={session.name}
+                      onChange={(e) => handleSessionNameChange(sessionIdx, e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      placeholder="e.g., Block1 Week2 Day3, Week1 Day2"
+                      className="font-semibold border-none shadow-none p-0 h-auto focus-visible:ring-0 bg-transparent"
+                    />
                     <Button
                       variant="ghost"
                       size="sm"
@@ -329,15 +325,6 @@ export function ProgramForm({
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-4 pt-4">
-                    <div className="space-y-2">
-                      <Label>Session Name</Label>
-                      <Input
-                        value={session.name}
-                        onChange={(e) => handleSessionNameChange(sessionIdx, e.target.value)}
-                        placeholder="e.g., Upper Body, Lower Body"
-                      />
-                    </div>
-
                     <div className="space-y-3">
                       {session.exercises.map((exercise, exIdx) => (
                         <ProgramExerciseRow
@@ -360,15 +347,15 @@ export function ProgramForm({
                   </div>
                 </AccordionContent>
               </AccordionItem>
-            ))}
-          </Accordion>
+            </div>
+          ))}
+        </Accordion>
 
-          <Button variant="outline" onClick={handleAddSession} className="w-full">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Session
-          </Button>
-        </CardContent>
-      </Card>
+        <Button variant="outline" onClick={handleAddSession} className="w-full">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Session
+        </Button>
+      </div>
 
       <div className="flex justify-between">
         {isEditing && onDelete && (

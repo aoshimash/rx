@@ -1,13 +1,13 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { PlanEntryCreate } from '@/types/api';
-import { Plus, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { DeleteConfirmDialog } from './DeleteConfirmDialog';
+import { ExerciseTable } from './ExerciseTable';
 import { SessionAccordion } from './SessionAccordion';
 import { type SessionGroup, entriesToSessionGroups, sessionGroupsToEntries } from './types';
 
@@ -38,15 +38,11 @@ export function PlanForm({
   const [sessions, setSessions] = useState<SessionGroup[]>(() =>
     initialEntries && initialEntries.length > 0
       ? entriesToSessionGroups(initialEntries)
-      : [{ name: 'Day 1', exercises: [] }]
+      : [{ name: '', exercises: [] }]
   );
 
   const handleAddSession = () => {
-    const newSession: SessionGroup = {
-      name: `Day ${sessions.length + 1}`,
-      exercises: [],
-    };
-    setSessions([...sessions, newSession]);
+    setSessions([...sessions, { name: '', exercises: [] }]);
   };
 
   const handleSessionChange = (index: number, updated: SessionGroup) => {
@@ -59,50 +55,117 @@ export function PlanForm({
     setSessions(sessions.filter((_, idx) => idx !== index));
   };
 
+  const updateSession0 = (updater: (s: SessionGroup) => SessionGroup) => {
+    setSessions((prev) => {
+      const next = [...prev];
+      if (next[0]) next[0] = updater(next[0]);
+      return next;
+    });
+  };
+
+  const session0 = sessions[0] ?? { name: '', exercises: [] };
+
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Plan Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="plan-name">Plan Name</Label>
-            <Input
-              id="plan-name"
-              value={planName}
-              onChange={(e) => onNameChange(e.target.value)}
-              placeholder="e.g., 5/3/1, Starting Strength"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="plan-description">Description</Label>
-            <Input
-              id="plan-description"
-              value={planDescription}
-              onChange={(e) => onDescriptionChange(e.target.value)}
-              placeholder="Brief description of the plan"
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="plan-name">Plan Name</Label>
+          <Input
+            id="plan-name"
+            value={planName}
+            onChange={(e) => onNameChange(e.target.value)}
+            placeholder="e.g., 5/3/1, Starting Strength"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="plan-description">Description</Label>
+          <Input
+            id="plan-description"
+            value={planDescription}
+            onChange={(e) => onDescriptionChange(e.target.value)}
+            placeholder="Brief description of the plan"
+          />
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Training Sessions</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      {isEditing ? (
+        <div className="space-y-4">
+          <p className="text-sm font-semibold">Sessions</p>
           <SessionAccordion
             sessions={sessions}
             onChange={handleSessionChange}
             onDelete={handleSessionDelete}
           />
           <Button variant="outline" onClick={handleAddSession} className="w-full">
-            <Plus className="h-4 w-4 mr-2" />
             Add Session
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <Label>Exercises</Label>
+          <ExerciseTable
+            exercises={session0.exercises}
+            onExerciseNameChange={(idx, name) =>
+              updateSession0((s) => {
+                const exercises = [...s.exercises];
+                if (exercises[idx]) exercises[idx] = { ...exercises[idx], exercise_name: name };
+                return { ...s, exercises };
+              })
+            }
+            onSetsChange={(idx, value) =>
+              updateSession0((s) => {
+                const exercises = [...s.exercises];
+                if (exercises[idx]) exercises[idx] = { ...exercises[idx], sets: value };
+                return { ...s, exercises };
+              })
+            }
+            onRepsChange={(idx, value) =>
+              updateSession0((s) => {
+                const exercises = [...s.exercises];
+                if (exercises[idx]) exercises[idx] = { ...exercises[idx], reps: value };
+                return { ...s, exercises };
+              })
+            }
+            onLoadKgChange={(idx, value) =>
+              updateSession0((s) => {
+                const exercises = [...s.exercises];
+                if (exercises[idx]) exercises[idx] = { ...exercises[idx], load_kg: value };
+                return { ...s, exercises };
+              })
+            }
+            onRpeChange={(idx, value) =>
+              updateSession0((s) => {
+                const exercises = [...s.exercises];
+                if (exercises[idx]) exercises[idx] = { ...exercises[idx], rpe: value };
+                return { ...s, exercises };
+              })
+            }
+            onRemove={(idx) =>
+              updateSession0((s) => ({
+                ...s,
+                exercises: s.exercises
+                  .filter((_, i) => i !== idx)
+                  .map((e, i) => ({ ...e, order: i })),
+              }))
+            }
+            onAdd={() =>
+              updateSession0((s) => ({
+                ...s,
+                exercises: [
+                  ...s.exercises,
+                  {
+                    exercise_name: 'Exercise',
+                    order: s.exercises.length,
+                    sets: 3,
+                    reps: 10,
+                    rpe: 7,
+                  },
+                ],
+              }))
+            }
+          />
+        </div>
+      )}
 
       <div className="flex justify-between">
         {isEditing && onDelete && (

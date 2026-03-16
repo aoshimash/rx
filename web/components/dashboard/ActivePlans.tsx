@@ -19,7 +19,7 @@ export function ActivePlans() {
         {!isLoading && (!plans || plans.length === 0) && (
           <p className="text-sm text-muted-foreground">
             No plans yet.{' '}
-            <Link href="/plans/new" className="underline">
+            <Link href="/plans" className="underline">
               Create one
             </Link>
           </p>

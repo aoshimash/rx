@@ -1,15 +1,52 @@
 'use client';
 
 import { ProgramCard } from '@/components/programs/ProgramCard';
+import { ProgramForm } from '@/components/programs/ProgramForm';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { usePrograms } from '@/lib/hooks/usePrograms';
+import { useCreateProgram, usePrograms } from '@/lib/hooks/usePrograms';
+import type { ProgramEntryCreate } from '@/types/api';
 import { Plus } from 'lucide-react';
-import Link from 'next/link';
+import { useState } from 'react';
 
 export default function ProgramsPage() {
   const { data: programsData, isLoading } = usePrograms();
+  const createProgram = useCreateProgram();
   const programs = programsData?.data || [];
+
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [notes, setNotes] = useState('');
+
+  const handleSave = async (entries: ProgramEntryCreate[]) => {
+    await createProgram.mutateAsync({
+      name,
+      description: description || undefined,
+      notes: notes || undefined,
+      entries,
+    });
+    setOpen(false);
+    setName('');
+    setDescription('');
+    setNotes('');
+  };
+
+  const handleOpenChange = (value: boolean) => {
+    setOpen(value);
+    if (!value) {
+      setName('');
+      setDescription('');
+      setNotes('');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -37,12 +74,10 @@ export default function ProgramsPage() {
           <p className="text-muted-foreground mb-4">
             No programs yet. Create your first training program.
           </p>
-          <Link href="/programs/new">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Program
-            </Button>
-          </Link>
+          <Button onClick={() => setOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Program
+          </Button>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
@@ -51,6 +86,25 @@ export default function ProgramsPage() {
           ))}
         </div>
       )}
+
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create Program</DialogTitle>
+            <DialogDescription>Define sessions and exercise prescriptions</DialogDescription>
+          </DialogHeader>
+          <ProgramForm
+            programName={name}
+            programDescription={description}
+            programNotes={notes}
+            onNameChange={setName}
+            onDescriptionChange={setDescription}
+            onNotesChange={setNotes}
+            onSave={handleSave}
+            isSaving={createProgram.isPending}
+          />
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
