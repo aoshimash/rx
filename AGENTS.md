@@ -4,179 +4,95 @@ This file provides guidance for AI coding agents working on this repository.
 
 ## Project Overview
 
-**Rx** - A program-first workout tracking system.
+**Rx** - A plan-driven training management system.
 
-This repository (`rx`) manages Programs and Workouts with a program-first philosophy.
+This repository (`rx`) manages Programs, Plans, and Logs with a plan-first philosophy.
 
 ## Key Principles
 
-1. **"Dumb Backend"** - No business logic for "health." Strictly stores and retrieves telemetry data.
+1. **"Dumb Backend"** - No business logic for "health." Strictly stores and retrieves data.
 2. **Domain-Driven Schema-First** - Domain models define business logic, OpenAPI spec defines API contract. Code is generated from OpenAPI spec.
 
-For details, see `.claude/skills/rx-philosophy/`.
+For details, see [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md).
 
-## Project Structure
+## Commands
+
+### API (run from `api/`)
+
+```bash
+task generate   # OpenAPI spec → Go code (run after editing openapi/openapi.yaml)
+task check      # format + lint + test (run before committing)
+task test       # unit tests with race detection
+task lint       # golangci-lint
+task format     # gofmt check
+task run        # dev server (localhost:8080)
+task migrate    # run DB migrations
+```
+
+Single test: `go test ./internal/domain/... -run TestRoundToIncrement -v`
+Integration tests: `go test -tags=integration ./internal/store/postgres/... -v`
+
+### Web (run from `web/`)
+
+```bash
+pnpm dev        # dev server (localhost:3000)
+pnpm check      # biome lint + format check (run before committing)
+pnpm check:fix  # fix biome issues
+pnpm build      # production build
+```
+
+### Pre-commit
+
+The hook runs `task check` for API changes and `pnpm check` for web changes automatically.
+Setup: `./scripts/setup-githooks.sh`
+
+**Never use `git commit --no-verify`.**
+
+## Architecture
+
+### API Layer Flow
 
 ```
-rx/
-├── api/                  # REST API (Go)
-├── web/                  # Web frontend (Next.js + React)
-├── mobile/               # Mobile app (React Native + Expo) - future
-├── mcp/                  # MCP Server (runs on user's local machine)
-├── packages/             # Shared packages (future)
-│   └── shared/           # Types, API client, validation schemas
-├── infra/                # Terraform/Helm (future)
-├── docs/                 # Documentation
-└── .claude/skills/       # AI agent skills
+openapi/openapi.yaml  →  task generate  →  pkg/openapi/server.gen.go (do not edit)
+                                                    ↓
+                                          internal/handler/      ← implements generated interface
+                                                    ↓
+                                          internal/domain/       ← validates business rules
+                                                    ↓
+                                          internal/repository/   ← interfaces (ports)
+                                                    ↓
+                                          internal/store/{memory,postgres}/  ← implementations
 ```
 
-## Skills Reference
+**Key constraint:** Handlers convert between OpenAPI types and domain types manually — there is no auto-mapping. Domain entities go through `Validate*()` before being passed to the repository.
 
-| Skill | Description |
-|-------|-------------|
-| [rx-philosophy](.claude/skills/rx-philosophy/) | Core philosophy and constraints |
-| [rx-domain](.claude/skills/rx-domain/) | Domain models (Workout, Program, Telemetry) |
-| [rx-go-standards](.claude/skills/rx-go-standards/) | Go coding standards (API) |
-| [rx-frontend-standards](.claude/skills/rx-frontend-standards/) | Frontend coding standards (Web/Mobile) |
+### Error Flow
 
-## Quick Reference
+Domain errors (`internal/domain/errors.go`) → handler catches with type assertion → middleware helpers write HTTP response:
 
-### API (Go)
+| Domain error | HTTP status |
+|---|---|
+| `ValidationError` | 400 |
+| `DomainError{Code: NOT_FOUND}` | 404 |
+| `DomainError{Code: CONFLICT}` | 409 |
 
-- **Language**: Go 1.25+
-- **HTTP Server**: chi
-- **OpenAPI**: oapi-codegen (Domain-Driven Schema-First)
-- **Linter**: golangci-lint (strict)
-- **Logging**: log/slog
-- **Testing**: standard testing package
+### Auth
 
-### Web Frontend
+Middleware-based (`internal/middleware/auth.go`). `AuthProvider` interface with `StubProvider` for dev (accepts any Bearer token, uses value as userID). UserID is stored in request context; retrieve with `middleware.GetUserID(ctx)`.
 
-- **Framework**: Next.js (App Router)
-- **Language**: TypeScript only (no JavaScript)
-- **Linter/Formatter**: Biome
-- **State Management**: TanStack Query
-- **UI Library**: shadcn/ui + Tailwind CSS
-- **Forms**: React Hook Form + Zod
+### Pagination
 
-### Mobile (Future)
+All list endpoints use cursor-based pagination: `limit` (1–100) + `after` (base64 UUID cursor). Repository `List()` returns `(entities, nextCursor string, hasMore bool, error)`.
 
-- **Framework**: React Native + Expo
-- **Language**: TypeScript only (no JavaScript)
-- **Linter/Formatter**: Biome
-- **State Management**: TanStack Query
+### Storage
+
+`STORAGE_TYPE=memory` (default) or `postgres`. Videos use pre-signed URLs — the server never handles file bytes, only issues upload/download URLs to S3/R2.
 
 ## Documentation
 
+- [Philosophy](docs/PHILOSOPHY.md) - Core principles and constraints
+- [Domain Model](docs/DOMAIN_MODEL.md) - Program / Plan / Log lifecycle
+- [Go Standards](docs/GO_STANDARDS.md) - Go coding standards
+- [Frontend Architecture](docs/FRONTEND_ARCHITECTURE.md) - Web/Mobile architecture and standards
 - [Architecture](docs/ARCHITECTURE.md) - System architecture
-- [Frontend Architecture](docs/FRONTEND_ARCHITECTURE.md) - Web/Mobile architecture
 - [Development Guide](docs/DEVELOPMENT.md) - Development setup
-
-## AI Agent Command Execution
-
-When executing commands that require host resources (network access, Docker socket access, file system writes), AI agents **MUST** use `required_permissions: ["all"]` parameter.
-
-### Commands Requiring `required_permissions: ["all"]`
-
-| Command | Reason |
-|---------|--------|
-| `aqua install` | Requires network access (GitHub API) and file system writes (`~/.local/share/aquaproj-aqua/`) |
-| `docker compose up/down` | Requires Docker socket access |
-| `docker compose pull` | Requires network access and Docker socket access |
-| `go get`, `go install` | Requires network access (if downloading packages) |
-| `npm install`, `pnpm install` | Requires network access (npm registry) |
-| `npx create-next-app` | Requires network access |
-
-### Example Usage
-
-```python
-# Correct: Using required_permissions
-run_terminal_cmd(
-    command="aqua install",
-    required_permissions=["all"]
-)
-
-# Correct: Docker Compose commands
-run_terminal_cmd(
-    command="docker compose up -d postgres",
-    required_permissions=["all"]
-)
-```
-
-### Important Notes
-
-**Sandbox Limitations:**
-- Cursor's sandbox may block certain DNS resolution methods (`ping`, `nslookup`) even with `required_permissions: ["all"]`
-- Some commands may fail with "no such host" or "operation not permitted" errors even when network access is available via `curl`
-- Docker socket access may be restricted even with `required_permissions: ["all"]`
-
-**Workaround:**
-- If commands fail with permission errors, instruct the user to run them manually
-- Configuration files (`aqua.yaml`, `docker-compose.yml`) are correctly set up and will work when executed manually
-- The user can run `aqua install` and `docker compose up -d postgres` directly in their terminal
-
-**Note:** These commands should trigger a user confirmation prompt before execution. If the prompt doesn't appear, it may be a Cursor configuration issue, and manual execution is recommended.
-
-### Troubleshooting: Permission Prompts Not Appearing
-
-If `required_permissions: ["all"]` doesn't trigger a confirmation prompt:
-
-1. **Check Cursor Settings:**
-   - Open Cursor Settings (`Cmd + ,` on macOS, `Ctrl + ,` on Windows/Linux)
-   - Search for "sandbox" or "permissions"
-   - Ensure sandbox is enabled and permission prompts are enabled
-
-2. **Check Cursor Configuration File:**
-   - macOS: `~/Library/Application Support/Cursor/User/settings.json`
-   - Windows: `%APPDATA%\Cursor\User\settings.json`
-   - Linux: `~/.config/Cursor/User/settings.json`
-   - Look for `cursor.sandbox.*` or `cursor.permissions.*` settings
-   - Note: These settings may not be visible in the UI and may need to be added manually
-
-3. **Manual Execution:**
-   - Run commands directly in your terminal
-   - Install tools: `aqua install`
-   - Start PostgreSQL: `docker compose up -d postgres`
-
-4. **Alternative:**
-   - AI agent will ask for explicit confirmation before running commands
-   - You can approve by responding "yes" or "proceed"
-
-## Pre-commit Hook Enforcement
-
-**CRITICAL**: AI agents **MUST NOT** use `git commit --no-verify` to skip pre-commit hooks.
-
-### Pre-commit Checks
-
-Before committing, the following checks are automatically executed:
-1. Code formatting (`task format`)
-2. Linting (`task lint`)
-3. Tests (`task test` with race detection)
-
-### AI Agent Commit Workflow
-
-1. **Before committing**: Ensure all checks pass locally
-   ```bash
-   cd api
-   task check  # Runs format + lint + test
-   ```
-
-2. **If checks fail**: Fix errors before committing
-   - Format errors: Run `go fmt ./...`
-   - Lint errors: Fix according to golangci-lint output
-   - Test failures: Fix failing tests
-
-3. **Commit**: Use standard `git commit` (pre-commit hook will run automatically)
-   - ❌ **DO NOT** use `git commit --no-verify`
-   - ✅ Use `git commit -m "message"` (hook runs automatically)
-
-4. **If hook fails**: The commit will be aborted. Fix errors and try again.
-
-### Setup
-
-Run the setup script to install pre-commit hooks:
-```bash
-./scripts/setup-githooks.sh
-```
-
-This configures Git to use hooks from `githooks/` directory, ensuring all developers (including AI agents) run the same checks.

@@ -78,7 +78,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
 
 ## Conventions
 
-See [.claude/skills/rx-frontend-standards/](../.claude/skills/rx-frontend-standards/) for coding standards.
+See [Frontend Architecture](../docs/FRONTEND_ARCHITECTURE.md) for coding standards.
 
 ## Related Documentation
 

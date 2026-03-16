@@ -1,0 +1,87 @@
+# Rx Philosophy
+
+## What Rx Is
+
+Rx is a **plan-driven training management system**. The core loop is:
+
+1. **Plan** — AI creates a training program (via API or CLI)
+2. **Execute** — User records actual training sessions (via Web, Mobile, API, or CLI)
+3. **Review** — AI or user analyzes the results
+
+This is **not a simple training log**. The plan is a first-class concept, and AI is the primary planner.
+
+## Core Principles
+
+### 1. API-First, Multi-Client
+
+- **API and CLI are required** — AI agents and automation tools interact via API or CLI
+- **Web and Mobile are first-class clients** — Full-featured interfaces, not samples or demos
+- **No features that only exist in UI** — Every action available in Web/Mobile must also be accessible via API
+
+### 2. AI as Planner
+
+- AI creates and manages Programs (training templates)
+- Humans execute and record the actual training sessions as Logs
+- The backend stores both Plans and Logs without judging the gap between them
+
+### 3. No Opinionated Health Logic
+
+- **No health scores, wellness indices, or motivation messages**
+- **No recommendations or comparisons** — the backend stores and retrieves, AI analyzes
+- **No gamification** — no streaks, badges, or achievements
+- Raw data in, raw data out
+
+### 4. Domain-Driven Schema-First Development
+
+- **Domain models define business rules** — `internal/domain/` contains validation and invariants
+- **OpenAPI spec defines the API contract** — single source of truth for HTTP API
+- **Code generation from OpenAPI** — Go types and server stubs are generated
+- **Handlers bridge the gap** — convert between OpenAPI types and domain models
+- **Keep them synchronized** — domain models and OpenAPI specs must stay in sync
+
+## What the Backend Does
+
+### Prohibited Features
+
+The backend MUST NOT:
+
+1. Calculate "health scores" or "wellness indices"
+2. Provide "motivation" or "encouragement" messages
+3. Make recommendations about training intensity
+4. Compare users or create leaderboards
+5. Implement gamification (streaks, badges, achievements)
+
+### Permitted Features
+
+The backend MAY:
+
+1. Store and retrieve Programs, Plans, and Logs
+2. Provide CRUD operations for all resources
+3. Expose time-series telemetry data for external analysis
+4. Implement filtering and aggregation queries
+5. Serve data to AI Agents for analysis (via API or CLI)
+
+### Interface Requirements
+
+All of the following are first-class interfaces:
+
+- **Web** — Full-featured browser client
+- **Mobile** — Full-featured native mobile client
+- **REST API** — For AI agents and automation
+- **CLI** — For scripting and local automation
+
+Every feature MUST be accessible via API (and ideally CLI).
+
+## Terminology
+
+| Term | Description |
+|------|-------------|
+| Program | A reusable training template (created typically by AI) |
+| Plan | A concrete training schedule derived from a Program |
+| Log | A record of actual training performed |
+| Exercise | A specific movement or activity |
+| Rep | A single repetition of an exercise |
+| Set | A group of repetitions |
+| RPE | Rate of Perceived Exertion (1–10 scale) |
+| 1RM | One-rep max: maximum weight for a single repetition |
+| load_kg | Weight used for an exercise, in kilograms |
