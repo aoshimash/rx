@@ -12,6 +12,8 @@ Existing training apps share common problems that make them frustrating for seri
 
 4. **No RPE-to-load conversion** — Programs designed with RPE targets require manual calculation to determine actual working weights based on current 1RM. This mental math between sets is unnecessary friction.
 
+5. **Not ready for AI integration** — AI will increasingly be involved in both program design and result analysis. Existing apps have minimal external interfaces, making it difficult for AI agents to read data, generate plans, or provide feedback programmatically.
+
 Rx is built to solve these problems directly. Every design decision traces back to eliminating one of these pain points.
 
 ## What Rx Is
