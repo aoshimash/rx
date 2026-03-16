@@ -1,7 +1,6 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { PlanEntryCreate } from '@/types/api';
@@ -61,48 +60,39 @@ export function PlanForm({
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Plan Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="plan-name">Plan Name</Label>
-            <Input
-              id="plan-name"
-              value={planName}
-              onChange={(e) => onNameChange(e.target.value)}
-              placeholder="e.g., 5/3/1, Starting Strength"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="plan-description">Description</Label>
-            <Input
-              id="plan-description"
-              value={planDescription}
-              onChange={(e) => onDescriptionChange(e.target.value)}
-              placeholder="Brief description of the plan"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Training Sessions</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <SessionAccordion
-            sessions={sessions}
-            onChange={handleSessionChange}
-            onDelete={handleSessionDelete}
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="plan-name">Plan Name</Label>
+          <Input
+            id="plan-name"
+            value={planName}
+            onChange={(e) => onNameChange(e.target.value)}
+            placeholder="e.g., 5/3/1, Starting Strength"
           />
-          <Button variant="outline" onClick={handleAddSession} className="w-full">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Session
-          </Button>
-        </CardContent>
-      </Card>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="plan-description">Description</Label>
+          <Input
+            id="plan-description"
+            value={planDescription}
+            onChange={(e) => onDescriptionChange(e.target.value)}
+            placeholder="Brief description of the plan"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <p className="text-sm font-semibold">Training Sessions</p>
+        <SessionAccordion
+          sessions={sessions}
+          onChange={handleSessionChange}
+          onDelete={handleSessionDelete}
+        />
+        <Button variant="outline" onClick={handleAddSession} className="w-full">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Session
+        </Button>
+      </div>
 
       <div className="flex justify-between">
         {isEditing && onDelete && (
