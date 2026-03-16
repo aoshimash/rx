@@ -4,16 +4,16 @@ This file provides guidance for AI coding agents working on this repository.
 
 ## Project Overview
 
-**Rx** - A program-first workout tracking system.
+**Rx** - A plan-driven training management system.
 
-This repository (`rx`) manages Programs and Workouts with a program-first philosophy.
+This repository (`rx`) manages Programs, Plans, and Logs with a plan-first philosophy.
 
 ## Key Principles
 
-1. **"Dumb Backend"** - No business logic for "health." Strictly stores and retrieves telemetry data.
+1. **"Dumb Backend"** - No business logic for "health." Strictly stores and retrieves data.
 2. **Domain-Driven Schema-First** - Domain models define business logic, OpenAPI spec defines API contract. Code is generated from OpenAPI spec.
 
-For details, see `.claude/skills/rx-philosophy/`.
+For details, see [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md).
 
 ## Project Structure
 
@@ -22,22 +22,11 @@ rx/
 ├── api/                  # REST API (Go)
 ├── web/                  # Web frontend (Next.js + React)
 ├── mobile/               # Mobile app (React Native + Expo) - future
-├── mcp/                  # MCP Server (runs on user's local machine)
 ├── packages/             # Shared packages (future)
 │   └── shared/           # Types, API client, validation schemas
 ├── infra/                # Terraform/Helm (future)
-├── docs/                 # Documentation
-└── .claude/skills/       # AI agent skills
+└── docs/                 # Documentation
 ```
-
-## Skills Reference
-
-| Skill | Description |
-|-------|-------------|
-| [rx-philosophy](.claude/skills/rx-philosophy/) | Core philosophy and constraints |
-| [rx-domain](.claude/skills/rx-domain/) | Domain models (Workout, Program, Telemetry) |
-| [rx-go-standards](.claude/skills/rx-go-standards/) | Go coding standards (API) |
-| [rx-frontend-standards](.claude/skills/rx-frontend-standards/) | Frontend coding standards (Web/Mobile) |
 
 ## Quick Reference
 
@@ -68,8 +57,11 @@ rx/
 
 ## Documentation
 
+- [Philosophy](docs/PHILOSOPHY.md) - Core principles and constraints
+- [Domain Model](docs/DOMAIN_MODEL.md) - Program / Plan / Log lifecycle
+- [Go Standards](docs/GO_STANDARDS.md) - Go coding standards
+- [Frontend Architecture](docs/FRONTEND_ARCHITECTURE.md) - Web/Mobile architecture and standards
 - [Architecture](docs/ARCHITECTURE.md) - System architecture
-- [Frontend Architecture](docs/FRONTEND_ARCHITECTURE.md) - Web/Mobile architecture
 - [Development Guide](docs/DEVELOPMENT.md) - Development setup
 
 ## AI Agent Command Execution
