@@ -37,7 +37,7 @@ export function PlanForm({
   const [sessions, setSessions] = useState<SessionGroup[]>(() =>
     initialEntries && initialEntries.length > 0
       ? entriesToSessionGroups(initialEntries)
-      : [{ name: 'Session 1', exercises: [] }]
+      : [{ name: '', exercises: [] }]
   );
 
   const handleAddSession = () => {

@@ -213,11 +213,11 @@ export function ProgramForm({
   const [sessions, setSessions] = useState<SessionGroup[]>(() =>
     initialEntries && initialEntries.length > 0
       ? entriesToSessionGroups(initialEntries)
-      : [{ name: 'Session 1', exercises: [] }]
+      : [{ name: '', exercises: [] }]
   );
 
   const handleAddSession = () => {
-    setSessions([...sessions, { name: `Session ${sessions.length + 1}`, exercises: [] }]);
+    setSessions([...sessions, { name: '', exercises: [] }]);
   };
 
   const handleRemoveSession = (idx: number) => {
@@ -303,8 +303,12 @@ export function ProgramForm({
             <AccordionItem key={sessionIdx} value={`session-${sessionIdx}`}>
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center justify-between w-full pr-4">
-                  <span className="font-semibold">
-                    {session.name || `Session ${sessionIdx + 1}`}
+                  <span
+                    className={
+                      session.name ? 'font-semibold' : 'font-semibold text-muted-foreground'
+                    }
+                  >
+                    {session.name || 'Untitled'}
                   </span>
                   <Button
                     variant="ghost"

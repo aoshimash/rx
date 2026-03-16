@@ -102,7 +102,11 @@ export function SessionAccordion({ sessions, onChange, onDelete }: SessionAccord
           <AccordionItem key={sessionIdx} value={`session-${sessionIdx}`}>
             <AccordionTrigger className="hover:no-underline">
               <div className="flex items-center justify-between w-full pr-4">
-                <span className="font-semibold">{session.name || `Day ${sessionIdx + 1}`}</span>
+                <span
+                  className={session.name ? 'font-semibold' : 'font-semibold text-muted-foreground'}
+                >
+                  {session.name || 'Untitled'}
+                </span>
                 <Button
                   variant="ghost"
                   size="sm"
