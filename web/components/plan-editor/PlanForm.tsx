@@ -105,64 +105,7 @@ export function PlanForm({
           <Label>Exercises</Label>
           <ExerciseTable
             exercises={session0.exercises}
-            onExerciseNameChange={(idx, name) =>
-              updateSession0((s) => {
-                const exercises = [...s.exercises];
-                if (exercises[idx]) exercises[idx] = { ...exercises[idx], exercise_name: name };
-                return { ...s, exercises };
-              })
-            }
-            onSetsChange={(idx, value) =>
-              updateSession0((s) => {
-                const exercises = [...s.exercises];
-                if (exercises[idx]) exercises[idx] = { ...exercises[idx], sets: value };
-                return { ...s, exercises };
-              })
-            }
-            onRepsChange={(idx, value) =>
-              updateSession0((s) => {
-                const exercises = [...s.exercises];
-                if (exercises[idx]) exercises[idx] = { ...exercises[idx], reps: value };
-                return { ...s, exercises };
-              })
-            }
-            onLoadKgChange={(idx, value) =>
-              updateSession0((s) => {
-                const exercises = [...s.exercises];
-                if (exercises[idx]) exercises[idx] = { ...exercises[idx], load_kg: value };
-                return { ...s, exercises };
-              })
-            }
-            onRpeChange={(idx, value) =>
-              updateSession0((s) => {
-                const exercises = [...s.exercises];
-                if (exercises[idx]) exercises[idx] = { ...exercises[idx], rpe: value };
-                return { ...s, exercises };
-              })
-            }
-            onRemove={(idx) =>
-              updateSession0((s) => ({
-                ...s,
-                exercises: s.exercises
-                  .filter((_, i) => i !== idx)
-                  .map((e, i) => ({ ...e, order: i })),
-              }))
-            }
-            onAdd={() =>
-              updateSession0((s) => ({
-                ...s,
-                exercises: [
-                  ...s.exercises,
-                  {
-                    exercise_name: 'Exercise',
-                    order: s.exercises.length,
-                    sets: 3,
-                    reps: 10,
-                    rpe: 7,
-                  },
-                ],
-              }))
-            }
+            onChange={(exercises) => updateSession0((s) => ({ ...s, exercises }))}
           />
         </div>
       )}

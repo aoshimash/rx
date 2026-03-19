@@ -11,11 +11,35 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
-function findMatchingPlanEntry(
-  logEntry: LogEntry,
-  planEntries: PlanEntry[]
-): PlanEntry | undefined {
-  return planEntries.find((pe) => pe.exercise_name === logEntry.exercise_name);
+const SET_TYPE_LABELS: Record<string, string> = {
+  top: 'Top',
+  main: 'メイン',
+  backoff: 'バックオフ',
+};
+
+type LogExerciseGroup = { name: string; entries: LogEntry[] };
+
+function groupByExercise(entries: LogEntry[]): LogExerciseGroup[] {
+  const groups: LogExerciseGroup[] = [];
+  const map = new Map<string, LogExerciseGroup>();
+  for (const entry of [...entries].sort((a, b) => a.order - b.order)) {
+    if (!map.has(entry.exercise_name)) {
+      const g: LogExerciseGroup = { name: entry.exercise_name, entries: [] };
+      groups.push(g);
+      map.set(entry.exercise_name, g);
+    }
+    map.get(entry.exercise_name)!.entries.push(entry);
+  }
+  return groups;
+}
+
+function findMatchingPlanEntry(logEntry: LogEntry, planEntries: PlanEntry[]): PlanEntry | undefined {
+  const logSetType = logEntry.metadata?.set_type;
+  return planEntries.find(
+    (pe) =>
+      pe.exercise_name === logEntry.exercise_name &&
+      (pe.metadata?.set_type ?? undefined) === (logSetType ?? undefined),
+  );
 }
 
 export default function LogDetailPage() {
@@ -58,6 +82,7 @@ export default function LogDetailPage() {
 
   const planEntries = plan?.entries || [];
   const hasPlan = !!log.plan_id;
+  const groups = groupByExercise(log.entries);
 
   return (
     <main className="container mx-auto p-6">
@@ -89,62 +114,81 @@ export default function LogDetailPage() {
         )}
       </div>
 
-      <div className="space-y-3">
-        {log.entries.map((entry) => {
-          const matchedPlan = hasPlan ? findMatchingPlanEntry(entry, planEntries) : undefined;
-          const diff = hasPlan ? calculateDiff(matchedPlan, entry) : null;
+      <div className="space-y-4">
+        {groups.map((group) => (
+          <Card key={group.name}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">{group.name}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {group.entries.map((entry) => {
+                  const setType = entry.metadata?.set_type as string | undefined;
+                  const matchedPlan = hasPlan
+                    ? findMatchingPlanEntry(entry, planEntries)
+                    : undefined;
+                  const diff = hasPlan ? calculateDiff(matchedPlan, entry) : null;
 
-          return (
-            <Card key={entry.id}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">{entry.exercise_name}</CardTitle>
-                  {diff && (
-                    <Badge variant={getStatusVariant(diff.status)}>
-                      {getStatusIcon(diff.status)}{' '}
-                      {diff.status.charAt(0).toUpperCase() + diff.status.slice(1)}
-                    </Badge>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <span className="text-muted-foreground block">Sets</span>
-                    <span className="font-medium">{entry.sets ?? '-'}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block">Reps</span>
-                    <span className="font-medium">{entry.reps ?? '-'}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block">Load</span>
-                    <span className="font-medium">
-                      {entry.load_kg != null ? `${entry.load_kg}kg` : '-'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block">RPE</span>
-                    <span className="font-medium">{entry.rpe ?? '-'}</span>
-                  </div>
-                </div>
-                {diff && diff.differences.length > 0 && (
-                  <div className="mt-3 pt-3 border-t">
-                    <p className="text-xs text-muted-foreground mb-1">Differences from plan:</p>
-                    <div className="flex gap-2 flex-wrap">
-                      {diff.differences.map((d) => (
-                        <Badge key={d} variant="outline" className="text-xs">
-                          {d}
-                        </Badge>
-                      ))}
+                  return (
+                    <div key={entry.id} className="rounded-md border px-3 py-2">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div>
+                          {setType ? (
+                            <Badge variant="secondary" className="text-xs">
+                              {SET_TYPE_LABELS[setType] ?? setType}
+                            </Badge>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">-</span>
+                          )}
+                        </div>
+                        {diff && (
+                          <Badge variant={getStatusVariant(diff.status)} className="text-xs">
+                            {getStatusIcon(diff.status)}{' '}
+                            {diff.status.charAt(0).toUpperCase() + diff.status.slice(1)}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-4 gap-3 text-sm">
+                        <div>
+                          <span className="text-muted-foreground block text-xs">Sets</span>
+                          <span className="font-medium">{entry.sets ?? '-'}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground block text-xs">Reps</span>
+                          <span className="font-medium">{entry.reps ?? '-'}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground block text-xs">Load</span>
+                          <span className="font-medium">
+                            {entry.load_kg != null ? `${entry.load_kg}kg` : '-'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground block text-xs">RPE</span>
+                          <span className="font-medium">{entry.rpe ?? '-'}</span>
+                        </div>
+                      </div>
+                      {diff && diff.differences.length > 0 && (
+                        <div className="mt-2 pt-2 border-t">
+                          <div className="flex gap-1.5 flex-wrap">
+                            {diff.differences.map((d) => (
+                              <Badge key={d} variant="outline" className="text-xs">
+                                {d}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {entry.notes && (
+                        <p className="text-xs text-muted-foreground mt-2">{entry.notes}</p>
+                      )}
                     </div>
-                  </div>
-                )}
-                {entry.notes && <p className="text-sm text-muted-foreground mt-2">{entry.notes}</p>}
-              </CardContent>
-            </Card>
-          );
-        })}
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </main>
   );

@@ -81,6 +81,11 @@ tasks:
         fi
         exit $test_exit
 
+  seed:
+    desc: Seed local development data (use STORAGE_TYPE=postgres for DB, --reset to truncate first)
+    cmds:
+      - go run cmd/seed/main.go {{.CLI_ARGS}}
+
   run:
     desc: Start the development server
     cmds:

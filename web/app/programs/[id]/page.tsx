@@ -10,14 +10,24 @@ import { ArrowRightLeft, Edit } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
-function groupBySession(entries: ProgramEntry[]): Map<string, ProgramEntry[]> {
-  const groups = new Map<string, ProgramEntry[]>();
-  for (const entry of entries) {
-    const session = (entry.metadata?.session as string) ?? 'Ungrouped';
-    if (!groups.has(session)) {
-      groups.set(session, []);
+const SET_TYPE_LABELS: Record<string, string> = {
+  top: 'Top',
+  main: 'メイン',
+  backoff: 'バックオフ',
+};
+
+type ExerciseGroup = { name: string; entries: ProgramEntry[] };
+
+function groupByExercise(entries: ProgramEntry[]): ExerciseGroup[] {
+  const groups: ExerciseGroup[] = [];
+  const map = new Map<string, ExerciseGroup>();
+  for (const entry of [...entries].sort((a, b) => a.order - b.order)) {
+    if (!map.has(entry.exercise_name)) {
+      const g: ExerciseGroup = { name: entry.exercise_name, entries: [] };
+      groups.push(g);
+      map.set(entry.exercise_name, g);
     }
-    groups.get(session)!.push(entry);
+    map.get(entry.exercise_name)!.entries.push(entry);
   }
   return groups;
 }
@@ -44,8 +54,7 @@ export default function ProgramDetailPage() {
     );
   }
 
-  const entries = program.entries || [];
-  const sessionGroups = groupBySession(entries);
+  const groups = groupByExercise(program.entries || []);
 
   return (
     <main className="container mx-auto p-6">
@@ -73,39 +82,52 @@ export default function ProgramDetailPage() {
         </div>
       </div>
 
-      {entries.length === 0 ? (
+      {groups.length === 0 ? (
         <p className="text-muted-foreground">No entries in this program.</p>
       ) : (
         <div className="space-y-4">
-          {Array.from(sessionGroups.entries()).map(([sessionName, sessionEntries]) => (
-            <Card key={sessionName}>
-              <CardHeader>
-                <CardTitle>{sessionName}</CardTitle>
+          {groups.map((group) => (
+            <Card key={group.name}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">{group.name}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {sessionEntries
-                    .sort((a, b) => a.order - b.order)
-                    .map((entry) => (
+                <div className="space-y-2">
+                  {group.entries.map((entry) => {
+                    const setType = entry.metadata?.set_type as string | undefined;
+                    return (
                       <div
                         key={entry.id}
-                        className="flex items-center justify-between border rounded-lg p-3"
+                        className="flex items-center justify-between rounded-md px-2 py-1.5 hover:bg-muted/50"
                       >
-                        <div>
-                          <span className="font-medium">{entry.exercise_name}</span>
+                        <div className="w-24">
+                          {setType ? (
+                            <Badge variant="secondary" className="text-xs">
+                              {SET_TYPE_LABELS[setType] ?? setType}
+                            </Badge>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">-</span>
+                          )}
                         </div>
                         <div className="flex gap-2">
-                          {entry.sets && <Badge variant="secondary">{entry.sets} sets</Badge>}
-                          {entry.reps && <Badge variant="secondary">{entry.reps} reps</Badge>}
-                          {entry.rpe && <Badge variant="outline">RPE {entry.rpe}</Badge>}
-                          {entry.percent_1rm !== undefined && (
+                          {entry.sets != null && (
+                            <Badge variant="outline">{entry.sets} sets</Badge>
+                          )}
+                          {entry.reps != null && (
+                            <Badge variant="outline">{entry.reps} reps</Badge>
+                          )}
+                          {entry.rpe != null && (
+                            <Badge variant="outline">RPE {entry.rpe}</Badge>
+                          )}
+                          {entry.percent_1rm != null && (
                             <Badge variant="outline">
                               {Math.round(entry.percent_1rm * 100)}% 1RM
                             </Badge>
                           )}
                         </div>
                       </div>
-                    ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
