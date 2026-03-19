@@ -52,13 +52,14 @@ func TestRoundToIncrement(t *testing.T) {
 	})
 }
 
-func TestConvertProgramToPlan(t *testing.T) {
+func TestConvertProgramToPlans(t *testing.T) {
 	sets3 := 3
 	reps5 := 5
 	rpe8 := 8
 	pct80 := 0.80
 	pct70 := 0.70
 
+	// Program with no session metadata (single session)
 	program := &Program{
 		ID:   uuid.New(),
 		Name: "Strength Program",
@@ -91,11 +92,11 @@ func TestConvertProgramToPlan(t *testing.T) {
 		},
 	}
 
-	t.Run("calculates weights from percent_1rm", func(t *testing.T) {
-		input := &ConvertProgramToPlanInput{
+	t.Run("single session - calculates weights from percent_1rm", func(t *testing.T) {
+		input := &ConvertProgramToPlansInput{
 			TargetWeights: map[string]float64{
-				"Squat":       200.0, // 1RM
-				"Bench Press": 100.0, // 1RM
+				"Squat":       200.0,
+				"Bench Press": 100.0,
 			},
 			LoadIncrements: map[string]float64{
 				"Squat":       2.5,
@@ -103,11 +104,13 @@ func TestConvertProgramToPlan(t *testing.T) {
 			},
 		}
 
-		plan := ConvertProgramToPlan(program, input)
+		plans := ConvertProgramToPlans(program, input)
 
-		require.NotNil(t, plan)
+		require.Len(t, plans, 1)
+		plan := plans[0]
 		assert.Equal(t, "Strength Program", plan.Name)
 		assert.Equal(t, &program.ID, plan.ProgramID)
+		assert.Nil(t, plan.SessionName) // no session metadata
 		require.Len(t, plan.Entries, 3)
 
 		// Squat: 0.80 * 200 = 160.0, rounded to 2.5 → 160.0
@@ -124,78 +127,172 @@ func TestConvertProgramToPlan(t *testing.T) {
 	})
 
 	t.Run("copies direct weight when no percent_1rm", func(t *testing.T) {
-		input := &ConvertProgramToPlanInput{
+		input := &ConvertProgramToPlansInput{
 			TargetWeights: map[string]float64{
-				"Chin Up": 10.0, // direct weight (no percent_1rm)
+				"Chin Up": 10.0,
 			},
 			LoadIncrements: map[string]float64{
 				"Chin Up": 2.5,
 			},
 		}
 
-		plan := ConvertProgramToPlan(program, input)
+		plans := ConvertProgramToPlans(program, input)
 
-		// Chin Up: no percent_1rm → copies 10.0 directly, rounded to 2.5 → 10.0
-		require.NotNil(t, plan.Entries[2].LoadKg)
-		assert.Equal(t, 10.0, *plan.Entries[2].LoadKg)
+		require.Len(t, plans, 1)
+		require.NotNil(t, plans[0].Entries[2].LoadKg)
+		assert.Equal(t, 10.0, *plans[0].Entries[2].LoadKg)
 	})
 
 	t.Run("rounds to increment", func(t *testing.T) {
-		input := &ConvertProgramToPlanInput{
+		input := &ConvertProgramToPlansInput{
 			TargetWeights: map[string]float64{
-				"Squat": 195.0, // 0.80 * 195 = 156.0 → round to 2.5 → 155.0
+				"Squat": 195.0,
 			},
 			LoadIncrements: map[string]float64{
 				"Squat": 2.5,
 			},
 		}
 
-		plan := ConvertProgramToPlan(program, input)
+		plans := ConvertProgramToPlans(program, input)
 
-		require.NotNil(t, plan.Entries[0].LoadKg)
-		assert.Equal(t, 155.0, *plan.Entries[0].LoadKg)
+		require.Len(t, plans, 1)
+		require.NotNil(t, plans[0].Entries[0].LoadKg)
+		assert.Equal(t, 155.0, *plans[0].Entries[0].LoadKg)
 	})
 
 	t.Run("uses 0.1kg precision without increment", func(t *testing.T) {
-		input := &ConvertProgramToPlanInput{
+		input := &ConvertProgramToPlansInput{
 			TargetWeights: map[string]float64{
-				"Squat": 195.0, // 0.80 * 195 = 156.0
+				"Squat": 195.0,
 			},
 		}
 
-		plan := ConvertProgramToPlan(program, input)
+		plans := ConvertProgramToPlans(program, input)
 
-		require.NotNil(t, plan.Entries[0].LoadKg)
-		assert.Equal(t, 156.0, *plan.Entries[0].LoadKg)
+		require.Len(t, plans, 1)
+		require.NotNil(t, plans[0].Entries[0].LoadKg)
+		assert.Equal(t, 156.0, *plans[0].Entries[0].LoadKg)
 	})
 
 	t.Run("custom plan name", func(t *testing.T) {
-		input := &ConvertProgramToPlanInput{
+		input := &ConvertProgramToPlansInput{
 			Name:          "Week 1 Plan",
 			TargetWeights: map[string]float64{},
 		}
 
-		plan := ConvertProgramToPlan(program, input)
-		assert.Equal(t, "Week 1 Plan", plan.Name)
+		plans := ConvertProgramToPlans(program, input)
+
+		require.Len(t, plans, 1)
+		assert.Equal(t, "Week 1 Plan", plans[0].Name)
 	})
 
 	t.Run("copies sets reps rpe notes", func(t *testing.T) {
-		input := &ConvertProgramToPlanInput{
+		input := &ConvertProgramToPlansInput{
 			TargetWeights: map[string]float64{},
 		}
 
-		plan := ConvertProgramToPlan(program, input)
+		plans := ConvertProgramToPlans(program, input)
 
-		assert.Equal(t, &sets3, plan.Entries[0].Sets)
-		assert.Equal(t, &reps5, plan.Entries[0].Reps)
-		assert.Equal(t, &rpe8, plan.Entries[0].RPE)
+		require.Len(t, plans, 1)
+		assert.Equal(t, &sets3, plans[0].Entries[0].Sets)
+		assert.Equal(t, &reps5, plans[0].Entries[0].Reps)
+		assert.Equal(t, &rpe8, plans[0].Entries[0].RPE)
 	})
 
-	t.Run("copies metadata", func(t *testing.T) {
+	t.Run("stores conversion metadata", func(t *testing.T) {
+		input := &ConvertProgramToPlansInput{
+			TargetWeights: map[string]float64{
+				"Squat": 200.0,
+			},
+			LoadIncrements: map[string]float64{
+				"Squat": 2.5,
+			},
+		}
+
+		plans := ConvertProgramToPlans(program, input)
+
+		require.Len(t, plans, 1)
+		var meta map[string]interface{}
+		err := json.Unmarshal(plans[0].Metadata, &meta)
+		require.NoError(t, err)
+
+		conversion, ok := meta["conversion"].(map[string]interface{})
+		require.True(t, ok)
+		tw, ok := conversion["target_weights"].(map[string]interface{})
+		require.True(t, ok)
+		assert.Equal(t, 200.0, tw["Squat"])
+	})
+
+	t.Run("multi-session groups entries by metadata.session", func(t *testing.T) {
+		multiProgram := &Program{
+			ID:   uuid.New(),
+			Name: "Upper/Lower Split",
+			Entries: []ProgramEntry{
+				{
+					Order:        0,
+					ExerciseName: "Squat",
+					Sets:         &sets3,
+					Reps:         &reps5,
+					Percent1RM:   &pct80,
+					Metadata:     json.RawMessage(`{"session": "Lower"}`),
+				},
+				{
+					Order:        1,
+					ExerciseName: "Deadlift",
+					Sets:         &sets3,
+					Reps:         &reps5,
+					Metadata:     json.RawMessage(`{"session": "Lower"}`),
+				},
+				{
+					Order:        2,
+					ExerciseName: "Bench Press",
+					Sets:         &sets3,
+					Reps:         &reps5,
+					Percent1RM:   &pct70,
+					Metadata:     json.RawMessage(`{"session": "Upper"}`),
+				},
+				{
+					Order:        3,
+					ExerciseName: "Row",
+					Sets:         &sets3,
+					Reps:         &reps5,
+					Metadata:     json.RawMessage(`{"session": "Upper"}`),
+				},
+			},
+		}
+
+		input := &ConvertProgramToPlansInput{
+			TargetWeights: map[string]float64{
+				"Squat":       200.0,
+				"Bench Press": 100.0,
+			},
+		}
+
+		plans := ConvertProgramToPlans(multiProgram, input)
+
+		require.Len(t, plans, 2)
+
+		// First plan: Lower session
+		assert.Equal(t, "Upper/Lower Split - Lower", plans[0].Name)
+		require.NotNil(t, plans[0].SessionName)
+		assert.Equal(t, "Lower", *plans[0].SessionName)
+		require.Len(t, plans[0].Entries, 2)
+		assert.Equal(t, "Squat", plans[0].Entries[0].ExerciseName)
+		assert.Equal(t, "Deadlift", plans[0].Entries[1].ExerciseName)
+
+		// Second plan: Upper session
+		assert.Equal(t, "Upper/Lower Split - Upper", plans[1].Name)
+		require.NotNil(t, plans[1].SessionName)
+		assert.Equal(t, "Upper", *plans[1].SessionName)
+		require.Len(t, plans[1].Entries, 2)
+		assert.Equal(t, "Bench Press", plans[1].Entries[0].ExerciseName)
+		assert.Equal(t, "Row", plans[1].Entries[1].ExerciseName)
+	})
+
+	t.Run("copies entry metadata", func(t *testing.T) {
 		programWithMeta := &Program{
-			ID:       uuid.New(),
-			Name:     "Meta Program",
-			Metadata: json.RawMessage(`{"source": "ai"}`),
+			ID:   uuid.New(),
+			Name: "Meta Program",
 			Entries: []ProgramEntry{
 				{
 					Order:        0,
@@ -205,14 +302,29 @@ func TestConvertProgramToPlan(t *testing.T) {
 			},
 		}
 
-		input := &ConvertProgramToPlanInput{
+		input := &ConvertProgramToPlansInput{
 			TargetWeights: map[string]float64{},
 		}
 
-		plan := ConvertProgramToPlan(programWithMeta, input)
+		plans := ConvertProgramToPlans(programWithMeta, input)
 
-		assert.JSONEq(t, `{"source": "ai"}`, string(plan.Metadata))
-		assert.JSONEq(t, `{"week": 1}`, string(plan.Entries[0].Metadata))
+		require.Len(t, plans, 1)
+		assert.JSONEq(t, `{"week": 1}`, string(plans[0].Entries[0].Metadata))
+	})
+
+	t.Run("empty program produces empty plans", func(t *testing.T) {
+		emptyProgram := &Program{
+			ID:      uuid.New(),
+			Name:    "Empty",
+			Entries: []ProgramEntry{},
+		}
+
+		input := &ConvertProgramToPlansInput{
+			TargetWeights: map[string]float64{},
+		}
+
+		plans := ConvertProgramToPlans(emptyProgram, input)
+		assert.Empty(t, plans)
 	})
 }
 

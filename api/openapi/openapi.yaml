@@ -110,6 +110,12 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/After'
+        - name: program_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter plans by source program ID
       responses:
         '200':
           description: Paginated list of plans
@@ -143,11 +149,12 @@ paths:
 
   /plans/from-program:
     post:
-      summary: Convert a program into a plan
+      summary: Convert a program into plans (one per session)
       description: |
-        Creates a new Plan from an existing Program by calculating working weights
+        Creates Plans from an existing Program by calculating working weights
         from RPE/percent_1rm values and target weights, rounded to equipment increments.
-      operationId: convertProgramToPlan
+        Entries are grouped by metadata.session — one Plan per session.
+      operationId: convertProgramToPlans
       tags: [Plan]
       requestBody:
         required: true
@@ -157,11 +164,13 @@ paths:
               $ref: '#/components/schemas/ConvertProgramToPlanRequest'
       responses:
         '201':
-          description: Plan created from program
+          description: Plans created from program
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Plan'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Plan'
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -732,6 +741,14 @@ components:
           type: string
           minLength: 1
           maxLength: 200
+        date:
+          type: string
+          format: date
+          description: Scheduled date for this session (YYYY-MM-DD)
+        session_name:
+          type: string
+          maxLength: 200
+          description: Session name from the source program (e.g. "Day A", "Upper")
         description:
           type: string
           maxLength: 2000
@@ -766,6 +783,14 @@ components:
           type: string
           minLength: 1
           maxLength: 200
+        date:
+          type: string
+          format: date
+          description: Scheduled date for this session (YYYY-MM-DD)
+        session_name:
+          type: string
+          maxLength: 200
+          description: Session name (e.g. "Day A", "Upper")
         description:
           type: string
           maxLength: 2000

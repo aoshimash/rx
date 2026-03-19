@@ -245,8 +245,8 @@ func (h *ProgramHandler) ListPrograms(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// ConvertToPlan handles POST /plans/from-program
-func (h *ProgramHandler) ConvertToPlan(w http.ResponseWriter, r *http.Request) {
+// ConvertToPlans handles POST /plans/from-program
+func (h *ProgramHandler) ConvertToPlans(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req struct {
@@ -285,33 +285,36 @@ func (h *ProgramHandler) ConvertToPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Convert to plan
-	input := &domain.ConvertProgramToPlanInput{
+	// Convert to plans (one per session)
+	input := &domain.ConvertProgramToPlansInput{
 		Name:           req.Name,
 		TargetWeights:  req.TargetWeights,
 		LoadIncrements: req.LoadIncrements,
 	}
 
-	plan := domain.ConvertProgramToPlan(program, input)
+	plans := domain.ConvertProgramToPlans(program, input)
 
-	// Validate the generated plan
-	if err := domain.ValidatePlan(plan); err != nil {
-		if handleValidationError(w, err) {
+	// Validate and save each plan
+	savedPlans := make([]*domain.Plan, 0, len(plans))
+	for _, plan := range plans {
+		if err := domain.ValidatePlan(plan); err != nil {
+			if handleValidationError(w, err) {
+				return
+			}
+			middleware.WriteValidationError(w, "Generated plan validation failed", map[string]interface{}{
+				"error": err.Error(),
+			})
 			return
 		}
-		middleware.WriteValidationError(w, "Generated plan validation failed", map[string]interface{}{
-			"error": err.Error(),
-		})
-		return
+
+		if err := h.planRepo.Create(ctx, plan); err != nil {
+			middleware.WriteInternalError(w, "Failed to create plan")
+			return
+		}
+		savedPlans = append(savedPlans, plan)
 	}
 
-	// Save the plan
-	if err := h.planRepo.Create(ctx, plan); err != nil {
-		middleware.WriteInternalError(w, "Failed to create plan")
-		return
-	}
-
-	writeJSON(w, http.StatusCreated, plan)
+	writeJSON(w, http.StatusCreated, savedPlans)
 }
 
 // parseUUIDString parses a UUID from a string value
