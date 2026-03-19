@@ -110,15 +110,9 @@ export default function ProgramDetailPage() {
                           )}
                         </div>
                         <div className="flex gap-2">
-                          {entry.sets != null && (
-                            <Badge variant="outline">{entry.sets} sets</Badge>
-                          )}
-                          {entry.reps != null && (
-                            <Badge variant="outline">{entry.reps} reps</Badge>
-                          )}
-                          {entry.rpe != null && (
-                            <Badge variant="outline">RPE {entry.rpe}</Badge>
-                          )}
+                          {entry.sets != null && <Badge variant="outline">{entry.sets} sets</Badge>}
+                          {entry.reps != null && <Badge variant="outline">{entry.reps} reps</Badge>}
+                          {entry.rpe != null && <Badge variant="outline">RPE {entry.rpe}</Badge>}
                           {entry.percent_1rm != null && (
                             <Badge variant="outline">
                               {Math.round(entry.percent_1rm * 100)}% 1RM

@@ -46,6 +46,9 @@ codecov.SHA256SUM.sig
 # Note: OpenAPI generated code (pkg/openapi/*.gen.go) is committed to the repository
 # to ensure CI passes and to allow code review of generated code
 
+# Seed binary
+api/seed
+
 # Node.js
 node_modules/
 

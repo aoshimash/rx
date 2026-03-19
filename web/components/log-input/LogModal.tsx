@@ -4,17 +4,24 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { LogEntryCreate, PlanEntry } from '@/types/api';
+import type { LogEntryCreate, PlanEntryCreate } from '@/types/api';
 import { useEffect, useState } from 'react';
 import { AddExerciseButton } from './AddExerciseButton';
 import { ExerciseInputRow } from './ExerciseInputRow';
 
+export interface LogSaveContext {
+  planId?: string;
+  sessionName?: string;
+}
+
 interface LogModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  dayEntries?: PlanEntry[];
+  dayEntries?: PlanEntryCreate[];
   planContext?: string[];
-  onSave: (entries: LogEntryCreate[], notes: string) => Promise<void>;
+  planId?: string;
+  sessionName?: string;
+  onSave: (entries: LogEntryCreate[], notes: string, context?: LogSaveContext) => Promise<void>;
 }
 
 interface EntryInput {
@@ -33,7 +40,15 @@ interface EntryInput {
   };
 }
 
-export function LogModal({ open, onOpenChange, dayEntries, planContext, onSave }: LogModalProps) {
+export function LogModal({
+  open,
+  onOpenChange,
+  dayEntries,
+  planContext,
+  planId,
+  sessionName,
+  onSave,
+}: LogModalProps) {
   const [entries, setEntries] = useState<EntryInput[]>([]);
   const [sessionNotes, setSessionNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -41,7 +56,7 @@ export function LogModal({ open, onOpenChange, dayEntries, planContext, onSave }
   useEffect(() => {
     if (open && dayEntries && dayEntries.length > 0) {
       const initialEntries: EntryInput[] = dayEntries.map((entry, idx) => ({
-        id: `${entry.id}-${idx}`,
+        id: `plan-${idx}`,
         exercise_name: entry.exercise_name,
         sets: entry.sets || 3,
         reps: entry.reps || 10,
@@ -87,7 +102,9 @@ export function LogModal({ open, onOpenChange, dayEntries, planContext, onSave }
         rpe: entry.rpe,
       }));
 
-      await onSave(logEntries, sessionNotes);
+      const context: LogSaveContext | undefined =
+        planId || sessionName ? { planId, sessionName } : undefined;
+      await onSave(logEntries, sessionNotes, context);
       onOpenChange(false);
       setEntries([]);
       setSessionNotes('');

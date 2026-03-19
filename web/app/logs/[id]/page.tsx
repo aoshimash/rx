@@ -33,12 +33,15 @@ function groupByExercise(entries: LogEntry[]): LogExerciseGroup[] {
   return groups;
 }
 
-function findMatchingPlanEntry(logEntry: LogEntry, planEntries: PlanEntry[]): PlanEntry | undefined {
+function findMatchingPlanEntry(
+  logEntry: LogEntry,
+  planEntries: PlanEntry[]
+): PlanEntry | undefined {
   const logSetType = logEntry.metadata?.set_type;
   return planEntries.find(
     (pe) =>
       pe.exercise_name === logEntry.exercise_name &&
-      (pe.metadata?.set_type ?? undefined) === (logSetType ?? undefined),
+      (pe.metadata?.set_type ?? undefined) === (logSetType ?? undefined)
   );
 }
 

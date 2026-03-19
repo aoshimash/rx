@@ -46,7 +46,9 @@ export function ExerciseTable({ exercises, onChange }: ExerciseTableProps) {
   };
 
   const handleRename = (oldName: string, newName: string) => {
-    onChange(exercises.map((e) => (e.exercise_name === oldName ? { ...e, exercise_name: newName } : e)));
+    onChange(
+      exercises.map((e) => (e.exercise_name === oldName ? { ...e, exercise_name: newName } : e))
+    );
   };
 
   const handleRemoveExercise = (name: string) => {
@@ -71,7 +73,10 @@ export function ExerciseTable({ exercises, onChange }: ExerciseTableProps) {
   };
 
   const handleAddExercise = () => {
-    onChange([...exercises, { exercise_name: 'Exercise', order: exercises.length, sets: 3, reps: 5 }]);
+    onChange([
+      ...exercises,
+      { exercise_name: 'Exercise', order: exercises.length, sets: 3, reps: 5 },
+    ]);
   };
 
   const handleSetTypeChange = (index: number, value: SetType | undefined) => {
