@@ -78,9 +78,10 @@ Every feature MUST be accessible via API (and ideally CLI).
 
 | Term | Description |
 |------|-------------|
-| Program | A reusable training template (created typically by AI) |
-| Plan | A concrete training schedule derived from a Program |
-| Log | A record of actual training performed |
+| Program | A reusable training template containing multiple sessions (created typically by AI) |
+| Session | A grouping of exercises for one workout within a Program (metadata concept, not a DB entity) |
+| Plan | A concrete single-workout prescription with actual weights, optionally derived from a Program session |
+| Log | A record of one training session actually performed, optionally linked 1:1 to a Plan |
 | Exercise | A specific movement or activity |
 | Rep | A single repetition of an exercise |
 | Set | A group of repetitions |
