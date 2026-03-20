@@ -3,9 +3,7 @@
 import type { LogSaveContext } from '@/components/log-input/LogModal';
 import { LogModal } from '@/components/log-input/LogModal';
 import { PlanForm } from '@/components/plan-editor/PlanForm';
-import { entriesToSessionGroups } from '@/components/plan-editor/types';
-import { PlanSelector } from '@/components/plans/PlanSelector';
-import { SessionList } from '@/components/plans/SessionList';
+import { PlanList } from '@/components/plans/PlanList';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -16,42 +14,39 @@ import {
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCreateLog, useLogs } from '@/lib/hooks/useLogs';
-import { useCreatePlan, usePlan, usePlans } from '@/lib/hooks/usePlans';
-import { detectNextSession, sortSessionsByNext } from '@/lib/utils/next-session';
-import { usePlanStore } from '@/stores/plan';
+import { useCreatePlan, usePlans } from '@/lib/hooks/usePlans';
+import {
+  type PlanStatus,
+  detectNextPlan,
+  groupPlansByProgram,
+  sortPlansByNext,
+} from '@/lib/utils/next-session';
 import type { LogEntryCreate, PlanEntryCreate } from '@/types/api';
-import { Edit, Plus } from 'lucide-react';
-import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { Plus } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 export default function PlansPage() {
   const { data: plansData, isLoading: plansLoading } = usePlans();
   const { data: logsData } = useLogs();
   const createPlan = useCreatePlan();
   const createLog = useCreateLog();
-  const { selectedPlanId, setSelectedPlan } = usePlanStore();
 
   const plans = plansData?.data || [];
   const logs = logsData?.data || [];
 
-  // Auto-select first plan if none selected
-  useEffect(() => {
-    if (plans.length > 0 && !selectedPlanId && plans[0]) {
-      setSelectedPlan(plans[0].id);
+  // Group plans by program_id and detect next plan per group
+  const programGroups = useMemo(() => {
+    const grouped = groupPlansByProgram(plans);
+    const result: { programId: string | null; programName: string; statuses: PlanStatus[] }[] = [];
+
+    for (const [programId, groupPlans] of grouped) {
+      const statuses = sortPlansByNext(detectNextPlan(groupPlans, logs));
+      const programName = groupPlans[0]?.name.split(' - ')[0] || 'Unnamed';
+      result.push({ programId, programName, statuses });
     }
-  }, [plans, selectedPlanId, setSelectedPlan]);
 
-  const { data: selectedPlan } = usePlan(selectedPlanId);
-
-  const sessions = useMemo(() => {
-    if (!selectedPlan?.entries) return [];
-    return entriesToSessionGroups(selectedPlan.entries);
-  }, [selectedPlan]);
-
-  const sessionStatuses = useMemo(() => {
-    if (!selectedPlanId || sessions.length === 0) return [];
-    return sortSessionsByNext(detectNextSession(sessions, logs, selectedPlanId));
-  }, [sessions, logs, selectedPlanId]);
+    return result;
+  }, [plans, logs]);
 
   // Create Plan dialog state
   const [createOpen, setCreateOpen] = useState(false);
@@ -60,8 +55,9 @@ export default function PlansPage() {
 
   // Log modal state
   const [logModalOpen, setLogModalOpen] = useState(false);
-  const [logSessionName, setLogSessionName] = useState<string | undefined>();
-  const [logDayEntries, setLogDayEntries] = useState<PlanEntryCreate[] | undefined>();
+  const [logPlan, setLogPlan] = useState<
+    { id: string; name: string; entries: PlanEntryCreate[] } | undefined
+  >();
 
   const handleCreatePlan = async (entries: PlanEntryCreate[]) => {
     await createPlan.mutateAsync({
@@ -82,10 +78,23 @@ export default function PlansPage() {
     }
   };
 
-  const handleRecordLog = (sessionName: string) => {
-    const session = sessions.find((s) => s.name === sessionName);
-    setLogSessionName(sessionName);
-    setLogDayEntries(session?.exercises);
+  const handleRecordLog = (planId: string) => {
+    const plan = plans.find((p) => p.id === planId);
+    if (!plan) return;
+    setLogPlan({
+      id: plan.id,
+      name: plan.name,
+      entries: (plan.entries || []).map((e) => ({
+        exercise_name: e.exercise_name,
+        order: e.order,
+        sets: e.sets,
+        reps: e.reps,
+        load_kg: e.load_kg,
+        rpe: e.rpe,
+        notes: e.notes,
+        metadata: e.metadata,
+      })),
+    });
     setLogModalOpen(true);
   };
 
@@ -98,7 +107,6 @@ export default function PlansPage() {
       plan_id: context?.planId,
       performed_at: new Date().toISOString(),
       notes: notes || undefined,
-      metadata: context?.sessionName ? { session_name: context.sessionName } : undefined,
       entries,
     });
   };
@@ -137,45 +145,30 @@ export default function PlansPage() {
           </Button>
         </div>
       ) : (
-        <>
-          <div className="mb-4 flex items-center gap-3">
-            <PlanSelector
-              plans={plans}
-              selectedPlanId={selectedPlanId}
-              onSelect={setSelectedPlan}
-            />
-            {selectedPlanId && (
-              <Link href={`/plans/${selectedPlanId}/edit`}>
-                <Button variant="ghost" size="sm">
-                  <Edit className="h-4 w-4 mr-1" />
-                  Edit
-                </Button>
-              </Link>
-            )}
-          </div>
-
-          {sessions.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">
-                This plan has no sessions.{' '}
-                {selectedPlanId && (
-                  <Link href={`/plans/${selectedPlanId}/edit`} className="underline">
-                    Add sessions
-                  </Link>
-                )}
-              </p>
-            </div>
-          ) : (
-            <SessionList statuses={sessionStatuses} onRecordLog={handleRecordLog} />
-          )}
-        </>
+        <div className="space-y-8">
+          {programGroups.map(({ programId, programName, statuses }) => (
+            <section key={programId ?? 'standalone'}>
+              {programGroups.length > 1 && (
+                <h2 className="text-lg font-semibold mb-3">
+                  {programId ? programName : 'Standalone Plans'}
+                  <span className="text-sm font-normal text-muted-foreground ml-2">
+                    {statuses.length} session{statuses.length !== 1 ? 's' : ''}
+                  </span>
+                </h2>
+              )}
+              <PlanList statuses={statuses} onRecordLog={handleRecordLog} />
+            </section>
+          ))}
+        </div>
       )}
 
       <Dialog open={createOpen} onOpenChange={handleCreateOpenChange}>
         <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create Plan</DialogTitle>
-            <DialogDescription>Define sessions and exercise prescriptions</DialogDescription>
+            <DialogDescription>
+              Define exercise prescriptions for a single session
+            </DialogDescription>
           </DialogHeader>
           <PlanForm
             planName={planName}
@@ -191,12 +184,10 @@ export default function PlansPage() {
       <LogModal
         open={logModalOpen}
         onOpenChange={setLogModalOpen}
-        dayEntries={logDayEntries}
-        planId={selectedPlanId ?? undefined}
-        sessionName={logSessionName}
-        planContext={
-          selectedPlan && logSessionName ? [selectedPlan.name, logSessionName] : undefined
-        }
+        dayEntries={logPlan?.entries}
+        planId={logPlan?.id}
+        sessionName={logPlan?.name}
+        planContext={logPlan ? [logPlan.name] : undefined}
         onSave={handleSaveLog}
       />
     </main>

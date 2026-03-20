@@ -1,59 +1,65 @@
-import type { SessionGroup } from '@/components/plan-editor/types';
-import type { Log } from '@/types/api';
+import type { Log, Plan } from '@/types/api';
 
-export interface SessionStatus {
-  session: SessionGroup;
+export interface PlanStatus {
+  plan: Plan;
   isNext: boolean;
   completedCount: number;
   lastPerformedAt?: string;
 }
 
 /**
- * Detect the next session based on logs for a given plan.
- * Looks at the most recent log's metadata.session_name to determine
- * which session was done last, then advances to the next one cyclically.
+ * Group plans by program_id.
+ * Plans without a program_id are each treated as their own group.
  */
-export function detectNextSession(
-  sessions: SessionGroup[],
-  logs: Log[],
-  planId: string
-): SessionStatus[] {
-  if (sessions.length === 0) return [];
+export function groupPlansByProgram(plans: Plan[]): Map<string | null, Plan[]> {
+  const groups = new Map<string | null, Plan[]>();
+  for (const plan of plans) {
+    const key = plan.program_id ?? null;
+    const group = groups.get(key) ?? [];
+    group.push(plan);
+    groups.set(key, group);
+  }
+  return groups;
+}
 
-  const planLogs = logs
-    .filter((log) => log.plan_id === planId)
+/**
+ * Detect the next plan within a group of plans that share the same program_id.
+ * Cycles through plans based on which was most recently logged.
+ */
+export function detectNextPlan(plans: Plan[], logs: Log[]): PlanStatus[] {
+  if (plans.length === 0) return [];
+
+  const planIds = new Set(plans.map((p) => p.id));
+  const relevantLogs = logs
+    .filter((log) => log.plan_id && planIds.has(log.plan_id))
     .sort((a, b) => new Date(b.performed_at).getTime() - new Date(a.performed_at).getTime());
 
-  // Count completions and find last performed date per session
-  const sessionStats = new Map<string, { count: number; lastAt?: string }>();
-  for (const log of planLogs) {
-    const sessionName = log.metadata?.session_name as string | undefined;
-    if (!sessionName) continue;
-    const existing = sessionStats.get(sessionName) || { count: 0 };
+  // Count completions and find last performed date per plan
+  const planStats = new Map<string, { count: number; lastAt?: string }>();
+  for (const log of relevantLogs) {
+    if (!log.plan_id) continue;
+    const existing = planStats.get(log.plan_id) || { count: 0 };
     existing.count++;
     if (!existing.lastAt) {
       existing.lastAt = log.performed_at;
     }
-    sessionStats.set(sessionName, existing);
+    planStats.set(log.plan_id, existing);
   }
 
-  // Determine next session index
+  // Determine next plan index
   let nextIndex = 0;
-  const lastLog = planLogs[0];
-  if (lastLog) {
-    const lastSessionName = lastLog.metadata?.session_name as string | undefined;
-    if (lastSessionName) {
-      const lastIndex = sessions.findIndex((s) => s.name === lastSessionName);
-      if (lastIndex >= 0) {
-        nextIndex = (lastIndex + 1) % sessions.length;
-      }
+  const lastLog = relevantLogs[0];
+  if (lastLog?.plan_id) {
+    const lastIndex = plans.findIndex((p) => p.id === lastLog.plan_id);
+    if (lastIndex >= 0) {
+      nextIndex = (lastIndex + 1) % plans.length;
     }
   }
 
-  return sessions.map((session, index) => {
-    const stats = sessionStats.get(session.name);
+  return plans.map((plan, index) => {
+    const stats = planStats.get(plan.id);
     return {
-      session,
+      plan,
       isNext: index === nextIndex,
       completedCount: stats?.count ?? 0,
       lastPerformedAt: stats?.lastAt,
@@ -62,9 +68,9 @@ export function detectNextSession(
 }
 
 /**
- * Rotate session statuses so that the "next" session appears first.
+ * Rotate plan statuses so that the "next" plan appears first.
  */
-export function sortSessionsByNext(statuses: SessionStatus[]): SessionStatus[] {
+export function sortPlansByNext(statuses: PlanStatus[]): PlanStatus[] {
   if (statuses.length === 0) return [];
   const nextIndex = statuses.findIndex((s) => s.isNext);
   if (nextIndex <= 0) return statuses;

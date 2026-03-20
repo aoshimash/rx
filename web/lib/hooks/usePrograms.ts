@@ -51,11 +51,11 @@ export function useDeleteProgram() {
   });
 }
 
-export function useConvertProgramToPlan() {
+export function useConvertProgramToPlans() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: ConvertProgramToPlanRequest) => programsApi.convertToPlan(data),
+    mutationFn: (data: ConvertProgramToPlanRequest) => programsApi.convertToPlans(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['plans'] });
     },

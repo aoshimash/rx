@@ -12,6 +12,9 @@
 export interface Plan {
   id: string;
   name: string;
+  program_id?: string;
+  date?: string;
+  session_name?: string;
   description?: string;
   notes?: string;
   metadata?: Record<string, unknown>;
@@ -22,6 +25,8 @@ export interface Plan {
 
 export interface PlanCreate {
   name: string;
+  date?: string;
+  session_name?: string;
   description?: string;
   notes?: string;
   metadata?: Record<string, unknown>;
