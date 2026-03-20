@@ -29,3 +29,6 @@ packages:
 
   # Linter/Formatter for web frontend
   - name: biomejs/biome@cli/v1.9.4
+
+  # Database migration tool
+  - name: golang-migrate/migrate@v4.18.3

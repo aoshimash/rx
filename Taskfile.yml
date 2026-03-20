@@ -1,0 +1,71 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  DOCKER_COMPOSE: docker compose -f docker-compose.yml
+
+tasks:
+  dev:
+    desc: Start all development services (postgres + API + Web)
+    cmds:
+      - task: dev:up
+      - defer: { task: dev:down }
+      - task: dev:api-and-web
+
+  dev:up:
+    desc: Start postgres, run migrations, and seed data
+    cmds:
+      - '{{.DOCKER_COMPOSE}} up -d postgres'
+      - echo "Waiting for postgres to be ready..."
+      - |
+        for i in $(seq 1 30); do
+          if {{.DOCKER_COMPOSE}} exec postgres pg_isready -U rx >/dev/null 2>&1; then
+            echo "Postgres is ready."
+            break
+          fi
+          if [ "$i" -eq 30 ]; then
+            echo "Error: Postgres did not become ready in time."
+            exit 1
+          fi
+          sleep 1
+        done
+      - task: dev:migrate
+      - task: dev:seed
+
+  dev:migrate:
+    desc: Run database migrations
+    dir: api
+    cmds:
+      - task migrate
+
+  dev:seed:
+    desc: Seed development data
+    dir: api
+    env:
+      STORAGE_TYPE: postgres
+    cmds:
+      - task seed -- --reset
+
+  dev:api-and-web:
+    desc: Start API and Web dev servers in parallel
+    deps: [dev:api, dev:web]
+
+  dev:api:
+    desc: Start API dev server with postgres
+    dir: api
+    env:
+      STORAGE_TYPE: postgres
+    cmds:
+      - go run cmd/server/main.go
+
+  dev:web:
+    desc: Start Web dev server
+    dir: web
+    cmds:
+      - pnpm dev
+
+  dev:down:
+    desc: Stop all development services
+    cmds:
+      - '{{.DOCKER_COMPOSE}} down'
