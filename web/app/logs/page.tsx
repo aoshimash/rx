@@ -32,7 +32,7 @@ export default function LogsPage() {
     return (
       <main className="container mx-auto p-6 space-y-4">
         <Skeleton className="h-12 w-[300px]" />
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-4 max-w-2xl">
           <Skeleton className="h-[150px]" />
           <Skeleton className="h-[150px]" />
           <Skeleton className="h-[150px]" />
@@ -70,7 +70,7 @@ export default function LogsPage() {
           </Button>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-4 max-w-2xl">
           {sortedLogs.map((log) => (
             <LogCard key={log.id} log={log} />
           ))}
