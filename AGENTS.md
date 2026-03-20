@@ -82,7 +82,7 @@ Middleware-based (`internal/middleware/auth.go`). `AuthProvider` interface with 
 
 ### Pagination
 
-All list endpoints use cursor-based pagination: `limit` (1–100) + `after` (base64 UUID cursor). Repository `List()` returns `(entities, nextCursor string, hasMore bool, error)`.
+All list endpoints use cursor-based pagination: `limit` (1–100) + `after` (base64-encoded cursor). Most endpoints use a UUID cursor; Plan endpoints use a `created_at|UUID` cursor to support `created_at` ordering. Repository `List()` returns `(entities, nextCursor string, hasMore bool, error)`.
 
 ### Storage
 
