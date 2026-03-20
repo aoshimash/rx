@@ -29,11 +29,9 @@ func (d *DateOnly) UnmarshalJSON(data []byte) error {
 
 // PlanEntry represents a single exercise prescription entry within a training plan.
 type PlanEntry struct {
-	ID     uuid.UUID `json:"id"`
-	PlanID uuid.UUID `json:"plan_id"`
-	Order  int       `json:"order"`
-	// Deprecated: Date is being promoted to Plan level. Will be removed in a future release.
-	Date         *DateOnly       `json:"date,omitempty"`
+	ID           uuid.UUID       `json:"id"`
+	PlanID       uuid.UUID       `json:"plan_id"`
+	Order        int             `json:"order"`
 	ExerciseName string          `json:"exercise_name"`
 	Sets         *int            `json:"sets,omitempty"`
 	Reps         *int            `json:"reps,omitempty"`

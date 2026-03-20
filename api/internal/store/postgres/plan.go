@@ -72,24 +72,18 @@ func (r *planRepository) insertEntries(ctx context.Context, tx pgx.Tx, planID uu
 			entryID = entries[i].ID
 		}
 
-		var dateVal interface{}
-		if entries[i].Date != nil { //nolint:staticcheck // PlanEntry.Date is deprecated but still supported
-			dateVal = time.Time(*entries[i].Date) //nolint:staticcheck // PlanEntry.Date is deprecated but still supported
-		}
-
 		query := `
 			INSERT INTO plan_entries (
-				id, plan_id, "order", date, exercise_name,
+				id, plan_id, "order", exercise_name,
 				sets, reps, load_kg, rpe, notes, metadata
 			)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		`
 
 		_, err := tx.Exec(ctx, query,
 			entryID,
 			planID,
 			entries[i].Order,
-			dateVal,
 			entries[i].ExerciseName,
 			entries[i].Sets,
 			entries[i].Reps,
@@ -160,7 +154,7 @@ func (r *planRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Pla
 
 func (r *planRepository) getEntriesForPlan(ctx context.Context, planID uuid.UUID) ([]domain.PlanEntry, error) {
 	query := `
-		SELECT id, plan_id, "order", date, exercise_name,
+		SELECT id, plan_id, "order", exercise_name,
 		       sets, reps, load_kg, rpe, notes, metadata
 		FROM plan_entries
 		WHERE plan_id = $1
@@ -178,12 +172,10 @@ func (r *planRepository) getEntriesForPlan(ctx context.Context, planID uuid.UUID
 	for rows.Next() {
 		var entry domain.PlanEntry
 		var metadataRaw []byte
-		var dateVal *time.Time
 		err := rows.Scan(
 			&entry.ID,
 			&entry.PlanID,
 			&entry.Order,
-			&dateVal,
 			&entry.ExerciseName,
 			&entry.Sets,
 			&entry.Reps,
@@ -194,10 +186,6 @@ func (r *planRepository) getEntriesForPlan(ctx context.Context, planID uuid.UUID
 		)
 		if err != nil {
 			return nil, err
-		}
-		if dateVal != nil {
-			d := domain.DateOnly(*dateVal)
-			entry.Date = &d //nolint:staticcheck // PlanEntry.Date is deprecated but still supported
 		}
 		if len(metadataRaw) > 0 {
 			entry.Metadata = json.RawMessage(metadataRaw)

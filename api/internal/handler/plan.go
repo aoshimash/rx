@@ -12,15 +12,14 @@ import (
 
 // planEntryRequest represents a plan entry in the request body
 type planEntryRequest struct {
-	ExerciseName string           `json:"exercise_name"`
-	Order        int              `json:"order"`
-	Date         *domain.DateOnly `json:"date,omitempty"`
-	Sets         *int             `json:"sets,omitempty"`
-	Reps         *int             `json:"reps,omitempty"`
-	LoadKg       *float64         `json:"load_kg,omitempty"`
-	RPE          *int             `json:"rpe,omitempty"`
-	Notes        *string          `json:"notes,omitempty"`
-	Metadata     json.RawMessage  `json:"metadata,omitempty"`
+	ExerciseName string          `json:"exercise_name"`
+	Order        int             `json:"order"`
+	Sets         *int            `json:"sets,omitempty"`
+	Reps         *int            `json:"reps,omitempty"`
+	LoadKg       *float64        `json:"load_kg,omitempty"`
+	RPE          *int            `json:"rpe,omitempty"`
+	Notes        *string         `json:"notes,omitempty"`
+	Metadata     json.RawMessage `json:"metadata,omitempty"`
 }
 
 // PlanHandler handles Plan-related HTTP requests
@@ -104,7 +103,6 @@ func convertPlanEntry(req planEntryRequest) domain.PlanEntry {
 	return domain.PlanEntry{
 		ExerciseName: req.ExerciseName,
 		Order:        req.Order,
-		Date:         req.Date,
 		Sets:         req.Sets,
 		Reps:         req.Reps,
 		LoadKg:       req.LoadKg,
