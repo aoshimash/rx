@@ -1,8 +1,12 @@
 # Rx Philosophy
 
+## Plan Driven Training
+
+Rx follows **Plan Driven Training** — a philosophy where training is guided by a pre-defined plan, not ad-hoc decisions at the gym. Just as Test Driven Development starts with tests and Domain Driven Design starts with domain models, Plan Driven Training starts with a Program that defines the training structure before any weight is lifted.
+
 ## What Rx Is
 
-Rx is a **training data backend**. The core loop is:
+Rx is a **training data backend** that supports Plan Driven Training. The core loop is:
 
 1. **Plan** — An external tool (AI agent, script, or human) creates a training program and registers it via API or CLI
 2. **Execute** — User records actual training sessions (via Web, Mobile, API, or CLI)
