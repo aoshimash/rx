@@ -138,7 +138,7 @@ export function ConvertToPlanForm({ program }: ConvertToPlanFormProps) {
         {resultMessage && <span className="text-sm text-green-600">{resultMessage}</span>}
         <Button
           onClick={handleSubmit}
-          disabled={convertMutation.isPending || exerciseNames.length === 0}
+          disabled={convertMutation.isPending || !!resultMessage || exerciseNames.length === 0}
         >
           {convertMutation.isPending ? 'Converting...' : 'Convert to Plans'}
         </Button>

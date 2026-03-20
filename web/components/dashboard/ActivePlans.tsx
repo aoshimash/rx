@@ -13,12 +13,13 @@ export function ActivePlans() {
 
   const groups = useMemo(() => {
     const grouped = groupPlansByProgram(plans);
-    const result: { programId: string | null; name: string; count: number }[] = [];
-    for (const [programId, groupPlans] of grouped) {
-      const name = programId
-        ? groupPlans[0]?.name.split(' - ')[0] || 'Unnamed'
-        : 'Standalone Plans';
-      result.push({ programId, name, count: groupPlans.length });
+    const result: { groupKey: string; name: string; count: number }[] = [];
+    for (const [groupKey, groupPlans] of grouped) {
+      const isStandalone = groupKey.startsWith('standalone:');
+      const name = isStandalone
+        ? groupPlans[0]?.name || 'Unnamed'
+        : groupPlans[0]?.name.split(' - ')[0] || 'Unnamed';
+      result.push({ groupKey, name, count: groupPlans.length });
     }
     return result.slice(0, 5);
   }, [plans]);
@@ -40,7 +41,7 @@ export function ActivePlans() {
         )}
         <ul className="space-y-2">
           {groups.map((group) => (
-            <li key={group.programId ?? 'standalone'}>
+            <li key={group.groupKey}>
               <Link
                 href="/plans"
                 className="flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors"

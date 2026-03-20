@@ -9,12 +9,12 @@ export interface PlanStatus {
 
 /**
  * Group plans by program_id.
- * Plans without a program_id are each treated as their own group.
+ * Plans without a program_id are each treated as their own independent group.
  */
-export function groupPlansByProgram(plans: Plan[]): Map<string | null, Plan[]> {
-  const groups = new Map<string | null, Plan[]>();
+export function groupPlansByProgram(plans: Plan[]): Map<string, Plan[]> {
+  const groups = new Map<string, Plan[]>();
   for (const plan of plans) {
-    const key = plan.program_id ?? null;
+    const key = plan.program_id ?? `standalone:${plan.id}`;
     const group = groups.get(key) ?? [];
     group.push(plan);
     groups.set(key, group);

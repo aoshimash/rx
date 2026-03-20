@@ -37,12 +37,20 @@ export default function PlansPage() {
   // Group plans by program_id and detect next plan per group
   const programGroups = useMemo(() => {
     const grouped = groupPlansByProgram(plans);
-    const result: { programId: string | null; programName: string; statuses: PlanStatus[] }[] = [];
+    const result: {
+      groupKey: string;
+      programName: string;
+      isStandalone: boolean;
+      statuses: PlanStatus[];
+    }[] = [];
 
-    for (const [programId, groupPlans] of grouped) {
+    for (const [groupKey, groupPlans] of grouped) {
+      const isStandalone = groupKey.startsWith('standalone:');
       const statuses = sortPlansByNext(detectNextPlan(groupPlans, logs));
-      const programName = groupPlans[0]?.name.split(' - ')[0] || 'Unnamed';
-      result.push({ programId, programName, statuses });
+      const programName = isStandalone
+        ? groupPlans[0]?.name || 'Unnamed'
+        : groupPlans[0]?.name.split(' - ')[0] || 'Unnamed';
+      result.push({ groupKey, programName, isStandalone, statuses });
     }
 
     return result;
@@ -146,11 +154,11 @@ export default function PlansPage() {
         </div>
       ) : (
         <div className="space-y-8">
-          {programGroups.map(({ programId, programName, statuses }) => (
-            <section key={programId ?? 'standalone'}>
-              {programGroups.length > 1 && (
+          {programGroups.map(({ groupKey, programName, isStandalone, statuses }) => (
+            <section key={groupKey}>
+              {programGroups.length > 1 && !isStandalone && (
                 <h2 className="text-lg font-semibold mb-3">
-                  {programId ? programName : 'Standalone Plans'}
+                  {programName}
                   <span className="text-sm font-normal text-muted-foreground ml-2">
                     {statuses.length} session{statuses.length !== 1 ? 's' : ''}
                   </span>
