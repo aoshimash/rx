@@ -166,9 +166,6 @@ type PlanCreate struct {
 
 // PlanEntry defines model for PlanEntry.
 type PlanEntry struct {
-	// Date Optional date for this entry (YYYY-MM-DD)
-	Date *openapi_types.Date `json:"date,omitempty"`
-
 	// ExerciseName Exercise name (plain string)
 	ExerciseName string             `json:"exercise_name"`
 	Id           openapi_types.UUID `json:"id"`
@@ -192,8 +189,6 @@ type PlanEntry struct {
 
 // PlanEntryCreate defines model for PlanEntryCreate.
 type PlanEntryCreate struct {
-	// Date Optional date for this entry (YYYY-MM-DD)
-	Date         *openapi_types.Date     `json:"date,omitempty"`
 	ExerciseName string                  `json:"exercise_name"`
 	LoadKg       *float64                `json:"load_kg,omitempty"`
 	Metadata     *map[string]interface{} `json:"metadata,omitempty"`

@@ -824,10 +824,6 @@ components:
           type: integer
           minimum: 0
           description: Position in plan
-        date:
-          type: string
-          format: date
-          description: Optional date for this entry (YYYY-MM-DD)
         exercise_name:
           type: string
           minLength: 1
@@ -870,10 +866,6 @@ components:
         order:
           type: integer
           minimum: 0
-        date:
-          type: string
-          format: date
-          description: Optional date for this entry (YYYY-MM-DD)
         sets:
           type: integer
           minimum: 1
