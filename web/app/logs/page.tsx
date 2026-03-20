@@ -2,7 +2,7 @@
 
 import { ExportButton } from '@/components/export/ExportButton';
 import { LogModal } from '@/components/log-input/LogModal';
-import { LogCard } from '@/components/logs/LogCard';
+import { LogTable } from '@/components/logs/LogTable';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCreateLog, useLogs } from '@/lib/hooks/useLogs';
@@ -32,10 +32,11 @@ export default function LogsPage() {
     return (
       <main className="container mx-auto p-6 space-y-4">
         <Skeleton className="h-12 w-[300px]" />
-        <div className="space-y-4 max-w-2xl">
-          <Skeleton className="h-[150px]" />
-          <Skeleton className="h-[150px]" />
-          <Skeleton className="h-[150px]" />
+        <div className="space-y-2">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
         </div>
       </main>
     );
@@ -70,11 +71,7 @@ export default function LogsPage() {
           </Button>
         </div>
       ) : (
-        <div className="space-y-4 max-w-2xl">
-          {sortedLogs.map((log) => (
-            <LogCard key={log.id} log={log} />
-          ))}
-        </div>
+        <LogTable logs={sortedLogs} />
       )}
 
       <LogModal open={modalOpen} onOpenChange={setModalOpen} onSave={handleSaveLog} />
