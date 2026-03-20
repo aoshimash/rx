@@ -23,6 +23,7 @@ import {
   sortPlansByNext,
 } from '@/lib/utils/next-session';
 import type { LogEntryCreate, PlanEntryCreate } from '@/types/api';
+import { useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -31,6 +32,7 @@ export default function PlansPage() {
   const { data: logsData } = useLogs();
   const createPlan = useCreatePlan();
   const createLog = useCreateLog();
+  const queryClient = useQueryClient();
 
   const plans = plansData?.data || [];
   const logs = logsData?.data || [];
@@ -88,7 +90,10 @@ export default function PlansPage() {
   };
 
   const handleRecordLog = async (planId: string) => {
-    const fullPlan = await plansApi.get(planId);
+    const fullPlan = await queryClient.ensureQueryData({
+      queryKey: ['plans', planId],
+      queryFn: () => plansApi.get(planId),
+    });
     setLogPlan({
       id: fullPlan.id,
       name: fullPlan.name,
