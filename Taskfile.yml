@@ -63,7 +63,7 @@ tasks:
     desc: Start Web dev server
     dir: web
     cmds:
-      - pnpm dev
+      - nix-shell -p nodejs_22 nodePackages.pnpm --run "pnpm dev"
 
   dev:down:
     desc: Stop all development services
