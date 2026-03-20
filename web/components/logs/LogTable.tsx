@@ -58,10 +58,12 @@ export function LogTable({ logs }: LogTableProps) {
                   )}
                 </Link>
               </TableCell>
-              <TableCell className="hidden md:table-cell max-w-[200px]">
+              <TableCell className="hidden md:table-cell">
                 <Link href={`/logs/${log.id}`} className="block w-full">
                   {log.notes ? (
-                    <span className="truncate text-muted-foreground">{log.notes}</span>
+                    <span className="block max-w-[200px] truncate text-muted-foreground">
+                      {log.notes}
+                    </span>
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}
