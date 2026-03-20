@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { plansApi } from '@/lib/api/plans';
 import { useCreateLog, useLogs } from '@/lib/hooks/useLogs';
 import { useCreatePlan, usePlans } from '@/lib/hooks/usePlans';
 import {
@@ -86,13 +87,12 @@ export default function PlansPage() {
     }
   };
 
-  const handleRecordLog = (planId: string) => {
-    const plan = plans.find((p) => p.id === planId);
-    if (!plan) return;
+  const handleRecordLog = async (planId: string) => {
+    const fullPlan = await plansApi.get(planId);
     setLogPlan({
-      id: plan.id,
-      name: plan.name,
-      entries: (plan.entries || []).map((e) => ({
+      id: fullPlan.id,
+      name: fullPlan.name,
+      entries: (fullPlan.entries || []).map((e) => ({
         exercise_name: e.exercise_name,
         order: e.order,
         sets: e.sets,

@@ -1,6 +1,9 @@
+'use client';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { usePlan } from '@/lib/hooks/usePlans';
 import type { PlanStatus } from '@/lib/utils/next-session';
 import { Edit } from 'lucide-react';
 import Link from 'next/link';
@@ -13,6 +16,7 @@ interface PlanCardProps {
 
 export function PlanCard({ status, onRecordLog }: PlanCardProps) {
   const { plan, isNext, completedCount, lastPerformedAt } = status;
+  const { data: fullPlan } = usePlan(plan.id);
 
   const lastDate = lastPerformedAt
     ? new Date(lastPerformedAt).toLocaleDateString('en-US', {
@@ -22,6 +26,7 @@ export function PlanCard({ status, onRecordLog }: PlanCardProps) {
     : null;
 
   const displayName = plan.session_name || plan.name;
+  const entries = fullPlan?.entries || [];
 
   return (
     <Card className={isNext ? 'border-primary' : ''}>
@@ -46,7 +51,7 @@ export function PlanCard({ status, onRecordLog }: PlanCardProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <ExerciseSummary exercises={plan.entries || []} />
+        <ExerciseSummary exercises={entries} />
         <div className="flex gap-2">
           <Button variant={isNext ? 'default' : 'outline'} size="sm" onClick={onRecordLog}>
             Record Log
