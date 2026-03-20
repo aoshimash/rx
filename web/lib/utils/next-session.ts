@@ -19,6 +19,10 @@ export function groupPlansByProgram(plans: Plan[]): Map<string, Plan[]> {
     group.push(plan);
     groups.set(key, group);
   }
+  // Sort each group by created_at to preserve creation order (e.g., Day A, Day B, Day C)
+  for (const group of groups.values()) {
+    group.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+  }
   return groups;
 }
 
