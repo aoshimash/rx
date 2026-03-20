@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useConvertProgramToPlan } from '@/lib/hooks/usePrograms';
+import { useConvertProgramToPlans } from '@/lib/hooks/usePrograms';
 import type { Program } from '@/types/api';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
@@ -15,9 +15,10 @@ interface ConvertToPlanFormProps {
 
 export function ConvertToPlanForm({ program }: ConvertToPlanFormProps) {
   const router = useRouter();
-  const convertMutation = useConvertProgramToPlan();
+  const convertMutation = useConvertProgramToPlans();
 
   const [planName, setPlanName] = useState(program.name);
+  const [resultMessage, setResultMessage] = useState<string | null>(null);
 
   const exerciseNames = useMemo(() => {
     const names = new Set<string>();
@@ -52,14 +53,15 @@ export function ConvertToPlanForm({ program }: ConvertToPlanFormProps) {
       }
     }
 
-    await convertMutation.mutateAsync({
+    const plans = await convertMutation.mutateAsync({
       program_id: program.id,
       name: planName || undefined,
       target_weights: weights,
       load_increments: Object.keys(increments).length > 0 ? increments : undefined,
     });
 
-    router.push('/plans');
+    setResultMessage(`${plans.length} plan${plans.length !== 1 ? 's' : ''} created`);
+    setTimeout(() => router.push('/plans'), 1500);
   };
 
   return (
@@ -132,12 +134,13 @@ export function ConvertToPlanForm({ program }: ConvertToPlanFormProps) {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
+      <div className="flex items-center justify-end gap-4">
+        {resultMessage && <span className="text-sm text-green-600">{resultMessage}</span>}
         <Button
           onClick={handleSubmit}
-          disabled={convertMutation.isPending || exerciseNames.length === 0}
+          disabled={convertMutation.isPending || !!resultMessage || exerciseNames.length === 0}
         >
-          {convertMutation.isPending ? 'Converting...' : 'Convert to Plan'}
+          {convertMutation.isPending ? 'Converting...' : 'Convert to Plans'}
         </Button>
       </div>
     </div>

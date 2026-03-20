@@ -4,6 +4,7 @@ import { api } from './client';
 interface PaginationParams {
   limit?: number;
   after?: string;
+  program_id?: string;
 }
 
 export const plansApi = {
@@ -11,6 +12,7 @@ export const plansApi = {
     const searchParams = new URLSearchParams();
     if (params?.limit) searchParams.set('limit', params.limit.toString());
     if (params?.after) searchParams.set('after', params.after);
+    if (params?.program_id) searchParams.set('program_id', params.program_id);
 
     return api.get(`plans?${searchParams}`).json<PlanListResponse>();
   },

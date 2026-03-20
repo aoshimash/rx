@@ -18,11 +18,15 @@ export default function EditPlanPage() {
 
   const [planName, setPlanName] = useState('');
   const [planDescription, setPlanDescription] = useState('');
+  const [planDate, setPlanDate] = useState<string | undefined>();
+  const [planSessionName, setPlanSessionName] = useState<string | undefined>();
 
   useEffect(() => {
     if (plan) {
       setPlanName(plan.name);
       setPlanDescription(plan.description || '');
+      setPlanDate(plan.date || undefined);
+      setPlanSessionName(plan.session_name || undefined);
     }
   }, [plan]);
 
@@ -32,6 +36,8 @@ export default function EditPlanPage() {
       data: {
         name: planName,
         description: planDescription,
+        date: planDate,
+        session_name: planSessionName,
         entries,
       },
     });
@@ -56,16 +62,18 @@ export default function EditPlanPage() {
     <main className="container mx-auto p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Edit Plan</h1>
-        <p className="text-muted-foreground mt-1">Modify sessions and exercise prescriptions</p>
+        <p className="text-muted-foreground mt-1">Modify exercise prescriptions</p>
       </div>
 
       <PlanForm
         key={planId}
         planName={planName}
         planDescription={planDescription}
+        planDate={planDate}
         initialEntries={plan?.entries}
         onNameChange={setPlanName}
         onDescriptionChange={setPlanDescription}
+        onDateChange={setPlanDate}
         onSave={handleSave}
         onDelete={handleDelete}
         isSaving={updatePlan.isPending}

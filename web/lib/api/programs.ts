@@ -37,7 +37,7 @@ export const programsApi = {
     await api.delete(`programs/${id}`);
   },
 
-  async convertToPlan(data: ConvertProgramToPlanRequest): Promise<Plan> {
-    return api.post('plans/from-program', { json: data }).json<Plan>();
+  async convertToPlans(data: ConvertProgramToPlanRequest): Promise<Plan[]> {
+    return api.post('plans/from-program', { json: data }).json<Plan[]>();
   },
 };

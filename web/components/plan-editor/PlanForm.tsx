@@ -8,15 +8,15 @@ import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { DeleteConfirmDialog } from './DeleteConfirmDialog';
 import { ExerciseTable } from './ExerciseTable';
-import { SessionAccordion } from './SessionAccordion';
-import { type SessionGroup, entriesToSessionGroups, sessionGroupsToEntries } from './types';
 
 interface PlanFormProps {
   planName: string;
   planDescription: string;
+  planDate?: string;
   initialEntries?: PlanEntryCreate[];
   onNameChange: (name: string) => void;
   onDescriptionChange: (description: string) => void;
+  onDateChange?: (date: string | undefined) => void;
   onSave: (entries: PlanEntryCreate[]) => void;
   onDelete?: () => void;
   isSaving?: boolean;
@@ -26,44 +26,20 @@ interface PlanFormProps {
 export function PlanForm({
   planName,
   planDescription,
+  planDate,
   initialEntries,
   onNameChange,
   onDescriptionChange,
+  onDateChange,
   onSave,
   onDelete,
   isSaving,
   isEditing,
 }: PlanFormProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [sessions, setSessions] = useState<SessionGroup[]>(() =>
-    initialEntries && initialEntries.length > 0
-      ? entriesToSessionGroups(initialEntries)
-      : [{ name: '', exercises: [] }]
+  const [exercises, setExercises] = useState<PlanEntryCreate[]>(
+    initialEntries && initialEntries.length > 0 ? initialEntries : []
   );
-
-  const handleAddSession = () => {
-    setSessions([...sessions, { name: '', exercises: [] }]);
-  };
-
-  const handleSessionChange = (index: number, updated: SessionGroup) => {
-    const newSessions = [...sessions];
-    newSessions[index] = updated;
-    setSessions(newSessions);
-  };
-
-  const handleSessionDelete = (index: number) => {
-    setSessions(sessions.filter((_, idx) => idx !== index));
-  };
-
-  const updateSession0 = (updater: (s: SessionGroup) => SessionGroup) => {
-    setSessions((prev) => {
-      const next = [...prev];
-      if (next[0]) next[0] = updater(next[0]);
-      return next;
-    });
-  };
-
-  const session0 = sessions[0] ?? { name: '', exercises: [] };
 
   return (
     <div className="space-y-6">
@@ -74,7 +50,7 @@ export function PlanForm({
             id="plan-name"
             value={planName}
             onChange={(e) => onNameChange(e.target.value)}
-            placeholder="e.g., 5/3/1, Starting Strength"
+            placeholder="e.g., 5/3/1 - Day A, Starting Strength"
           />
         </div>
         <div className="space-y-2">
@@ -86,29 +62,23 @@ export function PlanForm({
             placeholder="Brief description of the plan"
           />
         </div>
+        {onDateChange && (
+          <div className="space-y-2">
+            <Label htmlFor="plan-date">Date (optional)</Label>
+            <Input
+              id="plan-date"
+              type="date"
+              value={planDate || ''}
+              onChange={(e) => onDateChange(e.target.value || undefined)}
+            />
+          </div>
+        )}
       </div>
 
-      {isEditing ? (
-        <div className="space-y-4">
-          <p className="text-sm font-semibold">Sessions</p>
-          <SessionAccordion
-            sessions={sessions}
-            onChange={handleSessionChange}
-            onDelete={handleSessionDelete}
-          />
-          <Button variant="outline" onClick={handleAddSession} className="w-full">
-            Add Session
-          </Button>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          <Label>Exercises</Label>
-          <ExerciseTable
-            exercises={session0.exercises}
-            onChange={(exercises) => updateSession0((s) => ({ ...s, exercises }))}
-          />
-        </div>
-      )}
+      <div className="space-y-2">
+        <Label>Exercises</Label>
+        <ExerciseTable exercises={exercises} onChange={setExercises} />
+      </div>
 
       <div className="flex justify-between">
         {isEditing && onDelete && (
@@ -118,7 +88,7 @@ export function PlanForm({
           </Button>
         )}
         <Button
-          onClick={() => onSave(sessionGroupsToEntries(sessions))}
+          onClick={() => onSave(exercises)}
           disabled={isSaving || !planName}
           className={!isEditing ? 'ml-auto' : ''}
         >
