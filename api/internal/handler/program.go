@@ -294,8 +294,7 @@ func (h *ProgramHandler) ConvertToPlans(w http.ResponseWriter, r *http.Request) 
 
 	plans := domain.ConvertProgramToPlans(program, input)
 
-	// Validate and save each plan
-	savedPlans := make([]*domain.Plan, 0, len(plans))
+	// Validate all plans before saving any
 	for _, plan := range plans {
 		if err := domain.ValidatePlan(plan); err != nil {
 			if handleValidationError(w, err) {
@@ -306,7 +305,11 @@ func (h *ProgramHandler) ConvertToPlans(w http.ResponseWriter, r *http.Request) 
 			})
 			return
 		}
+	}
 
+	// Save all validated plans
+	savedPlans := make([]*domain.Plan, 0, len(plans))
+	for _, plan := range plans {
 		if err := h.planRepo.Create(ctx, plan); err != nil {
 			middleware.WriteInternalError(w, "Failed to create plan")
 			return
