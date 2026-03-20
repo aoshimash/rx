@@ -92,7 +92,10 @@ export function ExerciseTable({ exercises, onChange }: ExerciseTableProps) {
         <ExerciseGroup
           key={group.name}
           exerciseName={group.name}
-          entries={group.indices.map((i) => ({ entry: exercises[i], flatIndex: i }))}
+          entries={group.indices.flatMap((i) => {
+            const entry = exercises[i];
+            return entry ? [{ entry, flatIndex: i }] : [];
+          })}
           onRename={(newName) => handleRename(group.name, newName)}
           onRemoveExercise={() => handleRemoveExercise(group.name)}
           onAddSet={() => handleAddSet(group.name)}
