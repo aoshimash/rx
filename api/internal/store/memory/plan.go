@@ -2,7 +2,10 @@ package memory
 
 import (
 	"context"
+	"encoding/base64"
+	"fmt"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -13,14 +16,17 @@ import (
 
 // planStore implements PlanRepository with in-memory map storage
 type planStore struct {
-	mu    sync.RWMutex
-	plans map[uuid.UUID]*domain.Plan
+	mu      sync.RWMutex
+	plans   map[uuid.UUID]*domain.Plan
+	logRepo repository.LogRepository
 }
 
-// NewPlanRepository creates a new in-memory Plan repository
-func NewPlanRepository() repository.PlanRepository {
+// NewPlanRepository creates a new in-memory Plan repository.
+// logRepo is used to filter out executed plans (plans with associated logs) from list results.
+func NewPlanRepository(logRepo repository.LogRepository) repository.PlanRepository {
 	return &planStore{
-		plans: make(map[uuid.UUID]*domain.Plan),
+		plans:   make(map[uuid.UUID]*domain.Plan),
+		logRepo: logRepo,
 	}
 }
 
@@ -106,20 +112,64 @@ func (s *planStore) Delete(ctx context.Context, id uuid.UUID) error {
 
 func (s *planStore) List(ctx context.Context, limit int, after string) ([]*domain.Plan, string, bool, error) {
 	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	plans := make([]*domain.Plan, 0, len(s.plans))
+	allPlans := make([]*domain.Plan, 0, len(s.plans))
 	for _, p := range s.plans {
-		plans = append(plans, p)
+		allPlans = append(allPlans, p)
+	}
+	s.mu.RUnlock()
+
+	// Filter out executed plans (plans with associated logs)
+	plans := make([]*domain.Plan, 0, len(allPlans))
+	for _, p := range allPlans {
+		logs, err := s.logRepo.ListByPlanID(ctx, p.ID)
+		if err != nil {
+			return nil, "", false, err
+		}
+		if len(logs) == 0 {
+			plans = append(plans, p)
+		}
 	}
 
+	return s.paginatePlans(plans, limit, after)
+}
+
+func (s *planStore) ListByProgramID(ctx context.Context, programID uuid.UUID, limit int, after string) ([]*domain.Plan, string, bool, error) {
+	s.mu.RLock()
+	allPlans := make([]*domain.Plan, 0)
+	for _, p := range s.plans {
+		if p.ProgramID != nil && *p.ProgramID == programID {
+			allPlans = append(allPlans, p)
+		}
+	}
+	s.mu.RUnlock()
+
+	// Filter out executed plans (plans with associated logs)
+	plans := make([]*domain.Plan, 0, len(allPlans))
+	for _, p := range allPlans {
+		logs, err := s.logRepo.ListByPlanID(ctx, p.ID)
+		if err != nil {
+			return nil, "", false, err
+		}
+		if len(logs) == 0 {
+			plans = append(plans, p)
+		}
+	}
+
+	return s.paginatePlans(plans, limit, after)
+}
+
+// paginatePlans sorts plans by (created_at, id) and applies cursor-based pagination.
+func (s *planStore) paginatePlans(plans []*domain.Plan, limit int, after string) ([]*domain.Plan, string, bool, error) {
 	sort.Slice(plans, func(i, j int) bool {
+		if !plans[i].CreatedAt.Equal(plans[j].CreatedAt) {
+			return plans[i].CreatedAt.Before(plans[j].CreatedAt)
+		}
 		return plans[i].ID.String() < plans[j].ID.String()
 	})
 
 	var startIdx int
 	if after != "" {
-		cursorID, err := decodeCursor(after)
+		_, cursorID, err := decodePlanCursor(after)
 		if err != nil {
 			return nil, "", false, err
 		}
@@ -141,7 +191,8 @@ func (s *planStore) List(ctx context.Context, limit int, after string) ([]*domai
 
 	var nextCursor string
 	if hasMore && len(result) > 0 {
-		nextCursor = encodeCursor(result[len(result)-1].ID)
+		last := result[len(result)-1]
+		nextCursor = encodePlanCursor(last.CreatedAt, last.ID)
 	}
 
 	copies := make([]*domain.Plan, len(result))
@@ -152,52 +203,29 @@ func (s *planStore) List(ctx context.Context, limit int, after string) ([]*domai
 	return copies, nextCursor, hasMore, nil
 }
 
-func (s *planStore) ListByProgramID(ctx context.Context, programID uuid.UUID, limit int, after string) ([]*domain.Plan, string, bool, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+// encodePlanCursor encodes a (created_at, id) pair for plan cursor-based pagination
+func encodePlanCursor(createdAt time.Time, id uuid.UUID) string {
+	s := createdAt.Format(time.RFC3339Nano) + "|" + id.String()
+	return base64.URLEncoding.EncodeToString([]byte(s))
+}
 
-	plans := make([]*domain.Plan, 0)
-	for _, p := range s.plans {
-		if p.ProgramID != nil && *p.ProgramID == programID {
-			plans = append(plans, p)
-		}
+// decodePlanCursor decodes a plan cursor to (created_at, id)
+func decodePlanCursor(cursor string) (time.Time, uuid.UUID, error) {
+	data, err := base64.URLEncoding.DecodeString(cursor)
+	if err != nil {
+		return time.Time{}, uuid.Nil, err
 	}
-
-	sort.Slice(plans, func(i, j int) bool {
-		return plans[i].ID.String() < plans[j].ID.String()
-	})
-
-	var startIdx int
-	if after != "" {
-		cursorID, err := decodeCursor(after)
-		if err != nil {
-			return nil, "", false, err
-		}
-		for i, p := range plans {
-			if p.ID == cursorID {
-				startIdx = i + 1
-				break
-			}
-		}
+	parts := strings.SplitN(string(data), "|", 2)
+	if len(parts) != 2 {
+		return time.Time{}, uuid.Nil, fmt.Errorf("invalid plan cursor format")
 	}
-
-	endIdx := startIdx + limit
-	if endIdx > len(plans) {
-		endIdx = len(plans)
+	t, err := time.Parse(time.RFC3339Nano, parts[0])
+	if err != nil {
+		return time.Time{}, uuid.Nil, err
 	}
-
-	result := plans[startIdx:endIdx]
-	hasMore := endIdx < len(plans)
-
-	var nextCursor string
-	if hasMore && len(result) > 0 {
-		nextCursor = encodeCursor(result[len(result)-1].ID)
+	id, err := uuid.Parse(parts[1])
+	if err != nil {
+		return time.Time{}, uuid.Nil, err
 	}
-
-	copies := make([]*domain.Plan, len(result))
-	for i, p := range result {
-		copies[i] = s.copyPlan(p)
-	}
-
-	return copies, nextCursor, hasMore, nil
+	return t, id, nil
 }

@@ -17,7 +17,8 @@ import (
 
 func setupProgramTestRouter() (chi.Router, *ProgramHandler) {
 	programRepo := memory.NewProgramRepository()
-	planRepo := memory.NewPlanRepository()
+	logRepo := memory.NewLogRepository()
+	planRepo := memory.NewPlanRepository(logRepo)
 
 	handler := NewProgramHandler(programRepo, planRepo)
 
