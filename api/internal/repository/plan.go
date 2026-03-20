@@ -26,4 +26,7 @@ type PlanRepository interface {
 	// after: cursor for pagination (UUID string, base64-encoded)
 	// Returns: plans, next cursor (empty string if no more), has_more flag
 	List(ctx context.Context, limit int, after string) ([]*domain.Plan, string, bool, error)
+
+	// ListByProgramID retrieves Plans filtered by program_id with pagination
+	ListByProgramID(ctx context.Context, programID uuid.UUID, limit int, after string) ([]*domain.Plan, string, bool, error)
 }

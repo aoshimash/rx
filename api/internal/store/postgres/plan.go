@@ -35,13 +35,18 @@ func (r *planRepository) Create(ctx context.Context, plan *domain.Plan) error {
 		id = plan.ID
 	}
 
+	var dateVal interface{}
+	if plan.Date != nil {
+		dateVal = time.Time(*plan.Date)
+	}
+
 	query := `
-		INSERT INTO plans (id, program_id, name, description, notes, metadata, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+		INSERT INTO plans (id, program_id, name, date, session_name, description, notes, metadata, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
 		RETURNING created_at, updated_at
 	`
 
-	err = tx.QueryRow(ctx, query, id, plan.ProgramID, plan.Name, plan.Description, plan.Notes, plan.Metadata).Scan(
+	err = tx.QueryRow(ctx, query, id, plan.ProgramID, plan.Name, dateVal, plan.SessionName, plan.Description, plan.Notes, plan.Metadata).Scan(
 		&plan.CreatedAt, &plan.UpdatedAt,
 	)
 	if err != nil {
@@ -68,8 +73,8 @@ func (r *planRepository) insertEntries(ctx context.Context, tx pgx.Tx, planID uu
 		}
 
 		var dateVal interface{}
-		if entries[i].Date != nil {
-			dateVal = time.Time(*entries[i].Date)
+		if entries[i].Date != nil { //nolint:staticcheck // PlanEntry.Date is deprecated but still supported
+			dateVal = time.Time(*entries[i].Date) //nolint:staticcheck // PlanEntry.Date is deprecated but still supported
 		}
 
 		query := `
@@ -107,17 +112,20 @@ func (r *planRepository) insertEntries(ctx context.Context, tx pgx.Tx, planID uu
 
 func (r *planRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Plan, error) {
 	query := `
-		SELECT id, program_id, name, description, notes, metadata, created_at, updated_at
+		SELECT id, program_id, name, date, session_name, description, notes, metadata, created_at, updated_at
 		FROM plans
 		WHERE id = $1
 	`
 
 	var plan domain.Plan
 	var metadataRaw []byte
+	var dateVal *time.Time
 	err := r.pool.QueryRow(ctx, query, id).Scan(
 		&plan.ID,
 		&plan.ProgramID,
 		&plan.Name,
+		&dateVal,
+		&plan.SessionName,
 		&plan.Description,
 		&plan.Notes,
 		&metadataRaw,
@@ -133,6 +141,10 @@ func (r *planRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Pla
 		return nil, err
 	}
 
+	if dateVal != nil {
+		d := domain.DateOnly(*dateVal)
+		plan.Date = &d
+	}
 	if len(metadataRaw) > 0 {
 		plan.Metadata = json.RawMessage(metadataRaw)
 	}
@@ -185,7 +197,7 @@ func (r *planRepository) getEntriesForPlan(ctx context.Context, planID uuid.UUID
 		}
 		if dateVal != nil {
 			d := domain.DateOnly(*dateVal)
-			entry.Date = &d
+			entry.Date = &d //nolint:staticcheck // PlanEntry.Date is deprecated but still supported
 		}
 		if len(metadataRaw) > 0 {
 			entry.Metadata = json.RawMessage(metadataRaw)
@@ -203,14 +215,20 @@ func (r *planRepository) Update(ctx context.Context, plan *domain.Plan) error {
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
+	var updateDateVal interface{}
+	if plan.Date != nil {
+		updateDateVal = time.Time(*plan.Date)
+	}
+
 	query := `
 		UPDATE plans
-		SET program_id = $2, name = $3, description = $4, notes = $5, metadata = $6, updated_at = NOW()
+		SET program_id = $2, name = $3, date = $4, session_name = $5,
+		    description = $6, notes = $7, metadata = $8, updated_at = NOW()
 		WHERE id = $1
 		RETURNING updated_at
 	`
 
-	err = tx.QueryRow(ctx, query, plan.ID, plan.ProgramID, plan.Name, plan.Description, plan.Notes, plan.Metadata).Scan(&plan.UpdatedAt)
+	err = tx.QueryRow(ctx, query, plan.ID, plan.ProgramID, plan.Name, updateDateVal, plan.SessionName, plan.Description, plan.Notes, plan.Metadata).Scan(&plan.UpdatedAt)
 	if err == pgx.ErrNoRows {
 		return domain.ErrNotFound
 	}
@@ -259,13 +277,38 @@ func (r *planRepository) List(ctx context.Context, limit int, after string) ([]*
 	}
 
 	query := `
-		SELECT id, program_id, name, description, notes, metadata, created_at, updated_at
+		SELECT id, program_id, name, date, session_name, description, notes, metadata, created_at, updated_at
 		FROM plans
 		WHERE ($1::uuid IS NULL OR id > $1)
 		ORDER BY id ASC
 		LIMIT $2
 	`
 
+	return r.listPlans(ctx, query, startID, limit)
+}
+
+func (r *planRepository) ListByProgramID(ctx context.Context, programID uuid.UUID, limit int, after string) ([]*domain.Plan, string, bool, error) {
+	var startID uuid.UUID
+	if after != "" {
+		var err error
+		startID, err = decodeCursor(after)
+		if err != nil {
+			return nil, "", false, err
+		}
+	}
+
+	query := `
+		SELECT id, program_id, name, date, session_name, description, notes, metadata, created_at, updated_at
+		FROM plans
+		WHERE program_id = $3 AND ($1::uuid IS NULL OR id > $1)
+		ORDER BY id ASC
+		LIMIT $2
+	`
+
+	return r.listPlansWithExtra(ctx, query, startID, limit, programID)
+}
+
+func (r *planRepository) listPlans(ctx context.Context, query string, startID uuid.UUID, limit int) ([]*domain.Plan, string, bool, error) {
 	rows, err := r.pool.Query(ctx, query, startID, limit+1)
 	if err != nil {
 		slog.Error("Failed to list plans", "error", err)
@@ -273,15 +316,36 @@ func (r *planRepository) List(ctx context.Context, limit int, after string) ([]*
 	}
 	defer rows.Close()
 
+	return r.scanPlanList(ctx, rows, limit)
+}
+
+func (r *planRepository) listPlansWithExtra(ctx context.Context, query string, startID uuid.UUID, limit int, extraArgs ...interface{}) ([]*domain.Plan, string, bool, error) {
+	args := []interface{}{startID, limit + 1}
+	args = append(args, extraArgs...)
+
+	rows, err := r.pool.Query(ctx, query, args...)
+	if err != nil {
+		slog.Error("Failed to list plans", "error", err)
+		return nil, "", false, err
+	}
+	defer rows.Close()
+
+	return r.scanPlanList(ctx, rows, limit)
+}
+
+func (r *planRepository) scanPlanList(ctx context.Context, rows pgx.Rows, limit int) ([]*domain.Plan, string, bool, error) {
 	plans := make([]*domain.Plan, 0, limit)
 
 	for rows.Next() {
 		var plan domain.Plan
 		var metadataRaw []byte
+		var dateVal *time.Time
 		err := rows.Scan(
 			&plan.ID,
 			&plan.ProgramID,
 			&plan.Name,
+			&dateVal,
+			&plan.SessionName,
 			&plan.Description,
 			&plan.Notes,
 			&metadataRaw,
@@ -290,6 +354,10 @@ func (r *planRepository) List(ctx context.Context, limit int, after string) ([]*
 		)
 		if err != nil {
 			return nil, "", false, err
+		}
+		if dateVal != nil {
+			d := domain.DateOnly(*dateVal)
+			plan.Date = &d
 		}
 		if len(metadataRaw) > 0 {
 			plan.Metadata = json.RawMessage(metadataRaw)

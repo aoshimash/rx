@@ -151,3 +151,53 @@ func (s *planStore) List(ctx context.Context, limit int, after string) ([]*domai
 
 	return copies, nextCursor, hasMore, nil
 }
+
+func (s *planStore) ListByProgramID(ctx context.Context, programID uuid.UUID, limit int, after string) ([]*domain.Plan, string, bool, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	plans := make([]*domain.Plan, 0)
+	for _, p := range s.plans {
+		if p.ProgramID != nil && *p.ProgramID == programID {
+			plans = append(plans, p)
+		}
+	}
+
+	sort.Slice(plans, func(i, j int) bool {
+		return plans[i].ID.String() < plans[j].ID.String()
+	})
+
+	var startIdx int
+	if after != "" {
+		cursorID, err := decodeCursor(after)
+		if err != nil {
+			return nil, "", false, err
+		}
+		for i, p := range plans {
+			if p.ID == cursorID {
+				startIdx = i + 1
+				break
+			}
+		}
+	}
+
+	endIdx := startIdx + limit
+	if endIdx > len(plans) {
+		endIdx = len(plans)
+	}
+
+	result := plans[startIdx:endIdx]
+	hasMore := endIdx < len(plans)
+
+	var nextCursor string
+	if hasMore && len(result) > 0 {
+		nextCursor = encodeCursor(result[len(result)-1].ID)
+	}
+
+	copies := make([]*domain.Plan, len(result))
+	for i, p := range result {
+		copies[i] = s.copyPlan(p)
+	}
+
+	return copies, nextCursor, hasMore, nil
+}

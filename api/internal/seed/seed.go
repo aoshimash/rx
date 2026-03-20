@@ -145,15 +145,15 @@ func accessoryWeek1Plan(programID uuid.UUID) domain.Plan {
 
 func trainingLogs(planID uuid.UUID) []domain.Log {
 	type weekData struct {
-		date       time.Time
-		squatTop   float64
-		squatMain  float64
-		squatBO    float64
-		benchTop   float64
-		benchMain  float64
-		benchBO    float64
-		deadTop    float64
-		deadMain   float64
+		date      time.Time
+		squatTop  float64
+		squatMain float64
+		squatBO   float64
+		benchTop  float64
+		benchMain float64
+		benchBO   float64
+		deadTop   float64
+		deadMain  float64
 	}
 	weeks := []weekData{
 		{time.Date(2026, 2, 26, 18, 0, 0, 0, time.Local), 122.5, 105, 95, 92.5, 80, 72.5, 150, 130},
@@ -183,9 +183,9 @@ func trainingLogs(planID uuid.UUID) []domain.Log {
 	return logs
 }
 
-func intPtr(v int) *int          { return &v }
-func f64Ptr(v float64) *float64  { return &v }
-func strPtr(v string) *string    { return &v }
+func intPtr(v int) *int         { return &v }
+func f64Ptr(v float64) *float64 { return &v }
+func strPtr(v string) *string   { return &v }
 
 func datePtr(year, month, day int) *domain.DateOnly {
 	d := domain.DateOnly(time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC))

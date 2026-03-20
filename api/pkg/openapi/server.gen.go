@@ -126,8 +126,11 @@ type LogListResponse struct {
 
 // Plan defines model for Plan.
 type Plan struct {
-	CreatedAt   time.Time `json:"created_at"`
-	Description *string   `json:"description,omitempty"`
+	CreatedAt time.Time `json:"created_at"`
+
+	// Date Scheduled date for this session (YYYY-MM-DD)
+	Date        *openapi_types.Date `json:"date,omitempty"`
+	Description *string             `json:"description,omitempty"`
 
 	// Entries Training prescription entries
 	Entries *[]PlanEntry       `json:"entries,omitempty"`
@@ -140,17 +143,25 @@ type Plan struct {
 
 	// ProgramId Optional reference to the source program template
 	ProgramId *openapi_types.UUID `json:"program_id,omitempty"`
-	UpdatedAt time.Time           `json:"updated_at"`
+
+	// SessionName Session name from the source program (e.g. "Day A", "Upper")
+	SessionName *string   `json:"session_name,omitempty"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 // PlanCreate defines model for PlanCreate.
 type PlanCreate struct {
+	// Date Scheduled date for this session (YYYY-MM-DD)
+	Date        *openapi_types.Date     `json:"date,omitempty"`
 	Description *string                 `json:"description,omitempty"`
 	Entries     *[]PlanEntryCreate      `json:"entries,omitempty"`
 	Metadata    *map[string]interface{} `json:"metadata,omitempty"`
 	Name        string                  `json:"name"`
 	Notes       *string                 `json:"notes,omitempty"`
 	ProgramId   *openapi_types.UUID     `json:"program_id,omitempty"`
+
+	// SessionName Session name (e.g. "Day A", "Upper")
+	SessionName *string `json:"session_name,omitempty"`
 }
 
 // PlanEntry defines model for PlanEntry.
@@ -355,6 +366,9 @@ type ListPlansParams struct {
 
 	// After Cursor for pagination (from previous response)
 	After *After `form:"after,omitempty" json:"after,omitempty"`
+
+	// ProgramId Filter plans by source program ID
+	ProgramId *openapi_types.UUID `form:"program_id,omitempty" json:"program_id,omitempty"`
 }
 
 // ListProgramsParams defines parameters for ListPrograms.
@@ -375,8 +389,8 @@ type UpdateLogJSONRequestBody = LogCreate
 // CreatePlanJSONRequestBody defines body for CreatePlan for application/json ContentType.
 type CreatePlanJSONRequestBody = PlanCreate
 
-// ConvertProgramToPlanJSONRequestBody defines body for ConvertProgramToPlan for application/json ContentType.
-type ConvertProgramToPlanJSONRequestBody = ConvertProgramToPlanRequest
+// ConvertProgramToPlansJSONRequestBody defines body for ConvertProgramToPlans for application/json ContentType.
+type ConvertProgramToPlansJSONRequestBody = ConvertProgramToPlanRequest
 
 // UpdatePlanJSONRequestBody defines body for UpdatePlan for application/json ContentType.
 type UpdatePlanJSONRequestBody = PlanCreate
@@ -416,9 +430,9 @@ type ServerInterface interface {
 	// Create plan
 	// (POST /plans)
 	CreatePlan(w http.ResponseWriter, r *http.Request)
-	// Convert a program into a plan
+	// Convert a program into plans (one per session)
 	// (POST /plans/from-program)
-	ConvertProgramToPlan(w http.ResponseWriter, r *http.Request)
+	ConvertProgramToPlans(w http.ResponseWriter, r *http.Request)
 	// Delete plan
 	// (DELETE /plans/{id})
 	DeletePlan(w http.ResponseWriter, r *http.Request, id PlanId)
@@ -497,9 +511,9 @@ func (_ Unimplemented) CreatePlan(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Convert a program into a plan
+// Convert a program into plans (one per session)
 // (POST /plans/from-program)
-func (_ Unimplemented) ConvertProgramToPlan(w http.ResponseWriter, r *http.Request) {
+func (_ Unimplemented) ConvertProgramToPlans(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -772,6 +786,14 @@ func (siw *ServerInterfaceWrapper) ListPlans(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	// ------------- Optional query parameter "program_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "program_id", r.URL.Query(), &params.ProgramId)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "program_id", Err: err})
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListPlans(w, r, params)
 	}))
@@ -803,8 +825,8 @@ func (siw *ServerInterfaceWrapper) CreatePlan(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
-// ConvertProgramToPlan operation middleware
-func (siw *ServerInterfaceWrapper) ConvertProgramToPlan(w http.ResponseWriter, r *http.Request) {
+// ConvertProgramToPlans operation middleware
+func (siw *ServerInterfaceWrapper) ConvertProgramToPlans(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
@@ -813,7 +835,7 @@ func (siw *ServerInterfaceWrapper) ConvertProgramToPlan(w http.ResponseWriter, r
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ConvertProgramToPlan(w, r)
+		siw.Handler.ConvertProgramToPlans(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1245,7 +1267,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/plans", wrapper.CreatePlan)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/plans/from-program", wrapper.ConvertProgramToPlan)
+		r.Post(options.BaseURL+"/plans/from-program", wrapper.ConvertProgramToPlans)
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/plans/{id}", wrapper.DeletePlan)

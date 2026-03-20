@@ -44,6 +44,8 @@ func (h *PlanHandler) CreatePlan(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		ProgramID   *string            `json:"program_id,omitempty"`
 		Name        string             `json:"name"`
+		Date        *domain.DateOnly   `json:"date,omitempty"`
+		SessionName *string            `json:"session_name,omitempty"`
 		Description *string            `json:"description,omitempty"`
 		Notes       *string            `json:"notes,omitempty"`
 		Metadata    json.RawMessage    `json:"metadata,omitempty"`
@@ -59,6 +61,8 @@ func (h *PlanHandler) CreatePlan(w http.ResponseWriter, r *http.Request) {
 
 	plan := &domain.Plan{
 		Name:        req.Name,
+		Date:        req.Date,
+		SessionName: req.SessionName,
 		Description: req.Description,
 		Notes:       req.Notes,
 		Metadata:    req.Metadata,
@@ -155,6 +159,8 @@ func (h *PlanHandler) UpdatePlan(w http.ResponseWriter, r *http.Request) {
 
 	var req struct {
 		Name        string             `json:"name"`
+		Date        *domain.DateOnly   `json:"date,omitempty"`
+		SessionName *string            `json:"session_name,omitempty"`
 		Description *string            `json:"description,omitempty"`
 		Notes       *string            `json:"notes,omitempty"`
 		Metadata    json.RawMessage    `json:"metadata,omitempty"`
@@ -169,6 +175,8 @@ func (h *PlanHandler) UpdatePlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	existing.Name = req.Name
+	existing.Date = req.Date
+	existing.SessionName = req.SessionName
 	existing.Description = req.Description
 	existing.Notes = req.Notes
 	existing.Metadata = req.Metadata
@@ -261,7 +269,22 @@ func (h *PlanHandler) ListPlans(w http.ResponseWriter, r *http.Request) {
 	}
 	after := r.URL.Query().Get("after")
 
-	plans, nextCursor, hasMore, err := h.repo.List(ctx, limit, after)
+	var plans []*domain.Plan
+	var nextCursor string
+	var hasMore bool
+	var err error
+
+	if programIDStr := r.URL.Query().Get("program_id"); programIDStr != "" {
+		programID, parseErr := uuid.Parse(programIDStr)
+		if parseErr != nil {
+			middleware.WriteValidationError(w, "Invalid program_id format", nil)
+			return
+		}
+		plans, nextCursor, hasMore, err = h.repo.ListByProgramID(ctx, programID, limit, after)
+	} else {
+		plans, nextCursor, hasMore, err = h.repo.List(ctx, limit, after)
+	}
+
 	if err != nil {
 		middleware.WriteInternalError(w, "Failed to list plans")
 		return

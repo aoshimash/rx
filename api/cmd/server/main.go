@@ -129,7 +129,7 @@ func main() {
 
 		// Plan routes
 		r.Post("/plans", planHandler.CreatePlan)
-		r.Post("/plans/from-program", programHandler.ConvertToPlan)
+		r.Post("/plans/from-program", programHandler.ConvertToPlans)
 		r.Get("/plans", planHandler.ListPlans)
 		r.Get("/plans/{id}", planHandler.GetPlan)
 		r.Put("/plans/{id}", planHandler.UpdatePlan)

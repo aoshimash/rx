@@ -149,6 +149,13 @@ func ValidatePlan(p *Plan) error {
 		return err
 	}
 
+	// Validate session_name length if provided
+	if p.SessionName != nil {
+		if err := ValidateStringLength("session_name", *p.SessionName, 1, 200); err != nil {
+			return err
+		}
+	}
+
 	// Validate description length if provided
 	if p.Description != nil {
 		if err := ValidateStringLength("description", *p.Description, 0, 2000); err != nil {

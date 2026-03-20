@@ -28,7 +28,7 @@ func setupProgramTestRouter() (chi.Router, *ProgramHandler) {
 	r.Get("/programs/{id}", handler.GetProgram)
 	r.Put("/programs/{id}", handler.UpdateProgram)
 	r.Delete("/programs/{id}", handler.DeleteProgram)
-	r.Post("/plans/from-program", handler.ConvertToPlan)
+	r.Post("/plans/from-program", handler.ConvertToPlans)
 
 	return r, handler
 }
@@ -236,10 +236,10 @@ func TestProgramHandler_ListPrograms(t *testing.T) {
 	})
 }
 
-func TestProgramHandler_ConvertToPlan(t *testing.T) {
+func TestProgramHandler_ConvertToPlans(t *testing.T) {
 	router, _ := setupProgramTestRouter()
 
-	t.Run("converts program to plan", func(t *testing.T) {
+	t.Run("converts program to plans array", func(t *testing.T) {
 		created := createTestProgram(t, router)
 		programID := created["id"].(string)
 
@@ -266,10 +266,12 @@ func TestProgramHandler_ConvertToPlan(t *testing.T) {
 
 		require.Equal(t, http.StatusCreated, w.Code)
 
-		var result map[string]interface{}
-		err := json.Unmarshal(w.Body.Bytes(), &result)
+		var results []map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &results)
 		require.NoError(t, err)
+		require.Len(t, results, 1)
 
+		result := results[0]
 		assert.Equal(t, "Week 1 Plan", result["name"])
 		assert.Equal(t, programID, result["program_id"])
 		assert.NotEmpty(t, result["id"])
