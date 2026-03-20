@@ -169,13 +169,14 @@ func (s *planStore) paginatePlans(plans []*domain.Plan, limit int, after string)
 
 	var startIdx int
 	if after != "" {
-		_, cursorID, err := decodePlanCursor(after)
+		cursorTime, cursorID, err := decodePlanCursor(after)
 		if err != nil {
 			return nil, "", false, err
 		}
+		startIdx = len(plans) // default: cursor is past all elements
 		for i, p := range plans {
-			if p.ID == cursorID {
-				startIdx = i + 1
+			if p.CreatedAt.After(cursorTime) || (p.CreatedAt.Equal(cursorTime) && p.ID.String() > cursorID.String()) {
+				startIdx = i
 				break
 			}
 		}

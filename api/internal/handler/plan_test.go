@@ -110,102 +110,104 @@ func listPlans(t *testing.T, router chi.Router) map[string]interface{} {
 	return result
 }
 
-func TestPlanHandler_ListPlans_HidesExecutedPlans(t *testing.T) {
-	router, _, _ := setupPlanTestRouter()
+func TestPlanHandler_ListPlans(t *testing.T) {
+	t.Run("hides executed plans", func(t *testing.T) {
+		router, _, _ := setupPlanTestRouter()
 
-	// Create 3 plans
-	plan1 := createTestPlan(t, router, "Plan 1")
-	plan2 := createTestPlan(t, router, "Plan 2")
-	createTestPlan(t, router, "Plan 3")
+		// Create 3 plans
+		plan1 := createTestPlan(t, router, "Plan 1")
+		plan2 := createTestPlan(t, router, "Plan 2")
+		createTestPlan(t, router, "Plan 3")
 
-	// All 3 should be visible
-	result := listPlans(t, router)
-	data := result["data"].([]interface{})
-	assert.Len(t, data, 3)
+		// All 3 should be visible
+		result := listPlans(t, router)
+		data := result["data"].([]interface{})
+		assert.Len(t, data, 3)
 
-	// Execute plan 1 by creating a log with plan_id
-	plan1ID := plan1["id"].(string)
-	createTestLog(t, router, &plan1ID)
+		// Execute plan 1 by creating a log with plan_id
+		plan1ID := plan1["id"].(string)
+		createTestLog(t, router, &plan1ID)
 
-	// Now only 2 should be visible (plan 2 and plan 3)
-	result = listPlans(t, router)
-	data = result["data"].([]interface{})
-	assert.Len(t, data, 2)
+		// Now only 2 should be visible (plan 2 and plan 3)
+		result = listPlans(t, router)
+		data = result["data"].([]interface{})
+		assert.Len(t, data, 2)
 
-	// Verify plan 1 is not in the list
-	for _, item := range data {
-		plan := item.(map[string]interface{})
-		assert.NotEqual(t, plan1ID, plan["id"])
-	}
+		// Verify plan 1 is not in the list
+		for _, item := range data {
+			plan := item.(map[string]interface{})
+			assert.NotEqual(t, plan1ID, plan["id"])
+		}
 
-	// Execute plan 2
-	plan2ID := plan2["id"].(string)
-	createTestLog(t, router, &plan2ID)
+		// Execute plan 2
+		plan2ID := plan2["id"].(string)
+		createTestLog(t, router, &plan2ID)
 
-	// Now only 1 should be visible (plan 3)
-	result = listPlans(t, router)
-	data = result["data"].([]interface{})
-	assert.Len(t, data, 1)
-}
+		// Now only 1 should be visible (plan 3)
+		result = listPlans(t, router)
+		data = result["data"].([]interface{})
+		assert.Len(t, data, 1)
+	})
 
-func TestPlanHandler_ListPlans_ExecutedPlanStillAccessibleByID(t *testing.T) {
-	router, _, _ := setupPlanTestRouter()
+	t.Run("executed plan still accessible by ID", func(t *testing.T) {
+		router, _, _ := setupPlanTestRouter()
 
-	// Create and execute a plan
-	plan := createTestPlan(t, router, "Executed Plan")
-	planID := plan["id"].(string)
-	createTestLog(t, router, &planID)
+		// Create and execute a plan
+		plan := createTestPlan(t, router, "Executed Plan")
+		planID := plan["id"].(string)
+		createTestLog(t, router, &planID)
 
-	// Plan should not be in list
-	result := listPlans(t, router)
-	data := result["data"].([]interface{})
-	assert.Len(t, data, 0)
+		// Plan should not be in list
+		result := listPlans(t, router)
+		data := result["data"].([]interface{})
+		assert.Len(t, data, 0)
 
-	// But should still be accessible by ID
-	req := httptest.NewRequest(http.MethodGet, "/plans/"+planID, nil)
-	req.Header.Set("Authorization", "Bearer test-token")
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+		// But should still be accessible by ID
+		req := httptest.NewRequest(http.MethodGet, "/plans/"+planID, nil)
+		req.Header.Set("Authorization", "Bearer test-token")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusOK, w.Code)
-	var fetched map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &fetched)
-	require.NoError(t, err)
-	assert.Equal(t, planID, fetched["id"])
-}
+		assert.Equal(t, http.StatusOK, w.Code)
+		var fetched map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &fetched)
+		require.NoError(t, err)
+		assert.Equal(t, planID, fetched["id"])
+	})
 
-func TestPlanHandler_ListPlans_OrderByCreatedAt(t *testing.T) {
-	router, _, _ := setupPlanTestRouter()
+	t.Run("order by created_at", func(t *testing.T) {
+		router, _, _ := setupPlanTestRouter()
 
-	// Create plans with small delays to ensure different created_at
-	plan1 := createTestPlan(t, router, "First Plan")
-	plan2 := createTestPlan(t, router, "Second Plan")
-	plan3 := createTestPlan(t, router, "Third Plan")
+		// Create plans with small delays to ensure different created_at
+		plan1 := createTestPlan(t, router, "First Plan")
+		plan2 := createTestPlan(t, router, "Second Plan")
+		plan3 := createTestPlan(t, router, "Third Plan")
 
-	// List should return in created_at order
-	result := listPlans(t, router)
-	data := result["data"].([]interface{})
-	require.Len(t, data, 3)
+		// List should return in created_at order
+		result := listPlans(t, router)
+		data := result["data"].([]interface{})
+		require.Len(t, data, 3)
 
-	// Verify order: First, Second, Third
-	assert.Equal(t, plan1["id"], data[0].(map[string]interface{})["id"])
-	assert.Equal(t, plan2["id"], data[1].(map[string]interface{})["id"])
-	assert.Equal(t, plan3["id"], data[2].(map[string]interface{})["id"])
-}
+		// Verify order: First, Second, Third
+		assert.Equal(t, plan1["id"], data[0].(map[string]interface{})["id"])
+		assert.Equal(t, plan2["id"], data[1].(map[string]interface{})["id"])
+		assert.Equal(t, plan3["id"], data[2].(map[string]interface{})["id"])
+	})
 
-func TestPlanHandler_ListPlans_LogWithoutPlanIDDoesNotAffectList(t *testing.T) {
-	router, _, _ := setupPlanTestRouter()
+	t.Run("log without plan_id does not affect list", func(t *testing.T) {
+		router, _, _ := setupPlanTestRouter()
 
-	// Create a plan
-	createTestPlan(t, router, "Standalone Plan")
+		// Create a plan
+		createTestPlan(t, router, "Standalone Plan")
 
-	// Create a log WITHOUT plan_id
-	createTestLog(t, router, nil)
+		// Create a log WITHOUT plan_id
+		createTestLog(t, router, nil)
 
-	// Plan should still be visible
-	result := listPlans(t, router)
-	data := result["data"].([]interface{})
-	assert.Len(t, data, 1)
+		// Plan should still be visible
+		result := listPlans(t, router)
+		data := result["data"].([]interface{})
+		assert.Len(t, data, 1)
+	})
 }
 
 // Suppress unused import warning
