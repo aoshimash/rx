@@ -27,7 +27,7 @@ function groupByExercise(exercises: PlanEntryCreate[]): GroupData[] {
       groups.push(group);
       nameToGroup.set(name, group);
     }
-    nameToGroup.get(name)!.indices.push(i);
+    nameToGroup.get(name)?.indices.push(i);
   });
 
   return groups;
@@ -41,7 +41,7 @@ export function ExerciseTable({ exercises, onChange }: ExerciseTableProps) {
 
   const updateEntry = (index: number, updater: (e: PlanEntryCreate) => PlanEntryCreate) => {
     const next = [...exercises];
-    if (next[index]) next[index] = updater(next[index]!);
+    if (next[index]) next[index] = updater(next[index]);
     onChange(next);
   };
 
@@ -92,7 +92,7 @@ export function ExerciseTable({ exercises, onChange }: ExerciseTableProps) {
         <ExerciseGroup
           key={group.name}
           exerciseName={group.name}
-          entries={group.indices.map((i) => ({ entry: exercises[i]!, flatIndex: i }))}
+          entries={group.indices.map((i) => ({ entry: exercises[i], flatIndex: i }))}
           onRename={(newName) => handleRename(group.name, newName)}
           onRemoveExercise={() => handleRemoveExercise(group.name)}
           onAddSet={() => handleAddSet(group.name)}

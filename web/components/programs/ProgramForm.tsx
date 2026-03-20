@@ -45,7 +45,7 @@ function entriesToSessionGroups(entries: ProgramEntryCreate[]): SessionGroup[] {
       sessionMap.set(sessionName, []);
       sessionOrder.push(sessionName);
     }
-    sessionMap.get(sessionName)!.push({
+    sessionMap.get(sessionName)?.push({
       exercise_name: entry.exercise_name,
       sets: entry.sets,
       reps: entry.reps,
