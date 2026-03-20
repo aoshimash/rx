@@ -19,12 +19,14 @@ export default function EditPlanPage() {
   const [planName, setPlanName] = useState('');
   const [planDescription, setPlanDescription] = useState('');
   const [planDate, setPlanDate] = useState<string | undefined>();
+  const [planSessionName, setPlanSessionName] = useState<string | undefined>();
 
   useEffect(() => {
     if (plan) {
       setPlanName(plan.name);
       setPlanDescription(plan.description || '');
       setPlanDate(plan.date || undefined);
+      setPlanSessionName(plan.session_name || undefined);
     }
   }, [plan]);
 
@@ -35,6 +37,7 @@ export default function EditPlanPage() {
         name: planName,
         description: planDescription,
         date: planDate,
+        session_name: planSessionName,
         entries,
       },
     });

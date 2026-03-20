@@ -25,6 +25,7 @@ export interface Plan {
 
 export interface PlanCreate {
   name: string;
+  program_id?: string;
   date?: string;
   session_name?: string;
   description?: string;
