@@ -2,8 +2,11 @@ package postgres
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/aoshimash/rx/api/internal/domain"
@@ -255,49 +258,27 @@ func (r *planRepository) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 func (r *planRepository) List(ctx context.Context, limit int, after string) ([]*domain.Plan, string, bool, error) {
+	var startTime *time.Time
 	var startID uuid.UUID
 	if after != "" {
-		var err error
-		startID, err = decodeCursor(after)
+		t, id, err := decodePlanCursor(after)
 		if err != nil {
 			return nil, "", false, err
 		}
+		startTime = &t
+		startID = id
 	}
 
 	query := `
 		SELECT id, program_id, name, date, session_name, description, notes, metadata, created_at, updated_at
 		FROM plans
-		WHERE ($1::uuid IS NULL OR id > $1)
-		ORDER BY id ASC
-		LIMIT $2
+		WHERE NOT EXISTS (SELECT 1 FROM logs WHERE logs.plan_id = plans.id)
+		  AND ($1::timestamptz IS NULL OR (created_at, id) > ($1, $2::uuid))
+		ORDER BY created_at ASC, id ASC
+		LIMIT $3
 	`
 
-	return r.listPlans(ctx, query, startID, limit)
-}
-
-func (r *planRepository) ListByProgramID(ctx context.Context, programID uuid.UUID, limit int, after string) ([]*domain.Plan, string, bool, error) {
-	var startID uuid.UUID
-	if after != "" {
-		var err error
-		startID, err = decodeCursor(after)
-		if err != nil {
-			return nil, "", false, err
-		}
-	}
-
-	query := `
-		SELECT id, program_id, name, date, session_name, description, notes, metadata, created_at, updated_at
-		FROM plans
-		WHERE program_id = $3 AND ($1::uuid IS NULL OR id > $1)
-		ORDER BY id ASC
-		LIMIT $2
-	`
-
-	return r.listPlansWithExtra(ctx, query, startID, limit, programID)
-}
-
-func (r *planRepository) listPlans(ctx context.Context, query string, startID uuid.UUID, limit int) ([]*domain.Plan, string, bool, error) {
-	rows, err := r.pool.Query(ctx, query, startID, limit+1)
+	rows, err := r.pool.Query(ctx, query, startTime, startID, limit+1)
 	if err != nil {
 		slog.Error("Failed to list plans", "error", err)
 		return nil, "", false, err
@@ -307,11 +288,29 @@ func (r *planRepository) listPlans(ctx context.Context, query string, startID uu
 	return r.scanPlanList(ctx, rows, limit)
 }
 
-func (r *planRepository) listPlansWithExtra(ctx context.Context, query string, startID uuid.UUID, limit int, extraArgs ...interface{}) ([]*domain.Plan, string, bool, error) {
-	args := []interface{}{startID, limit + 1}
-	args = append(args, extraArgs...)
+func (r *planRepository) ListByProgramID(ctx context.Context, programID uuid.UUID, limit int, after string) ([]*domain.Plan, string, bool, error) {
+	var startTime *time.Time
+	var startID uuid.UUID
+	if after != "" {
+		t, id, err := decodePlanCursor(after)
+		if err != nil {
+			return nil, "", false, err
+		}
+		startTime = &t
+		startID = id
+	}
 
-	rows, err := r.pool.Query(ctx, query, args...)
+	query := `
+		SELECT id, program_id, name, date, session_name, description, notes, metadata, created_at, updated_at
+		FROM plans
+		WHERE program_id = $4
+		  AND NOT EXISTS (SELECT 1 FROM logs WHERE logs.plan_id = plans.id)
+		  AND ($1::timestamptz IS NULL OR (created_at, id) > ($1, $2::uuid))
+		ORDER BY created_at ASC, id ASC
+		LIMIT $3
+	`
+
+	rows, err := r.pool.Query(ctx, query, startTime, startID, limit+1, programID)
 	if err != nil {
 		slog.Error("Failed to list plans", "error", err)
 		return nil, "", false, err
@@ -372,8 +371,36 @@ func (r *planRepository) scanPlanList(ctx context.Context, rows pgx.Rows, limit 
 
 	var nextCursor string
 	if hasMore && len(plans) > 0 {
-		nextCursor = encodeCursor(plans[len(plans)-1].ID)
+		last := plans[len(plans)-1]
+		nextCursor = encodePlanCursor(last.CreatedAt, last.ID)
 	}
 
 	return plans, nextCursor, hasMore, nil
+}
+
+// encodePlanCursor encodes a (created_at, id) pair for plan cursor-based pagination
+func encodePlanCursor(createdAt time.Time, id uuid.UUID) string {
+	s := createdAt.Format(time.RFC3339Nano) + "|" + id.String()
+	return base64.URLEncoding.EncodeToString([]byte(s))
+}
+
+// decodePlanCursor decodes a plan cursor to (created_at, id)
+func decodePlanCursor(cursor string) (time.Time, uuid.UUID, error) {
+	data, err := base64.URLEncoding.DecodeString(cursor)
+	if err != nil {
+		return time.Time{}, uuid.Nil, err
+	}
+	parts := strings.SplitN(string(data), "|", 2)
+	if len(parts) != 2 {
+		return time.Time{}, uuid.Nil, fmt.Errorf("invalid plan cursor format")
+	}
+	t, err := time.Parse(time.RFC3339Nano, parts[0])
+	if err != nil {
+		return time.Time{}, uuid.Nil, err
+	}
+	id, err := uuid.Parse(parts[1])
+	if err != nil {
+		return time.Time{}, uuid.Nil, err
+	}
+	return t, id, nil
 }

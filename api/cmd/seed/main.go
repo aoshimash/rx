@@ -52,10 +52,11 @@ func main() {
 		}
 	} else {
 		slog.Warn("STORAGE_TYPE is not postgres — seeding in-memory (data will not persist)")
+		logRepo := memory.NewLogRepository()
 		err := seed.Run(ctx,
 			memory.NewProgramRepository(),
-			memory.NewPlanRepository(),
-			memory.NewLogRepository(),
+			memory.NewPlanRepository(logRepo),
+			logRepo,
 		)
 		if err != nil {
 			slog.Error("Seeding failed", "error", err)

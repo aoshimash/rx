@@ -23,7 +23,7 @@ type PlanRepository interface {
 
 	// List retrieves Plans with pagination
 	// limit: maximum number of records (1-100)
-	// after: cursor for pagination (UUID string, base64-encoded)
+	// after: cursor for pagination (base64-encoded "created_at|UUID" string)
 	// Returns: plans, next cursor (empty string if no more), has_more flag
 	List(ctx context.Context, limit int, after string) ([]*domain.Plan, string, bool, error)
 

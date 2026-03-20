@@ -49,8 +49,8 @@ func main() {
 	} else {
 		slog.Info("Using in-memory storage backend")
 		programRepo = memory.NewProgramRepository()
-		planRepo = memory.NewPlanRepository()
 		logRepo = memory.NewLogRepository()
+		planRepo = memory.NewPlanRepository(logRepo)
 	}
 
 	// Initialize storage provider (optional)
