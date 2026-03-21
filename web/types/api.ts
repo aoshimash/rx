@@ -133,6 +133,7 @@ export interface Program {
   notes?: string;
   metadata?: Record<string, unknown>;
   entries?: ProgramEntry[];
+  archived_at?: string;
   created_at: string;
   updated_at: string;
 }
@@ -211,6 +212,7 @@ export interface PaginatedResponse<T> {
 export type PlanListResponse = PaginatedResponse<Plan>;
 export type LogListResponse = PaginatedResponse<Log>;
 export type ProgramListResponse = PaginatedResponse<Program>;
+export type CycleListResponse = PaginatedResponse<Cycle>;
 
 // ============================================================================
 // Error

@@ -33,7 +33,7 @@ export default function PlansPage() {
   const logs = logsData?.data || [];
 
   // Build plan statuses with a single global NEXT plan
-  const programGroups = useMemo(() => buildGlobalPlanStatuses(plans, logs), [plans, logs]);
+  const cycleGroups = useMemo(() => buildGlobalPlanStatuses(plans, logs), [plans, logs]);
 
   // Create Plan dialog state
   const [createOpen, setCreateOpen] = useState(false);
@@ -137,11 +137,11 @@ export default function PlansPage() {
         </div>
       ) : (
         <div className="space-y-8">
-          {programGroups.map(({ groupKey, programName, isStandalone, statuses }) => (
+          {cycleGroups.map(({ groupKey, cycleName, isStandalone, statuses }) => (
             <section key={groupKey}>
-              {programGroups.length > 1 && !isStandalone && (
+              {cycleGroups.length > 1 && !isStandalone && (
                 <h2 className="text-lg font-semibold mb-3">
-                  {programName}
+                  {cycleName}
                   <span className="text-sm font-normal text-muted-foreground ml-2">
                     {statuses.length} session{statuses.length !== 1 ? 's' : ''}
                   </span>

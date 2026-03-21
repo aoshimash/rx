@@ -4,11 +4,16 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useProgram } from '@/lib/hooks/usePrograms';
+import {
+  useArchiveProgram,
+  useDuplicateProgram,
+  useProgram,
+  useUnarchiveProgram,
+} from '@/lib/hooks/usePrograms';
 import type { ProgramEntry } from '@/types/api';
-import { ArrowRightLeft, Edit } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowRightLeft, Copy } from 'lucide-react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
 type ExerciseGroup = { name: string; entries: ProgramEntry[] };
 type SessionGroup = { name: string; exerciseGroups: ExerciseGroup[] };
@@ -60,8 +65,12 @@ function groupByExercise(entries: ProgramEntry[]): ExerciseGroup[] {
 
 export default function ProgramDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const programId = params.id as string;
   const { data: program, isLoading } = useProgram(programId);
+  const archiveProgram = useArchiveProgram();
+  const unarchiveProgram = useUnarchiveProgram();
+  const duplicateProgram = useDuplicateProgram();
 
   if (isLoading) {
     return (
@@ -81,30 +90,65 @@ export default function ProgramDetailPage() {
   }
 
   const sessions = groupBySession(program.entries || []);
+  const isArchived = !!program.archived_at;
+
+  const handleDuplicate = async () => {
+    await duplicateProgram.mutateAsync(programId);
+    router.push('/programs');
+  };
+
+  const handleArchiveToggle = async () => {
+    if (isArchived) {
+      await unarchiveProgram.mutateAsync(programId);
+    } else {
+      await archiveProgram.mutateAsync(programId);
+      router.push('/programs');
+    }
+  };
 
   return (
     <main className="container mx-auto p-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">{program.name}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold">{program.name}</h1>
+            {isArchived && <Badge variant="secondary">Archived</Badge>}
+          </div>
           {program.description && (
             <p className="text-muted-foreground mt-1">{program.description}</p>
           )}
           {program.notes && <p className="text-sm text-muted-foreground mt-1">{program.notes}</p>}
         </div>
         <div className="flex gap-2">
-          <Link href={`/programs/${program.id}/edit`}>
-            <Button variant="outline">
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
-          </Link>
-          <Link href={`/programs/${program.id}/convert`}>
-            <Button>
-              <ArrowRightLeft className="h-4 w-4 mr-2" />
-              Convert to Plan
-            </Button>
-          </Link>
+          <Button variant="outline" onClick={handleDuplicate} disabled={duplicateProgram.isPending}>
+            <Copy className="h-4 w-4 mr-2" />
+            Duplicate
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleArchiveToggle}
+            disabled={archiveProgram.isPending || unarchiveProgram.isPending}
+          >
+            {isArchived ? (
+              <>
+                <ArchiveRestore className="h-4 w-4 mr-2" />
+                Unarchive
+              </>
+            ) : (
+              <>
+                <Archive className="h-4 w-4 mr-2" />
+                Archive
+              </>
+            )}
+          </Button>
+          {!isArchived && (
+            <Link href={`/programs/${program.id}/convert`}>
+              <Button>
+                <ArrowRightLeft className="h-4 w-4 mr-2" />
+                Convert to Plan
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
