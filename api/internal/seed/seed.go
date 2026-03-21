@@ -75,20 +75,48 @@ func createPlan(ctx context.Context, repo repository.PlanRepository, plan domain
 func sbdProgram() domain.Program {
 	return domain.Program{
 		ID:          uuid.New(),
-		Name:        "SBD 基本プログラム",
-		Description: strPtr("スクワット・ベンチプレス・デッドリフトを中心としたパワーリフティング向けプログラム"),
+		Name:        "SBD 3-Week プログラム",
+		Description: strPtr("3週間のスクワット・ベンチプレス・デッドリフト周期プログラム（週2日）"),
 		Entries: []domain.ProgramEntry{
-			// スクワット
-			{Order: 1, ExerciseName: "スクワット", Sets: intPtr(1), Reps: intPtr(1), RPE: intPtr(9), Metadata: setTypeMeta("top")},
-			{Order: 2, ExerciseName: "スクワット", Sets: intPtr(3), Reps: intPtr(3), RPE: intPtr(8), Metadata: setTypeMeta("main")},
-			{Order: 3, ExerciseName: "スクワット", Sets: intPtr(3), Reps: intPtr(5), RPE: intPtr(7), Metadata: setTypeMeta("backoff")},
-			// ベンチプレス
-			{Order: 4, ExerciseName: "ベンチプレス", Sets: intPtr(1), Reps: intPtr(1), RPE: intPtr(9), Metadata: setTypeMeta("top")},
-			{Order: 5, ExerciseName: "ベンチプレス", Sets: intPtr(3), Reps: intPtr(3), RPE: intPtr(8), Metadata: setTypeMeta("main")},
-			{Order: 6, ExerciseName: "ベンチプレス", Sets: intPtr(3), Reps: intPtr(5), RPE: intPtr(7), Metadata: setTypeMeta("backoff")},
-			// デッドリフト
-			{Order: 7, ExerciseName: "デッドリフト", Sets: intPtr(1), Reps: intPtr(1), RPE: intPtr(9), Metadata: setTypeMeta("top")},
-			{Order: 8, ExerciseName: "デッドリフト", Sets: intPtr(2), Reps: intPtr(3), RPE: intPtr(8), Metadata: setTypeMeta("main")},
+			// ── Week 1 Day 1: Heavy ──
+			{Order: 1, ExerciseName: "スクワット", Sets: intPtr(1), Reps: intPtr(1), RPE: intPtr(9), Metadata: sessionSetMeta("Week 1 Day 1", "top")},
+			{Order: 2, ExerciseName: "スクワット", Sets: intPtr(3), Reps: intPtr(3), RPE: intPtr(8), Metadata: sessionSetMeta("Week 1 Day 1", "main")},
+			{Order: 3, ExerciseName: "スクワット", Sets: intPtr(3), Reps: intPtr(5), RPE: intPtr(7), Metadata: sessionSetMeta("Week 1 Day 1", "backoff")},
+			{Order: 4, ExerciseName: "ベンチプレス", Sets: intPtr(1), Reps: intPtr(1), RPE: intPtr(9), Metadata: sessionSetMeta("Week 1 Day 1", "top")},
+			{Order: 5, ExerciseName: "ベンチプレス", Sets: intPtr(3), Reps: intPtr(3), RPE: intPtr(8), Metadata: sessionSetMeta("Week 1 Day 1", "main")},
+			{Order: 6, ExerciseName: "ベンチプレス", Sets: intPtr(3), Reps: intPtr(5), RPE: intPtr(7), Metadata: sessionSetMeta("Week 1 Day 1", "backoff")},
+			{Order: 7, ExerciseName: "デッドリフト", Sets: intPtr(1), Reps: intPtr(1), RPE: intPtr(9), Metadata: sessionSetMeta("Week 1 Day 1", "top")},
+			{Order: 8, ExerciseName: "デッドリフト", Sets: intPtr(2), Reps: intPtr(3), RPE: intPtr(8), Metadata: sessionSetMeta("Week 1 Day 1", "main")},
+			// ── Week 1 Day 2: Volume ──
+			{Order: 9, ExerciseName: "スクワット", Sets: intPtr(4), Reps: intPtr(6), RPE: intPtr(7), Metadata: sessionSetMeta("Week 1 Day 2", "main")},
+			{Order: 10, ExerciseName: "ベンチプレス", Sets: intPtr(4), Reps: intPtr(6), RPE: intPtr(7), Metadata: sessionSetMeta("Week 1 Day 2", "main")},
+			{Order: 11, ExerciseName: "デッドリフト", Sets: intPtr(3), Reps: intPtr(5), RPE: intPtr(7), Metadata: sessionSetMeta("Week 1 Day 2", "main")},
+			// ── Week 2 Day 1: Heavy ──
+			{Order: 12, ExerciseName: "スクワット", Sets: intPtr(1), Reps: intPtr(1), RPE: intPtr(9), Metadata: sessionSetMeta("Week 2 Day 1", "top")},
+			{Order: 13, ExerciseName: "スクワット", Sets: intPtr(4), Reps: intPtr(3), RPE: intPtr(8), Metadata: sessionSetMeta("Week 2 Day 1", "main")},
+			{Order: 14, ExerciseName: "スクワット", Sets: intPtr(2), Reps: intPtr(5), RPE: intPtr(7), Metadata: sessionSetMeta("Week 2 Day 1", "backoff")},
+			{Order: 15, ExerciseName: "ベンチプレス", Sets: intPtr(1), Reps: intPtr(1), RPE: intPtr(9), Metadata: sessionSetMeta("Week 2 Day 1", "top")},
+			{Order: 16, ExerciseName: "ベンチプレス", Sets: intPtr(4), Reps: intPtr(3), RPE: intPtr(8), Metadata: sessionSetMeta("Week 2 Day 1", "main")},
+			{Order: 17, ExerciseName: "ベンチプレス", Sets: intPtr(2), Reps: intPtr(5), RPE: intPtr(7), Metadata: sessionSetMeta("Week 2 Day 1", "backoff")},
+			{Order: 18, ExerciseName: "デッドリフト", Sets: intPtr(1), Reps: intPtr(1), RPE: intPtr(9), Metadata: sessionSetMeta("Week 2 Day 1", "top")},
+			{Order: 19, ExerciseName: "デッドリフト", Sets: intPtr(3), Reps: intPtr(3), RPE: intPtr(8), Metadata: sessionSetMeta("Week 2 Day 1", "main")},
+			// ── Week 2 Day 2: Volume ──
+			{Order: 20, ExerciseName: "スクワット", Sets: intPtr(4), Reps: intPtr(5), RPE: intPtr(7), Metadata: sessionSetMeta("Week 2 Day 2", "main")},
+			{Order: 21, ExerciseName: "ベンチプレス", Sets: intPtr(4), Reps: intPtr(5), RPE: intPtr(7), Metadata: sessionSetMeta("Week 2 Day 2", "main")},
+			{Order: 22, ExerciseName: "デッドリフト", Sets: intPtr(3), Reps: intPtr(4), RPE: intPtr(7), Metadata: sessionSetMeta("Week 2 Day 2", "main")},
+			// ── Week 3 Day 1: Peak ──
+			{Order: 23, ExerciseName: "スクワット", Sets: intPtr(1), Reps: intPtr(1), RPE: intPtr(9), Metadata: sessionSetMeta("Week 3 Day 1", "top")},
+			{Order: 24, ExerciseName: "スクワット", Sets: intPtr(3), Reps: intPtr(2), RPE: intPtr(9), Metadata: sessionSetMeta("Week 3 Day 1", "main")},
+			{Order: 25, ExerciseName: "スクワット", Sets: intPtr(2), Reps: intPtr(4), RPE: intPtr(7), Metadata: sessionSetMeta("Week 3 Day 1", "backoff")},
+			{Order: 26, ExerciseName: "ベンチプレス", Sets: intPtr(1), Reps: intPtr(1), RPE: intPtr(9), Metadata: sessionSetMeta("Week 3 Day 1", "top")},
+			{Order: 27, ExerciseName: "ベンチプレス", Sets: intPtr(3), Reps: intPtr(2), RPE: intPtr(9), Metadata: sessionSetMeta("Week 3 Day 1", "main")},
+			{Order: 28, ExerciseName: "ベンチプレス", Sets: intPtr(2), Reps: intPtr(4), RPE: intPtr(7), Metadata: sessionSetMeta("Week 3 Day 1", "backoff")},
+			{Order: 29, ExerciseName: "デッドリフト", Sets: intPtr(1), Reps: intPtr(1), RPE: intPtr(9), Metadata: sessionSetMeta("Week 3 Day 1", "top")},
+			{Order: 30, ExerciseName: "デッドリフト", Sets: intPtr(2), Reps: intPtr(2), RPE: intPtr(9), Metadata: sessionSetMeta("Week 3 Day 1", "main")},
+			// ── Week 3 Day 2: Deload ──
+			{Order: 31, ExerciseName: "スクワット", Sets: intPtr(3), Reps: intPtr(5), RPE: intPtr(6), Metadata: sessionSetMeta("Week 3 Day 2", "main")},
+			{Order: 32, ExerciseName: "ベンチプレス", Sets: intPtr(3), Reps: intPtr(5), RPE: intPtr(6), Metadata: sessionSetMeta("Week 3 Day 2", "main")},
+			{Order: 33, ExerciseName: "デッドリフト", Sets: intPtr(2), Reps: intPtr(5), RPE: intPtr(6), Metadata: sessionSetMeta("Week 3 Day 2", "main")},
 		},
 	}
 }
@@ -96,13 +124,25 @@ func sbdProgram() domain.Program {
 func accessoryProgram() domain.Program {
 	return domain.Program{
 		ID:          uuid.New(),
-		Name:        "補助種目プログラム",
-		Description: strPtr("SBD の弱点補強のための補助種目"),
+		Name:        "補助種目 2-Week プログラム",
+		Description: strPtr("SBD の弱点補強のための補助種目（2週間サイクル・週2日）"),
 		Entries: []domain.ProgramEntry{
-			{Order: 1, ExerciseName: "ルーマニアンデッドリフト", Sets: intPtr(3), Reps: intPtr(8), RPE: intPtr(7)},
-			{Order: 2, ExerciseName: "クローズグリップベンチプレス", Sets: intPtr(3), Reps: intPtr(8), RPE: intPtr(7)},
-			{Order: 3, ExerciseName: "フロントスクワット", Sets: intPtr(3), Reps: intPtr(5), RPE: intPtr(7)},
-			{Order: 4, ExerciseName: "バーベルロウ", Sets: intPtr(4), Reps: intPtr(8), RPE: intPtr(7)},
+			// ── Week 1 Day 1: Posterior Chain ──
+			{Order: 1, ExerciseName: "ルーマニアンデッドリフト", Sets: intPtr(3), Reps: intPtr(8), RPE: intPtr(7), Metadata: sessionMeta("Week 1 Day 1")},
+			{Order: 2, ExerciseName: "バーベルロウ", Sets: intPtr(4), Reps: intPtr(8), RPE: intPtr(7), Metadata: sessionMeta("Week 1 Day 1")},
+			{Order: 3, ExerciseName: "ハムストリングカール", Sets: intPtr(3), Reps: intPtr(12), RPE: intPtr(7), Metadata: sessionMeta("Week 1 Day 1")},
+			// ── Week 1 Day 2: Upper & Quad ──
+			{Order: 4, ExerciseName: "クローズグリップベンチプレス", Sets: intPtr(3), Reps: intPtr(8), RPE: intPtr(7), Metadata: sessionMeta("Week 1 Day 2")},
+			{Order: 5, ExerciseName: "フロントスクワット", Sets: intPtr(3), Reps: intPtr(5), RPE: intPtr(7), Metadata: sessionMeta("Week 1 Day 2")},
+			{Order: 6, ExerciseName: "ダンベルショルダープレス", Sets: intPtr(3), Reps: intPtr(10), RPE: intPtr(7), Metadata: sessionMeta("Week 1 Day 2")},
+			// ── Week 2 Day 1: Posterior Chain (heavier) ──
+			{Order: 7, ExerciseName: "ルーマニアンデッドリフト", Sets: intPtr(4), Reps: intPtr(6), RPE: intPtr(8), Metadata: sessionMeta("Week 2 Day 1")},
+			{Order: 8, ExerciseName: "バーベルロウ", Sets: intPtr(4), Reps: intPtr(6), RPE: intPtr(8), Metadata: sessionMeta("Week 2 Day 1")},
+			{Order: 9, ExerciseName: "ハムストリングカール", Sets: intPtr(3), Reps: intPtr(10), RPE: intPtr(8), Metadata: sessionMeta("Week 2 Day 1")},
+			// ── Week 2 Day 2: Upper & Quad (heavier) ──
+			{Order: 10, ExerciseName: "クローズグリップベンチプレス", Sets: intPtr(4), Reps: intPtr(6), RPE: intPtr(8), Metadata: sessionMeta("Week 2 Day 2")},
+			{Order: 11, ExerciseName: "フロントスクワット", Sets: intPtr(4), Reps: intPtr(4), RPE: intPtr(8), Metadata: sessionMeta("Week 2 Day 2")},
+			{Order: 12, ExerciseName: "ダンベルショルダープレス", Sets: intPtr(3), Reps: intPtr(8), RPE: intPtr(8), Metadata: sessionMeta("Week 2 Day 2")},
 		},
 	}
 }
@@ -112,10 +152,10 @@ func sbdWeek1Plans(programID uuid.UUID) []domain.Plan {
 		{
 			ID:          uuid.New(),
 			ProgramID:   &programID,
-			Name:        "SBD Week 1 Day 1",
+			Name:        "SBD Week 1 Day 1 - Heavy",
 			Date:        datePtr(2026, 3, 16),
-			SessionName: strPtr("Day 1"),
-			Notes:       strPtr("1週目 Day 1: スクワットTop130kg / ベンチTop100kg / デッドリフトTop160kg"),
+			SessionName: strPtr("Week 1 Day 1"),
+			Notes:       strPtr("Week 1 Heavy: SQ Top130kg / BP Top100kg / DL Top160kg"),
 			Entries: []domain.PlanEntry{
 				{Order: 1, ExerciseName: "スクワット", Sets: intPtr(1), Reps: intPtr(1), LoadKg: f64Ptr(130), RPE: intPtr(9), Metadata: setTypeMeta("top")},
 				{Order: 2, ExerciseName: "スクワット", Sets: intPtr(3), Reps: intPtr(3), LoadKg: f64Ptr(110), RPE: intPtr(8), Metadata: setTypeMeta("main")},
@@ -130,19 +170,14 @@ func sbdWeek1Plans(programID uuid.UUID) []domain.Plan {
 		{
 			ID:          uuid.New(),
 			ProgramID:   &programID,
-			Name:        "SBD Week 1 Day 2",
+			Name:        "SBD Week 1 Day 2 - Volume",
 			Date:        datePtr(2026, 3, 19),
-			SessionName: strPtr("Day 2"),
-			Notes:       strPtr("1週目 Day 2: スクワットTop132.5kg / ベンチTop102.5kg / デッドリフトTop162.5kg"),
+			SessionName: strPtr("Week 1 Day 2"),
+			Notes:       strPtr("Week 1 Volume: SQ 4x6@100kg / BP 4x6@75kg / DL 3x5@130kg"),
 			Entries: []domain.PlanEntry{
-				{Order: 1, ExerciseName: "スクワット", Sets: intPtr(1), Reps: intPtr(1), LoadKg: f64Ptr(132.5), RPE: intPtr(9), Metadata: setTypeMeta("top")},
-				{Order: 2, ExerciseName: "スクワット", Sets: intPtr(3), Reps: intPtr(3), LoadKg: f64Ptr(112.5), RPE: intPtr(8), Metadata: setTypeMeta("main")},
-				{Order: 3, ExerciseName: "スクワット", Sets: intPtr(3), Reps: intPtr(5), LoadKg: f64Ptr(102.5), RPE: intPtr(7), Metadata: setTypeMeta("backoff")},
-				{Order: 4, ExerciseName: "ベンチプレス", Sets: intPtr(1), Reps: intPtr(1), LoadKg: f64Ptr(102.5), RPE: intPtr(9), Metadata: setTypeMeta("top")},
-				{Order: 5, ExerciseName: "ベンチプレス", Sets: intPtr(3), Reps: intPtr(3), LoadKg: f64Ptr(87.5), RPE: intPtr(8), Metadata: setTypeMeta("main")},
-				{Order: 6, ExerciseName: "ベンチプレス", Sets: intPtr(3), Reps: intPtr(5), LoadKg: f64Ptr(80), RPE: intPtr(7), Metadata: setTypeMeta("backoff")},
-				{Order: 7, ExerciseName: "デッドリフト", Sets: intPtr(1), Reps: intPtr(1), LoadKg: f64Ptr(162.5), RPE: intPtr(9), Metadata: setTypeMeta("top")},
-				{Order: 8, ExerciseName: "デッドリフト", Sets: intPtr(2), Reps: intPtr(3), LoadKg: f64Ptr(142.5), RPE: intPtr(8), Metadata: setTypeMeta("main")},
+				{Order: 1, ExerciseName: "スクワット", Sets: intPtr(4), Reps: intPtr(6), LoadKg: f64Ptr(100), RPE: intPtr(7), Metadata: setTypeMeta("main")},
+				{Order: 2, ExerciseName: "ベンチプレス", Sets: intPtr(4), Reps: intPtr(6), LoadKg: f64Ptr(75), RPE: intPtr(7), Metadata: setTypeMeta("main")},
+				{Order: 3, ExerciseName: "デッドリフト", Sets: intPtr(3), Reps: intPtr(5), LoadKg: f64Ptr(130), RPE: intPtr(7), Metadata: setTypeMeta("main")},
 			},
 		},
 	}
@@ -152,14 +187,13 @@ func accessoryWeek1Plan(programID uuid.UUID) domain.Plan {
 	return domain.Plan{
 		ID:          uuid.New(),
 		ProgramID:   &programID,
-		Name:        "補助 Week 1",
+		Name:        "補助 Week 1 Day 1 - Posterior Chain",
 		Date:        datePtr(2026, 3, 17),
-		SessionName: strPtr("補助 Day 1"),
+		SessionName: strPtr("Week 1 Day 1"),
 		Entries: []domain.PlanEntry{
 			{Order: 1, ExerciseName: "ルーマニアンデッドリフト", Sets: intPtr(3), Reps: intPtr(8), LoadKg: f64Ptr(80), RPE: intPtr(7)},
-			{Order: 2, ExerciseName: "クローズグリップベンチプレス", Sets: intPtr(3), Reps: intPtr(8), LoadKg: f64Ptr(65), RPE: intPtr(7)},
-			{Order: 3, ExerciseName: "フロントスクワット", Sets: intPtr(3), Reps: intPtr(5), LoadKg: f64Ptr(80), RPE: intPtr(7)},
-			{Order: 4, ExerciseName: "バーベルロウ", Sets: intPtr(4), Reps: intPtr(8), LoadKg: f64Ptr(70), RPE: intPtr(7)},
+			{Order: 2, ExerciseName: "バーベルロウ", Sets: intPtr(4), Reps: intPtr(8), LoadKg: f64Ptr(70), RPE: intPtr(7)},
+			{Order: 3, ExerciseName: "ハムストリングカール", Sets: intPtr(3), Reps: intPtr(12), LoadKg: f64Ptr(30), RPE: intPtr(7)},
 		},
 	}
 }
@@ -215,5 +249,19 @@ func datePtr(year, month, day int) *domain.DateOnly {
 
 func setTypeMeta(setType string) json.RawMessage {
 	b, _ := json.Marshal(map[string]string{"set_type": setType})
+	return b
+}
+
+func sessionSetMeta(session, setType string) json.RawMessage {
+	m := map[string]string{"session": session}
+	if setType != "" {
+		m["set_type"] = setType
+	}
+	b, _ := json.Marshal(m)
+	return b
+}
+
+func sessionMeta(session string) json.RawMessage {
+	b, _ := json.Marshal(map[string]string{"session": session})
 	return b
 }
