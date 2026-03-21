@@ -16,12 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { plansApi } from '@/lib/api/plans';
 import { useCreateLog, useLogs } from '@/lib/hooks/useLogs';
 import { useCreatePlan, usePlans } from '@/lib/hooks/usePlans';
-import {
-  type PlanStatus,
-  detectNextPlan,
-  groupPlansByProgram,
-  sortPlansByNext,
-} from '@/lib/utils/next-session';
+import { buildGlobalPlanStatuses } from '@/lib/utils/next-session';
 import type { LogEntryCreate, PlanEntryCreate } from '@/types/api';
 import { useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
@@ -37,27 +32,8 @@ export default function PlansPage() {
   const plans = plansData?.data || [];
   const logs = logsData?.data || [];
 
-  // Group plans by program_id and detect next plan per group
-  const programGroups = useMemo(() => {
-    const grouped = groupPlansByProgram(plans);
-    const result: {
-      groupKey: string;
-      programName: string;
-      isStandalone: boolean;
-      statuses: PlanStatus[];
-    }[] = [];
-
-    for (const [groupKey, groupPlans] of grouped) {
-      const isStandalone = groupKey.startsWith('standalone:');
-      const statuses = sortPlansByNext(detectNextPlan(groupPlans, logs));
-      const programName = isStandalone
-        ? groupPlans[0]?.name || 'Unnamed'
-        : groupPlans[0]?.name.split(' - ')[0] || 'Unnamed';
-      result.push({ groupKey, programName, isStandalone, statuses });
-    }
-
-    return result;
-  }, [plans, logs]);
+  // Build plan statuses with a single global NEXT plan
+  const programGroups = useMemo(() => buildGlobalPlanStatuses(plans, logs), [plans, logs]);
 
   // Create Plan dialog state
   const [createOpen, setCreateOpen] = useState(false);
