@@ -53,14 +53,15 @@ export function ConvertToPlanForm({ program }: ConvertToPlanFormProps) {
       }
     }
 
-    const plans = await convertMutation.mutateAsync({
+    const result = await convertMutation.mutateAsync({
       program_id: program.id,
       name: planName || undefined,
       target_weights: weights,
       load_increments: Object.keys(increments).length > 0 ? increments : undefined,
     });
 
-    setResultMessage(`${plans.length} plan${plans.length !== 1 ? 's' : ''} created`);
+    const count = result.plans.length;
+    setResultMessage(`${count} plan${count !== 1 ? 's' : ''} created`);
     setTimeout(() => router.push('/plans'), 1500);
   };
 

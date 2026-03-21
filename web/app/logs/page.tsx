@@ -8,19 +8,17 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCreateLog, useLogs } from '@/lib/hooks/useLogs';
 import { usePlans } from '@/lib/hooks/usePlans';
-import { usePrograms } from '@/lib/hooks/usePrograms';
-import type { LogEntryCreate, Plan, Program } from '@/types/api';
+import type { LogEntryCreate, Plan } from '@/types/api';
 import { Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 export default function LogsPage() {
   const { data: logsData, isLoading: logsLoading, error: logsError } = useLogs();
   const { data: plansData, isLoading: plansLoading } = usePlans();
-  const { data: programsData, isLoading: programsLoading } = usePrograms();
   const createLog = useCreateLog();
   const [modalOpen, setModalOpen] = useState(false);
 
-  const isLoading = logsLoading || plansLoading || programsLoading;
+  const isLoading = logsLoading || plansLoading;
 
   const logs = logsData?.data || [];
   const sortedLogs = [...logs].sort(
@@ -34,14 +32,6 @@ export default function LogsPage() {
     }
     return map;
   }, [plansData]);
-
-  const programMap = useMemo(() => {
-    const map = new Map<string, Program>();
-    for (const program of programsData?.data || []) {
-      map.set(program.id, program);
-    }
-    return map;
-  }, [programsData]);
 
   const handleSaveLog = async (
     entries: LogEntryCreate[],
@@ -100,7 +90,7 @@ export default function LogsPage() {
           </Button>
         </div>
       ) : (
-        <LogTable logs={sortedLogs} planMap={planMap} programMap={programMap} />
+        <LogTable logs={sortedLogs} planMap={planMap} />
       )}
 
       <LogModal open={modalOpen} onOpenChange={setModalOpen} onSave={handleSaveLog} />

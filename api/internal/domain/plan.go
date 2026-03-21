@@ -41,10 +41,9 @@ type PlanEntry struct {
 	Metadata     json.RawMessage `json:"metadata,omitempty"`
 }
 
-// Plan represents a single workout session prescription, optionally derived from a Program.
+// Plan represents a single workout session prescription, optionally derived from a Program via a Cycle.
 type Plan struct {
 	ID          uuid.UUID       `json:"id"`
-	ProgramID   *uuid.UUID      `json:"program_id,omitempty"`
 	CycleID     *uuid.UUID      `json:"cycle_id,omitempty"`
 	Name        string          `json:"name"`
 	Date        *DateOnly       `json:"date,omitempty"`

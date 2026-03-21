@@ -56,7 +56,7 @@ func main() {
 		planRepo = memory.NewPlanRepository(logRepo)
 		cycleRepo = memory.NewCycleRepository()
 
-		if err := seed.Run(ctx, programRepo, planRepo, logRepo); err != nil {
+		if err := seed.Run(ctx, programRepo, cycleRepo, planRepo, logRepo); err != nil {
 			slog.Error("Failed to seed development data", "error", err)
 			os.Exit(1)
 		}

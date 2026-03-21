@@ -8,13 +8,13 @@ export interface PlanStatus {
 }
 
 /**
- * Group plans by program_id.
- * Plans without a program_id are each treated as their own independent group.
+ * Group plans by cycle_id.
+ * Plans without a cycle_id are each treated as their own independent group.
  */
-export function groupPlansByProgram(plans: Plan[]): Map<string, Plan[]> {
+export function groupPlansByCycle(plans: Plan[]): Map<string, Plan[]> {
   const groups = new Map<string, Plan[]>();
   for (const plan of plans) {
-    const key = plan.program_id ?? `standalone:${plan.id}`;
+    const key = plan.cycle_id ?? `standalone:${plan.id}`;
     const group = groups.get(key) ?? [];
     group.push(plan);
     groups.set(key, group);
@@ -27,7 +27,7 @@ export function groupPlansByProgram(plans: Plan[]): Map<string, Plan[]> {
 }
 
 /**
- * Detect the next plan within a group of plans that share the same program_id.
+ * Detect the next plan within a group of plans that share the same cycle_id.
  * Cycles through plans based on which was most recently logged.
  */
 export function detectNextPlan(plans: Plan[], logs: Log[]): PlanStatus[] {
@@ -120,7 +120,7 @@ export function findActiveProgram(groups: Map<string, Plan[]>, logs: Log[]): str
  * Groups are ordered: active program first, then remaining groups.
  */
 export function buildGlobalPlanStatuses(plans: Plan[], logs: Log[]): ProgramGroup[] {
-  const grouped = groupPlansByProgram(plans);
+  const grouped = groupPlansByCycle(plans);
   const activeKey = findActiveProgram(grouped, logs);
 
   const result: ProgramGroup[] = [];

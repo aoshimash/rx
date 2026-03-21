@@ -43,6 +43,7 @@ func main() {
 		pool := db.Pool()
 		err = seed.Run(ctx,
 			postgresstore.NewProgramRepository(pool),
+			postgresstore.NewCycleRepository(pool),
 			postgresstore.NewPlanRepository(pool),
 			postgresstore.NewLogRepository(pool),
 		)
@@ -55,6 +56,7 @@ func main() {
 		logRepo := memory.NewLogRepository()
 		err := seed.Run(ctx,
 			memory.NewProgramRepository(),
+			memory.NewCycleRepository(),
 			memory.NewPlanRepository(logRepo),
 			logRepo,
 		)
@@ -69,7 +71,7 @@ func main() {
 
 func resetDB(ctx context.Context, pool *pgxpool.Pool) error {
 	_, err := pool.Exec(ctx,
-		"TRUNCATE log_entries, logs, plan_entries, plans, program_entries, programs RESTART IDENTITY CASCADE",
+		"TRUNCATE log_entries, logs, plan_entries, plans, cycles, program_entries, programs RESTART IDENTITY CASCADE",
 	)
 	return err
 }

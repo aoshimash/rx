@@ -109,7 +109,7 @@ func TestConvertProgramToPlans(t *testing.T) {
 		require.Len(t, plans, 1)
 		plan := plans[0]
 		assert.Equal(t, "Strength Program", plan.Name)
-		assert.Equal(t, &program.ID, plan.ProgramID)
+		assert.Nil(t, plan.CycleID)     // cycle is set by handler, not domain
 		assert.Nil(t, plan.SessionName) // no session metadata
 		require.Len(t, plan.Entries, 3)
 

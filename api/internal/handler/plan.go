@@ -41,7 +41,6 @@ func (h *PlanHandler) CreatePlan(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req struct {
-		ProgramID   *string            `json:"program_id,omitempty"`
 		CycleID     *string            `json:"cycle_id,omitempty"`
 		Name        string             `json:"name"`
 		Date        *domain.DateOnly   `json:"date,omitempty"`
@@ -67,15 +66,6 @@ func (h *PlanHandler) CreatePlan(w http.ResponseWriter, r *http.Request) {
 		Notes:       req.Notes,
 		Metadata:    req.Metadata,
 		Entries:     make([]domain.PlanEntry, len(req.Entries)),
-	}
-
-	if req.ProgramID != nil {
-		programID, err := uuid.Parse(*req.ProgramID)
-		if err != nil {
-			middleware.WriteValidationError(w, "Invalid program_id format", nil)
-			return
-		}
-		plan.ProgramID = &programID
 	}
 
 	if req.CycleID != nil {
@@ -282,13 +272,13 @@ func (h *PlanHandler) ListPlans(w http.ResponseWriter, r *http.Request) {
 	var hasMore bool
 	var err error
 
-	if programIDStr := r.URL.Query().Get("program_id"); programIDStr != "" {
-		programID, parseErr := uuid.Parse(programIDStr)
+	if cycleIDStr := r.URL.Query().Get("cycle_id"); cycleIDStr != "" {
+		cycleID, parseErr := uuid.Parse(cycleIDStr)
 		if parseErr != nil {
-			middleware.WriteValidationError(w, "Invalid program_id format", nil)
+			middleware.WriteValidationError(w, "Invalid cycle_id format", nil)
 			return
 		}
-		plans, nextCursor, hasMore, err = h.repo.ListByProgramID(ctx, programID, limit, after)
+		plans, nextCursor, hasMore, err = h.repo.ListByCycleID(ctx, cycleID, limit, after)
 	} else {
 		plans, nextCursor, hasMore, err = h.repo.List(ctx, limit, after)
 	}

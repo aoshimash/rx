@@ -1,6 +1,6 @@
 import type {
   ConvertProgramToPlanRequest,
-  Plan,
+  ConvertProgramToPlansResponse,
   Program,
   ProgramCreate,
   ProgramListResponse,
@@ -37,7 +37,7 @@ export const programsApi = {
     await api.delete(`programs/${id}`);
   },
 
-  async convertToPlans(data: ConvertProgramToPlanRequest): Promise<Plan[]> {
-    return api.post('plans/from-program', { json: data }).json<Plan[]>();
+  async convertToPlans(data: ConvertProgramToPlanRequest): Promise<ConvertProgramToPlansResponse> {
+    return api.post('plans/from-program', { json: data }).json<ConvertProgramToPlansResponse>();
   },
 };

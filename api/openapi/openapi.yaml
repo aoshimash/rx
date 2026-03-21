@@ -209,12 +209,12 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/After'
-        - name: program_id
+        - name: cycle_id
           in: query
           schema:
             type: string
             format: uuid
-          description: Filter plans by source program ID
+          description: Filter plans by cycle ID
       responses:
         '200':
           description: Paginated list of plans
@@ -263,13 +263,11 @@ paths:
               $ref: '#/components/schemas/ConvertProgramToPlanRequest'
       responses:
         '201':
-          description: Plans created from program
+          description: Cycle and plans created from program
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Plan'
+                $ref: '#/components/schemas/ConvertProgramToPlansResponse'
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -881,6 +879,19 @@ components:
             Map of exercise_name to weight increment in kg for rounding.
             If not specified, weights are rounded to 0.1 kg precision.
 
+    ConvertProgramToPlansResponse:
+      type: object
+      required:
+        - cycle
+        - plans
+      properties:
+        cycle:
+          $ref: '#/components/schemas/Cycle'
+        plans:
+          type: array
+          items:
+            $ref: '#/components/schemas/Plan'
+
     # ========================================
     # Plan
     # ========================================
@@ -895,14 +906,10 @@ components:
         id:
           type: string
           format: uuid
-        program_id:
-          type: string
-          format: uuid
-          description: Optional reference to the source program template
         cycle_id:
           type: string
           format: uuid
-          description: Optional reference to the source cycle
+          description: Optional reference to the cycle this plan belongs to
         name:
           type: string
           minLength: 1
@@ -942,9 +949,6 @@ components:
       required:
         - name
       properties:
-        program_id:
-          type: string
-          format: uuid
         cycle_id:
           type: string
           format: uuid

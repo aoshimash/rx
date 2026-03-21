@@ -58,6 +58,7 @@ export function useConvertProgramToPlans() {
     mutationFn: (data: ConvertProgramToPlanRequest) => programsApi.convertToPlans(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['plans'] });
+      queryClient.invalidateQueries({ queryKey: ['cycles'] });
     },
   });
 }
