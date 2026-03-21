@@ -853,6 +853,10 @@ components:
           type: string
           format: uuid
           description: Optional reference to the source program template
+        cycle_id:
+          type: string
+          format: uuid
+          description: Optional reference to the source cycle
         name:
           type: string
           minLength: 1
@@ -893,6 +897,9 @@ components:
         - name
       properties:
         program_id:
+          type: string
+          format: uuid
+        cycle_id:
           type: string
           format: uuid
         name:

@@ -165,6 +165,9 @@ type LogListResponse struct {
 type Plan struct {
 	CreatedAt time.Time `json:"created_at"`
 
+	// CycleId Optional reference to the source cycle
+	CycleId *openapi_types.UUID `json:"cycle_id,omitempty"`
+
 	// Date Scheduled date for this session (YYYY-MM-DD)
 	Date        *openapi_types.Date `json:"date,omitempty"`
 	Description *string             `json:"description,omitempty"`
@@ -188,6 +191,8 @@ type Plan struct {
 
 // PlanCreate defines model for PlanCreate.
 type PlanCreate struct {
+	CycleId *openapi_types.UUID `json:"cycle_id,omitempty"`
+
 	// Date Scheduled date for this session (YYYY-MM-DD)
 	Date        *openapi_types.Date     `json:"date,omitempty"`
 	Description *string                 `json:"description,omitempty"`
