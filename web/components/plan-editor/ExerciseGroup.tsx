@@ -102,7 +102,7 @@ export function ExerciseGroup({
         onClick={onAddSet}
       >
         <Plus className="h-3 w-3 mr-1" />
-        セット追加
+        Add Set
       </Button>
     </div>
   );
