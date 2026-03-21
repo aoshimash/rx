@@ -7,31 +7,19 @@ import { LogTable } from '@/components/logs/LogTable';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCreateLog, useLogs } from '@/lib/hooks/useLogs';
-import { usePlans } from '@/lib/hooks/usePlans';
-import type { LogEntryCreate, Plan } from '@/types/api';
+import type { LogEntryCreate } from '@/types/api';
 import { Plus } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 export default function LogsPage() {
   const { data: logsData, isLoading: logsLoading, error: logsError } = useLogs();
-  const { data: plansData, isLoading: plansLoading } = usePlans();
   const createLog = useCreateLog();
   const [modalOpen, setModalOpen] = useState(false);
-
-  const isLoading = logsLoading || plansLoading;
 
   const logs = logsData?.data || [];
   const sortedLogs = [...logs].sort(
     (a, b) => new Date(b.performed_at).getTime() - new Date(a.performed_at).getTime()
   );
-
-  const planMap = useMemo(() => {
-    const map = new Map<string, Plan>();
-    for (const plan of plansData?.data || []) {
-      map.set(plan.id, plan);
-    }
-    return map;
-  }, [plansData]);
 
   const handleSaveLog = async (
     entries: LogEntryCreate[],
@@ -39,6 +27,8 @@ export default function LogsPage() {
     context?: LogSaveContext
   ) => {
     await createLog.mutateAsync({
+      program_id: context?.programId,
+      session_name: context?.sessionName,
       performed_at: new Date().toISOString(),
       started_at: context?.startedAt,
       finished_at: context?.finishedAt,
@@ -47,7 +37,7 @@ export default function LogsPage() {
     });
   };
 
-  if (isLoading) {
+  if (logsLoading) {
     return (
       <main className="container mx-auto p-6 space-y-4">
         <Skeleton className="h-12 w-[300px]" />
@@ -90,7 +80,7 @@ export default function LogsPage() {
           </Button>
         </div>
       ) : (
-        <LogTable logs={sortedLogs} planMap={planMap} />
+        <LogTable logs={sortedLogs} />
       )}
 
       <LogModal open={modalOpen} onOpenChange={setModalOpen} onSave={handleSaveLog} />

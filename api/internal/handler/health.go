@@ -11,13 +11,13 @@ import (
 
 // HealthHandler handles health check requests
 type HealthHandler struct {
-	planRepo repository.PlanRepository
+	logRepo repository.LogRepository
 }
 
 // NewHealthHandler creates a new health handler
-func NewHealthHandler(planRepo repository.PlanRepository) *HealthHandler {
+func NewHealthHandler(logRepo repository.LogRepository) *HealthHandler {
 	return &HealthHandler{
-		planRepo: planRepo,
+		logRepo: logRepo,
 	}
 }
 
@@ -27,7 +27,7 @@ func (h *HealthHandler) Health(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	// Check database connectivity by attempting a simple query
-	_, _, _, err := h.planRepo.List(ctx, 1, "")
+	_, _, _, err := h.logRepo.List(ctx, 1, "")
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusServiceUnavailable)

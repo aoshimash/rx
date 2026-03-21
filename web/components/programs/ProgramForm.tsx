@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { ProgramEntryCreate } from '@/types/api';
+import type { ProgramTemplateEntryCreate } from '@/types/api';
 import { Plus, Trash2, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -48,7 +48,7 @@ interface SessionGroup {
 // Conversion helpers
 // ============================================================================
 
-function entriesToSessionGroups(entries: ProgramEntryCreate[]): SessionGroup[] {
+function entriesToSessionGroups(entries: ProgramTemplateEntryCreate[]): SessionGroup[] {
   const sessionMap = new Map<string, SessionExercise[]>();
   const sessionOrder: string[] = [];
 
@@ -87,7 +87,7 @@ function exerciseToEntry(
   ex: SessionExercise,
   sessionName: string,
   order: number
-): ProgramEntryCreate {
+): ProgramTemplateEntryCreate {
   const metadata: Record<string, unknown> = { session: sessionName };
   if (ex.label) metadata.label = ex.label;
   if (ex.intensity_type === 'weight_kg' && ex.weight_kg != null) {
@@ -107,8 +107,8 @@ function exerciseToEntry(
   };
 }
 
-function sessionGroupsToEntries(sessions: SessionGroup[]): ProgramEntryCreate[] {
-  const entries: ProgramEntryCreate[] = [];
+function sessionGroupsToEntries(sessions: SessionGroup[]): ProgramTemplateEntryCreate[] {
+  const entries: ProgramTemplateEntryCreate[] = [];
   let order = 0;
 
   for (const session of sessions) {
@@ -337,11 +337,11 @@ interface ProgramFormProps {
   programName: string;
   programDescription: string;
   programNotes: string;
-  initialEntries?: ProgramEntryCreate[];
+  initialEntries?: ProgramTemplateEntryCreate[];
   onNameChange: (name: string) => void;
   onDescriptionChange: (description: string) => void;
   onNotesChange: (notes: string) => void;
-  onSave: (entries: ProgramEntryCreate[]) => void;
+  onSave: (entries: ProgramTemplateEntryCreate[]) => void;
   onDelete?: () => void;
   isSaving?: boolean;
   isEditing?: boolean;

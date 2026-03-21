@@ -1,73 +1,85 @@
 # Domain Model
 
-## Three-Stage Training Lifecycle
+## Three-Tier Training Lifecycle
 
 ```
-Program → Plans → Logs
+ProgramTemplate → Program → Log
 ```
 
-1. **Program** — Reusable training template containing multiple sessions (no dates, no absolute weights)
-2. **Plan** — A single concrete workout prescription derived from one session of a Program (with date and calculated weights)
-3. **Log** — Actual workout record for one training session (what was actually performed)
+1. **ProgramTemplate** — Reusable training blueprint containing sessions with relative prescriptions (RPE / %1RM). No dates, no absolute weights.
+2. **Program** — Concrete training program derived from a template (or created manually), containing sessions with scheduled exercises and absolute weights. Tracks training progress with a `status` (active / completed).
+3. **Log** — Actual workout record for one training session (what was actually performed).
 
 ## Key Concepts
 
-### Session (metadata concept)
+### ProgramTemplate
 
-A **Session** is a grouping of exercises for one workout within a Program. It exists only as metadata (`metadata.session` name) on ProgramEntries — it is **not** a database entity or a separate API resource.
+A **ProgramTemplate** is a reusable blueprint that defines exercise prescriptions using relative intensity (RPE, %1RM). It is the "program design" layer.
 
-When a Program is converted to Plans, each session becomes its own Plan.
+- Entries are stored flat with `metadata.session` grouping them into sessions in the frontend
+- Can be archived (soft delete), duplicated, and used to generate Programs
+- Has no execution semantics — it is purely a template
 
-### Plan = One Workout
+### Program
 
-A Plan represents **exactly one training session** with:
-- A date (when the workout is scheduled)
-- A session name (inherited from the Program session)
-- Concrete weights (calculated from the Program's relative prescriptions)
-- A reference back to the source Program (optional)
+A **Program** is a concrete training instance derived from a ProgramTemplate (via the `/generate` endpoint) or created directly. It:
 
-Plans derived from the same Program share the same `program_id`, which serves as the grouping mechanism.
+- Contains **ProgramSessions** (named workout days with an order and optional date)
+- Each session has **ProgramSessionEntries** (exercises with absolute weights, not relative prescriptions)
+- Has a `status`: `active` (in progress) or `completed` (finished)
+- Status transitions automatically to `completed` when all sessions have been logged
 
-### Log and Plan (1:1)
+### Log and Program (many:1)
 
-A Log records what was actually performed in one training session. A Log **optionally** references a Plan (`plan_id`), enabling comparison between planned and actual performance. Logs without a `plan_id` represent unplanned/ad-hoc training sessions.
+A Log records what was actually performed in one training session. A Log **optionally** references a Program (`program_id`) and a session name (`session_name`), enabling tracking of which program session was performed. Logs without a `program_id` represent unplanned/ad-hoc training sessions.
 
 ## Entity Relationships
 
 ```
-┌──────────────┐
-│   Program    │  (template: sessions grouped by metadata)
-└──────┬───────┘
-       │ ConvertProgramToPlans()  — 1 Program → N Plans (one per session)
-       ▼
-┌──────────────┐
-│    Plan      │  (1 workout: date + session_name + calculated weights)
-└──────┬───────┘
-       │ 1:1 (optional reference)
-       ▼
-┌──────────────┐
-│     Log      │  (record: what was actually performed)
-└──────────────┘
+┌───────────────────┐
+│  ProgramTemplate  │  (blueprint: RPE/% prescriptions grouped by session)
+└────────┬──────────┘
+         │ generate() — template → concrete Program with absolute weights
+         ▼
+┌───────────────────┐     ┌──────────────────────┐
+│     Program       │────►│   ProgramSession      │  (named training day)
+│  (status: active/ │     └──────────┬───────────┘
+│   completed)      │               │
+└────────┬──────────┘     ┌──────────▼───────────┐
+         │                │ ProgramSessionEntry   │  (exercise with load_kg)
+         │                └──────────────────────┘
+         │ 1:N (optional reference)
+         ▼
+┌───────────────────┐
+│       Log         │  (record: what was actually performed)
+│  program_id       │
+│  session_name     │
+└───────────────────┘
 ```
 
-### Conversion Flow
+### Generation Flow
 
 ```
-Program (3 sessions: "Upper A", "Lower", "Upper B")
+ProgramTemplate (3 sessions: "W1D1", "W1D2", "W1D3")
     │
-    │ ConvertProgramToPlans(target_weights, dates)
+    │ POST /program-templates/{id}/generate
+    │   { target_weights: { "Squat": 100, "Bench": 80 }, load_increments: {...} }
     │
-    ├──► Plan 1: "Upper A" on 2026-03-20, with calculated weights
-    ├──► Plan 2: "Lower"   on 2026-03-22, with calculated weights
-    └──► Plan 3: "Upper B" on 2026-03-24, with calculated weights
+    └──► Program (status: active) with sessions:
+          ├── ProgramSession "W1D1": entries with calculated load_kg
+          ├── ProgramSession "W1D2": entries with calculated load_kg
+          └── ProgramSession "W1D3": entries with calculated load_kg
 ```
 
-Conversion parameters (target weights, load increments) are stored in `Plan.metadata.conversion` for traceability.
+### Auto-Completion
+
+When a Log is created with a `program_id` and `session_name`, the system checks whether all sessions in the referenced Program have been logged. If all sessions have been logged, the Program status transitions automatically from `active` to `completed`.
 
 ## Design Decisions
 
-- **Session is not a DB entity** — Grouping by `program_id` is sufficient; no intermediate entity needed
-- **Plan grouping via `program_id`** — Plans derived from the same Program are related through this reference, not through a separate grouping entity
-- **Log.plan_id is optional** — Supports both planned and ad-hoc training sessions
+- **ProgramSession is a DB entity** — Unlike the old metadata-based session grouping, sessions are now proper first-class entities with IDs, ordering, and optional dates
+- **Program.status tracks execution progress** — The status transitions automatically; no manual status management required
+- **Log.program_id is optional** — Supports both program-linked and ad-hoc training sessions
+- **Absolute weights in Program, relative in Template** — Templates use RPE/%1RM, Programs use load_kg; the generate endpoint handles the conversion
 
 For schema details, see `api/internal/domain/`.

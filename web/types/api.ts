@@ -6,69 +6,13 @@
  */
 
 // ============================================================================
-// Plan
-// ============================================================================
-
-export interface Plan {
-  id: string;
-  name: string;
-  cycle_id?: string;
-  date?: string;
-  session_name?: string;
-  description?: string;
-  notes?: string;
-  metadata?: Record<string, unknown>;
-  entries?: PlanEntry[];
-  created_at: string;
-  updated_at: string;
-}
-
-export interface PlanCreate {
-  name: string;
-  cycle_id?: string;
-  date?: string;
-  session_name?: string;
-  description?: string;
-  notes?: string;
-  metadata?: Record<string, unknown>;
-  entries?: PlanEntryCreate[];
-}
-
-// ============================================================================
-// PlanEntry
-// ============================================================================
-
-export interface PlanEntry {
-  id: string;
-  plan_id: string;
-  exercise_name: string;
-  order: number;
-  sets?: number;
-  reps?: number;
-  load_kg?: number;
-  rpe?: number;
-  notes?: string;
-  metadata?: Record<string, unknown>;
-}
-
-export interface PlanEntryCreate {
-  exercise_name: string;
-  order: number;
-  sets?: number;
-  reps?: number;
-  load_kg?: number;
-  rpe?: number;
-  notes?: string;
-  metadata?: Record<string, unknown>;
-}
-
-// ============================================================================
 // Log
 // ============================================================================
 
 export interface Log {
   id: string;
-  plan_id?: string;
+  program_id?: string;
+  session_name?: string;
   performed_at: string;
   started_at?: string;
   finished_at?: string;
@@ -80,7 +24,8 @@ export interface Log {
 }
 
 export interface LogCreate {
-  plan_id?: string;
+  program_id?: string;
+  session_name?: string;
   performed_at: string;
   started_at?: string;
   finished_at?: string;
@@ -123,36 +68,36 @@ export interface LogEntryCreate {
 }
 
 // ============================================================================
-// Program
+// ProgramTemplate
 // ============================================================================
 
-export interface Program {
+export interface ProgramTemplate {
   id: string;
   name: string;
   description?: string;
   notes?: string;
   metadata?: Record<string, unknown>;
-  entries?: ProgramEntry[];
+  entries?: ProgramTemplateEntry[];
   archived_at?: string;
   created_at: string;
   updated_at: string;
 }
 
-export interface ProgramCreate {
+export interface ProgramTemplateCreate {
   name: string;
   description?: string;
   notes?: string;
   metadata?: Record<string, unknown>;
-  entries?: ProgramEntryCreate[];
+  entries?: ProgramTemplateEntryCreate[];
 }
 
 // ============================================================================
-// ProgramEntry
+// ProgramTemplateEntry
 // ============================================================================
 
-export interface ProgramEntry {
+export interface ProgramTemplateEntry {
   id: string;
-  program_id: string;
+  program_template_id: string;
   order: number;
   exercise_name: string;
   sets?: number;
@@ -163,7 +108,7 @@ export interface ProgramEntry {
   metadata?: Record<string, unknown>;
 }
 
-export interface ProgramEntryCreate {
+export interface ProgramTemplateEntryCreate {
   exercise_name: string;
   order: number;
   sets?: number;
@@ -174,29 +119,84 @@ export interface ProgramEntryCreate {
   metadata?: Record<string, unknown>;
 }
 
-export interface ConvertProgramToPlanRequest {
-  program_id: string;
+export interface GenerateProgramRequest {
   name?: string;
   target_weights: Record<string, number>;
   load_increments?: Record<string, number>;
 }
 
-export interface ConvertProgramToPlansResponse {
-  cycle: Cycle;
-  plans: Plan[];
+// ============================================================================
+// Program
+// ============================================================================
+
+export type ProgramStatus = 'active' | 'completed';
+
+export interface Program {
+  id: string;
+  program_template_id?: string;
+  name: string;
+  status: ProgramStatus;
+  notes?: string;
+  metadata?: Record<string, unknown>;
+  sessions: ProgramSession[];
+  created_at: string;
+  updated_at: string;
 }
 
-// ============================================================================
-// Cycle
-// ============================================================================
-
-export interface Cycle {
-  id: string;
-  program_id: string;
+export interface ProgramCreate {
+  program_template_id?: string;
   name: string;
   notes?: string;
   metadata?: Record<string, unknown>;
-  created_at: string;
+  sessions?: ProgramSessionCreate[];
+}
+
+// ============================================================================
+// ProgramSession
+// ============================================================================
+
+export interface ProgramSession {
+  id: string;
+  program_id: string;
+  session_name: string;
+  order: number;
+  date?: string;
+  entries: ProgramSessionEntry[];
+}
+
+export interface ProgramSessionCreate {
+  session_name: string;
+  order: number;
+  date?: string;
+  entries?: ProgramSessionEntryCreate[];
+}
+
+// ============================================================================
+// ProgramSessionEntry
+// ============================================================================
+
+export interface ProgramSessionEntry {
+  id: string;
+  session_id: string;
+  order: number;
+  exercise_name: string;
+  sets?: number;
+  reps?: number;
+  load_kg?: number;
+  rpe?: number;
+  notes?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ProgramSessionEntryCreate {
+  exercise_name: string;
+  order: number;
+  sets?: number;
+  reps?: number;
+  load_kg?: number;
+  rpe?: number;
+  notes?: string;
+  metadata?: Record<string, unknown>;
 }
 
 // ============================================================================
@@ -209,10 +209,9 @@ export interface PaginatedResponse<T> {
   has_more: boolean;
 }
 
-export type PlanListResponse = PaginatedResponse<Plan>;
 export type LogListResponse = PaginatedResponse<Log>;
+export type ProgramTemplateListResponse = PaginatedResponse<ProgramTemplate>;
 export type ProgramListResponse = PaginatedResponse<Program>;
-export type CycleListResponse = PaginatedResponse<Cycle>;
 
 // ============================================================================
 // Error

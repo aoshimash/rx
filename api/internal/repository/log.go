@@ -36,7 +36,7 @@ type LogRepository interface {
 	// Returns: logs, next cursor (empty string if no more), has_more flag
 	ListByPerformedAtRange(ctx context.Context, performedAtFrom, performedAtTo *time.Time, limit int, after string) ([]*domain.Log, string, bool, error)
 
-	// ListByPlanID retrieves Logs that reference the given Plan ID
-	// Used for referential integrity checks when deleting a Plan
-	ListByPlanID(ctx context.Context, planID uuid.UUID) ([]*domain.Log, error)
+	// ListDistinctLoggedSessionsByProgramID returns distinct session_names that have at least one log for the given program.
+	// Used to check program completion when a new log is created.
+	ListDistinctLoggedSessionsByProgramID(ctx context.Context, programID uuid.UUID) ([]string, error)
 }

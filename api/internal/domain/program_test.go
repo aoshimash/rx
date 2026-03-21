@@ -48,22 +48,22 @@ func TestRoundToIncrement(t *testing.T) {
 	})
 
 	t.Run("exact value unchanged", func(t *testing.T) {
-		assert.Equal(t, 100.0, RoundToIncrement(100.0, 2.5))
+		assert.Equal(t, 80.0, RoundToIncrement(80.0, 2.5))
 	})
 }
 
-func TestConvertProgramToPlans(t *testing.T) {
+func TestGenerateProgramFromTemplate(t *testing.T) {
 	sets3 := 3
 	reps5 := 5
 	rpe8 := 8
 	pct80 := 0.80
 	pct70 := 0.70
 
-	// Program with no session metadata (single session)
-	program := &Program{
+	// Template with no session metadata (single session)
+	tmpl := &ProgramTemplate{
 		ID:   uuid.New(),
 		Name: "Strength Program",
-		Entries: []ProgramEntry{
+		Entries: []ProgramTemplateEntry{
 			{
 				ID:           uuid.New(),
 				Order:        0,
@@ -93,7 +93,7 @@ func TestConvertProgramToPlans(t *testing.T) {
 	}
 
 	t.Run("single session - calculates weights from percent_1rm", func(t *testing.T) {
-		input := &ConvertProgramToPlansInput{
+		input := &GenerateProgramInput{
 			TargetWeights: map[string]float64{
 				"Squat":       200.0,
 				"Bench Press": 100.0,
@@ -104,30 +104,28 @@ func TestConvertProgramToPlans(t *testing.T) {
 			},
 		}
 
-		plans := ConvertProgramToPlans(program, input)
+		program := GenerateProgramFromTemplate(tmpl, input)
 
-		require.Len(t, plans, 1)
-		plan := plans[0]
-		assert.Equal(t, "Strength Program", plan.Name)
-		assert.Nil(t, plan.CycleID)     // cycle is set by handler, not domain
-		assert.Nil(t, plan.SessionName) // no session metadata
-		require.Len(t, plan.Entries, 3)
+		require.Len(t, program.Sessions, 1)
+		session := program.Sessions[0]
+		assert.Equal(t, "Strength Program", session.SessionName)
+		require.Len(t, session.Entries, 3)
 
 		// Squat: 0.80 * 200 = 160.0, rounded to 2.5 → 160.0
-		require.NotNil(t, plan.Entries[0].LoadKg)
-		assert.Equal(t, 160.0, *plan.Entries[0].LoadKg)
-		assert.Equal(t, "Squat", plan.Entries[0].ExerciseName)
+		require.NotNil(t, session.Entries[0].LoadKg)
+		assert.Equal(t, 160.0, *session.Entries[0].LoadKg)
+		assert.Equal(t, "Squat", session.Entries[0].ExerciseName)
 
 		// Bench Press: 0.70 * 100 = 70.0, rounded to 2.5 → 70.0
-		require.NotNil(t, plan.Entries[1].LoadKg)
-		assert.Equal(t, 70.0, *plan.Entries[1].LoadKg)
+		require.NotNil(t, session.Entries[1].LoadKg)
+		assert.Equal(t, 70.0, *session.Entries[1].LoadKg)
 
 		// Chin Up: no target weight provided → nil
-		assert.Nil(t, plan.Entries[2].LoadKg)
+		assert.Nil(t, session.Entries[2].LoadKg)
 	})
 
 	t.Run("copies direct weight when no percent_1rm", func(t *testing.T) {
-		input := &ConvertProgramToPlansInput{
+		input := &GenerateProgramInput{
 			TargetWeights: map[string]float64{
 				"Chin Up": 10.0,
 			},
@@ -136,15 +134,15 @@ func TestConvertProgramToPlans(t *testing.T) {
 			},
 		}
 
-		plans := ConvertProgramToPlans(program, input)
+		program := GenerateProgramFromTemplate(tmpl, input)
 
-		require.Len(t, plans, 1)
-		require.NotNil(t, plans[0].Entries[2].LoadKg)
-		assert.Equal(t, 10.0, *plans[0].Entries[2].LoadKg)
+		require.Len(t, program.Sessions, 1)
+		require.NotNil(t, program.Sessions[0].Entries[2].LoadKg)
+		assert.Equal(t, 10.0, *program.Sessions[0].Entries[2].LoadKg)
 	})
 
 	t.Run("rounds to increment", func(t *testing.T) {
-		input := &ConvertProgramToPlansInput{
+		input := &GenerateProgramInput{
 			TargetWeights: map[string]float64{
 				"Squat": 195.0,
 			},
@@ -153,54 +151,53 @@ func TestConvertProgramToPlans(t *testing.T) {
 			},
 		}
 
-		plans := ConvertProgramToPlans(program, input)
+		program := GenerateProgramFromTemplate(tmpl, input)
 
-		require.Len(t, plans, 1)
-		require.NotNil(t, plans[0].Entries[0].LoadKg)
-		assert.Equal(t, 155.0, *plans[0].Entries[0].LoadKg)
+		require.Len(t, program.Sessions, 1)
+		require.NotNil(t, program.Sessions[0].Entries[0].LoadKg)
+		assert.Equal(t, 155.0, *program.Sessions[0].Entries[0].LoadKg)
 	})
 
 	t.Run("uses 0.1kg precision without increment", func(t *testing.T) {
-		input := &ConvertProgramToPlansInput{
+		input := &GenerateProgramInput{
 			TargetWeights: map[string]float64{
 				"Squat": 195.0,
 			},
 		}
 
-		plans := ConvertProgramToPlans(program, input)
+		program := GenerateProgramFromTemplate(tmpl, input)
 
-		require.Len(t, plans, 1)
-		require.NotNil(t, plans[0].Entries[0].LoadKg)
-		assert.Equal(t, 156.0, *plans[0].Entries[0].LoadKg)
+		require.Len(t, program.Sessions, 1)
+		require.NotNil(t, program.Sessions[0].Entries[0].LoadKg)
+		assert.Equal(t, 156.0, *program.Sessions[0].Entries[0].LoadKg)
 	})
 
-	t.Run("custom plan name", func(t *testing.T) {
-		input := &ConvertProgramToPlansInput{
-			Name:          "Week 1 Plan",
+	t.Run("custom program name", func(t *testing.T) {
+		input := &GenerateProgramInput{
+			Name:          "Week 1",
 			TargetWeights: map[string]float64{},
 		}
 
-		plans := ConvertProgramToPlans(program, input)
+		program := GenerateProgramFromTemplate(tmpl, input)
 
-		require.Len(t, plans, 1)
-		assert.Equal(t, "Week 1 Plan", plans[0].Name)
+		assert.Equal(t, "Week 1", program.Name)
 	})
 
-	t.Run("copies sets reps rpe notes", func(t *testing.T) {
-		input := &ConvertProgramToPlansInput{
+	t.Run("copies sets reps rpe", func(t *testing.T) {
+		input := &GenerateProgramInput{
 			TargetWeights: map[string]float64{},
 		}
 
-		plans := ConvertProgramToPlans(program, input)
+		program := GenerateProgramFromTemplate(tmpl, input)
 
-		require.Len(t, plans, 1)
-		assert.Equal(t, &sets3, plans[0].Entries[0].Sets)
-		assert.Equal(t, &reps5, plans[0].Entries[0].Reps)
-		assert.Equal(t, &rpe8, plans[0].Entries[0].RPE)
+		require.Len(t, program.Sessions, 1)
+		assert.Equal(t, &sets3, program.Sessions[0].Entries[0].Sets)
+		assert.Equal(t, &reps5, program.Sessions[0].Entries[0].Reps)
+		assert.Equal(t, &rpe8, program.Sessions[0].Entries[0].RPE)
 	})
 
-	t.Run("stores conversion metadata", func(t *testing.T) {
-		input := &ConvertProgramToPlansInput{
+	t.Run("stores generation metadata", func(t *testing.T) {
+		input := &GenerateProgramInput{
 			TargetWeights: map[string]float64{
 				"Squat": 200.0,
 			},
@@ -209,25 +206,24 @@ func TestConvertProgramToPlans(t *testing.T) {
 			},
 		}
 
-		plans := ConvertProgramToPlans(program, input)
+		program := GenerateProgramFromTemplate(tmpl, input)
 
-		require.Len(t, plans, 1)
 		var meta map[string]interface{}
-		err := json.Unmarshal(plans[0].Metadata, &meta)
+		err := json.Unmarshal(program.Metadata, &meta)
 		require.NoError(t, err)
 
-		conversion, ok := meta["conversion"].(map[string]interface{})
+		generation, ok := meta["generation"].(map[string]interface{})
 		require.True(t, ok)
-		tw, ok := conversion["target_weights"].(map[string]interface{})
+		tw, ok := generation["target_weights"].(map[string]interface{})
 		require.True(t, ok)
 		assert.Equal(t, 200.0, tw["Squat"])
 	})
 
 	t.Run("multi-session groups entries by metadata.session", func(t *testing.T) {
-		multiProgram := &Program{
+		multiTmpl := &ProgramTemplate{
 			ID:   uuid.New(),
 			Name: "Upper/Lower Split",
-			Entries: []ProgramEntry{
+			Entries: []ProgramTemplateEntry{
 				{
 					Order:        0,
 					ExerciseName: "Squat",
@@ -261,39 +257,35 @@ func TestConvertProgramToPlans(t *testing.T) {
 			},
 		}
 
-		input := &ConvertProgramToPlansInput{
+		input := &GenerateProgramInput{
 			TargetWeights: map[string]float64{
 				"Squat":       200.0,
 				"Bench Press": 100.0,
 			},
 		}
 
-		plans := ConvertProgramToPlans(multiProgram, input)
+		program := GenerateProgramFromTemplate(multiTmpl, input)
 
-		require.Len(t, plans, 2)
+		require.Len(t, program.Sessions, 2)
 
-		// First plan: Lower session
-		assert.Equal(t, "Lower", plans[0].Name)
-		require.NotNil(t, plans[0].SessionName)
-		assert.Equal(t, "Lower", *plans[0].SessionName)
-		require.Len(t, plans[0].Entries, 2)
-		assert.Equal(t, "Squat", plans[0].Entries[0].ExerciseName)
-		assert.Equal(t, "Deadlift", plans[0].Entries[1].ExerciseName)
+		// First session: Lower
+		assert.Equal(t, "Lower", program.Sessions[0].SessionName)
+		require.Len(t, program.Sessions[0].Entries, 2)
+		assert.Equal(t, "Squat", program.Sessions[0].Entries[0].ExerciseName)
+		assert.Equal(t, "Deadlift", program.Sessions[0].Entries[1].ExerciseName)
 
-		// Second plan: Upper session
-		assert.Equal(t, "Upper", plans[1].Name)
-		require.NotNil(t, plans[1].SessionName)
-		assert.Equal(t, "Upper", *plans[1].SessionName)
-		require.Len(t, plans[1].Entries, 2)
-		assert.Equal(t, "Bench Press", plans[1].Entries[0].ExerciseName)
-		assert.Equal(t, "Row", plans[1].Entries[1].ExerciseName)
+		// Second session: Upper
+		assert.Equal(t, "Upper", program.Sessions[1].SessionName)
+		require.Len(t, program.Sessions[1].Entries, 2)
+		assert.Equal(t, "Bench Press", program.Sessions[1].Entries[0].ExerciseName)
+		assert.Equal(t, "Row", program.Sessions[1].Entries[1].ExerciseName)
 	})
 
 	t.Run("copies entry metadata", func(t *testing.T) {
-		programWithMeta := &Program{
+		tmplWithMeta := &ProgramTemplate{
 			ID:   uuid.New(),
 			Name: "Meta Program",
-			Entries: []ProgramEntry{
+			Entries: []ProgramTemplateEntry{
 				{
 					Order:        0,
 					ExerciseName: "Squat",
@@ -302,72 +294,72 @@ func TestConvertProgramToPlans(t *testing.T) {
 			},
 		}
 
-		input := &ConvertProgramToPlansInput{
+		input := &GenerateProgramInput{
 			TargetWeights: map[string]float64{},
 		}
 
-		plans := ConvertProgramToPlans(programWithMeta, input)
+		program := GenerateProgramFromTemplate(tmplWithMeta, input)
 
-		require.Len(t, plans, 1)
-		assert.JSONEq(t, `{"week": 1}`, string(plans[0].Entries[0].Metadata))
+		require.Len(t, program.Sessions, 1)
+		assert.JSONEq(t, `{"week": 1}`, string(program.Sessions[0].Entries[0].Metadata))
 	})
 
-	t.Run("empty program produces empty plans", func(t *testing.T) {
-		emptyProgram := &Program{
+	t.Run("empty template produces empty sessions", func(t *testing.T) {
+		emptyTmpl := &ProgramTemplate{
 			ID:      uuid.New(),
 			Name:    "Empty",
-			Entries: []ProgramEntry{},
+			Entries: []ProgramTemplateEntry{},
 		}
 
-		input := &ConvertProgramToPlansInput{
+		input := &GenerateProgramInput{
 			TargetWeights: map[string]float64{},
 		}
 
-		plans := ConvertProgramToPlans(emptyProgram, input)
-		assert.Empty(t, plans)
+		program := GenerateProgramFromTemplate(emptyTmpl, input)
+		assert.Empty(t, program.Sessions)
 	})
 }
 
-func TestValidateProgramEntry(t *testing.T) {
-	validEntry := func() *ProgramEntry {
+func TestValidateProgramTemplateEntry(t *testing.T) {
+	validEntry := func() *ProgramTemplateEntry {
 		sets := 3
 		reps := 10
 		rpe := 8
 		pct := 0.75
-		return &ProgramEntry{
-			ID:           uuid.New(),
-			ProgramID:    uuid.New(),
-			Order:        0,
-			ExerciseName: "Squat",
-			Sets:         &sets,
-			Reps:         &reps,
-			RPE:          &rpe,
-			Percent1RM:   &pct,
+		return &ProgramTemplateEntry{
+			ID:                uuid.New(),
+			ProgramTemplateID: uuid.New(),
+			Order:             0,
+			ExerciseName:      "Squat",
+			Sets:              &sets,
+			Reps:              &reps,
+			RPE:               &rpe,
+			Percent1RM:        &pct,
 		}
 	}
 
 	t.Run("valid entry", func(t *testing.T) {
 		e := validEntry()
-		err := ValidateProgramEntry(e)
+		err := ValidateProgramTemplateEntry(e)
 		assert.NoError(t, err)
 	})
 
 	t.Run("nil entry", func(t *testing.T) {
-		err := ValidateProgramEntry(nil)
+		err := ValidateProgramTemplateEntry(nil)
 		assert.Error(t, err)
 	})
 
 	t.Run("empty exercise_name", func(t *testing.T) {
 		e := validEntry()
 		e.ExerciseName = ""
-		err := ValidateProgramEntry(e)
+		err := ValidateProgramTemplateEntry(e)
 		assert.Error(t, err)
 	})
 
 	t.Run("negative order", func(t *testing.T) {
 		e := validEntry()
 		e.Order = -1
-		err := ValidateProgramEntry(e)
+		err := ValidateProgramTemplateEntry(e)
 		assert.Error(t, err)
 	})
 
@@ -375,7 +367,7 @@ func TestValidateProgramEntry(t *testing.T) {
 		e := validEntry()
 		sets := 0
 		e.Sets = &sets
-		err := ValidateProgramEntry(e)
+		err := ValidateProgramTemplateEntry(e)
 		assert.Error(t, err)
 	})
 
@@ -383,7 +375,7 @@ func TestValidateProgramEntry(t *testing.T) {
 		e := validEntry()
 		reps := 0
 		e.Reps = &reps
-		err := ValidateProgramEntry(e)
+		err := ValidateProgramTemplateEntry(e)
 		assert.Error(t, err)
 	})
 
@@ -391,7 +383,7 @@ func TestValidateProgramEntry(t *testing.T) {
 		e := validEntry()
 		rpe := 11
 		e.RPE = &rpe
-		err := ValidateProgramEntry(e)
+		err := ValidateProgramTemplateEntry(e)
 		assert.Error(t, err)
 	})
 
@@ -399,7 +391,7 @@ func TestValidateProgramEntry(t *testing.T) {
 		e := validEntry()
 		pct := 1.5
 		e.Percent1RM = &pct
-		err := ValidateProgramEntry(e)
+		err := ValidateProgramTemplateEntry(e)
 		assert.Error(t, err)
 	})
 
@@ -407,7 +399,7 @@ func TestValidateProgramEntry(t *testing.T) {
 		e := validEntry()
 		pct := -0.1
 		e.Percent1RM = &pct
-		err := ValidateProgramEntry(e)
+		err := ValidateProgramTemplateEntry(e)
 		assert.Error(t, err)
 	})
 
@@ -415,21 +407,20 @@ func TestValidateProgramEntry(t *testing.T) {
 		e := validEntry()
 		pct := 0.0
 		e.Percent1RM = &pct
-		assert.NoError(t, ValidateProgramEntry(e))
+		assert.NoError(t, ValidateProgramTemplateEntry(e))
 
 		pct = 1.0
 		e.Percent1RM = &pct
-		assert.NoError(t, ValidateProgramEntry(e))
+		assert.NoError(t, ValidateProgramTemplateEntry(e))
 	})
 
 	t.Run("nil optional fields are valid", func(t *testing.T) {
-		e := &ProgramEntry{
+		e := &ProgramTemplateEntry{
 			ID:           uuid.New(),
-			ProgramID:    uuid.New(),
 			Order:        0,
 			ExerciseName: "Squat",
 		}
-		err := ValidateProgramEntry(e)
+		err := ValidateProgramTemplateEntry(e)
 		assert.NoError(t, err)
 	})
 }
@@ -439,16 +430,24 @@ func TestValidateProgram(t *testing.T) {
 		sets := 3
 		reps := 10
 		return &Program{
-			ID:   uuid.New(),
-			Name: "Test Program",
-			Entries: []ProgramEntry{
+			ID:     uuid.New(),
+			Name:   "Test Program",
+			Status: ProgramStatusActive,
+			Sessions: []ProgramSession{
 				{
-					ID:           uuid.New(),
-					ProgramID:    uuid.New(),
-					Order:        0,
-					ExerciseName: "Squat",
-					Sets:         &sets,
-					Reps:         &reps,
+					ID:          uuid.New(),
+					ProgramID:   uuid.New(),
+					SessionName: "Day 1",
+					Order:       0,
+					Entries: []ProgramSessionEntry{
+						{
+							ID:           uuid.New(),
+							Order:        0,
+							ExerciseName: "Squat",
+							Sets:         &sets,
+							Reps:         &reps,
+						},
+					},
 				},
 			},
 		}
@@ -472,28 +471,14 @@ func TestValidateProgram(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("too many entries", func(t *testing.T) {
-		p := validProgram()
-		p.Entries = make([]ProgramEntry, 1001)
-		for i := range p.Entries {
-			p.Entries[i] = ProgramEntry{
-				ID:           uuid.New(),
-				ProgramID:    p.ID,
-				Order:        i,
-				ExerciseName: "Exercise",
-			}
+	t.Run("program with no sessions is invalid", func(t *testing.T) {
+		p := &Program{
+			ID:     uuid.New(),
+			Name:   "Empty Program",
+			Status: ProgramStatusActive,
 		}
 		err := ValidateProgram(p)
 		assert.Error(t, err)
-	})
-
-	t.Run("program with no entries is valid", func(t *testing.T) {
-		p := &Program{
-			ID:   uuid.New(),
-			Name: "Empty Program",
-		}
-		err := ValidateProgram(p)
-		assert.NoError(t, err)
 	})
 }
 

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Rx API
-  version: 0.2.0
+  version: 0.3.0
 servers:
   - url: http://localhost:8080/api/v1
 
@@ -10,11 +10,11 @@ security:
   - bearerAuth: []
 
 paths:
-  /programs:
+  /program-templates:
     get:
-      summary: List programs
-      operationId: listPrograms
-      tags: [Program]
+      summary: List program templates
+      operationId: listProgramTemplates
+      tags: [ProgramTemplate]
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/After'
@@ -23,7 +23,180 @@ paths:
           schema:
             type: boolean
             default: false
-          description: When true, archived programs are included in results
+          description: When true, archived program templates are included in results
+      responses:
+        '200':
+          description: Paginated list of program templates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramTemplateListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      summary: Create program template
+      operationId: createProgramTemplate
+      tags: [ProgramTemplate]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramTemplateCreate'
+      responses:
+        '201':
+          description: Program template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramTemplate'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /program-templates/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ProgramTemplateId'
+    get:
+      summary: Get program template by ID
+      operationId: getProgramTemplate
+      tags: [ProgramTemplate]
+      responses:
+        '200':
+          description: Program template found (includes all entries)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramTemplate'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete program template
+      operationId: deleteProgramTemplate
+      tags: [ProgramTemplate]
+      responses:
+        '204':
+          description: Program template deleted (entries cascade deleted)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /program-templates/{id}/archive:
+    parameters:
+      - $ref: '#/components/parameters/ProgramTemplateId'
+    post:
+      summary: Archive program template
+      operationId: archiveProgramTemplate
+      tags: [ProgramTemplate]
+      responses:
+        '200':
+          description: Program template archived
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramTemplate'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /program-templates/{id}/unarchive:
+    parameters:
+      - $ref: '#/components/parameters/ProgramTemplateId'
+    post:
+      summary: Unarchive program template
+      operationId: unarchiveProgramTemplate
+      tags: [ProgramTemplate]
+      responses:
+        '200':
+          description: Program template unarchived
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramTemplate'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /program-templates/{id}/duplicate:
+    parameters:
+      - $ref: '#/components/parameters/ProgramTemplateId'
+    post:
+      summary: Duplicate program template
+      description: Creates a deep copy of the ProgramTemplate with all entries, appending " (copy)" to the name.
+      operationId: duplicateProgramTemplate
+      tags: [ProgramTemplate]
+      responses:
+        '201':
+          description: Program template duplicated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramTemplate'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /program-templates/{id}/generate:
+    parameters:
+      - $ref: '#/components/parameters/ProgramTemplateId'
+    post:
+      summary: Generate a Program from this template
+      description: |
+        Creates a concrete Program from a ProgramTemplate by calculating working weights
+        from RPE/percent_1rm values and target weights, rounded to equipment increments.
+        Entries are grouped by metadata.session — one ProgramSession per session group.
+        Returns the newly created Program with all sessions embedded.
+      operationId: generateProgram
+      tags: [ProgramTemplate]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateProgramRequest'
+      responses:
+        '201':
+          description: Program generated from template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Program'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /programs:
+    get:
+      summary: List programs
+      operationId: listPrograms
+      tags: [Program]
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/After'
+        - name: program_template_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter programs by source program template ID
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, completed]
+          description: Filter programs by status
       responses:
         '200':
           description: Paginated list of programs
@@ -64,7 +237,7 @@ paths:
       tags: [Program]
       responses:
         '200':
-          description: Program found (includes all entries)
+          description: Program found (includes all sessions and entries)
           content:
             application/json:
               schema:
@@ -79,256 +252,11 @@ paths:
       tags: [Program]
       responses:
         '204':
-          description: Program deleted (entries cascade deleted)
+          description: Program deleted (sessions and entries cascade deleted, referencing logs have program_id cleared)
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-
-  /programs/{id}/archive:
-    parameters:
-      - $ref: '#/components/parameters/ProgramId'
-    post:
-      summary: Archive program
-      operationId: archiveProgram
-      tags: [Program]
-      responses:
-        '200':
-          description: Program archived
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Program'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /programs/{id}/unarchive:
-    parameters:
-      - $ref: '#/components/parameters/ProgramId'
-    post:
-      summary: Unarchive program
-      operationId: unarchiveProgram
-      tags: [Program]
-      responses:
-        '200':
-          description: Program unarchived
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Program'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /programs/{id}/duplicate:
-    parameters:
-      - $ref: '#/components/parameters/ProgramId'
-    post:
-      summary: Duplicate program
-      description: Creates a deep copy of the Program with all entries, appending " (copy)" to the name.
-      operationId: duplicateProgram
-      tags: [Program]
-      responses:
-        '201':
-          description: Program duplicated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Program'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /cycles:
-    get:
-      summary: List cycles
-      operationId: listCycles
-      tags: [Cycle]
-      parameters:
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/After'
-        - name: program_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter cycles by program ID
-      responses:
-        '200':
-          description: Paginated list of cycles
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CycleListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  /cycles/{id}:
-    parameters:
-      - $ref: '#/components/parameters/CycleId'
-    get:
-      summary: Get cycle by ID
-      operationId: getCycle
-      tags: [Cycle]
-      responses:
-        '200':
-          description: Cycle found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Cycle'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    delete:
-      summary: Delete cycle
-      operationId: deleteCycle
-      tags: [Cycle]
-      responses:
-        '204':
-          description: Cycle deleted
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-
-  /plans:
-    get:
-      summary: List plans
-      operationId: listPlans
-      tags: [Plan]
-      parameters:
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/After'
-        - name: cycle_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter plans by cycle ID
-      responses:
-        '200':
-          description: Paginated list of plans
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlanListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-    post:
-      summary: Create plan
-      operationId: createPlan
-      tags: [Plan]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PlanCreate'
-      responses:
-        '201':
-          description: Plan created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Plan'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  /plans/from-program:
-    post:
-      summary: Convert a program into plans (one per session)
-      description: |
-        Creates Plans from an existing Program by calculating working weights
-        from RPE/percent_1rm values and target weights, rounded to equipment increments.
-        Entries are grouped by metadata.session — one Plan per session.
-      operationId: convertProgramToPlans
-      tags: [Plan]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ConvertProgramToPlanRequest'
-      responses:
-        '201':
-          description: Cycle and plans created from program
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ConvertProgramToPlansResponse'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /plans/{id}:
-    parameters:
-      - $ref: '#/components/parameters/PlanId'
-    get:
-      summary: Get plan by ID
-      operationId: getPlan
-      tags: [Plan]
-      responses:
-        '200':
-          description: Plan found (includes all entries)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Plan'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    put:
-      summary: Update plan
-      operationId: updatePlan
-      tags: [Plan]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PlanCreate'
-      responses:
-        '200':
-          description: Plan updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Plan'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    delete:
-      summary: Delete plan
-      operationId: deletePlan
-      tags: [Plan]
-      responses:
-        '204':
-          description: Plan deleted (entries cascade deleted)
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
 
   /logs:
     get:
@@ -539,6 +467,15 @@ components:
         type: string
       description: Cursor for pagination (from previous response)
 
+    ProgramTemplateId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Program Template ID
+
     ProgramId:
       name: id
       in: path
@@ -547,24 +484,6 @@ components:
         type: string
         format: uuid
       description: Program ID
-
-    CycleId:
-      name: id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-      description: Cycle ID
-
-    PlanId:
-      name: id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-      description: Plan ID
 
     LogId:
       name: id
@@ -620,20 +539,20 @@ components:
             $ref: '#/components/schemas/Error'
           example:
             code: CONFLICT
-            message: Cannot delete plan - referenced by logs
+            message: Cannot delete program template - referenced by programs
             details:
               blocking_references:
-                - type: log
-                  count: 5
+                - type: program
+                  count: 3
 
   # ========================================
   # Schemas
   # ========================================
   schemas:
     # ========================================
-    # Program
+    # ProgramTemplate
     # ========================================
-    Program:
+    ProgramTemplate:
       type: object
       required:
         - id
@@ -661,7 +580,7 @@ components:
         entries:
           type: array
           items:
-            $ref: '#/components/schemas/ProgramEntry'
+            $ref: '#/components/schemas/ProgramTemplateEntry'
           description: Exercise prescription entries (RPE-based, no absolute weights)
         created_at:
           type: string
@@ -673,9 +592,9 @@ components:
           type: string
           format: date-time
           nullable: true
-          description: When set, the program is archived and hidden from default list results
+          description: When set, the program template is archived and hidden from default list results
 
-    ProgramCreate:
+    ProgramTemplateCreate:
       type: object
       required:
         - name
@@ -696,27 +615,27 @@ components:
         entries:
           type: array
           items:
-            $ref: '#/components/schemas/ProgramEntryCreate'
+            $ref: '#/components/schemas/ProgramTemplateEntryCreate'
           maxItems: 1000
 
-    ProgramEntry:
+    ProgramTemplateEntry:
       type: object
       required:
         - id
-        - program_id
+        - program_template_id
         - order
         - exercise_name
       properties:
         id:
           type: string
           format: uuid
-        program_id:
+        program_template_id:
           type: string
           format: uuid
         order:
           type: integer
           minimum: 0
-          description: Position in program
+          description: Position in program template
         exercise_name:
           type: string
           minLength: 1
@@ -745,9 +664,9 @@ components:
         metadata:
           type: object
           additionalProperties: true
-          description: Free-form JSON metadata
+          description: Free-form JSON metadata (e.g., session grouping via metadata.session)
 
-    ProgramEntryCreate:
+    ProgramTemplateEntryCreate:
       type: object
       required:
         - exercise_name
@@ -782,7 +701,7 @@ components:
           type: object
           additionalProperties: true
 
-    ProgramListResponse:
+    ProgramTemplateListResponse:
       type: object
       required:
         - data
@@ -791,76 +710,22 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/Program'
+            $ref: '#/components/schemas/ProgramTemplate'
         next_cursor:
           type: string
           nullable: true
         has_more:
           type: boolean
 
-    # ========================================
-    # Cycle
-    # ========================================
-    Cycle:
+    GenerateProgramRequest:
       type: object
       required:
-        - id
-        - program_id
-        - name
-        - created_at
-      properties:
-        id:
-          type: string
-          format: uuid
-        program_id:
-          type: string
-          format: uuid
-          description: Reference to the source program
-        name:
-          type: string
-          minLength: 1
-          maxLength: 200
-        notes:
-          type: string
-          maxLength: 5000
-        metadata:
-          type: object
-          additionalProperties: true
-          description: Free-form JSON metadata (e.g., conversion parameters)
-        created_at:
-          type: string
-          format: date-time
-
-    CycleListResponse:
-      type: object
-      required:
-        - data
-        - has_more
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Cycle'
-        next_cursor:
-          type: string
-          nullable: true
-        has_more:
-          type: boolean
-
-    ConvertProgramToPlanRequest:
-      type: object
-      required:
-        - program_id
         - target_weights
       properties:
-        program_id:
-          type: string
-          format: uuid
-          description: ID of the program to convert
         name:
           type: string
           maxLength: 200
-          description: Name for the created plan (defaults to program name)
+          description: Name for the generated program (defaults to template name)
         target_weights:
           type: object
           additionalProperties:
@@ -879,64 +744,47 @@ components:
             Map of exercise_name to weight increment in kg for rounding.
             If not specified, weights are rounded to 0.1 kg precision.
 
-    ConvertProgramToPlansResponse:
-      type: object
-      required:
-        - cycle
-        - plans
-      properties:
-        cycle:
-          $ref: '#/components/schemas/Cycle'
-        plans:
-          type: array
-          items:
-            $ref: '#/components/schemas/Plan'
-
     # ========================================
-    # Plan
+    # Program
     # ========================================
-    Plan:
+    Program:
       type: object
       required:
         - id
         - name
+        - status
+        - sessions
         - created_at
         - updated_at
       properties:
         id:
           type: string
           format: uuid
-        cycle_id:
+        program_template_id:
           type: string
           format: uuid
-          description: Optional reference to the cycle this plan belongs to
+          nullable: true
+          description: Reference to the source program template (null for manually created programs)
         name:
           type: string
           minLength: 1
           maxLength: 200
-        date:
+        status:
           type: string
-          format: date
-          description: Scheduled date for this session (YYYY-MM-DD)
-        session_name:
-          type: string
-          maxLength: 200
-          description: Session name from the source program (e.g. "Day A", "Upper")
-        description:
-          type: string
-          maxLength: 2000
+          enum: [active, completed]
+          description: active = in progress, completed = all sessions have been logged
         notes:
           type: string
           maxLength: 5000
         metadata:
           type: object
           additionalProperties: true
-          description: Free-form JSON metadata
-        entries:
+          description: Free-form JSON metadata (e.g., generation parameters)
+        sessions:
           type: array
           items:
-            $ref: '#/components/schemas/PlanEntry'
-          description: Training prescription entries
+            $ref: '#/components/schemas/ProgramSession'
+          description: Ordered training sessions (each contains entries with absolute weights)
         created_at:
           type: string
           format: date-time
@@ -944,59 +792,107 @@ components:
           type: string
           format: date-time
 
-    PlanCreate:
+    ProgramCreate:
       type: object
       required:
         - name
+        - sessions
       properties:
-        cycle_id:
+        program_template_id:
           type: string
           format: uuid
+          description: Optional reference to source program template
         name:
           type: string
           minLength: 1
           maxLength: 200
-        date:
-          type: string
-          format: date
-          description: Scheduled date for this session (YYYY-MM-DD)
-        session_name:
-          type: string
-          maxLength: 200
-          description: Session name (e.g. "Day A", "Upper")
-        description:
-          type: string
-          maxLength: 2000
         notes:
           type: string
           maxLength: 5000
         metadata:
           type: object
           additionalProperties: true
-        entries:
+        sessions:
           type: array
           items:
-            $ref: '#/components/schemas/PlanEntryCreate'
-          maxItems: 1000
+            $ref: '#/components/schemas/ProgramSessionCreate'
+          minItems: 1
+          maxItems: 100
 
-    PlanEntry:
+    ProgramSession:
       type: object
       required:
         - id
-        - plan_id
+        - program_id
+        - session_name
+        - order
+        - entries
+      properties:
+        id:
+          type: string
+          format: uuid
+        program_id:
+          type: string
+          format: uuid
+        session_name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Name of this training session (e.g., "Week 1 Day 1", "Day A")
+        order:
+          type: integer
+          minimum: 0
+          description: Position in program (0-based)
+        date:
+          type: string
+          format: date
+          description: Scheduled date for this session (YYYY-MM-DD, optional)
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProgramSessionEntry'
+          description: Exercise prescriptions with absolute weights
+
+    ProgramSessionCreate:
+      type: object
+      required:
+        - session_name
+        - order
+      properties:
+        session_name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        order:
+          type: integer
+          minimum: 0
+        date:
+          type: string
+          format: date
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProgramSessionEntryCreate'
+          maxItems: 1000
+
+    ProgramSessionEntry:
+      type: object
+      required:
+        - id
+        - session_id
         - order
         - exercise_name
       properties:
         id:
           type: string
           format: uuid
-        plan_id:
+        session_id:
           type: string
           format: uuid
         order:
           type: integer
           minimum: 0
-          description: Position in plan
+          description: Position in session
         exercise_name:
           type: string
           minLength: 1
@@ -1026,7 +922,7 @@ components:
           additionalProperties: true
           description: Free-form JSON metadata
 
-    PlanEntryCreate:
+    ProgramSessionEntryCreate:
       type: object
       required:
         - exercise_name
@@ -1060,6 +956,22 @@ components:
           type: object
           additionalProperties: true
 
+    ProgramListResponse:
+      type: object
+      required:
+        - data
+        - has_more
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Program'
+        next_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+
     # ========================================
     # Log
     # ========================================
@@ -1075,10 +987,15 @@ components:
         id:
           type: string
           format: uuid
-        plan_id:
+        program_id:
           type: string
           format: uuid
-          description: Optional reference to the training plan
+          nullable: true
+          description: Optional reference to the training program
+        session_name:
+          type: string
+          maxLength: 200
+          description: Session name within the referenced program (used when program_id is set)
         performed_at:
           type: string
           format: date-time
@@ -1118,9 +1035,14 @@ components:
         - performed_at
         - entries
       properties:
-        plan_id:
+        program_id:
           type: string
           format: uuid
+          description: Optional reference to a training program
+        session_name:
+          type: string
+          maxLength: 200
+          description: Session name within the referenced program
         performed_at:
           type: string
           format: date-time
@@ -1243,22 +1165,6 @@ components:
     # ========================================
     # Pagination Response Types
     # ========================================
-    PlanListResponse:
-      type: object
-      required:
-        - data
-        - has_more
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Plan'
-        next_cursor:
-          type: string
-          nullable: true
-        has_more:
-          type: boolean
-
     LogListResponse:
       type: object
       required:

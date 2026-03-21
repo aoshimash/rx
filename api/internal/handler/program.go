@@ -2,9 +2,7 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/aoshimash/rx/api/internal/domain"
 	"github.com/aoshimash/rx/api/internal/middleware"
@@ -12,31 +10,37 @@ import (
 	"github.com/google/uuid"
 )
 
-// programEntryRequest represents a program entry in the request body
-type programEntryRequest struct {
+// programSessionEntryRequest represents a program session entry in the request body
+type programSessionEntryRequest struct {
 	ExerciseName string          `json:"exercise_name"`
 	Order        int             `json:"order"`
 	Sets         *int            `json:"sets,omitempty"`
 	Reps         *int            `json:"reps,omitempty"`
+	LoadKg       *float64        `json:"load_kg,omitempty"`
 	RPE          *int            `json:"rpe,omitempty"`
-	Percent1RM   *float64        `json:"percent_1rm,omitempty"`
 	Notes        *string         `json:"notes,omitempty"`
 	Metadata     json.RawMessage `json:"metadata,omitempty"`
 }
 
+// programSessionRequest represents a program session in the request body
+type programSessionRequest struct {
+	SessionName string                       `json:"session_name"`
+	Order       int                          `json:"order"`
+	Date        *string                      `json:"date,omitempty"`
+	Entries     []programSessionEntryRequest `json:"entries,omitempty"`
+}
+
 // ProgramHandler handles Program-related HTTP requests
 type ProgramHandler struct {
-	repo      repository.ProgramRepository
-	planRepo  repository.PlanRepository
-	cycleRepo repository.CycleRepository
+	repo    repository.ProgramRepository
+	logRepo repository.LogRepository
 }
 
 // NewProgramHandler creates a new ProgramHandler
-func NewProgramHandler(repo repository.ProgramRepository, planRepo repository.PlanRepository, cycleRepo repository.CycleRepository) *ProgramHandler {
+func NewProgramHandler(repo repository.ProgramRepository, logRepo repository.LogRepository) *ProgramHandler {
 	return &ProgramHandler{
-		repo:      repo,
-		planRepo:  planRepo,
-		cycleRepo: cycleRepo,
+		repo:    repo,
+		logRepo: logRepo,
 	}
 }
 
@@ -45,11 +49,11 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req struct {
-		Name        string                `json:"name"`
-		Description *string               `json:"description,omitempty"`
-		Notes       *string               `json:"notes,omitempty"`
-		Metadata    json.RawMessage       `json:"metadata,omitempty"`
-		Entries     []programEntryRequest `json:"entries,omitempty"`
+		ProgramTemplateID *string                 `json:"program_template_id,omitempty"`
+		Name              string                  `json:"name"`
+		Notes             *string                 `json:"notes,omitempty"`
+		Metadata          json.RawMessage         `json:"metadata,omitempty"`
+		Sessions          []programSessionRequest `json:"sessions,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -60,15 +64,52 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	program := &domain.Program{
-		Name:        req.Name,
-		Description: req.Description,
-		Notes:       req.Notes,
-		Metadata:    req.Metadata,
-		Entries:     make([]domain.ProgramEntry, len(req.Entries)),
+		Name:     req.Name,
+		Status:   domain.ProgramStatusActive,
+		Notes:    req.Notes,
+		Metadata: req.Metadata,
+		Sessions: make([]domain.ProgramSession, len(req.Sessions)),
 	}
 
-	for i, entryReq := range req.Entries {
-		program.Entries[i] = convertProgramEntry(entryReq)
+	if req.ProgramTemplateID != nil {
+		tid, err := uuid.Parse(*req.ProgramTemplateID)
+		if err != nil {
+			middleware.WriteValidationError(w, "Invalid program_template_id format", nil)
+			return
+		}
+		program.ProgramTemplateID = &tid
+	}
+
+	for i, sessReq := range req.Sessions {
+		sess := domain.ProgramSession{
+			SessionName: sessReq.SessionName,
+			Order:       sessReq.Order,
+			Entries:     make([]domain.ProgramSessionEntry, len(sessReq.Entries)),
+		}
+
+		if sessReq.Date != nil {
+			var d domain.DateOnly
+			if err := json.Unmarshal([]byte(`"`+*sessReq.Date+`"`), &d); err != nil {
+				middleware.WriteValidationError(w, "Invalid date format in session (expected YYYY-MM-DD)", nil)
+				return
+			}
+			sess.Date = &d
+		}
+
+		for j, e := range sessReq.Entries {
+			sess.Entries[j] = domain.ProgramSessionEntry{
+				ExerciseName: e.ExerciseName,
+				Order:        e.Order,
+				Sets:         e.Sets,
+				Reps:         e.Reps,
+				LoadKg:       e.LoadKg,
+				RPE:          e.RPE,
+				Notes:        e.Notes,
+				Metadata:     e.Metadata,
+			}
+		}
+
+		program.Sessions[i] = sess
 	}
 
 	if err := domain.ValidateProgram(program); err != nil {
@@ -87,19 +128,6 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusCreated, program)
-}
-
-func convertProgramEntry(req programEntryRequest) domain.ProgramEntry {
-	return domain.ProgramEntry{
-		ExerciseName: req.ExerciseName,
-		Order:        req.Order,
-		Sets:         req.Sets,
-		Reps:         req.Reps,
-		RPE:          req.RPE,
-		Percent1RM:   req.Percent1RM,
-		Notes:        req.Notes,
-		Metadata:     req.Metadata,
-	}
 }
 
 // GetProgram handles GET /programs/{id}
@@ -125,133 +153,6 @@ func (h *ProgramHandler) GetProgram(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, program)
 }
 
-// ArchiveProgram handles POST /programs/{id}/archive
-func (h *ProgramHandler) ArchiveProgram(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	id, err := parseUUIDParam(r, "id", "program")
-	if err != nil {
-		middleware.WriteValidationError(w, err.Error(), nil)
-		return
-	}
-
-	if err := h.repo.Archive(ctx, id); err != nil {
-		if err == domain.ErrNotFound {
-			middleware.WriteNotFoundError(w, "Program not found")
-			return
-		}
-		middleware.WriteInternalError(w, "Failed to archive program")
-		return
-	}
-
-	program, err := h.repo.GetByID(ctx, id)
-	if err != nil {
-		middleware.WriteInternalError(w, "Failed to retrieve program")
-		return
-	}
-
-	writeJSON(w, http.StatusOK, program)
-}
-
-// UnarchiveProgram handles POST /programs/{id}/unarchive
-func (h *ProgramHandler) UnarchiveProgram(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	id, err := parseUUIDParam(r, "id", "program")
-	if err != nil {
-		middleware.WriteValidationError(w, err.Error(), nil)
-		return
-	}
-
-	if err := h.repo.Unarchive(ctx, id); err != nil {
-		if err == domain.ErrNotFound {
-			middleware.WriteNotFoundError(w, "Program not found")
-			return
-		}
-		middleware.WriteInternalError(w, "Failed to unarchive program")
-		return
-	}
-
-	program, err := h.repo.GetByID(ctx, id)
-	if err != nil {
-		middleware.WriteInternalError(w, "Failed to retrieve program")
-		return
-	}
-
-	writeJSON(w, http.StatusOK, program)
-}
-
-// DuplicateProgram handles POST /programs/{id}/duplicate
-func (h *ProgramHandler) DuplicateProgram(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	id, err := parseUUIDParam(r, "id", "program")
-	if err != nil {
-		middleware.WriteValidationError(w, err.Error(), nil)
-		return
-	}
-
-	original, err := h.repo.GetByID(ctx, id)
-	if err != nil {
-		if err == domain.ErrNotFound {
-			middleware.WriteNotFoundError(w, "Program not found")
-			return
-		}
-		middleware.WriteInternalError(w, "Failed to retrieve program")
-		return
-	}
-
-	copyName := strings.TrimSpace(original.Name) + " (copy)"
-
-	entries := make([]domain.ProgramEntry, len(original.Entries))
-	for i, e := range original.Entries {
-		entries[i] = domain.ProgramEntry{
-			Order:        e.Order,
-			ExerciseName: e.ExerciseName,
-			Sets:         e.Sets,
-			Reps:         e.Reps,
-			RPE:          e.RPE,
-			Percent1RM:   e.Percent1RM,
-			Notes:        e.Notes,
-		}
-		if e.Metadata != nil {
-			entries[i].Metadata = make([]byte, len(e.Metadata))
-			copy(entries[i].Metadata, e.Metadata)
-		}
-	}
-
-	var copyMeta json.RawMessage
-	if original.Metadata != nil {
-		copyMeta = make(json.RawMessage, len(original.Metadata))
-		copy(copyMeta, original.Metadata)
-	}
-
-	duplicate := &domain.Program{
-		Name:        copyName,
-		Description: original.Description,
-		Notes:       original.Notes,
-		Metadata:    copyMeta,
-		Entries:     entries,
-	}
-
-	if err := domain.ValidateProgram(duplicate); err != nil {
-		if handleValidationError(w, err) {
-			return
-		}
-		middleware.WriteValidationError(w, "Validation failed", map[string]interface{}{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	if err := h.repo.Create(ctx, duplicate); err != nil {
-		middleware.WriteInternalError(w, "Failed to duplicate program")
-		return
-	}
-
-	writeJSON(w, http.StatusCreated, duplicate)
-}
-
 // DeleteProgram handles DELETE /programs/{id}
 func (h *ProgramHandler) DeleteProgram(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -268,23 +169,6 @@ func (h *ProgramHandler) DeleteProgram(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		middleware.WriteInternalError(w, "Failed to retrieve program")
-		return
-	}
-
-	// Check for referential integrity: Program referenced by Cycles
-	hasCycles, err := h.cycleRepo.ExistsByProgramID(ctx, id)
-	if err != nil {
-		middleware.WriteInternalError(w, "Failed to check references")
-		return
-	}
-	if hasCycles {
-		middleware.WriteConflictError(w, "Cannot delete program - referenced by cycles", map[string]interface{}{
-			"blocking_references": []map[string]interface{}{
-				{
-					"type": "cycle",
-				},
-			},
-		})
 		return
 	}
 
@@ -311,9 +195,20 @@ func (h *ProgramHandler) ListPrograms(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	after := r.URL.Query().Get("after")
-	includeArchived := r.URL.Query().Get("include_archived") == "true"
 
-	programs, nextCursor, hasMore, err := h.repo.List(ctx, limit, after, includeArchived)
+	var programTemplateID *uuid.UUID
+	if tmplIDStr := r.URL.Query().Get("program_template_id"); tmplIDStr != "" {
+		tid, err := uuid.Parse(tmplIDStr)
+		if err != nil {
+			middleware.WriteValidationError(w, "Invalid program_template_id format", nil)
+			return
+		}
+		programTemplateID = &tid
+	}
+
+	status := r.URL.Query().Get("status")
+
+	programs, nextCursor, hasMore, err := h.repo.List(ctx, limit, after, programTemplateID, status)
 	if err != nil {
 		middleware.WriteInternalError(w, "Failed to list programs")
 		return
@@ -324,115 +219,4 @@ func (h *ProgramHandler) ListPrograms(w http.ResponseWriter, r *http.Request) {
 		"next_cursor": nextCursor,
 		"has_more":    hasMore,
 	})
-}
-
-// ConvertToPlans handles POST /plans/from-program
-func (h *ProgramHandler) ConvertToPlans(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	var req struct {
-		ProgramID      string             `json:"program_id"`
-		Name           string             `json:"name,omitempty"`
-		TargetWeights  map[string]float64 `json:"target_weights"`
-		LoadIncrements map[string]float64 `json:"load_increments,omitempty"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		middleware.WriteValidationError(w, "Invalid request body", map[string]interface{}{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	if req.ProgramID == "" {
-		middleware.WriteValidationError(w, "program_id is required", nil)
-		return
-	}
-
-	programID, err := parseUUIDString(req.ProgramID, "program")
-	if err != nil {
-		middleware.WriteValidationError(w, err.Error(), nil)
-		return
-	}
-
-	// Fetch the program
-	program, err := h.repo.GetByID(ctx, programID)
-	if err != nil {
-		if err == domain.ErrNotFound {
-			middleware.WriteNotFoundError(w, "Program not found")
-			return
-		}
-		middleware.WriteInternalError(w, "Failed to retrieve program")
-		return
-	}
-
-	// Create a Cycle for this conversion
-	cycleName := req.Name
-	if cycleName == "" {
-		cycleName = program.Name
-	}
-	cycle := &domain.Cycle{
-		ProgramID: programID,
-		Name:      cycleName,
-	}
-	if err := domain.ValidateCycle(cycle); err != nil {
-		if handleValidationError(w, err) {
-			return
-		}
-		middleware.WriteValidationError(w, "Cycle validation failed", map[string]interface{}{
-			"error": err.Error(),
-		})
-		return
-	}
-	if err := h.cycleRepo.Create(ctx, cycle); err != nil {
-		middleware.WriteInternalError(w, "Failed to create cycle")
-		return
-	}
-
-	// Convert to plans (one per session)
-	input := &domain.ConvertProgramToPlansInput{
-		Name:           req.Name,
-		TargetWeights:  req.TargetWeights,
-		LoadIncrements: req.LoadIncrements,
-	}
-
-	plans := domain.ConvertProgramToPlans(program, input)
-
-	// Set cycle_id on all plans and validate
-	for _, plan := range plans {
-		plan.CycleID = &cycle.ID
-		if err := domain.ValidatePlan(plan); err != nil {
-			if handleValidationError(w, err) {
-				return
-			}
-			middleware.WriteValidationError(w, "Generated plan validation failed", map[string]interface{}{
-				"error": err.Error(),
-			})
-			return
-		}
-	}
-
-	// Save all validated plans
-	savedPlans := make([]*domain.Plan, 0, len(plans))
-	for _, plan := range plans {
-		if err := h.planRepo.Create(ctx, plan); err != nil {
-			middleware.WriteInternalError(w, "Failed to create plan")
-			return
-		}
-		savedPlans = append(savedPlans, plan)
-	}
-
-	writeJSON(w, http.StatusCreated, map[string]interface{}{
-		"cycle": cycle,
-		"plans": savedPlans,
-	})
-}
-
-// parseUUIDString parses a UUID from a string value
-func parseUUIDString(s string, resourceName string) (uuid.UUID, error) {
-	id, err := uuid.Parse(s)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("invalid %s ID format: %s", resourceName, s)
-	}
-	return id, nil
 }

@@ -4,73 +4,16 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  useArchiveProgram,
-  useDuplicateProgram,
-  useProgram,
-  useUnarchiveProgram,
-} from '@/lib/hooks/usePrograms';
-import type { ProgramEntry } from '@/types/api';
-import { Archive, ArchiveRestore, ArrowRightLeft, Copy } from 'lucide-react';
-import Link from 'next/link';
+import { useDeleteProgram, useProgram } from '@/lib/hooks/usePrograms';
+import { Trash2 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
-
-type ExerciseGroup = { name: string; entries: ProgramEntry[] };
-type SessionGroup = { name: string; exerciseGroups: ExerciseGroup[] };
-
-function formatEntryText(entry: ProgramEntry): string {
-  const parts: string[] = [];
-  if (entry.rpe != null) parts.push(`RPE${entry.rpe}`);
-  if (entry.reps != null) parts.push(`${entry.reps}reps`);
-  if (entry.sets != null) parts.push(`${entry.sets}sets`);
-  if (entry.percent_1rm != null) parts.push(`${Math.round(entry.percent_1rm * 100)}%`);
-  const weightKg = entry.metadata?.weight_kg as number | undefined;
-  if (weightKg != null) parts.push(`${weightKg}kg`);
-  return parts.join(' ');
-}
-
-function groupBySession(entries: ProgramEntry[]): SessionGroup[] {
-  const sorted = [...entries].sort((a, b) => a.order - b.order);
-  const sessionOrder: string[] = [];
-  const sessionMap = new Map<string, ProgramEntry[]>();
-
-  for (const entry of sorted) {
-    const session = (entry.metadata?.session as string) || '';
-    if (!sessionMap.has(session)) {
-      sessionOrder.push(session);
-      sessionMap.set(session, []);
-    }
-    sessionMap.get(session)?.push(entry);
-  }
-
-  return sessionOrder.map((session) => ({
-    name: session,
-    exerciseGroups: groupByExercise(sessionMap.get(session) ?? []),
-  }));
-}
-
-function groupByExercise(entries: ProgramEntry[]): ExerciseGroup[] {
-  const groups: ExerciseGroup[] = [];
-  const map = new Map<string, ExerciseGroup>();
-  for (const entry of entries) {
-    if (!map.has(entry.exercise_name)) {
-      const g: ExerciseGroup = { name: entry.exercise_name, entries: [] };
-      groups.push(g);
-      map.set(entry.exercise_name, g);
-    }
-    map.get(entry.exercise_name)?.entries.push(entry);
-  }
-  return groups;
-}
 
 export default function ProgramDetailPage() {
   const params = useParams();
   const router = useRouter();
   const programId = params.id as string;
   const { data: program, isLoading } = useProgram(programId);
-  const archiveProgram = useArchiveProgram();
-  const unarchiveProgram = useUnarchiveProgram();
-  const duplicateProgram = useDuplicateProgram();
+  const deleteProgram = useDeleteProgram();
 
   if (isLoading) {
     return (
@@ -89,21 +32,9 @@ export default function ProgramDetailPage() {
     );
   }
 
-  const sessions = groupBySession(program.entries || []);
-  const isArchived = !!program.archived_at;
-
-  const handleDuplicate = async () => {
-    await duplicateProgram.mutateAsync(programId);
+  const handleDelete = async () => {
+    await deleteProgram.mutateAsync(programId);
     router.push('/programs');
-  };
-
-  const handleArchiveToggle = async () => {
-    if (isArchived) {
-      await unarchiveProgram.mutateAsync(programId);
-    } else {
-      await archiveProgram.mutateAsync(programId);
-      router.push('/programs');
-    }
   };
 
   return (
@@ -112,84 +43,68 @@ export default function ProgramDetailPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-bold">{program.name}</h1>
-            {isArchived && <Badge variant="secondary">Archived</Badge>}
+            <Badge variant={program.status === 'active' ? 'default' : 'secondary'}>
+              {program.status}
+            </Badge>
           </div>
-          {program.description && (
-            <p className="text-muted-foreground mt-1">{program.description}</p>
-          )}
-          {program.notes && <p className="text-sm text-muted-foreground mt-1">{program.notes}</p>}
+          {program.notes && <p className="text-muted-foreground mt-1">{program.notes}</p>}
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleDuplicate} disabled={duplicateProgram.isPending}>
-            <Copy className="h-4 w-4 mr-2" />
-            Duplicate
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleArchiveToggle}
-            disabled={archiveProgram.isPending || unarchiveProgram.isPending}
-          >
-            {isArchived ? (
-              <>
-                <ArchiveRestore className="h-4 w-4 mr-2" />
-                Unarchive
-              </>
-            ) : (
-              <>
-                <Archive className="h-4 w-4 mr-2" />
-                Archive
-              </>
-            )}
-          </Button>
-          {!isArchived && (
-            <Link href={`/programs/${program.id}/convert`}>
-              <Button>
-                <ArrowRightLeft className="h-4 w-4 mr-2" />
-                Convert to Plan
-              </Button>
-            </Link>
-          )}
-        </div>
+        <Button variant="outline" onClick={handleDelete} disabled={deleteProgram.isPending}>
+          <Trash2 className="h-4 w-4 mr-2" />
+          Delete
+        </Button>
       </div>
 
-      {sessions.length === 0 ? (
-        <p className="text-muted-foreground">No entries in this program.</p>
+      {program.sessions.length === 0 ? (
+        <p className="text-muted-foreground">No sessions in this program.</p>
       ) : (
         <div className="space-y-4">
-          {sessions.map((session) => (
-            <Card key={session.name}>
-              {session.name && (
+          {program.sessions
+            .slice()
+            .sort((a, b) => a.order - b.order)
+            .map((session) => (
+              <Card key={session.id}>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base">{session.name}</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-base">{session.session_name}</CardTitle>
+                    {session.date && (
+                      <span className="text-sm text-muted-foreground">{session.date}</span>
+                    )}
+                  </div>
                 </CardHeader>
-              )}
-              <CardContent className={session.name ? '' : 'pt-4'}>
-                <div className="divide-y">
-                  {session.exerciseGroups.map((group) => (
-                    <div
-                      key={`${session.name}-${group.name}`}
-                      className="flex items-baseline gap-3 py-1.5 first:pt-0 last:pb-0"
-                    >
-                      <span className="w-40 shrink-0 font-medium text-sm truncate">
-                        {group.name}
-                      </span>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                        {group.entries.map((entry) => {
-                          const label = entry.metadata?.label as string | undefined;
-                          return (
-                            <span key={entry.id} className="inline-flex items-center gap-1.5">
-                              {label && <Badge variant="outline">{label}</Badge>}
-                              {formatEntryText(entry)}
+                <CardContent>
+                  {session.entries.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No exercises</p>
+                  ) : (
+                    <div className="divide-y">
+                      {session.entries
+                        .slice()
+                        .sort((a, b) => a.order - b.order)
+                        .map((entry) => (
+                          <div
+                            key={entry.id}
+                            className="flex items-baseline gap-3 py-1.5 first:pt-0 last:pb-0"
+                          >
+                            <span className="w-40 shrink-0 font-medium text-sm truncate">
+                              {entry.exercise_name}
                             </span>
-                          );
-                        })}
-                      </div>
+                            <span className="text-sm text-muted-foreground">
+                              {[
+                                entry.sets != null && `${entry.sets}sets`,
+                                entry.reps != null && `${entry.reps}reps`,
+                                entry.load_kg != null && `${entry.load_kg}kg`,
+                                entry.rpe != null && `RPE${entry.rpe}`,
+                              ]
+                                .filter(Boolean)
+                                .join(' ')}
+                            </span>
+                          </div>
+                        ))}
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  )}
+                </CardContent>
+              </Card>
+            ))}
         </div>
       )}
     </main>

@@ -1,4 +1,4 @@
-import type { Log, Plan } from '@/types/api';
+import type { Log } from '@/types/api';
 
 interface ExportOptions {
   includeHeaders?: boolean;
@@ -41,10 +41,19 @@ function downloadCSV(filename: string, csv: string): void {
 
 export function exportLogsToCSV(
   logs: Log[],
-  plan?: Plan,
   _options: { scope: 'all' | 'current-week' } = { scope: 'all' }
 ): void {
-  const headers = ['Date', 'Time', 'Plan', 'Exercise', 'Sets', 'Reps', 'Load (kg)', 'RPE', 'Notes'];
+  const headers = [
+    'Date',
+    'Time',
+    'Session',
+    'Exercise',
+    'Sets',
+    'Reps',
+    'Load (kg)',
+    'RPE',
+    'Notes',
+  ];
 
   const rows: string[][] = [headers];
 
@@ -52,13 +61,13 @@ export function exportLogsToCSV(
     const date = new Date(log.performed_at);
     const dateStr = date.toLocaleDateString('en-US');
     const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    const planName = plan?.name || 'No Plan';
+    const sessionName = log.session_name || '';
 
     for (const entry of log.entries) {
       rows.push([
         dateStr,
         timeStr,
-        planName,
+        sessionName,
         entry.exercise_name,
         String(entry.sets ?? ''),
         String(entry.reps ?? ''),
@@ -71,27 +80,5 @@ export function exportLogsToCSV(
 
   const csv = arrayToCSV(rows);
   const filename = `rx-logs-${new Date().toISOString().split('T')[0]}.csv`;
-  downloadCSV(filename, csv);
-}
-
-export function exportPlanToCSV(plan: Plan): void {
-  const headers = ['Week', 'Day', 'Exercise', 'Sets', 'Reps', 'Load (kg)', 'RPE', 'Notes'];
-  const rows: string[][] = [headers];
-
-  for (const entry of plan.entries || []) {
-    rows.push([
-      (entry.metadata?.week as string) || '',
-      (entry.metadata?.day as string) || '',
-      entry.exercise_name,
-      String(entry.sets ?? ''),
-      String(entry.reps ?? ''),
-      String(entry.load_kg ?? ''),
-      String(entry.rpe ?? ''),
-      entry.notes || '',
-    ]);
-  }
-
-  const csv = arrayToCSV(rows);
-  const filename = `rx-plan-${plan.name.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.csv`;
   downloadCSV(filename, csv);
 }

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -13,7 +14,8 @@ import (
 
 // logRequest represents the request body for creating/updating a log
 type logRequest struct {
-	PlanID      *string           `json:"plan_id,omitempty"`
+	ProgramID   *string           `json:"program_id,omitempty"`
+	SessionName *string           `json:"session_name,omitempty"`
 	PerformedAt string            `json:"performed_at"`
 	StartedAt   *string           `json:"started_at,omitempty"`
 	FinishedAt  *string           `json:"finished_at,omitempty"`
@@ -38,12 +40,16 @@ type logEntryRequest struct {
 
 // LogHandler handles Log-related HTTP requests
 type LogHandler struct {
-	repo repository.LogRepository
+	repo        repository.LogRepository
+	programRepo repository.ProgramRepository
 }
 
 // NewLogHandler creates a new LogHandler
-func NewLogHandler(repo repository.LogRepository) *LogHandler {
-	return &LogHandler{repo: repo}
+func NewLogHandler(repo repository.LogRepository, programRepo repository.ProgramRepository) *LogHandler {
+	return &LogHandler{
+		repo:        repo,
+		programRepo: programRepo,
+	}
 }
 
 // parseLogRequest parses and validates a log request into a domain model
@@ -57,6 +63,7 @@ func (h *LogHandler) parseLogRequest(req *logRequest) (*domain.Log, error) {
 	}
 
 	log := &domain.Log{
+		SessionName: req.SessionName,
 		PerformedAt: performedAt,
 		Notes:       req.Notes,
 		Metadata:    req.Metadata,
@@ -84,15 +91,15 @@ func (h *LogHandler) parseLogRequest(req *logRequest) (*domain.Log, error) {
 		log.FinishedAt = &t
 	}
 
-	if req.PlanID != nil {
-		planID, err := uuid.Parse(*req.PlanID)
+	if req.ProgramID != nil {
+		programID, err := uuid.Parse(*req.ProgramID)
 		if err != nil {
 			return nil, &domain.ValidationError{
-				Field:   "plan_id",
+				Field:   "program_id",
 				Message: "invalid UUID format: " + err.Error(),
 			}
 		}
-		log.PlanID = &planID
+		log.ProgramID = &programID
 	}
 
 	entries := make([]domain.LogEntry, len(req.Entries))
@@ -172,6 +179,38 @@ func (h *LogHandler) CreateLog(w http.ResponseWriter, r *http.Request) {
 	if err := h.repo.Create(ctx, log); err != nil {
 		middleware.WriteInternalError(w, "Failed to create log")
 		return
+	}
+
+	// Auto-completion: check if all sessions of the referenced program have been logged
+	if log.ProgramID != nil && h.programRepo != nil {
+		program, err := h.programRepo.GetByID(ctx, *log.ProgramID)
+		if err == nil && program.Status == domain.ProgramStatusActive {
+			loggedSessions, err := h.repo.ListDistinctLoggedSessionsByProgramID(ctx, *log.ProgramID)
+			if err == nil {
+				// Build set of program session names
+				programSessionNames := make(map[string]struct{}, len(program.Sessions))
+				for _, s := range program.Sessions {
+					programSessionNames[s.SessionName] = struct{}{}
+				}
+				// Check if all program sessions have been logged
+				loggedSet := make(map[string]struct{}, len(loggedSessions))
+				for _, s := range loggedSessions {
+					loggedSet[s] = struct{}{}
+				}
+				allLogged := len(programSessionNames) > 0
+				for name := range programSessionNames {
+					if _, ok := loggedSet[name]; !ok {
+						allLogged = false
+						break
+					}
+				}
+				if allLogged {
+					if err := h.programRepo.UpdateStatus(ctx, *log.ProgramID, domain.ProgramStatusCompleted); err != nil {
+						slog.Warn("Failed to auto-complete program", "program_id", log.ProgramID, "error", err)
+					}
+				}
+			}
+		}
 	}
 
 	writeJSON(w, http.StatusCreated, log)

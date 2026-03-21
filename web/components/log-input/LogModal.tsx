@@ -4,13 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { LogEntryCreate, PlanEntryCreate } from '@/types/api';
+import type { LogEntryCreate, ProgramSessionEntryCreate } from '@/types/api';
 import { useEffect, useState } from 'react';
 import { AddExerciseButton } from './AddExerciseButton';
 import { ExerciseInputRow } from './ExerciseInputRow';
 
 export interface LogSaveContext {
-  planId?: string;
+  programId?: string;
   sessionName?: string;
   startedAt?: string;
   finishedAt?: string;
@@ -19,9 +19,9 @@ export interface LogSaveContext {
 interface LogModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  dayEntries?: PlanEntryCreate[];
-  planContext?: string[];
-  planId?: string;
+  dayEntries?: ProgramSessionEntryCreate[];
+  sessionContext?: string[];
+  programId?: string;
   sessionName?: string;
   onSave: (entries: LogEntryCreate[], notes: string, context?: LogSaveContext) => Promise<void>;
 }
@@ -48,8 +48,8 @@ export function LogModal({
   open,
   onOpenChange,
   dayEntries,
-  planContext,
-  planId,
+  sessionContext,
+  programId,
   sessionName,
   onSave,
 }: LogModalProps) {
@@ -115,7 +115,7 @@ export function LogModal({
       }));
 
       const context: LogSaveContext = {
-        planId,
+        programId,
         sessionName,
         startedAt: sessionStartedAt ? new Date(sessionStartedAt).toISOString() : undefined,
         finishedAt: sessionFinishedAt ? new Date(sessionFinishedAt).toISOString() : undefined,
@@ -133,20 +133,16 @@ export function LogModal({
     }
   };
 
-  const dayName = dayEntries?.[0]
-    ? (dayEntries[0].metadata?.day as string) || dayEntries[0].exercise_name
-    : undefined;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             Record Log
-            {dayName && <span className="ml-2 text-muted-foreground">- {dayName}</span>}
+            {sessionName && <span className="ml-2 text-muted-foreground">- {sessionName}</span>}
           </DialogTitle>
-          {planContext && planContext.length > 0 && (
-            <p className="text-sm text-muted-foreground">{planContext.join(' > ')}</p>
+          {sessionContext && sessionContext.length > 0 && (
+            <p className="text-sm text-muted-foreground">{sessionContext.join(' > ')}</p>
           )}
         </DialogHeader>
 

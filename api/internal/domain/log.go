@@ -27,7 +27,8 @@ type LogEntry struct {
 // Log represents a record of actual training performed.
 type Log struct {
 	ID          uuid.UUID       `json:"id"`
-	PlanID      *uuid.UUID      `json:"plan_id,omitempty"`
+	ProgramID   *uuid.UUID      `json:"program_id,omitempty"`
+	SessionName *string         `json:"session_name,omitempty"`
 	PerformedAt time.Time       `json:"performed_at"`
 	StartedAt   *time.Time      `json:"started_at,omitempty"`
 	FinishedAt  *time.Time      `json:"finished_at,omitempty"`

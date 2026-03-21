@@ -229,10 +229,12 @@ func TestValidateLog(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("log with plan_id", func(t *testing.T) {
+	t.Run("log with program_id and session_name", func(t *testing.T) {
 		l := validLog()
-		planID := uuid.New()
-		l.PlanID = &planID
+		programID := uuid.New()
+		sessionName := "Week 1 Day 1"
+		l.ProgramID = &programID
+		l.SessionName = &sessionName
 		err := ValidateLog(l)
 		assert.NoError(t, err)
 	})

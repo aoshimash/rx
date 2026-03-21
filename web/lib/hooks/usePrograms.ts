@@ -1,11 +1,11 @@
 import { programsApi } from '@/lib/api/programs';
-import type { ConvertProgramToPlanRequest, ProgramCreate } from '@/types/api';
+import type { ProgramCreate } from '@/types/api';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-export function usePrograms(includeArchived = false) {
+export function usePrograms(status?: string) {
   return useQuery({
-    queryKey: ['programs', { includeArchived }],
-    queryFn: () => programsApi.list({ limit: 100, includeArchived }),
+    queryKey: ['programs', { status }],
+    queryFn: () => programsApi.list({ limit: 100, status }),
   });
 }
 
@@ -35,53 +35,6 @@ export function useDeleteProgram() {
     mutationFn: (id: string) => programsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['programs'] });
-    },
-  });
-}
-
-export function useArchiveProgram() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => programsApi.archive(id),
-    onSuccess: (_data, id) => {
-      queryClient.invalidateQueries({ queryKey: ['programs'] });
-      queryClient.invalidateQueries({ queryKey: ['programs', id] });
-    },
-  });
-}
-
-export function useUnarchiveProgram() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => programsApi.unarchive(id),
-    onSuccess: (_data, id) => {
-      queryClient.invalidateQueries({ queryKey: ['programs'] });
-      queryClient.invalidateQueries({ queryKey: ['programs', id] });
-    },
-  });
-}
-
-export function useDuplicateProgram() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => programsApi.duplicate(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['programs'] });
-    },
-  });
-}
-
-export function useConvertProgramToPlans() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: ConvertProgramToPlanRequest) => programsApi.convertToPlans(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['plans'] });
-      queryClient.invalidateQueries({ queryKey: ['cycles'] });
     },
   });
 }

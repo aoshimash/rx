@@ -43,6 +43,6 @@
     }
   },
   "files": {
-    "ignore": ["node_modules", ".next", "dist", "*.gen.ts"]
+    "ignore": ["node_modules", ".next", "dist", "*.gen.ts", "next-env.d.ts"]
   }
 }

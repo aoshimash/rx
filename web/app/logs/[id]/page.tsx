@@ -4,9 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLog } from '@/lib/hooks/useLogs';
-import { usePlan } from '@/lib/hooks/usePlans';
-import { calculateDiff, getStatusIcon, getStatusVariant } from '@/lib/utils/diff';
-import type { LogEntry, PlanEntry } from '@/types/api';
+import type { LogEntry } from '@/types/api';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -27,24 +25,11 @@ function groupByExercise(entries: LogEntry[]): LogExerciseGroup[] {
   return groups;
 }
 
-function findMatchingPlanEntry(
-  logEntry: LogEntry,
-  planEntries: PlanEntry[]
-): PlanEntry | undefined {
-  const logLabel = logEntry.metadata?.label;
-  return planEntries.find(
-    (pe) =>
-      pe.exercise_name === logEntry.exercise_name &&
-      (pe.metadata?.label ?? undefined) === (logLabel ?? undefined)
-  );
-}
-
 export default function LogDetailPage() {
   const params = useParams();
   const logId = params.id as string;
 
   const { data: log, isLoading: logLoading, error: logError } = useLog(logId);
-  const { data: plan, isLoading: planLoading } = usePlan(log?.plan_id ?? null);
 
   const performedDate = log
     ? new Date(log.performed_at).toLocaleDateString('en-US', {
@@ -77,8 +62,6 @@ export default function LogDetailPage() {
     );
   }
 
-  const planEntries = plan?.entries || [];
-  const hasPlan = !!log.plan_id;
   const groups = groupByExercise(log.entries);
 
   return (
@@ -93,22 +76,10 @@ export default function LogDetailPage() {
 
       <div className="mb-6">
         <h1 className="text-3xl font-bold">{performedDate}</h1>
-        {log.notes && <p className="text-muted-foreground mt-2">{log.notes}</p>}
-        {hasPlan && (
-          <div className="mt-2">
-            {planLoading ? (
-              <Skeleton className="h-6 w-[150px]" />
-            ) : plan ? (
-              <Link href={`/plans/${plan.id}/edit`}>
-                <Badge variant="secondary" className="cursor-pointer">
-                  Plan: {plan.name}
-                </Badge>
-              </Link>
-            ) : (
-              <Badge variant="outline">Linked Plan</Badge>
-            )}
-          </div>
+        {log.session_name && (
+          <p className="text-muted-foreground mt-1">Session: {log.session_name}</p>
         )}
+        {log.notes && <p className="text-muted-foreground mt-2">{log.notes}</p>}
       </div>
 
       <div className="space-y-4">
@@ -121,10 +92,6 @@ export default function LogDetailPage() {
               <div className="space-y-2">
                 {group.entries.map((entry) => {
                   const label = entry.metadata?.label as string | undefined;
-                  const matchedPlan = hasPlan
-                    ? findMatchingPlanEntry(entry, planEntries)
-                    : undefined;
-                  const diff = hasPlan ? calculateDiff(matchedPlan, entry) : null;
 
                   return (
                     <div key={entry.id} className="rounded-md border px-3 py-2">
@@ -138,12 +105,6 @@ export default function LogDetailPage() {
                             <span className="text-xs text-muted-foreground">-</span>
                           )}
                         </div>
-                        {diff && (
-                          <Badge variant={getStatusVariant(diff.status)} className="text-xs">
-                            {getStatusIcon(diff.status)}{' '}
-                            {diff.status.charAt(0).toUpperCase() + diff.status.slice(1)}
-                          </Badge>
-                        )}
                       </div>
                       <div className="grid grid-cols-4 gap-3 text-sm">
                         <div>
@@ -165,17 +126,6 @@ export default function LogDetailPage() {
                           <span className="font-medium">{entry.rpe ?? '-'}</span>
                         </div>
                       </div>
-                      {diff && diff.differences.length > 0 && (
-                        <div className="mt-2 pt-2 border-t">
-                          <div className="flex gap-1.5 flex-wrap">
-                            {diff.differences.map((d) => (
-                              <Badge key={d} variant="outline" className="text-xs">
-                                {d}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                       {entry.notes && (
                         <p className="text-xs text-muted-foreground mt-2">{entry.notes}</p>
                       )}
