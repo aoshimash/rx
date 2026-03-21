@@ -258,6 +258,29 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /programs/{id}/logged-sessions:
+    parameters:
+      - $ref: '#/components/parameters/ProgramId'
+    get:
+      summary: List distinct logged session names for a program
+      description: |
+        Returns an array of distinct session names that have at least one log entry
+        for the given program. Used by the frontend to determine session completion status
+        without pagination limits.
+      operationId: listLoggedSessions
+      tags: [Program]
+      responses:
+        '200':
+          description: Distinct logged session names
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoggedSessionsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /logs:
     get:
       summary: List logs
@@ -977,6 +1000,17 @@ components:
           nullable: true
         has_more:
           type: boolean
+
+    LoggedSessionsResponse:
+      type: object
+      required:
+        - sessions
+      properties:
+        sessions:
+          type: array
+          items:
+            type: string
+          description: Distinct session names that have at least one log for this program
 
     # ========================================
     # Log

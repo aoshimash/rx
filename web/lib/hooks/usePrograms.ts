@@ -35,6 +35,14 @@ export function useCreateProgram() {
   });
 }
 
+export function useLoggedSessions(programId: string | null) {
+  return useQuery({
+    queryKey: ['programs', programId, 'logged-sessions'],
+    queryFn: () => programsApi.getLoggedSessions(programId!),
+    enabled: !!programId,
+  });
+}
+
 export function useDeleteProgram() {
   const queryClient = useQueryClient();
 
