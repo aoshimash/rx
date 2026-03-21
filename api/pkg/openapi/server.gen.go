@@ -402,6 +402,9 @@ type ListLogsParams struct {
 	// After Cursor for pagination (from previous response)
 	After *After `form:"after,omitempty" json:"after,omitempty"`
 
+	// ProgramId Filter logs by program ID
+	ProgramId *openapi_types.UUID `form:"program_id,omitempty" json:"program_id,omitempty"`
+
 	// PerformedAtFrom Filter logs at or after this timestamp
 	PerformedAtFrom *time.Time `form:"performed_at_from,omitempty" json:"performed_at_from,omitempty"`
 
@@ -675,6 +678,14 @@ func (siw *ServerInterfaceWrapper) ListLogs(w http.ResponseWriter, r *http.Reque
 	err = runtime.BindQueryParameter("form", true, false, "after", r.URL.Query(), &params.After)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "after", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "program_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "program_id", r.URL.Query(), &params.ProgramId)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "program_id", Err: err})
 		return
 	}
 

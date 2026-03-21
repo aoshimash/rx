@@ -23,18 +23,20 @@ type LogRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 
 	// List retrieves Logs with pagination
+	// programID: optional filter by program (nil means no filter)
 	// limit: maximum number of records (1-100)
 	// after: cursor for pagination (UUID string, base64-encoded)
 	// Returns: logs, next cursor (empty string if no more), has_more flag
-	List(ctx context.Context, limit int, after string) ([]*domain.Log, string, bool, error)
+	List(ctx context.Context, programID *uuid.UUID, limit int, after string) ([]*domain.Log, string, bool, error)
 
 	// ListByPerformedAtRange retrieves Logs filtered by performed_at range with pagination
+	// programID: optional filter by program (nil means no filter)
 	// performedAtFrom: filter logs at or after this timestamp (inclusive)
 	// performedAtTo: filter logs before this timestamp (exclusive)
 	// limit: maximum number of records (1-100)
 	// after: cursor for pagination (UUID string, base64-encoded)
 	// Returns: logs, next cursor (empty string if no more), has_more flag
-	ListByPerformedAtRange(ctx context.Context, performedAtFrom, performedAtTo *time.Time, limit int, after string) ([]*domain.Log, string, bool, error)
+	ListByPerformedAtRange(ctx context.Context, programID *uuid.UUID, performedAtFrom, performedAtTo *time.Time, limit int, after string) ([]*domain.Log, string, bool, error)
 
 	// ListDistinctLoggedSessionsByProgramID returns distinct session_names that have at least one log for the given program.
 	// Used to check program completion when a new log is created.
