@@ -36,6 +36,12 @@ type ConvertProgramToPlanRequest struct {
 	TargetWeights map[string]float64 `json:"target_weights"`
 }
 
+// ConvertProgramToPlansResponse defines model for ConvertProgramToPlansResponse.
+type ConvertProgramToPlansResponse struct {
+	Cycle Cycle  `json:"cycle"`
+	Plans []Plan `json:"plans"`
+}
+
 // Cycle defines model for Cycle.
 type Cycle struct {
 	CreatedAt time.Time          `json:"created_at"`
@@ -165,7 +171,7 @@ type LogListResponse struct {
 type Plan struct {
 	CreatedAt time.Time `json:"created_at"`
 
-	// CycleId Optional reference to the source cycle
+	// CycleId Optional reference to the cycle this plan belongs to
 	CycleId *openapi_types.UUID `json:"cycle_id,omitempty"`
 
 	// Date Scheduled date for this session (YYYY-MM-DD)
@@ -180,9 +186,6 @@ type Plan struct {
 	Metadata *map[string]interface{} `json:"metadata,omitempty"`
 	Name     string                  `json:"name"`
 	Notes    *string                 `json:"notes,omitempty"`
-
-	// ProgramId Optional reference to the source program template
-	ProgramId *openapi_types.UUID `json:"program_id,omitempty"`
 
 	// SessionName Session name from the source program (e.g. "Day A", "Upper")
 	SessionName *string   `json:"session_name,omitempty"`
@@ -200,7 +203,6 @@ type PlanCreate struct {
 	Metadata    *map[string]interface{} `json:"metadata,omitempty"`
 	Name        string                  `json:"name"`
 	Notes       *string                 `json:"notes,omitempty"`
-	ProgramId   *openapi_types.UUID     `json:"program_id,omitempty"`
 
 	// SessionName Session name (e.g. "Day A", "Upper")
 	SessionName *string `json:"session_name,omitempty"`
@@ -421,8 +423,8 @@ type ListPlansParams struct {
 	// After Cursor for pagination (from previous response)
 	After *After `form:"after,omitempty" json:"after,omitempty"`
 
-	// ProgramId Filter plans by source program ID
-	ProgramId *openapi_types.UUID `form:"program_id,omitempty" json:"program_id,omitempty"`
+	// CycleId Filter plans by cycle ID
+	CycleId *openapi_types.UUID `form:"cycle_id,omitempty" json:"cycle_id,omitempty"`
 }
 
 // ListProgramsParams defines parameters for ListPrograms.
@@ -996,11 +998,11 @@ func (siw *ServerInterfaceWrapper) ListPlans(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// ------------- Optional query parameter "program_id" -------------
+	// ------------- Optional query parameter "cycle_id" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "program_id", r.URL.Query(), &params.ProgramId)
+	err = runtime.BindQueryParameter("form", true, false, "cycle_id", r.URL.Query(), &params.CycleId)
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "program_id", Err: err})
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cycle_id", Err: err})
 		return
 	}
 

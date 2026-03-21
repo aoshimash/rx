@@ -379,17 +379,25 @@ func TestProgramHandler_ConvertToPlans(t *testing.T) {
 
 		require.Equal(t, http.StatusCreated, w.Code)
 
-		var results []map[string]interface{}
-		err := json.Unmarshal(w.Body.Bytes(), &results)
+		var response map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
-		require.Len(t, results, 1)
 
-		result := results[0]
-		assert.Equal(t, "Week 1 Plan", result["name"])
-		assert.Equal(t, programID, result["program_id"])
-		assert.NotEmpty(t, result["id"])
+		cycle := response["cycle"].(map[string]interface{})
+		assert.Equal(t, "Week 1 Plan", cycle["name"])
+		assert.Equal(t, programID, cycle["program_id"])
+		assert.NotEmpty(t, cycle["id"])
 
-		entries := result["entries"].([]interface{})
+		plans := response["plans"].([]interface{})
+		require.Len(t, plans, 1)
+
+		plan := plans[0].(map[string]interface{})
+		assert.Equal(t, "Week 1 Plan", plan["name"])
+		assert.Equal(t, cycle["id"], plan["cycle_id"])
+		assert.Nil(t, plan["program_id"])
+		assert.NotEmpty(t, plan["id"])
+
+		entries := plan["entries"].([]interface{})
 		require.Len(t, entries, 3)
 
 		// Squat: 0.80 * 200 = 160.0

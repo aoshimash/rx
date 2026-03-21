@@ -12,7 +12,7 @@
 export interface Plan {
   id: string;
   name: string;
-  program_id?: string;
+  cycle_id?: string;
   date?: string;
   session_name?: string;
   description?: string;
@@ -25,7 +25,7 @@ export interface Plan {
 
 export interface PlanCreate {
   name: string;
-  program_id?: string;
+  cycle_id?: string;
   date?: string;
   session_name?: string;
   description?: string;
@@ -178,6 +178,24 @@ export interface ConvertProgramToPlanRequest {
   name?: string;
   target_weights: Record<string, number>;
   load_increments?: Record<string, number>;
+}
+
+export interface ConvertProgramToPlansResponse {
+  cycle: Cycle;
+  plans: Plan[];
+}
+
+// ============================================================================
+// Cycle
+// ============================================================================
+
+export interface Cycle {
+  id: string;
+  program_id: string;
+  name: string;
+  notes?: string;
+  metadata?: Record<string, unknown>;
+  created_at: string;
 }
 
 // ============================================================================

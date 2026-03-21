@@ -133,11 +133,11 @@ func (s *planStore) List(ctx context.Context, limit int, after string) ([]*domai
 	return s.paginatePlans(plans, limit, after)
 }
 
-func (s *planStore) ListByProgramID(ctx context.Context, programID uuid.UUID, limit int, after string) ([]*domain.Plan, string, bool, error) {
+func (s *planStore) ListByCycleID(ctx context.Context, cycleID uuid.UUID, limit int, after string) ([]*domain.Plan, string, bool, error) {
 	s.mu.RLock()
 	allPlans := make([]*domain.Plan, 0)
 	for _, p := range s.plans {
-		if p.ProgramID != nil && *p.ProgramID == programID {
+		if p.CycleID != nil && *p.CycleID == cycleID {
 			allPlans = append(allPlans, p)
 		}
 	}

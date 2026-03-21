@@ -161,7 +161,6 @@ func ConvertProgramToPlans(program *Program, input *ConvertProgramToPlansInput) 
 		baseName = input.Name
 	}
 
-	programID := program.ID
 	groups := groupBySession(program.Entries)
 	multiSession := len(groups) > 1
 
@@ -179,7 +178,6 @@ func ConvertProgramToPlans(program *Program, input *ConvertProgramToPlansInput) 
 		}
 
 		plan := &Plan{
-			ProgramID:   &programID,
 			Name:        planName,
 			SessionName: sessionName,
 			Description: program.Description,

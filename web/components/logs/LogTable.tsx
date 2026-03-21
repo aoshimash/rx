@@ -6,22 +6,21 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { Log, Plan, Program } from '@/types/api';
+import type { Log, Plan } from '@/types/api';
 import Link from 'next/link';
 
 interface LogTableProps {
   logs: Log[];
   planMap: Map<string, Plan>;
-  programMap: Map<string, Program>;
 }
 
-export function LogTable({ logs, planMap, programMap }: LogTableProps) {
+export function LogTable({ logs, planMap }: LogTableProps) {
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Date</TableHead>
-          <TableHead>Program</TableHead>
+          <TableHead>Cycle</TableHead>
           <TableHead>Plan</TableHead>
         </TableRow>
       </TableHeader>
@@ -33,7 +32,6 @@ export function LogTable({ logs, planMap, programMap }: LogTableProps) {
             day: 'numeric',
           });
           const plan = log.plan_id ? planMap.get(log.plan_id) : undefined;
-          const program = plan?.program_id ? programMap.get(plan.program_id) : undefined;
 
           return (
             <TableRow key={log.id} className="cursor-pointer">
@@ -44,7 +42,11 @@ export function LogTable({ logs, planMap, programMap }: LogTableProps) {
               </TableCell>
               <TableCell>
                 <Link href={`/logs/${log.id}`} className="block w-full">
-                  {program ? program.name : <span className="text-muted-foreground">—</span>}
+                  {plan?.cycle_id ? (
+                    plan.cycle_id.slice(0, 8)
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
                 </Link>
               </TableCell>
               <TableCell>

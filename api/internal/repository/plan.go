@@ -27,8 +27,8 @@ type PlanRepository interface {
 	// Returns: plans, next cursor (empty string if no more), has_more flag
 	List(ctx context.Context, limit int, after string) ([]*domain.Plan, string, bool, error)
 
-	// ListByProgramID retrieves Plans filtered by program_id with pagination
-	ListByProgramID(ctx context.Context, programID uuid.UUID, limit int, after string) ([]*domain.Plan, string, bool, error)
+	// ListByCycleID retrieves Plans filtered by cycle_id with pagination
+	ListByCycleID(ctx context.Context, cycleID uuid.UUID, limit int, after string) ([]*domain.Plan, string, bool, error)
 
 	// CountByCycleID returns the number of Plans referencing the given cycle
 	CountByCycleID(ctx context.Context, cycleID uuid.UUID) (int, error)

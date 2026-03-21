@@ -366,6 +366,29 @@ func (h *ProgramHandler) ConvertToPlans(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Create a Cycle for this conversion
+	cycleName := req.Name
+	if cycleName == "" {
+		cycleName = program.Name
+	}
+	cycle := &domain.Cycle{
+		ProgramID: programID,
+		Name:      cycleName,
+	}
+	if err := domain.ValidateCycle(cycle); err != nil {
+		if handleValidationError(w, err) {
+			return
+		}
+		middleware.WriteValidationError(w, "Cycle validation failed", map[string]interface{}{
+			"error": err.Error(),
+		})
+		return
+	}
+	if err := h.cycleRepo.Create(ctx, cycle); err != nil {
+		middleware.WriteInternalError(w, "Failed to create cycle")
+		return
+	}
+
 	// Convert to plans (one per session)
 	input := &domain.ConvertProgramToPlansInput{
 		Name:           req.Name,
@@ -375,8 +398,9 @@ func (h *ProgramHandler) ConvertToPlans(w http.ResponseWriter, r *http.Request) 
 
 	plans := domain.ConvertProgramToPlans(program, input)
 
-	// Validate all plans before saving any
+	// Set cycle_id on all plans and validate
 	for _, plan := range plans {
+		plan.CycleID = &cycle.ID
 		if err := domain.ValidatePlan(plan); err != nil {
 			if handleValidationError(w, err) {
 				return
@@ -398,7 +422,10 @@ func (h *ProgramHandler) ConvertToPlans(w http.ResponseWriter, r *http.Request) 
 		savedPlans = append(savedPlans, plan)
 	}
 
-	writeJSON(w, http.StatusCreated, savedPlans)
+	writeJSON(w, http.StatusCreated, map[string]interface{}{
+		"cycle": cycle,
+		"plans": savedPlans,
+	})
 }
 
 // parseUUIDString parses a UUID from a string value

@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePlans } from '@/lib/hooks/usePlans';
-import { groupPlansByProgram } from '@/lib/utils/next-session';
+import { groupPlansByCycle } from '@/lib/utils/next-session';
 import Link from 'next/link';
 import { useMemo } from 'react';
 
@@ -12,7 +12,7 @@ export function ActivePlans() {
   const plans = data?.data || [];
 
   const groups = useMemo(() => {
-    const grouped = groupPlansByProgram(plans);
+    const grouped = groupPlansByCycle(plans);
     const result: { groupKey: string; name: string; count: number }[] = [];
     for (const [groupKey, groupPlans] of grouped) {
       const isStandalone = groupKey.startsWith('standalone:');

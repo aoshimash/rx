@@ -15,7 +15,7 @@ import (
 )
 
 // Run inserts sample powerlifting data into the provided repositories.
-func Run(ctx context.Context, programRepo repository.ProgramRepository, planRepo repository.PlanRepository, logRepo repository.LogRepository) error {
+func Run(ctx context.Context, programRepo repository.ProgramRepository, cycleRepo repository.CycleRepository, planRepo repository.PlanRepository, logRepo repository.LogRepository) error {
 	prog1, err := createProgram(ctx, programRepo, sbdProgram())
 	if err != nil {
 		return fmt.Errorf("create SBD program: %w", err)
@@ -28,8 +28,27 @@ func Run(ctx context.Context, programRepo repository.ProgramRepository, planRepo
 	}
 	slog.Info("[seed] Created program", "name", prog2.Name)
 
+	// Create Cycles for each program
+	sbdCycle, err := createCycle(ctx, cycleRepo, domain.Cycle{
+		ProgramID: prog1.ID,
+		Name:      prog1.Name,
+	})
+	if err != nil {
+		return fmt.Errorf("create SBD cycle: %w", err)
+	}
+	slog.Info("[seed] Created cycle", "name", sbdCycle.Name)
+
+	accCycle, err := createCycle(ctx, cycleRepo, domain.Cycle{
+		ProgramID: prog2.ID,
+		Name:      prog2.Name,
+	})
+	if err != nil {
+		return fmt.Errorf("create accessory cycle: %w", err)
+	}
+	slog.Info("[seed] Created cycle", "name", accCycle.Name)
+
 	// Create SBD plans: [0]=W1D1, [1]=W1D2, [2]=W2D1, [3]=W2D2, [4]=W3D1, [5]=W3D2
-	allSbdPlans := sbdPlans(prog1.ID)
+	allSbdPlans := sbdPlans(sbdCycle.ID)
 	created := make([]*domain.Plan, len(allSbdPlans))
 	for i, p := range allSbdPlans {
 		cp, err := createPlan(ctx, planRepo, p)
@@ -40,7 +59,7 @@ func Run(ctx context.Context, programRepo repository.ProgramRepository, planRepo
 		created[i] = cp
 	}
 
-	accPlan, err := createPlan(ctx, planRepo, accessoryWeek1Plan(prog2.ID))
+	accPlan, err := createPlan(ctx, planRepo, accessoryWeek1Plan(accCycle.ID))
 	if err != nil {
 		return fmt.Errorf("create accessory plan: %w", err)
 	}
@@ -57,6 +76,13 @@ func Run(ctx context.Context, programRepo repository.ProgramRepository, planRepo
 	}
 
 	return nil
+}
+
+func createCycle(ctx context.Context, repo repository.CycleRepository, cycle domain.Cycle) (*domain.Cycle, error) {
+	if err := repo.Create(ctx, &cycle); err != nil {
+		return nil, err
+	}
+	return &cycle, nil
 }
 
 func createProgram(ctx context.Context, repo repository.ProgramRepository, prog domain.Program) (*domain.Program, error) {
@@ -166,13 +192,13 @@ var sbdTargetWeights = map[string]float64{
 
 // sbdPlans returns 6 plans in program order: W1D1, W1D2, W2D1, W2D2, W3D1, W3D2.
 // W1D1/W1D2/W2D1 will have logs (completed); W2D2/W3D1/W3D2 remain unexecuted.
-func sbdPlans(programID uuid.UUID) []domain.Plan {
+func sbdPlans(cycleID uuid.UUID) []domain.Plan {
 	planMeta := conversionMeta(sbdTargetWeights)
 	return []domain.Plan{
 		// [0] Week 1 Day 1: Heavy (completed — has log)
 		{
 			ID:          uuid.New(),
-			ProgramID:   &programID,
+			CycleID:     &cycleID,
 			Name:        "Week 1 Day 1",
 			Date:        datePtr(2026, 2, 26),
 			SessionName: strPtr("Week 1 Day 1"),
@@ -191,7 +217,7 @@ func sbdPlans(programID uuid.UUID) []domain.Plan {
 		// [1] Week 1 Day 2: Volume (completed — has log)
 		{
 			ID:          uuid.New(),
-			ProgramID:   &programID,
+			CycleID:     &cycleID,
 			Name:        "Week 1 Day 2",
 			Date:        datePtr(2026, 2, 28),
 			SessionName: strPtr("Week 1 Day 2"),
@@ -205,7 +231,7 @@ func sbdPlans(programID uuid.UUID) []domain.Plan {
 		// [2] Week 2 Day 1: Heavy (completed — has log)
 		{
 			ID:          uuid.New(),
-			ProgramID:   &programID,
+			CycleID:     &cycleID,
 			Name:        "Week 2 Day 1",
 			Date:        datePtr(2026, 3, 5),
 			SessionName: strPtr("Week 2 Day 1"),
@@ -224,7 +250,7 @@ func sbdPlans(programID uuid.UUID) []domain.Plan {
 		// [3] Week 2 Day 2: Volume (NEXT — no log)
 		{
 			ID:          uuid.New(),
-			ProgramID:   &programID,
+			CycleID:     &cycleID,
 			Name:        "Week 2 Day 2",
 			Date:        datePtr(2026, 3, 7),
 			SessionName: strPtr("Week 2 Day 2"),
@@ -238,7 +264,7 @@ func sbdPlans(programID uuid.UUID) []domain.Plan {
 		// [4] Week 3 Day 1: Peak (no log)
 		{
 			ID:          uuid.New(),
-			ProgramID:   &programID,
+			CycleID:     &cycleID,
 			Name:        "Week 3 Day 1",
 			Date:        datePtr(2026, 3, 12),
 			SessionName: strPtr("Week 3 Day 1"),
@@ -257,7 +283,7 @@ func sbdPlans(programID uuid.UUID) []domain.Plan {
 		// [5] Week 3 Day 2: Deload (no log)
 		{
 			ID:          uuid.New(),
-			ProgramID:   &programID,
+			CycleID:     &cycleID,
 			Name:        "Week 3 Day 2",
 			Date:        datePtr(2026, 3, 14),
 			SessionName: strPtr("Week 3 Day 2"),
@@ -271,10 +297,10 @@ func sbdPlans(programID uuid.UUID) []domain.Plan {
 	}
 }
 
-func accessoryWeek1Plan(programID uuid.UUID) domain.Plan {
+func accessoryWeek1Plan(cycleID uuid.UUID) domain.Plan {
 	return domain.Plan{
 		ID:          uuid.New(),
-		ProgramID:   &programID,
+		CycleID:     &cycleID,
 		Name:        "Week 1 Day 1",
 		Date:        datePtr(2026, 3, 17),
 		SessionName: strPtr("Week 1 Day 1"),
