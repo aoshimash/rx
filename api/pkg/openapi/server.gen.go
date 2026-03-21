@@ -250,8 +250,10 @@ type PlanListResponse struct {
 
 // Program defines model for Program.
 type Program struct {
-	CreatedAt   time.Time `json:"created_at"`
-	Description *string   `json:"description,omitempty"`
+	// ArchivedAt When set, the program is archived and hidden from default list results
+	ArchivedAt  *time.Time `json:"archived_at"`
+	CreatedAt   time.Time  `json:"created_at"`
+	Description *string    `json:"description,omitempty"`
 
 	// Entries Exercise prescription entries (RPE-based, no absolute weights)
 	Entries *[]ProgramEntry    `json:"entries,omitempty"`
@@ -430,6 +432,9 @@ type ListProgramsParams struct {
 
 	// After Cursor for pagination (from previous response)
 	After *After `form:"after,omitempty" json:"after,omitempty"`
+
+	// IncludeArchived When true, archived programs are included in results
+	IncludeArchived *bool `form:"include_archived,omitempty" json:"include_archived,omitempty"`
 }
 
 // CreateLogJSONRequestBody defines body for CreateLog for application/json ContentType.
@@ -449,9 +454,6 @@ type UpdatePlanJSONRequestBody = PlanCreate
 
 // CreateProgramJSONRequestBody defines body for CreateProgram for application/json ContentType.
 type CreateProgramJSONRequestBody = ProgramCreate
-
-// UpdateProgramJSONRequestBody defines body for UpdateProgram for application/json ContentType.
-type UpdateProgramJSONRequestBody = ProgramCreate
 
 // GenerateVideoDownloadURLJSONRequestBody defines body for GenerateVideoDownloadURL for application/json ContentType.
 type GenerateVideoDownloadURLJSONRequestBody = VideoDownloadURLRequest
@@ -515,9 +517,15 @@ type ServerInterface interface {
 	// Get program by ID
 	// (GET /programs/{id})
 	GetProgram(w http.ResponseWriter, r *http.Request, id ProgramId)
-	// Update program
-	// (PUT /programs/{id})
-	UpdateProgram(w http.ResponseWriter, r *http.Request, id ProgramId)
+	// Archive program
+	// (POST /programs/{id}/archive)
+	ArchiveProgram(w http.ResponseWriter, r *http.Request, id ProgramId)
+	// Duplicate program
+	// (POST /programs/{id}/duplicate)
+	DuplicateProgram(w http.ResponseWriter, r *http.Request, id ProgramId)
+	// Unarchive program
+	// (POST /programs/{id}/unarchive)
+	UnarchiveProgram(w http.ResponseWriter, r *http.Request, id ProgramId)
 	// Generate pre-signed URL for video download
 	// (POST /videos/download-url)
 	GenerateVideoDownloadURL(w http.ResponseWriter, r *http.Request)
@@ -638,9 +646,21 @@ func (_ Unimplemented) GetProgram(w http.ResponseWriter, r *http.Request, id Pro
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Update program
-// (PUT /programs/{id})
-func (_ Unimplemented) UpdateProgram(w http.ResponseWriter, r *http.Request, id ProgramId) {
+// Archive program
+// (POST /programs/{id}/archive)
+func (_ Unimplemented) ArchiveProgram(w http.ResponseWriter, r *http.Request, id ProgramId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Duplicate program
+// (POST /programs/{id}/duplicate)
+func (_ Unimplemented) DuplicateProgram(w http.ResponseWriter, r *http.Request, id ProgramId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Unarchive program
+// (POST /programs/{id}/unarchive)
+func (_ Unimplemented) UnarchiveProgram(w http.ResponseWriter, r *http.Request, id ProgramId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1158,6 +1178,14 @@ func (siw *ServerInterfaceWrapper) ListPrograms(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	// ------------- Optional query parameter "include_archived" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "include_archived", r.URL.Query(), &params.IncludeArchived)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_archived", Err: err})
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListPrograms(w, r, params)
 	}))
@@ -1251,8 +1279,8 @@ func (siw *ServerInterfaceWrapper) GetProgram(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
-// UpdateProgram operation middleware
-func (siw *ServerInterfaceWrapper) UpdateProgram(w http.ResponseWriter, r *http.Request) {
+// ArchiveProgram operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveProgram(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
@@ -1272,7 +1300,69 @@ func (siw *ServerInterfaceWrapper) UpdateProgram(w http.ResponseWriter, r *http.
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateProgram(w, r, id)
+		siw.Handler.ArchiveProgram(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DuplicateProgram operation middleware
+func (siw *ServerInterfaceWrapper) DuplicateProgram(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id ProgramId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DuplicateProgram(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UnarchiveProgram operation middleware
+func (siw *ServerInterfaceWrapper) UnarchiveProgram(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id ProgramId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnarchiveProgram(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1490,7 +1580,13 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/programs/{id}", wrapper.GetProgram)
 	})
 	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/programs/{id}", wrapper.UpdateProgram)
+		r.Post(options.BaseURL+"/programs/{id}/archive", wrapper.ArchiveProgram)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/programs/{id}/duplicate", wrapper.DuplicateProgram)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/programs/{id}/unarchive", wrapper.UnarchiveProgram)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/videos/download-url", wrapper.GenerateVideoDownloadURL)
