@@ -21,7 +21,7 @@ For details, see [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md).
 
 ```bash
 task generate   # OpenAPI spec → Go code (run after editing openapi/openapi.yaml)
-task check      # format + lint + test (run before committing)
+task check      # generate + format + lint + test (run before committing)
 task test       # unit tests with race detection
 task lint       # golangci-lint
 task format     # gofmt check

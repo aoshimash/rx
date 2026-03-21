@@ -111,7 +111,7 @@ The pre-push hook catches stale generated code (the same check run by CI) before
 
 ```bash
 cd api
-task check  # Runs format + lint + test
+task check  # Runs generate + format + lint + test
 ```
 
 **Note:** The pre-commit hook is enforced for all commits, including AI agent commits. Do not use `git commit --no-verify` to skip hooks.
@@ -653,7 +653,7 @@ task validate-openapi
 task generate
 
 # 4. Run checks
-task check  # Runs format + lint + test
+task check  # Runs generate + format + lint + test
 task check-sync  # Ensure domain model and OpenAPI spec are in sync
 
 # 5. Commit with conventional commit message
@@ -685,8 +685,9 @@ tasks:
       - go test -v -race ./...
 
   check:
-    desc: Run format, lint, and tests (pre-commit check)
+    desc: Generate code and run format, lint, and tests (pre-commit check)
     cmds:
+      - task: generate
       - task: format
       - task: lint
       - task: test
