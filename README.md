@@ -114,7 +114,7 @@ task generate         # OpenAPI → Go code generation
 task lint             # golangci-lint
 task test             # Tests with race detection
 task format           # Format code
-task check            # format + lint + test
+task check            # generate + format + lint + test
 task validate-openapi # Validate OpenAPI spec
 task run              # Dev server
 task build            # Build binary
