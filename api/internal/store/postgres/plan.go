@@ -44,12 +44,12 @@ func (r *planRepository) Create(ctx context.Context, plan *domain.Plan) error {
 	}
 
 	query := `
-		INSERT INTO plans (id, program_id, name, date, session_name, description, notes, metadata, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+		INSERT INTO plans (id, program_id, cycle_id, name, date, session_name, description, notes, metadata, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
 		RETURNING created_at, updated_at
 	`
 
-	err = tx.QueryRow(ctx, query, id, plan.ProgramID, plan.Name, dateVal, plan.SessionName, plan.Description, plan.Notes, plan.Metadata).Scan(
+	err = tx.QueryRow(ctx, query, id, plan.ProgramID, plan.CycleID, plan.Name, dateVal, plan.SessionName, plan.Description, plan.Notes, plan.Metadata).Scan(
 		&plan.CreatedAt, &plan.UpdatedAt,
 	)
 	if err != nil {
@@ -109,7 +109,7 @@ func (r *planRepository) insertEntries(ctx context.Context, tx pgx.Tx, planID uu
 
 func (r *planRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Plan, error) {
 	query := `
-		SELECT id, program_id, name, date, session_name, description, notes, metadata, created_at, updated_at
+		SELECT id, program_id, cycle_id, name, date, session_name, description, notes, metadata, created_at, updated_at
 		FROM plans
 		WHERE id = $1
 	`
@@ -120,6 +120,7 @@ func (r *planRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Pla
 	err := r.pool.QueryRow(ctx, query, id).Scan(
 		&plan.ID,
 		&plan.ProgramID,
+		&plan.CycleID,
 		&plan.Name,
 		&dateVal,
 		&plan.SessionName,
@@ -213,13 +214,13 @@ func (r *planRepository) Update(ctx context.Context, plan *domain.Plan) error {
 
 	query := `
 		UPDATE plans
-		SET program_id = $2, name = $3, date = $4, session_name = $5,
-		    description = $6, notes = $7, metadata = $8, updated_at = NOW()
+		SET program_id = $2, cycle_id = $3, name = $4, date = $5, session_name = $6,
+		    description = $7, notes = $8, metadata = $9, updated_at = NOW()
 		WHERE id = $1
 		RETURNING updated_at
 	`
 
-	err = tx.QueryRow(ctx, query, plan.ID, plan.ProgramID, plan.Name, updateDateVal, plan.SessionName, plan.Description, plan.Notes, plan.Metadata).Scan(&plan.UpdatedAt)
+	err = tx.QueryRow(ctx, query, plan.ID, plan.ProgramID, plan.CycleID, plan.Name, updateDateVal, plan.SessionName, plan.Description, plan.Notes, plan.Metadata).Scan(&plan.UpdatedAt)
 	if err == pgx.ErrNoRows {
 		return domain.ErrNotFound
 	}
@@ -270,7 +271,7 @@ func (r *planRepository) List(ctx context.Context, limit int, after string) ([]*
 	}
 
 	query := `
-		SELECT id, program_id, name, date, session_name, description, notes, metadata, created_at, updated_at
+		SELECT id, program_id, cycle_id, name, date, session_name, description, notes, metadata, created_at, updated_at
 		FROM plans
 		WHERE NOT EXISTS (SELECT 1 FROM logs WHERE logs.plan_id = plans.id)
 		  AND ($1::timestamptz IS NULL OR (created_at, id) > ($1, $2::uuid))
@@ -301,7 +302,7 @@ func (r *planRepository) ListByProgramID(ctx context.Context, programID uuid.UUI
 	}
 
 	query := `
-		SELECT id, program_id, name, date, session_name, description, notes, metadata, created_at, updated_at
+		SELECT id, program_id, cycle_id, name, date, session_name, description, notes, metadata, created_at, updated_at
 		FROM plans
 		WHERE program_id = $4
 		  AND NOT EXISTS (SELECT 1 FROM logs WHERE logs.plan_id = plans.id)
@@ -330,6 +331,7 @@ func (r *planRepository) scanPlanList(ctx context.Context, rows pgx.Rows, limit 
 		err := rows.Scan(
 			&plan.ID,
 			&plan.ProgramID,
+			&plan.CycleID,
 			&plan.Name,
 			&dateVal,
 			&plan.SessionName,
@@ -376,6 +378,16 @@ func (r *planRepository) scanPlanList(ctx context.Context, rows pgx.Rows, limit 
 	}
 
 	return plans, nextCursor, hasMore, nil
+}
+
+func (r *planRepository) CountByCycleID(ctx context.Context, cycleID uuid.UUID) (int, error) {
+	var count int
+	err := r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM plans WHERE cycle_id = $1`, cycleID).Scan(&count)
+	if err != nil {
+		slog.Error("Failed to count plans by cycle ID", "cycleID", cycleID, "error", err)
+		return 0, err
+	}
+	return count, nil
 }
 
 // encodePlanCursor encodes a (created_at, id) pair for plan cursor-based pagination

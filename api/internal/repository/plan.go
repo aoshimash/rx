@@ -29,4 +29,7 @@ type PlanRepository interface {
 
 	// ListByProgramID retrieves Plans filtered by program_id with pagination
 	ListByProgramID(ctx context.Context, programID uuid.UUID, limit int, after string) ([]*domain.Plan, string, bool, error)
+
+	// CountByCycleID returns the number of Plans referencing the given cycle
+	CountByCycleID(ctx context.Context, cycleID uuid.UUID) (int, error)
 }
