@@ -1,10 +1,5 @@
+import { Badge } from '@/components/ui/badge';
 import type { PlanEntryCreate } from '@/types/api';
-
-const SET_TYPE_LABELS: Record<string, string> = {
-  top: 'Top',
-  main: 'Main',
-  backoff: 'Backoff',
-};
 
 interface ExerciseGroup {
   name: string;
@@ -26,18 +21,13 @@ function groupByExercise(entries: PlanEntryCreate[]): ExerciseGroup[] {
   return groups;
 }
 
-function formatEntry(entry: PlanEntryCreate): string {
+function formatEntryText(entry: PlanEntryCreate): string {
   const parts: string[] = [];
-  if (entry.sets != null && entry.reps != null) {
-    parts.push(`${entry.sets}x${entry.reps}`);
-  }
-  if (entry.load_kg != null) {
-    parts.push(`${entry.load_kg}kg`);
-  }
-  if (entry.rpe != null) {
-    parts.push(`@${entry.rpe}`);
-  }
-  return parts.join('  ');
+  if (entry.rpe != null) parts.push(`RPE${entry.rpe}`);
+  if (entry.reps != null) parts.push(`${entry.reps}reps`);
+  if (entry.sets != null) parts.push(`${entry.sets}sets`);
+  if (entry.load_kg != null) parts.push(`${entry.load_kg}kg`);
+  return parts.join(' ');
 }
 
 interface ExerciseSummaryProps {
@@ -48,19 +38,20 @@ export function ExerciseSummary({ exercises }: ExerciseSummaryProps) {
   const groups = groupByExercise(exercises);
 
   return (
-    <div className="space-y-2 text-sm">
+    <div className="divide-y text-sm">
       {groups.map((group) => (
-        <div key={group.name}>
-          <div className="font-medium">{group.name}</div>
-          <div className="ml-3 space-y-0.5 text-muted-foreground">
+        <div key={group.name} className="flex items-baseline gap-3 py-1.5 first:pt-0 last:pb-0">
+          <span className="w-40 shrink-0 font-medium truncate">{group.name}</span>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground">
             {group.entries.map((entry, idx) => {
-              const setType = entry.metadata?.set_type as string | undefined;
-              const label = setType ? (SET_TYPE_LABELS[setType] ?? setType) : null;
+              const label = (entry.metadata?.label ?? entry.metadata?.set_type) as
+                | string
+                | undefined;
               return (
-                <div key={`${group.name}-${idx}`} className="flex gap-2">
-                  {label && <span className="w-14 text-xs shrink-0">{label}</span>}
-                  <span>{formatEntry(entry)}</span>
-                </div>
+                <span key={`${group.name}-${idx}`} className="inline-flex items-center gap-1.5">
+                  {label && <Badge variant="outline">{label}</Badge>}
+                  {formatEntryText(entry)}
+                </span>
               );
             })}
           </div>
