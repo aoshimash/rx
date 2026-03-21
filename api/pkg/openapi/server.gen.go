@@ -157,6 +157,12 @@ type LogListResponse struct {
 	NextCursor *string `json:"next_cursor"`
 }
 
+// LoggedSessionsResponse defines model for LoggedSessionsResponse.
+type LoggedSessionsResponse struct {
+	// Sessions Distinct session names that have at least one log for this program
+	Sessions []string `json:"sessions"`
+}
+
 // Program defines model for Program.
 type Program struct {
 	CreatedAt time.Time          `json:"created_at"`
@@ -516,6 +522,9 @@ type ServerInterface interface {
 	// Get program by ID
 	// (GET /programs/{id})
 	GetProgram(w http.ResponseWriter, r *http.Request, id ProgramId)
+	// List distinct logged session names for a program
+	// (GET /programs/{id}/logged-sessions)
+	ListLoggedSessions(w http.ResponseWriter, r *http.Request, id ProgramId)
 	// Generate pre-signed URL for video download
 	// (POST /videos/download-url)
 	GenerateVideoDownloadURL(w http.ResponseWriter, r *http.Request)
@@ -627,6 +636,12 @@ func (_ Unimplemented) DeleteProgram(w http.ResponseWriter, r *http.Request, id 
 // Get program by ID
 // (GET /programs/{id})
 func (_ Unimplemented) GetProgram(w http.ResponseWriter, r *http.Request, id ProgramId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List distinct logged session names for a program
+// (GET /programs/{id}/logged-sessions)
+func (_ Unimplemented) ListLoggedSessions(w http.ResponseWriter, r *http.Request, id ProgramId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1223,6 +1238,37 @@ func (siw *ServerInterfaceWrapper) GetProgram(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
+// ListLoggedSessions operation middleware
+func (siw *ServerInterfaceWrapper) ListLoggedSessions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id ProgramId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListLoggedSessions(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GenerateVideoDownloadURL operation middleware
 func (siw *ServerInterfaceWrapper) GenerateVideoDownloadURL(w http.ResponseWriter, r *http.Request) {
 
@@ -1426,6 +1472,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/programs/{id}", wrapper.GetProgram)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/programs/{id}/logged-sessions", wrapper.ListLoggedSessions)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/videos/download-url", wrapper.GenerateVideoDownloadURL)

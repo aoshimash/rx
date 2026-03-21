@@ -4,8 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useLogs } from '@/lib/hooks/useLogs';
-import { useDeleteProgram, useProgram } from '@/lib/hooks/usePrograms';
+import { useDeleteProgram, useLoggedSessions, useProgram } from '@/lib/hooks/usePrograms';
 import type { ProgramSession } from '@/types/api';
 import { Trash2 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
@@ -69,12 +68,10 @@ export default function ProgramDetailPage() {
   const router = useRouter();
   const programId = params.id as string;
   const { data: program, isLoading } = useProgram(programId);
-  const { data: logsData } = useLogs({ program_id: programId });
+  const { data: loggedSessions } = useLoggedSessions(programId);
   const deleteProgram = useDeleteProgram();
 
-  const completedSessionNames = new Set(
-    logsData?.data?.map((log) => log.session_name).filter(Boolean) ?? []
-  );
+  const completedSessionNames = new Set(loggedSessions?.sessions ?? []);
 
   if (isLoading) {
     return (

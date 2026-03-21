@@ -220,3 +220,38 @@ func (h *ProgramHandler) ListPrograms(w http.ResponseWriter, r *http.Request) {
 		"has_more":    hasMore,
 	})
 }
+
+// ListLoggedSessions handles GET /programs/{id}/logged-sessions
+func (h *ProgramHandler) ListLoggedSessions(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	id, err := parseUUIDParam(r, "id", "program")
+	if err != nil {
+		middleware.WriteValidationError(w, err.Error(), nil)
+		return
+	}
+
+	// Verify the program exists
+	if _, err := h.repo.GetByID(ctx, id); err != nil {
+		if err == domain.ErrNotFound {
+			middleware.WriteNotFoundError(w, "Program not found")
+			return
+		}
+		middleware.WriteInternalError(w, "Failed to retrieve program")
+		return
+	}
+
+	sessions, err := h.logRepo.ListDistinctLoggedSessionsByProgramID(ctx, id)
+	if err != nil {
+		middleware.WriteInternalError(w, "Failed to list logged sessions")
+		return
+	}
+
+	if sessions == nil {
+		sessions = []string{}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"sessions": sessions,
+	})
+}

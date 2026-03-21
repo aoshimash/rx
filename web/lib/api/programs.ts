@@ -1,4 +1,9 @@
-import type { Program, ProgramCreate, ProgramListResponse } from '@/types/api';
+import type {
+  LoggedSessionsResponse,
+  Program,
+  ProgramCreate,
+  ProgramListResponse,
+} from '@/types/api';
 import { api } from './client';
 
 interface ProgramListParams {
@@ -30,5 +35,9 @@ export const programsApi = {
 
   async delete(id: string): Promise<void> {
     await api.delete(`programs/${id}`);
+  },
+
+  async getLoggedSessions(id: string): Promise<LoggedSessionsResponse> {
+    return api.get(`programs/${id}/logged-sessions`).json<LoggedSessionsResponse>();
   },
 };
