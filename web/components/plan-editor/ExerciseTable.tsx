@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { calculateE1rm } from '@/lib/utils/e1rm';
 import type { PlanEntryCreate } from '@/types/api';
 import { Plus } from 'lucide-react';
 import { ExerciseGroup } from './ExerciseGroup';
@@ -30,6 +31,27 @@ function groupByExercise(exercises: PlanEntryCreate[]): GroupData[] {
   });
 
   return groups;
+}
+
+/** Given e1RM, reps, and RPE, solve for load. Returns null if invalid. */
+function loadFromE1rm(e1rm: number, reps: number, rpe: number): number | null {
+  const effectiveReps = reps + (10 - rpe);
+  if (effectiveReps >= 37) return null;
+  return (e1rm * (37 - effectiveReps)) / 36;
+}
+
+/** Given e1RM, reps, and load, solve for RPE. Returns null if invalid. */
+function rpeFromE1rm(e1rm: number, reps: number, load: number): number | null {
+  // e1rm = load × 36 / (37 - reps - (10 - rpe))
+  // 27 - reps + rpe = load × 36 / e1rm
+  // rpe = load × 36 / e1rm - 27 + reps
+  const rpe = (load * 36) / e1rm - 27 + reps;
+  if (rpe < 1 || rpe > 10) return null;
+  return rpe;
+}
+
+function roundToHalf(n: number): number {
+  return Math.round(n * 2) / 2;
 }
 
 export function ExerciseTable({ exercises, onChange }: ExerciseTableProps) {
@@ -85,6 +107,42 @@ export function ExerciseTable({ exercises, onChange }: ExerciseTableProps) {
     }));
   };
 
+  const handleRpeChange = (index: number, newRpe: number | undefined) => {
+    const entry = exercises[index];
+    if (!entry) return;
+
+    // If all three old values exist, recalculate load to keep e1RM constant
+    if (newRpe != null && entry.load_kg != null && entry.reps != null && entry.rpe != null) {
+      const e1rm = calculateE1rm(entry.load_kg, entry.reps, entry.rpe);
+      if (e1rm != null) {
+        const newLoad = loadFromE1rm(e1rm, entry.reps, newRpe);
+        if (newLoad != null) {
+          updateEntry(index, (e) => ({ ...e, rpe: newRpe, load_kg: roundToHalf(newLoad) }));
+          return;
+        }
+      }
+    }
+    updateEntry(index, (e) => ({ ...e, rpe: newRpe }));
+  };
+
+  const handleLoadKgChange = (index: number, newLoad: number | undefined) => {
+    const entry = exercises[index];
+    if (!entry) return;
+
+    // If all three old values exist, recalculate RPE to keep e1RM constant
+    if (newLoad != null && entry.rpe != null && entry.reps != null && entry.load_kg != null) {
+      const e1rm = calculateE1rm(entry.load_kg, entry.reps, entry.rpe);
+      if (e1rm != null) {
+        const newRpe = rpeFromE1rm(e1rm, entry.reps, newLoad);
+        if (newRpe != null) {
+          updateEntry(index, (e) => ({ ...e, load_kg: newLoad, rpe: roundToHalf(newRpe) }));
+          return;
+        }
+      }
+    }
+    updateEntry(index, (e) => ({ ...e, load_kg: newLoad }));
+  };
+
   return (
     <div className="space-y-3">
       {groups.map((group) => (
@@ -99,10 +157,10 @@ export function ExerciseTable({ exercises, onChange }: ExerciseTableProps) {
           onRemoveExercise={() => handleRemoveExercise(group.name)}
           onAddSet={() => handleAddSet(group.name)}
           onLabelChange={handleLabelChange}
-          onSetsChange={(i, val) => updateEntry(i, (e) => ({ ...e, sets: val }))}
+          onRpeChange={handleRpeChange}
+          onLoadKgChange={handleLoadKgChange}
           onRepsChange={(i, val) => updateEntry(i, (e) => ({ ...e, reps: val }))}
-          onLoadKgChange={(i, val) => updateEntry(i, (e) => ({ ...e, load_kg: val }))}
-          onRpeChange={(i, val) => updateEntry(i, (e) => ({ ...e, rpe: val }))}
+          onSetsChange={(i, val) => updateEntry(i, (e) => ({ ...e, sets: val }))}
           onRemoveSet={handleRemoveSet}
         />
       ))}

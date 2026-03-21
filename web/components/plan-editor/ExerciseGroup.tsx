@@ -13,10 +13,10 @@ interface ExerciseGroupProps {
   onRemoveExercise: () => void;
   onAddSet: () => void;
   onLabelChange: (flatIndex: number, value: string | undefined) => void;
-  onSetsChange: (flatIndex: number, value: number) => void;
+  onRpeChange: (flatIndex: number, value: number | undefined) => void;
+  onLoadKgChange: (flatIndex: number, value: number | undefined) => void;
   onRepsChange: (flatIndex: number, value: number) => void;
-  onLoadKgChange: (flatIndex: number, value: number) => void;
-  onRpeChange: (flatIndex: number, value: number) => void;
+  onSetsChange: (flatIndex: number, value: number) => void;
   onRemoveSet: (flatIndex: number) => void;
 }
 
@@ -27,10 +27,10 @@ export function ExerciseGroup({
   onRemoveExercise,
   onAddSet,
   onLabelChange,
-  onSetsChange,
-  onRepsChange,
-  onLoadKgChange,
   onRpeChange,
+  onLoadKgChange,
+  onRepsChange,
+  onSetsChange,
   onRemoveSet,
 }: ExerciseGroupProps) {
   return (
@@ -57,32 +57,42 @@ export function ExerciseGroup({
       {entries.length > 0 && (
         <div className="flex items-center gap-2 px-0.5">
           <span className="w-[110px] text-xs text-muted-foreground">Label</span>
-          <span className="w-14 text-xs text-muted-foreground text-center">Sets</span>
-          <span className="w-4" />
+          <span
+            className="text-xs text-muted-foreground text-center"
+            style={{ width: 'calc(4rem + 5rem + 0.75rem + 0.5rem + 0.5rem)' }}
+          >
+            RPE / Load
+          </span>
           <span className="w-14 text-xs text-muted-foreground text-center">Reps</span>
-          <span className="w-20 text-xs text-muted-foreground text-center">Load (kg)</span>
-          <span className="w-16 text-xs text-muted-foreground text-center">RPE</span>
+          <span className="w-14 text-xs text-muted-foreground text-center">Sets</span>
         </div>
       )}
 
       {/* Set rows */}
       <div className="space-y-1.5">
-        {entries.map(({ entry, flatIndex }) => (
-          <ExerciseRow
-            key={flatIndex}
-            label={(entry.metadata?.label as string) ?? undefined}
-            sets={entry.sets}
-            reps={entry.reps}
-            loadKg={entry.load_kg}
-            rpe={entry.rpe}
-            onLabelChange={(val) => onLabelChange(flatIndex, val)}
-            onSetsChange={(val) => onSetsChange(flatIndex, val)}
-            onRepsChange={(val) => onRepsChange(flatIndex, val)}
-            onLoadKgChange={(val) => onLoadKgChange(flatIndex, val)}
-            onRpeChange={(val) => onRpeChange(flatIndex, val)}
-            onRemove={() => onRemoveSet(flatIndex)}
-          />
-        ))}
+        {entries.map(({ entry, flatIndex }) => {
+          const hasRpe = entry.rpe != null;
+          const hasLoad = entry.load_kg != null;
+          const hasReps = entry.reps != null;
+          const linked = hasRpe && hasLoad && hasReps;
+          return (
+            <ExerciseRow
+              key={flatIndex}
+              label={(entry.metadata?.label as string) ?? undefined}
+              rpe={entry.rpe}
+              loadKg={entry.load_kg}
+              reps={entry.reps}
+              sets={entry.sets}
+              onLabelChange={(val) => onLabelChange(flatIndex, val)}
+              onRpeChange={(val) => onRpeChange(flatIndex, val)}
+              onLoadKgChange={(val) => onLoadKgChange(flatIndex, val)}
+              onRepsChange={(val) => onRepsChange(flatIndex, val)}
+              onSetsChange={(val) => onSetsChange(flatIndex, val)}
+              onRemove={() => onRemoveSet(flatIndex)}
+              linked={linked}
+            />
+          );
+        })}
       </div>
 
       {/* Add set button */}
