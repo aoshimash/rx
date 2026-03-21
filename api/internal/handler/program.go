@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/aoshimash/rx/api/internal/domain"
 	"github.com/aoshimash/rx/api/internal/middleware"
@@ -124,8 +125,8 @@ func (h *ProgramHandler) GetProgram(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, program)
 }
 
-// UpdateProgram handles PUT /programs/{id}
-func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
+// ArchiveProgram handles POST /programs/{id}/archive
+func (h *ProgramHandler) ArchiveProgram(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	id, err := parseUUIDParam(r, "id", "program")
@@ -134,7 +135,63 @@ func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	existing, err := h.repo.GetByID(ctx, id)
+	if err := h.repo.Archive(ctx, id); err != nil {
+		if err == domain.ErrNotFound {
+			middleware.WriteNotFoundError(w, "Program not found")
+			return
+		}
+		middleware.WriteInternalError(w, "Failed to archive program")
+		return
+	}
+
+	program, err := h.repo.GetByID(ctx, id)
+	if err != nil {
+		middleware.WriteInternalError(w, "Failed to retrieve program")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, program)
+}
+
+// UnarchiveProgram handles POST /programs/{id}/unarchive
+func (h *ProgramHandler) UnarchiveProgram(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	id, err := parseUUIDParam(r, "id", "program")
+	if err != nil {
+		middleware.WriteValidationError(w, err.Error(), nil)
+		return
+	}
+
+	if err := h.repo.Unarchive(ctx, id); err != nil {
+		if err == domain.ErrNotFound {
+			middleware.WriteNotFoundError(w, "Program not found")
+			return
+		}
+		middleware.WriteInternalError(w, "Failed to unarchive program")
+		return
+	}
+
+	program, err := h.repo.GetByID(ctx, id)
+	if err != nil {
+		middleware.WriteInternalError(w, "Failed to retrieve program")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, program)
+}
+
+// DuplicateProgram handles POST /programs/{id}/duplicate
+func (h *ProgramHandler) DuplicateProgram(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	id, err := parseUUIDParam(r, "id", "program")
+	if err != nil {
+		middleware.WriteValidationError(w, err.Error(), nil)
+		return
+	}
+
+	original, err := h.repo.GetByID(ctx, id)
 	if err != nil {
 		if err == domain.ErrNotFound {
 			middleware.WriteNotFoundError(w, "Program not found")
@@ -144,32 +201,40 @@ func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req struct {
-		Name        string                `json:"name"`
-		Description *string               `json:"description,omitempty"`
-		Notes       *string               `json:"notes,omitempty"`
-		Metadata    json.RawMessage       `json:"metadata,omitempty"`
-		Entries     []programEntryRequest `json:"entries,omitempty"`
+	copyName := strings.TrimSpace(original.Name) + " (copy)"
+
+	entries := make([]domain.ProgramEntry, len(original.Entries))
+	for i, e := range original.Entries {
+		entries[i] = domain.ProgramEntry{
+			Order:        e.Order,
+			ExerciseName: e.ExerciseName,
+			Sets:         e.Sets,
+			Reps:         e.Reps,
+			RPE:          e.RPE,
+			Percent1RM:   e.Percent1RM,
+			Notes:        e.Notes,
+		}
+		if e.Metadata != nil {
+			entries[i].Metadata = make([]byte, len(e.Metadata))
+			copy(entries[i].Metadata, e.Metadata)
+		}
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		middleware.WriteValidationError(w, "Invalid request body", map[string]interface{}{
-			"error": err.Error(),
-		})
-		return
+	var copyMeta json.RawMessage
+	if original.Metadata != nil {
+		copyMeta = make(json.RawMessage, len(original.Metadata))
+		copy(copyMeta, original.Metadata)
 	}
 
-	existing.Name = req.Name
-	existing.Description = req.Description
-	existing.Notes = req.Notes
-	existing.Metadata = req.Metadata
-	existing.Entries = make([]domain.ProgramEntry, len(req.Entries))
-
-	for i, entryReq := range req.Entries {
-		existing.Entries[i] = convertProgramEntry(entryReq)
+	duplicate := &domain.Program{
+		Name:        copyName,
+		Description: original.Description,
+		Notes:       original.Notes,
+		Metadata:    copyMeta,
+		Entries:     entries,
 	}
 
-	if err := domain.ValidateProgram(existing); err != nil {
+	if err := domain.ValidateProgram(duplicate); err != nil {
 		if handleValidationError(w, err) {
 			return
 		}
@@ -179,16 +244,12 @@ func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.repo.Update(ctx, existing); err != nil {
-		if err == domain.ErrNotFound {
-			middleware.WriteNotFoundError(w, "Program not found")
-			return
-		}
-		middleware.WriteInternalError(w, "Failed to update program")
+	if err := h.repo.Create(ctx, duplicate); err != nil {
+		middleware.WriteInternalError(w, "Failed to duplicate program")
 		return
 	}
 
-	writeJSON(w, http.StatusOK, existing)
+	writeJSON(w, http.StatusCreated, duplicate)
 }
 
 // DeleteProgram handles DELETE /programs/{id}
@@ -250,8 +311,9 @@ func (h *ProgramHandler) ListPrograms(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	after := r.URL.Query().Get("after")
+	includeArchived := r.URL.Query().Get("include_archived") == "true"
 
-	programs, nextCursor, hasMore, err := h.repo.List(ctx, limit, after)
+	programs, nextCursor, hasMore, err := h.repo.List(ctx, limit, after, includeArchived)
 	if err != nil {
 		middleware.WriteInternalError(w, "Failed to list programs")
 		return

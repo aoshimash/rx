@@ -100,7 +100,7 @@ func (r *programRepository) insertEntries(ctx context.Context, tx pgx.Tx, progra
 
 func (r *programRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Program, error) {
 	query := `
-		SELECT id, name, description, notes, metadata, created_at, updated_at
+		SELECT id, name, description, notes, metadata, created_at, updated_at, archived_at
 		FROM programs
 		WHERE id = $1
 	`
@@ -115,6 +115,7 @@ func (r *programRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.
 		&metadataRaw,
 		&program.CreatedAt,
 		&program.UpdatedAt,
+		&program.ArchivedAt,
 	)
 
 	if err == pgx.ErrNoRows {
@@ -182,42 +183,34 @@ func (r *programRepository) getEntriesForProgram(ctx context.Context, programID 
 	return entries, rows.Err()
 }
 
-func (r *programRepository) Update(ctx context.Context, program *domain.Program) error {
-	tx, err := r.pool.Begin(ctx)
+func (r *programRepository) Archive(ctx context.Context, id uuid.UUID) error {
+	result, err := r.pool.Exec(ctx,
+		`UPDATE programs SET archived_at = NOW() WHERE id = $1`,
+		id,
+	)
 	if err != nil {
+		slog.Error("Failed to archive program", "id", id, "error", err)
 		return err
 	}
-	defer func() { _ = tx.Rollback(ctx) }()
-
-	query := `
-		UPDATE programs
-		SET name = $2, description = $3, notes = $4, metadata = $5, updated_at = NOW()
-		WHERE id = $1
-		RETURNING updated_at
-	`
-
-	err = tx.QueryRow(ctx, query, program.ID, program.Name, program.Description, program.Notes, program.Metadata).Scan(&program.UpdatedAt)
-	if err == pgx.ErrNoRows {
+	if result.RowsAffected() == 0 {
 		return domain.ErrNotFound
 	}
+	return nil
+}
+
+func (r *programRepository) Unarchive(ctx context.Context, id uuid.UUID) error {
+	result, err := r.pool.Exec(ctx,
+		`UPDATE programs SET archived_at = NULL WHERE id = $1`,
+		id,
+	)
 	if err != nil {
-		slog.Error("Failed to update program", "id", program.ID, "error", err)
+		slog.Error("Failed to unarchive program", "id", id, "error", err)
 		return err
 	}
-
-	_, err = tx.Exec(ctx, `DELETE FROM program_entries WHERE program_id = $1`, program.ID)
-	if err != nil {
-		slog.Error("Failed to delete program entries", "error", err)
-		return err
+	if result.RowsAffected() == 0 {
+		return domain.ErrNotFound
 	}
-
-	if len(program.Entries) > 0 {
-		if err = r.insertEntries(ctx, tx, program.ID, program.Entries); err != nil {
-			return err
-		}
-	}
-
-	return tx.Commit(ctx)
+	return nil
 }
 
 func (r *programRepository) Delete(ctx context.Context, id uuid.UUID) error {
@@ -234,7 +227,7 @@ func (r *programRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (r *programRepository) List(ctx context.Context, limit int, after string) ([]*domain.Program, string, bool, error) {
+func (r *programRepository) List(ctx context.Context, limit int, after string, includeArchived bool) ([]*domain.Program, string, bool, error) {
 	var startID uuid.UUID
 	if after != "" {
 		var err error
@@ -244,13 +237,24 @@ func (r *programRepository) List(ctx context.Context, limit int, after string) (
 		}
 	}
 
-	query := `
-		SELECT id, name, description, notes, metadata, created_at, updated_at
-		FROM programs
-		WHERE ($1::uuid IS NULL OR id > $1)
-		ORDER BY id ASC
-		LIMIT $2
-	`
+	var query string
+	if includeArchived {
+		query = `
+			SELECT id, name, description, notes, metadata, created_at, updated_at, archived_at
+			FROM programs
+			WHERE ($1::uuid IS NULL OR id > $1)
+			ORDER BY id ASC
+			LIMIT $2
+		`
+	} else {
+		query = `
+			SELECT id, name, description, notes, metadata, created_at, updated_at, archived_at
+			FROM programs
+			WHERE ($1::uuid IS NULL OR id > $1) AND archived_at IS NULL
+			ORDER BY id ASC
+			LIMIT $2
+		`
+	}
 
 	rows, err := r.pool.Query(ctx, query, startID, limit+1)
 	if err != nil {
@@ -272,6 +276,7 @@ func (r *programRepository) List(ctx context.Context, limit int, after string) (
 			&metadataRaw,
 			&program.CreatedAt,
 			&program.UpdatedAt,
+			&program.ArchivedAt,
 		)
 		if err != nil {
 			return nil, "", false, err

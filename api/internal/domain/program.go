@@ -25,6 +25,7 @@ type ProgramEntry struct {
 
 // Program represents a reusable, RPE-based training template.
 // It contains no dates and no absolute weights.
+// Programs are immutable after creation; use Archive/Unarchive to hide unused ones.
 type Program struct {
 	ID          uuid.UUID       `json:"id"`
 	Name        string          `json:"name"`
@@ -33,6 +34,7 @@ type Program struct {
 	Metadata    json.RawMessage `json:"metadata,omitempty"`
 	CreatedAt   time.Time       `json:"created_at"`
 	UpdatedAt   time.Time       `json:"updated_at"`
+	ArchivedAt  *time.Time      `json:"archived_at,omitempty"`
 	Entries     []ProgramEntry  `json:"entries,omitempty"`
 }
 
