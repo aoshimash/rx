@@ -6,19 +6,41 @@ import { LogTable } from '@/components/logs/LogTable';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCreateLog, useLogs } from '@/lib/hooks/useLogs';
-import type { LogEntryCreate } from '@/types/api';
+import { usePlans } from '@/lib/hooks/usePlans';
+import { usePrograms } from '@/lib/hooks/usePrograms';
+import type { LogEntryCreate, Plan, Program } from '@/types/api';
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 export default function LogsPage() {
-  const { data: logsData, isLoading, error } = useLogs();
+  const { data: logsData, isLoading: logsLoading, error: logsError } = useLogs();
+  const { data: plansData, isLoading: plansLoading } = usePlans();
+  const { data: programsData, isLoading: programsLoading } = usePrograms();
   const createLog = useCreateLog();
   const [modalOpen, setModalOpen] = useState(false);
+
+  const isLoading = logsLoading || plansLoading || programsLoading;
 
   const logs = logsData?.data || [];
   const sortedLogs = [...logs].sort(
     (a, b) => new Date(b.performed_at).getTime() - new Date(a.performed_at).getTime()
   );
+
+  const planMap = useMemo(() => {
+    const map = new Map<string, Plan>();
+    for (const plan of plansData?.data || []) {
+      map.set(plan.id, plan);
+    }
+    return map;
+  }, [plansData]);
+
+  const programMap = useMemo(() => {
+    const map = new Map<string, Program>();
+    for (const program of programsData?.data || []) {
+      map.set(program.id, program);
+    }
+    return map;
+  }, [programsData]);
 
   const handleSaveLog = async (entries: LogEntryCreate[], notes: string) => {
     await createLog.mutateAsync({
@@ -42,7 +64,7 @@ export default function LogsPage() {
     );
   }
 
-  if (error) {
+  if (logsError) {
     return (
       <main className="container mx-auto p-6">
         <p className="text-destructive">Failed to load logs. Please try again later.</p>
@@ -71,7 +93,7 @@ export default function LogsPage() {
           </Button>
         </div>
       ) : (
-        <LogTable logs={sortedLogs} />
+        <LogTable logs={sortedLogs} planMap={planMap} programMap={programMap} />
       )}
 
       <LogModal open={modalOpen} onOpenChange={setModalOpen} onSave={handleSaveLog} />
