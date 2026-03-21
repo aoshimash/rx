@@ -31,6 +31,8 @@ export function ExerciseGroup({
   onSetsChange,
   onRemoveSet,
 }: ExerciseGroupProps) {
+  const hasEditableRows = entries.some(({ entry }) => entry.rpe == null);
+
   return (
     <div className="border rounded-lg p-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
@@ -50,7 +52,7 @@ export function ExerciseGroup({
         </Button>
       </div>
 
-      {entries.length > 0 && (
+      {hasEditableRows && (
         <div className="flex items-center gap-2 px-0.5">
           <span className="w-[110px] text-xs text-muted-foreground">Label</span>
           <span className="w-20 text-xs text-muted-foreground text-center">Load (kg)</span>
@@ -60,20 +62,37 @@ export function ExerciseGroup({
       )}
 
       <div className="space-y-1.5">
-        {entries.map(({ entry, flatIndex }) => (
-          <ExerciseRow
-            key={flatIndex}
-            label={(entry.metadata?.label as string) ?? undefined}
-            loadKg={entry.load_kg}
-            reps={entry.reps}
-            sets={entry.sets}
-            onLabelChange={(val) => onLabelChange(flatIndex, val)}
-            onLoadKgChange={(val) => onLoadKgChange(flatIndex, val)}
-            onRepsChange={(val) => onRepsChange(flatIndex, val)}
-            onSetsChange={(val) => onSetsChange(flatIndex, val)}
-            onRemove={() => onRemoveSet(flatIndex)}
-          />
-        ))}
+        {entries.map(({ entry, flatIndex }) => {
+          const isReadOnly = entry.rpe != null;
+          if (isReadOnly) {
+            return (
+              <ExerciseRow
+                key={flatIndex}
+                readOnly
+                label={(entry.metadata?.label as string) ?? undefined}
+                rpe={entry.rpe}
+                loadKg={entry.load_kg}
+                reps={entry.reps}
+                sets={entry.sets}
+                onRemove={() => onRemoveSet(flatIndex)}
+              />
+            );
+          }
+          return (
+            <ExerciseRow
+              key={flatIndex}
+              label={(entry.metadata?.label as string) ?? undefined}
+              loadKg={entry.load_kg}
+              reps={entry.reps}
+              sets={entry.sets}
+              onLabelChange={(val) => onLabelChange(flatIndex, val)}
+              onLoadKgChange={(val) => onLoadKgChange(flatIndex, val)}
+              onRepsChange={(val) => onRepsChange(flatIndex, val)}
+              onSetsChange={(val) => onSetsChange(flatIndex, val)}
+              onRemove={() => onRemoveSet(flatIndex)}
+            />
+          );
+        })}
       </div>
 
       <Button
