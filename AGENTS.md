@@ -41,10 +41,19 @@ pnpm check:fix  # fix biome issues
 pnpm build      # production build
 ```
 
-### Pre-commit
+### Git Hooks (lefthook)
 
-The hook runs `task check` for API changes and `pnpm check` for web changes automatically.
-Setup: `./scripts/setup-githooks.sh`
+Hooks are managed by [lefthook](https://github.com/evilmartians/lefthook). Setup once after cloning:
+
+```bash
+aqua install    # installs lefthook and all other tools
+lefthook install  # registers git hooks
+```
+
+If upgrading from the old `githooks/` setup: `git config --unset core.hooksPath` first.
+
+- **pre-commit**: runs `task format`, `task lint`, `task test` for API changes; `pnpm check` for web changes
+- **pre-push**: runs `task generate` and verifies no stale generated code when `api/openapi/openapi.yaml` is changed
 
 **Never use `git commit --no-verify`.**
 

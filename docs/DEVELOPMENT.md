@@ -83,34 +83,32 @@ curl http://localhost:8080/api/v1/workouts
 
 All `task` commands (generate, lint, test, run, build) work natively on your host machine using tools managed by aqua.
 
-#### 4. Setup Pre-commit Hooks
+#### 4. Setup Git Hooks (lefthook)
 
-This repository uses pre-commit hooks to enforce code quality checks before commits. The hooks automatically run format, lint, and test checks.
-
-**Setup:**
+This repository uses [lefthook](https://github.com/evilmartians/lefthook) to manage git hooks. Run once after cloning:
 
 ```bash
-# Run the setup script from repository root
-./scripts/setup-githooks.sh
+# Install all tools (including lefthook)
+aqua install
+
+# Register git hooks
+lefthook install
 ```
 
-This script:
-- Configures Git to use hooks from `githooks/` directory
-- Creates symlinks for all hooks
-- Ensures hooks are executable
+> **Upgrading from the old `githooks/` setup?** Run `git config --unset core.hooksPath` first.
 
-**What the pre-commit hook does:**
+**What the hooks do:**
 
-Before each commit, the hook automatically runs:
-1. `task format` - Checks code formatting
-2. `task lint` - Runs linter
-3. `task test` - Runs tests with race detection
+| Hook | Trigger | Checks |
+|---|---|---|
+| pre-commit | `api/**` staged | `task format`, `task lint`, `task test` |
+| pre-commit | `web/**` staged | `pnpm check` |
+| pre-push | `api/openapi/openapi.yaml` changed | `task generate` + uncommitted-changes check |
 
-If any check fails, the commit is aborted. Fix the errors and try again.
+The pre-push hook catches stale generated code (the same check run by CI) before it reaches GitHub.
 
 **Manual check before committing:**
 
-You can manually run all checks:
 ```bash
 cd api
 task check  # Runs format + lint + test

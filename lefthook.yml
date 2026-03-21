@@ -1,0 +1,42 @@
+# lefthook - Git hook manager configuration
+# https://github.com/evilmartians/lefthook
+#
+# Setup: aqua install && lefthook install
+# (If upgrading from the old githooks/ setup: git config --unset core.hooksPath first)
+
+pre-commit:
+  commands:
+    api-format:
+      glob: "api/**"
+      root: "api/"
+      run: task format
+
+    api-lint:
+      glob: "api/**"
+      root: "api/"
+      run: task lint
+
+    api-test:
+      glob: "api/**"
+      root: "api/"
+      run: task test
+
+    web-check:
+      glob: "web/**"
+      root: "web/"
+      run: pnpm check
+
+pre-push:
+  commands:
+    api-generate-check:
+      glob: "api/openapi/openapi.yaml"
+      root: "api/"
+      run: |
+        task generate
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "❌ Generated code is stale. Run 'cd api && task generate' and commit the changes."
+          git status
+          git diff
+          exit 1
+        fi
+        echo "✅ Generated code is up to date."
