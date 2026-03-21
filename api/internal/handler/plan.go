@@ -42,6 +42,7 @@ func (h *PlanHandler) CreatePlan(w http.ResponseWriter, r *http.Request) {
 
 	var req struct {
 		ProgramID   *string            `json:"program_id,omitempty"`
+		CycleID     *string            `json:"cycle_id,omitempty"`
 		Name        string             `json:"name"`
 		Date        *domain.DateOnly   `json:"date,omitempty"`
 		SessionName *string            `json:"session_name,omitempty"`
@@ -75,6 +76,15 @@ func (h *PlanHandler) CreatePlan(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		plan.ProgramID = &programID
+	}
+
+	if req.CycleID != nil {
+		cycleID, err := uuid.Parse(*req.CycleID)
+		if err != nil {
+			middleware.WriteValidationError(w, "Invalid cycle_id format", nil)
+			return
+		}
+		plan.CycleID = &cycleID
 	}
 
 	for i, entryReq := range req.Entries {
