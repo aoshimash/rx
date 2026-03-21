@@ -234,6 +234,16 @@ func (h *ProgramHandler) DuplicateProgram(w http.ResponseWriter, r *http.Request
 		Entries:     entries,
 	}
 
+	if err := domain.ValidateProgram(duplicate); err != nil {
+		if handleValidationError(w, err) {
+			return
+		}
+		middleware.WriteValidationError(w, "Validation failed", map[string]interface{}{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	if err := h.repo.Create(ctx, duplicate); err != nil {
 		middleware.WriteInternalError(w, "Failed to duplicate program")
 		return
