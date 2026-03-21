@@ -8,7 +8,7 @@ ALTER TABLE logs
     DROP COLUMN IF EXISTS program_id,
     DROP COLUMN IF EXISTS session_name;
 
--- Restore old tables
+-- Restore old tables (plans, plan_entries)
 CREATE TABLE IF NOT EXISTS plans (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name        VARCHAR(200) NOT NULL,
@@ -32,6 +32,28 @@ CREATE TABLE IF NOT EXISTS plan_entries (
     metadata      JSONB
 );
 
+-- Drop new tables
+DROP TABLE IF EXISTS program_session_entries CASCADE;
+DROP TABLE IF EXISTS program_sessions CASCADE;
+DROP TABLE IF EXISTS program_template_entries CASCADE;
+DROP TABLE IF EXISTS program_templates CASCADE;
+
+-- Drop programs table (new version) and recreate old version
+-- Must happen BEFORE creating cycles/program_entries which reference programs(id)
+DROP TABLE IF EXISTS programs CASCADE;
+
+CREATE TABLE IF NOT EXISTS programs (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name        VARCHAR(200) NOT NULL,
+    description TEXT,
+    notes       TEXT,
+    metadata    JSONB,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    archived_at TIMESTAMPTZ
+);
+
+-- Restore cycles and program_entries (reference old programs table recreated above)
 CREATE TABLE IF NOT EXISTS cycles (
     id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     program_id UUID NOT NULL,
@@ -51,24 +73,4 @@ CREATE TABLE IF NOT EXISTS program_entries (
     percent_1rm   DOUBLE PRECISION,
     notes         TEXT,
     metadata      JSONB
-);
-
--- Drop new tables
-DROP TABLE IF EXISTS program_session_entries CASCADE;
-DROP TABLE IF EXISTS program_sessions CASCADE;
-DROP TABLE IF EXISTS program_template_entries CASCADE;
-DROP TABLE IF EXISTS program_templates CASCADE;
-
--- Drop programs table (new version) and recreate old version
-DROP TABLE IF EXISTS programs CASCADE;
-
-CREATE TABLE IF NOT EXISTS programs (
-    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name        VARCHAR(200) NOT NULL,
-    description TEXT,
-    notes       TEXT,
-    metadata    JSONB,
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    archived_at TIMESTAMPTZ
 );

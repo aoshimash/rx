@@ -310,6 +310,7 @@ func ValidateProgram(p *Program) error {
 		}
 	}
 
+	seenSessionNames := make(map[string]struct{}, len(p.Sessions))
 	for i := range p.Sessions {
 		if err := ValidateProgramSession(&p.Sessions[i]); err != nil {
 			return &ValidationError{
@@ -317,6 +318,14 @@ func ValidateProgram(p *Program) error {
 				Message: err.Error(),
 			}
 		}
+		name := p.Sessions[i].SessionName
+		if _, exists := seenSessionNames[name]; exists {
+			return &ValidationError{
+				Field:   fmt.Sprintf("sessions[%d].session_name", i),
+				Message: fmt.Sprintf("duplicate session name: %s", name),
+			}
+		}
+		seenSessionNames[name] = struct{}{}
 	}
 
 	return nil
