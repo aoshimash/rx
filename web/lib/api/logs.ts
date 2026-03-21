@@ -7,6 +7,7 @@ interface PaginationParams {
 }
 
 interface LogFilterParams extends PaginationParams {
+  program_id?: string;
   performed_at_from?: string;
   performed_at_to?: string;
 }
@@ -16,6 +17,7 @@ export const logsApi = {
     const searchParams = new URLSearchParams();
     if (params?.limit) searchParams.set('limit', params.limit.toString());
     if (params?.after) searchParams.set('after', params.after);
+    if (params?.program_id) searchParams.set('program_id', params.program_id);
     if (params?.performed_at_from) searchParams.set('performed_at_from', params.performed_at_from);
     if (params?.performed_at_to) searchParams.set('performed_at_to', params.performed_at_to);
 
