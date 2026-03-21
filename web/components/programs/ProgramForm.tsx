@@ -11,6 +11,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { ProgramEntryCreate } from '@/types/api';
 import { Plus, Trash2, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -19,12 +26,16 @@ import { useMemo, useState } from 'react';
 // Types
 // ============================================================================
 
+type IntensityType = 'rpe' | 'percent_1rm' | 'weight_kg';
+
 interface SessionExercise {
   exercise_name: string;
   sets?: number;
   reps?: number;
   rpe?: number;
   percent_1rm_display?: number; // displayed as 0-100%, stored as 0-1 in API
+  weight_kg?: number;
+  intensity_type?: IntensityType;
   label?: string;
 }
 
@@ -47,6 +58,12 @@ function entriesToSessionGroups(entries: ProgramEntryCreate[]): SessionGroup[] {
       sessionMap.set(sessionName, []);
       sessionOrder.push(sessionName);
     }
+    const weightKg = entry.metadata?.weight_kg as number | undefined;
+    let intensityType: IntensityType | undefined;
+    if (entry.rpe != null) intensityType = 'rpe';
+    else if (entry.percent_1rm != null) intensityType = 'percent_1rm';
+    else if (weightKg != null) intensityType = 'weight_kg';
+
     sessionMap.get(sessionName)?.push({
       exercise_name: entry.exercise_name,
       sets: entry.sets,
@@ -54,6 +71,8 @@ function entriesToSessionGroups(entries: ProgramEntryCreate[]): SessionGroup[] {
       rpe: entry.rpe,
       percent_1rm_display:
         entry.percent_1rm !== undefined ? Math.round(entry.percent_1rm * 100) : undefined,
+      weight_kg: weightKg,
+      intensity_type: intensityType,
       label: (entry.metadata?.label as string) || undefined,
     });
   }
@@ -64,25 +83,37 @@ function entriesToSessionGroups(entries: ProgramEntryCreate[]): SessionGroup[] {
   }));
 }
 
+function exerciseToEntry(
+  ex: SessionExercise,
+  sessionName: string,
+  order: number
+): ProgramEntryCreate {
+  const metadata: Record<string, unknown> = { session: sessionName };
+  if (ex.label) metadata.label = ex.label;
+  if (ex.intensity_type === 'weight_kg' && ex.weight_kg != null) {
+    metadata.weight_kg = ex.weight_kg;
+  }
+  return {
+    exercise_name: ex.exercise_name,
+    order,
+    sets: ex.sets,
+    reps: ex.reps,
+    rpe: ex.intensity_type === 'rpe' ? ex.rpe : undefined,
+    percent_1rm:
+      ex.intensity_type === 'percent_1rm' && ex.percent_1rm_display !== undefined
+        ? ex.percent_1rm_display / 100
+        : undefined,
+    metadata,
+  };
+}
+
 function sessionGroupsToEntries(sessions: SessionGroup[]): ProgramEntryCreate[] {
   const entries: ProgramEntryCreate[] = [];
   let order = 0;
 
   for (const session of sessions) {
     for (const ex of session.exercises) {
-      entries.push({
-        exercise_name: ex.exercise_name,
-        order,
-        sets: ex.sets,
-        reps: ex.reps,
-        rpe: ex.rpe,
-        percent_1rm:
-          ex.percent_1rm_display !== undefined ? ex.percent_1rm_display / 100 : undefined,
-        metadata: {
-          session: session.name,
-          ...(ex.label ? { label: ex.label } : {}),
-        },
-      });
+      entries.push(exerciseToEntry(ex, session.name, order));
       order++;
     }
   }
@@ -181,21 +212,87 @@ function ProgramExerciseRow({
         placeholder="e.g., Squat, Bench Press"
       />
 
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-4 gap-3">
         <div className="space-y-2">
-          <Label>Sets</Label>
-          <Input
-            type="number"
-            value={exercise.sets ?? ''}
-            onChange={(e) =>
-              onChange({
-                ...exercise,
-                sets: e.target.value ? Number(e.target.value) : undefined,
-              })
-            }
-            min={1}
-            placeholder="3"
+          <Label>Label</Label>
+          <LabelCombobox
+            value={exercise.label ?? ''}
+            onChange={(v) => onChange({ ...exercise, label: v })}
+            suggestions={labelSuggestions}
           />
+        </div>
+        <div className="space-y-2">
+          <Label>Intensity</Label>
+          <div className="flex gap-2">
+            <Select
+              value={exercise.intensity_type ?? ''}
+              onValueChange={(v) => {
+                const type = v as IntensityType | '';
+                onChange({
+                  ...exercise,
+                  intensity_type: type || undefined,
+                  rpe: type === 'rpe' ? exercise.rpe : undefined,
+                  percent_1rm_display:
+                    type === 'percent_1rm' ? exercise.percent_1rm_display : undefined,
+                  weight_kg: type === 'weight_kg' ? exercise.weight_kg : undefined,
+                });
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="-" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="rpe">RPE</SelectItem>
+                <SelectItem value="percent_1rm">%1RM</SelectItem>
+                <SelectItem value="weight_kg">Weight(kg)</SelectItem>
+              </SelectContent>
+            </Select>
+            {exercise.intensity_type === 'rpe' && (
+              <Input
+                type="number"
+                value={exercise.rpe ?? ''}
+                onChange={(e) =>
+                  onChange({
+                    ...exercise,
+                    rpe: e.target.value ? Number(e.target.value) : undefined,
+                  })
+                }
+                min={1}
+                max={10}
+                placeholder="7"
+              />
+            )}
+            {exercise.intensity_type === 'percent_1rm' && (
+              <Input
+                type="number"
+                value={exercise.percent_1rm_display ?? ''}
+                onChange={(e) =>
+                  onChange({
+                    ...exercise,
+                    percent_1rm_display: e.target.value ? Number(e.target.value) : undefined,
+                  })
+                }
+                min={0}
+                max={100}
+                placeholder="75"
+              />
+            )}
+            {exercise.intensity_type === 'weight_kg' && (
+              <Input
+                type="number"
+                value={exercise.weight_kg ?? ''}
+                onChange={(e) =>
+                  onChange({
+                    ...exercise,
+                    weight_kg: e.target.value ? Number(e.target.value) : undefined,
+                  })
+                }
+                min={0}
+                step="0.5"
+                placeholder="100"
+              />
+            )}
+          </div>
         </div>
         <div className="space-y-2">
           <Label>Reps</Label>
@@ -213,43 +310,18 @@ function ProgramExerciseRow({
           />
         </div>
         <div className="space-y-2">
-          <Label>RPE</Label>
+          <Label>Sets</Label>
           <Input
             type="number"
-            value={exercise.rpe ?? ''}
+            value={exercise.sets ?? ''}
             onChange={(e) =>
               onChange({
                 ...exercise,
-                rpe: e.target.value ? Number(e.target.value) : undefined,
+                sets: e.target.value ? Number(e.target.value) : undefined,
               })
             }
             min={1}
-            max={10}
-            placeholder="7"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>%1RM</Label>
-          <Input
-            type="number"
-            value={exercise.percent_1rm_display ?? ''}
-            onChange={(e) =>
-              onChange({
-                ...exercise,
-                percent_1rm_display: e.target.value ? Number(e.target.value) : undefined,
-              })
-            }
-            min={0}
-            max={100}
-            placeholder="75"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>Label</Label>
-          <LabelCombobox
-            value={exercise.label ?? ''}
-            onChange={(v) => onChange({ ...exercise, label: v })}
-            suggestions={labelSuggestions}
+            placeholder="3"
           />
         </div>
       </div>
@@ -327,7 +399,10 @@ export function ProgramForm({
     if (!session) return;
     updated[sessionIdx] = {
       ...session,
-      exercises: [...session.exercises, { exercise_name: '', sets: 3, reps: 10, rpe: 7 }],
+      exercises: [
+        ...session.exercises,
+        { exercise_name: '', sets: 3, reps: 10, rpe: 7, intensity_type: 'rpe' },
+      ],
     };
     setSessions(updated);
   };

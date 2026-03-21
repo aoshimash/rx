@@ -1,5 +1,6 @@
 'use client';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,21 +13,14 @@ import { useParams } from 'next/navigation';
 type ExerciseGroup = { name: string; entries: ProgramEntry[] };
 type SessionGroup = { name: string; exerciseGroups: ExerciseGroup[] };
 
-function formatEntry(entry: ProgramEntry): string {
+function formatEntryText(entry: ProgramEntry): string {
   const parts: string[] = [];
-  const label = entry.metadata?.label as string | undefined;
-  if (label) {
-    parts.push(label);
-  }
-  if (entry.sets != null && entry.reps != null) {
-    parts.push(`${entry.sets}×${entry.reps}`);
-  } else if (entry.sets != null) {
-    parts.push(`${entry.sets}sets`);
-  } else if (entry.reps != null) {
-    parts.push(`${entry.reps}reps`);
-  }
-  if (entry.rpe != null) parts.push(`@RPE${entry.rpe}`);
+  if (entry.rpe != null) parts.push(`RPE${entry.rpe}`);
+  if (entry.reps != null) parts.push(`${entry.reps}reps`);
+  if (entry.sets != null) parts.push(`${entry.sets}sets`);
   if (entry.percent_1rm != null) parts.push(`${Math.round(entry.percent_1rm * 100)}%`);
+  const weightKg = entry.metadata?.weight_kg as number | undefined;
+  if (weightKg != null) parts.push(`${weightKg}kg`);
   return parts.join(' ');
 }
 
@@ -136,9 +130,15 @@ export default function ProgramDetailPage() {
                         {group.name}
                       </span>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                        {group.entries.map((entry) => (
-                          <span key={entry.id}>{formatEntry(entry)}</span>
-                        ))}
+                        {group.entries.map((entry) => {
+                          const label = entry.metadata?.label as string | undefined;
+                          return (
+                            <span key={entry.id} className="inline-flex items-center gap-1.5">
+                              {label && <Badge variant="outline">{label}</Badge>}
+                              {formatEntryText(entry)}
+                            </span>
+                          );
+                        })}
                       </div>
                     </div>
                   ))}
