@@ -35,14 +35,19 @@ func (r *programRepository) Create(ctx context.Context, program *domain.Program)
 	}
 
 	query := `
-		INSERT INTO programs (id, name, description, notes, metadata, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+		INSERT INTO programs (id, program_template_id, name, status, notes, metadata, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
 		RETURNING created_at, updated_at
 	`
 
-	err = tx.QueryRow(ctx, query, id, program.Name, program.Description, program.Notes, program.Metadata).Scan(
-		&program.CreatedAt, &program.UpdatedAt,
-	)
+	err = tx.QueryRow(ctx, query,
+		id,
+		program.ProgramTemplateID,
+		program.Name,
+		program.Status,
+		program.Notes,
+		program.Metadata,
+	).Scan(&program.CreatedAt, &program.UpdatedAt)
 	if err != nil {
 		slog.Error("Failed to create program", "error", err)
 		return err
@@ -50,57 +55,66 @@ func (r *programRepository) Create(ctx context.Context, program *domain.Program)
 
 	program.ID = id
 
-	if len(program.Entries) > 0 {
-		if err = r.insertEntries(ctx, tx, id, program.Entries); err != nil {
+	for i := range program.Sessions {
+		sessionID := uuid.New()
+		sessionQuery := `
+			INSERT INTO program_sessions (id, program_id, session_name, "order", date)
+			VALUES ($1, $2, $3, $4, $5)
+		`
+		var dateVal interface{}
+		if program.Sessions[i].Date != nil {
+			dateVal = program.Sessions[i].Date
+		}
+		_, err = tx.Exec(ctx, sessionQuery,
+			sessionID,
+			id,
+			program.Sessions[i].SessionName,
+			program.Sessions[i].Order,
+			dateVal,
+		)
+		if err != nil {
+			slog.Error("Failed to insert program session", "error", err)
 			return err
+		}
+		program.Sessions[i].ID = sessionID
+		program.Sessions[i].ProgramID = id
+
+		for j := range program.Sessions[i].Entries {
+			entryID := uuid.New()
+			entryQuery := `
+				INSERT INTO program_session_entries (
+					id, session_id, "order", exercise_name,
+					sets, reps, load_kg, rpe, notes, metadata
+				)
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+			`
+			_, err = tx.Exec(ctx, entryQuery,
+				entryID,
+				sessionID,
+				program.Sessions[i].Entries[j].Order,
+				program.Sessions[i].Entries[j].ExerciseName,
+				program.Sessions[i].Entries[j].Sets,
+				program.Sessions[i].Entries[j].Reps,
+				program.Sessions[i].Entries[j].LoadKg,
+				program.Sessions[i].Entries[j].RPE,
+				program.Sessions[i].Entries[j].Notes,
+				program.Sessions[i].Entries[j].Metadata,
+			)
+			if err != nil {
+				slog.Error("Failed to insert program session entry", "error", err)
+				return err
+			}
+			program.Sessions[i].Entries[j].ID = entryID
+			program.Sessions[i].Entries[j].SessionID = sessionID
 		}
 	}
 
 	return tx.Commit(ctx)
 }
 
-func (r *programRepository) insertEntries(ctx context.Context, tx pgx.Tx, programID uuid.UUID, entries []domain.ProgramEntry) error {
-	for i := range entries {
-		entryID := uuid.New()
-		if entries[i].ID != uuid.Nil {
-			entryID = entries[i].ID
-		}
-
-		query := `
-			INSERT INTO program_entries (
-				id, program_id, "order", exercise_name,
-				sets, reps, rpe, percent_1rm, notes, metadata
-			)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-		`
-
-		_, err := tx.Exec(ctx, query,
-			entryID,
-			programID,
-			entries[i].Order,
-			entries[i].ExerciseName,
-			entries[i].Sets,
-			entries[i].Reps,
-			entries[i].RPE,
-			entries[i].Percent1RM,
-			entries[i].Notes,
-			entries[i].Metadata,
-		)
-		if err != nil {
-			slog.Error("Failed to insert program entry", "error", err)
-			return err
-		}
-
-		entries[i].ID = entryID
-		entries[i].ProgramID = programID
-	}
-
-	return nil
-}
-
 func (r *programRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Program, error) {
 	query := `
-		SELECT id, name, description, notes, metadata, created_at, updated_at, archived_at
+		SELECT id, program_template_id, name, status, notes, metadata, created_at, updated_at
 		FROM programs
 		WHERE id = $1
 	`
@@ -109,15 +123,14 @@ func (r *programRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.
 	var metadataRaw []byte
 	err := r.pool.QueryRow(ctx, query, id).Scan(
 		&program.ID,
+		&program.ProgramTemplateID,
 		&program.Name,
-		&program.Description,
+		&program.Status,
 		&program.Notes,
 		&metadataRaw,
 		&program.CreatedAt,
 		&program.UpdatedAt,
-		&program.ArchivedAt,
 	)
-
 	if err == pgx.ErrNoRows {
 		return nil, domain.ErrNotFound
 	}
@@ -130,44 +143,89 @@ func (r *programRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.
 		program.Metadata = json.RawMessage(metadataRaw)
 	}
 
-	entries, err := r.getEntriesForProgram(ctx, id)
+	sessions, err := r.getSessionsForProgram(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	program.Entries = entries
+	program.Sessions = sessions
 
 	return &program, nil
 }
 
-func (r *programRepository) getEntriesForProgram(ctx context.Context, programID uuid.UUID) ([]domain.ProgramEntry, error) {
+func (r *programRepository) getSessionsForProgram(ctx context.Context, programID uuid.UUID) ([]domain.ProgramSession, error) {
 	query := `
-		SELECT id, program_id, "order", exercise_name,
-		       sets, reps, rpe, percent_1rm, notes, metadata
-		FROM program_entries
+		SELECT id, program_id, session_name, "order", date
+		FROM program_sessions
 		WHERE program_id = $1
 		ORDER BY "order" ASC
 	`
 
 	rows, err := r.pool.Query(ctx, query, programID)
 	if err != nil {
-		slog.Error("Failed to get program entries", "programID", programID, "error", err)
+		slog.Error("Failed to get program sessions", "programID", programID, "error", err)
 		return nil, err
 	}
 	defer rows.Close()
 
-	var entries []domain.ProgramEntry
+	var sessions []domain.ProgramSession
 	for rows.Next() {
-		var entry domain.ProgramEntry
+		var sess domain.ProgramSession
+		err := rows.Scan(
+			&sess.ID,
+			&sess.ProgramID,
+			&sess.SessionName,
+			&sess.Order,
+			&sess.Date,
+		)
+		if err != nil {
+			return nil, err
+		}
+		sessions = append(sessions, sess)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	for i := range sessions {
+		entries, err := r.getEntriesForSession(ctx, sessions[i].ID)
+		if err != nil {
+			return nil, err
+		}
+		sessions[i].Entries = entries
+	}
+
+	return sessions, nil
+}
+
+func (r *programRepository) getEntriesForSession(ctx context.Context, sessionID uuid.UUID) ([]domain.ProgramSessionEntry, error) {
+	query := `
+		SELECT id, session_id, "order", exercise_name,
+		       sets, reps, load_kg, rpe, notes, metadata
+		FROM program_session_entries
+		WHERE session_id = $1
+		ORDER BY "order" ASC
+	`
+
+	rows, err := r.pool.Query(ctx, query, sessionID)
+	if err != nil {
+		slog.Error("Failed to get program session entries", "sessionID", sessionID, "error", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var entries []domain.ProgramSessionEntry
+	for rows.Next() {
+		var entry domain.ProgramSessionEntry
 		var metadataRaw []byte
 		err := rows.Scan(
 			&entry.ID,
-			&entry.ProgramID,
+			&entry.SessionID,
 			&entry.Order,
 			&entry.ExerciseName,
 			&entry.Sets,
 			&entry.Reps,
+			&entry.LoadKg,
 			&entry.RPE,
-			&entry.Percent1RM,
 			&entry.Notes,
 			&metadataRaw,
 		)
@@ -183,28 +241,13 @@ func (r *programRepository) getEntriesForProgram(ctx context.Context, programID 
 	return entries, rows.Err()
 }
 
-func (r *programRepository) Archive(ctx context.Context, id uuid.UUID) error {
+func (r *programRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ProgramStatus) error {
 	result, err := r.pool.Exec(ctx,
-		`UPDATE programs SET archived_at = NOW() WHERE id = $1`,
-		id,
+		`UPDATE programs SET status = $2, updated_at = NOW() WHERE id = $1`,
+		id, status,
 	)
 	if err != nil {
-		slog.Error("Failed to archive program", "id", id, "error", err)
-		return err
-	}
-	if result.RowsAffected() == 0 {
-		return domain.ErrNotFound
-	}
-	return nil
-}
-
-func (r *programRepository) Unarchive(ctx context.Context, id uuid.UUID) error {
-	result, err := r.pool.Exec(ctx,
-		`UPDATE programs SET archived_at = NULL WHERE id = $1`,
-		id,
-	)
-	if err != nil {
-		slog.Error("Failed to unarchive program", "id", id, "error", err)
+		slog.Error("Failed to update program status", "id", id, "error", err)
 		return err
 	}
 	if result.RowsAffected() == 0 {
@@ -219,15 +262,13 @@ func (r *programRepository) Delete(ctx context.Context, id uuid.UUID) error {
 		slog.Error("Failed to delete program", "id", id, "error", err)
 		return err
 	}
-
 	if result.RowsAffected() == 0 {
 		return domain.ErrNotFound
 	}
-
 	return nil
 }
 
-func (r *programRepository) List(ctx context.Context, limit int, after string, includeArchived bool) ([]*domain.Program, string, bool, error) {
+func (r *programRepository) List(ctx context.Context, limit int, after string, programTemplateID *uuid.UUID, status string) ([]*domain.Program, string, bool, error) {
 	var startID uuid.UUID
 	if after != "" {
 		var err error
@@ -237,26 +278,17 @@ func (r *programRepository) List(ctx context.Context, limit int, after string, i
 		}
 	}
 
-	var query string
-	if includeArchived {
-		query = `
-			SELECT id, name, description, notes, metadata, created_at, updated_at, archived_at
-			FROM programs
-			WHERE ($1::uuid IS NULL OR id > $1)
-			ORDER BY id ASC
-			LIMIT $2
-		`
-	} else {
-		query = `
-			SELECT id, name, description, notes, metadata, created_at, updated_at, archived_at
-			FROM programs
-			WHERE ($1::uuid IS NULL OR id > $1) AND archived_at IS NULL
-			ORDER BY id ASC
-			LIMIT $2
-		`
-	}
+	query := `
+		SELECT id, program_template_id, name, status, notes, metadata, created_at, updated_at
+		FROM programs
+		WHERE ($1::uuid IS NULL OR id > $1)
+		  AND ($2::uuid IS NULL OR program_template_id = $2)
+		  AND ($3::text = '' OR status = $3)
+		ORDER BY id ASC
+		LIMIT $4
+	`
 
-	rows, err := r.pool.Query(ctx, query, startID, limit+1)
+	rows, err := r.pool.Query(ctx, query, startID, programTemplateID, status, limit+1)
 	if err != nil {
 		slog.Error("Failed to list programs", "error", err)
 		return nil, "", false, err
@@ -264,19 +296,18 @@ func (r *programRepository) List(ctx context.Context, limit int, after string, i
 	defer rows.Close()
 
 	programs := make([]*domain.Program, 0, limit)
-
 	for rows.Next() {
 		var program domain.Program
 		var metadataRaw []byte
 		err := rows.Scan(
 			&program.ID,
+			&program.ProgramTemplateID,
 			&program.Name,
-			&program.Description,
+			&program.Status,
 			&program.Notes,
 			&metadataRaw,
 			&program.CreatedAt,
 			&program.UpdatedAt,
-			&program.ArchivedAt,
 		)
 		if err != nil {
 			return nil, "", false, err
@@ -297,11 +328,11 @@ func (r *programRepository) List(ctx context.Context, limit int, after string, i
 	}
 
 	for _, program := range programs {
-		entries, err := r.getEntriesForProgram(ctx, program.ID)
+		sessions, err := r.getSessionsForProgram(ctx, program.ID)
 		if err != nil {
 			return nil, "", false, err
 		}
-		program.Entries = entries
+		program.Sessions = sessions
 	}
 
 	var nextCursor string
@@ -310,4 +341,17 @@ func (r *programRepository) List(ctx context.Context, limit int, after string, i
 	}
 
 	return programs, nextCursor, hasMore, nil
+}
+
+func (r *programRepository) ExistsByProgramTemplateID(ctx context.Context, programTemplateID uuid.UUID) (bool, error) {
+	var exists bool
+	err := r.pool.QueryRow(ctx,
+		`SELECT EXISTS(SELECT 1 FROM programs WHERE program_template_id = $1)`,
+		programTemplateID,
+	).Scan(&exists)
+	if err != nil {
+		slog.Error("Failed to check program existence by template ID", "programTemplateID", programTemplateID, "error", err)
+		return false, err
+	}
+	return exists, nil
 }

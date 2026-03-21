@@ -28,10 +28,9 @@ func main() {
 	cfg := config.Load()
 
 	// Initialize repositories based on storage type
+	var programTemplateRepo repository.ProgramTemplateRepository
 	var programRepo repository.ProgramRepository
-	var planRepo repository.PlanRepository
 	var logRepo repository.LogRepository
-	var cycleRepo repository.CycleRepository
 
 	ctx := context.Background()
 
@@ -45,18 +44,16 @@ func main() {
 		defer db.Close()
 
 		slog.Info("Using PostgreSQL storage backend")
+		programTemplateRepo = postgresstore.NewProgramTemplateRepository(db.Pool())
 		programRepo = postgresstore.NewProgramRepository(db.Pool())
-		planRepo = postgresstore.NewPlanRepository(db.Pool())
 		logRepo = postgresstore.NewLogRepository(db.Pool())
-		cycleRepo = postgresstore.NewCycleRepository(db.Pool())
 	} else {
 		slog.Info("Using in-memory storage backend")
+		programTemplateRepo = memory.NewProgramTemplateRepository()
 		programRepo = memory.NewProgramRepository()
 		logRepo = memory.NewLogRepository()
-		planRepo = memory.NewPlanRepository(logRepo)
-		cycleRepo = memory.NewCycleRepository()
 
-		if err := seed.Run(ctx, programRepo, cycleRepo, planRepo, logRepo); err != nil {
+		if err := seed.Run(ctx, programTemplateRepo, programRepo, logRepo); err != nil {
 			slog.Error("Failed to seed development data", "error", err)
 			os.Exit(1)
 		}
@@ -88,12 +85,11 @@ func main() {
 	}
 
 	// Initialize handlers
-	programHandler := handler.NewProgramHandler(programRepo, planRepo, cycleRepo)
-	planHandler := handler.NewPlanHandler(planRepo, logRepo)
-	logHandler := handler.NewLogHandler(logRepo)
-	cycleHandler := handler.NewCycleHandler(cycleRepo, planRepo)
+	programTemplateHandler := handler.NewProgramTemplateHandler(programTemplateRepo, programRepo)
+	programHandler := handler.NewProgramHandler(programRepo, logRepo)
+	logHandler := handler.NewLogHandler(logRepo, programRepo)
 	videoHandler := handler.NewVideoHandler(storageProvider, logger)
-	healthHandler := handler.NewHealthHandler(planRepo)
+	healthHandler := handler.NewHealthHandler(logRepo)
 
 	// Initialize authentication provider based on config
 	var authProvider middleware.AuthProvider
@@ -131,27 +127,21 @@ func main() {
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Use(middleware.AuthMiddleware(authProvider))
 
+		// ProgramTemplate routes
+		r.Post("/program-templates", programTemplateHandler.CreateProgramTemplate)
+		r.Get("/program-templates", programTemplateHandler.ListProgramTemplates)
+		r.Get("/program-templates/{id}", programTemplateHandler.GetProgramTemplate)
+		r.Post("/program-templates/{id}/archive", programTemplateHandler.ArchiveProgramTemplate)
+		r.Post("/program-templates/{id}/unarchive", programTemplateHandler.UnarchiveProgramTemplate)
+		r.Post("/program-templates/{id}/duplicate", programTemplateHandler.DuplicateProgramTemplate)
+		r.Post("/program-templates/{id}/generate", programTemplateHandler.GenerateProgram)
+		r.Delete("/program-templates/{id}", programTemplateHandler.DeleteProgramTemplate)
+
 		// Program routes
 		r.Post("/programs", programHandler.CreateProgram)
 		r.Get("/programs", programHandler.ListPrograms)
 		r.Get("/programs/{id}", programHandler.GetProgram)
-		r.Post("/programs/{id}/archive", programHandler.ArchiveProgram)
-		r.Post("/programs/{id}/unarchive", programHandler.UnarchiveProgram)
-		r.Post("/programs/{id}/duplicate", programHandler.DuplicateProgram)
 		r.Delete("/programs/{id}", programHandler.DeleteProgram)
-
-		// Cycle routes
-		r.Get("/cycles", cycleHandler.ListCycles)
-		r.Get("/cycles/{id}", cycleHandler.GetCycle)
-		r.Delete("/cycles/{id}", cycleHandler.DeleteCycle)
-
-		// Plan routes
-		r.Post("/plans", planHandler.CreatePlan)
-		r.Post("/plans/from-program", programHandler.ConvertToPlans)
-		r.Get("/plans", planHandler.ListPlans)
-		r.Get("/plans/{id}", planHandler.GetPlan)
-		r.Put("/plans/{id}", planHandler.UpdatePlan)
-		r.Delete("/plans/{id}", planHandler.DeletePlan)
 
 		// Log routes
 		r.Post("/logs", logHandler.CreateLog)

@@ -33,9 +33,13 @@ func (s *programStore) Create(ctx context.Context, program *domain.Program) erro
 	program.CreatedAt = now
 	program.UpdatedAt = now
 
-	for i := range program.Entries {
-		program.Entries[i].ID = uuid.New()
-		program.Entries[i].ProgramID = program.ID
+	for i := range program.Sessions {
+		program.Sessions[i].ID = uuid.New()
+		program.Sessions[i].ProgramID = program.ID
+		for j := range program.Sessions[i].Entries {
+			program.Sessions[i].Entries[j].ID = uuid.New()
+			program.Sessions[i].Entries[j].SessionID = program.Sessions[i].ID
+		}
 	}
 
 	s.programs[program.ID] = program
@@ -56,12 +60,16 @@ func (s *programStore) GetByID(ctx context.Context, id uuid.UUID) (*domain.Progr
 
 func (s *programStore) copyProgram(p *domain.Program) *domain.Program {
 	cp := *p
-	cp.Entries = make([]domain.ProgramEntry, len(p.Entries))
-	for i, e := range p.Entries {
-		cp.Entries[i] = e
-		if e.Metadata != nil {
-			cp.Entries[i].Metadata = make([]byte, len(e.Metadata))
-			copy(cp.Entries[i].Metadata, e.Metadata)
+	cp.Sessions = make([]domain.ProgramSession, len(p.Sessions))
+	for i, sess := range p.Sessions {
+		cp.Sessions[i] = sess
+		cp.Sessions[i].Entries = make([]domain.ProgramSessionEntry, len(sess.Entries))
+		for j, e := range sess.Entries {
+			cp.Sessions[i].Entries[j] = e
+			if e.Metadata != nil {
+				cp.Sessions[i].Entries[j].Metadata = make([]byte, len(e.Metadata))
+				copy(cp.Sessions[i].Entries[j].Metadata, e.Metadata)
+			}
 		}
 	}
 	if p.Metadata != nil {
@@ -71,7 +79,7 @@ func (s *programStore) copyProgram(p *domain.Program) *domain.Program {
 	return &cp
 }
 
-func (s *programStore) Archive(ctx context.Context, id uuid.UUID) error {
+func (s *programStore) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ProgramStatus) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -80,21 +88,8 @@ func (s *programStore) Archive(ctx context.Context, id uuid.UUID) error {
 		return domain.ErrNotFound
 	}
 
-	now := time.Now()
-	program.ArchivedAt = &now
-	return nil
-}
-
-func (s *programStore) Unarchive(ctx context.Context, id uuid.UUID) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	program, exists := s.programs[id]
-	if !exists {
-		return domain.ErrNotFound
-	}
-
-	program.ArchivedAt = nil
+	program.Status = status
+	program.UpdatedAt = time.Now()
 	return nil
 }
 
@@ -110,13 +105,16 @@ func (s *programStore) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (s *programStore) List(ctx context.Context, limit int, after string, includeArchived bool) ([]*domain.Program, string, bool, error) {
+func (s *programStore) List(ctx context.Context, limit int, after string, programTemplateID *uuid.UUID, status string) ([]*domain.Program, string, bool, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	programs := make([]*domain.Program, 0, len(s.programs))
 	for _, p := range s.programs {
-		if !includeArchived && p.ArchivedAt != nil {
+		if programTemplateID != nil && (p.ProgramTemplateID == nil || *p.ProgramTemplateID != *programTemplateID) {
+			continue
+		}
+		if status != "" && string(p.Status) != status {
 			continue
 		}
 		programs = append(programs, p)
@@ -159,4 +157,16 @@ func (s *programStore) List(ctx context.Context, limit int, after string, includ
 	}
 
 	return copies, nextCursor, hasMore, nil
+}
+
+func (s *programStore) ExistsByProgramTemplateID(ctx context.Context, programTemplateID uuid.UUID) (bool, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	for _, p := range s.programs {
+		if p.ProgramTemplateID != nil && *p.ProgramTemplateID == programTemplateID {
+			return true, nil
+		}
+	}
+	return false, nil
 }

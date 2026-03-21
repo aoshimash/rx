@@ -36,14 +36,15 @@ func (r *logRepository) Create(ctx context.Context, log *domain.Log) error {
 	}
 
 	query := `
-		INSERT INTO logs (id, plan_id, performed_at, started_at, finished_at, notes, metadata, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+		INSERT INTO logs (id, program_id, session_name, performed_at, started_at, finished_at, notes, metadata, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
 		RETURNING created_at, updated_at
 	`
 
 	err = tx.QueryRow(ctx, query,
 		id,
-		log.PlanID,
+		log.ProgramID,
+		log.SessionName,
 		log.PerformedAt,
 		log.StartedAt,
 		log.FinishedAt,
@@ -113,7 +114,7 @@ func (r *logRepository) insertEntries(ctx context.Context, tx pgx.Tx, logID uuid
 
 func (r *logRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Log, error) {
 	query := `
-		SELECT id, plan_id, performed_at, started_at, finished_at, notes, metadata, created_at, updated_at
+		SELECT id, program_id, session_name, performed_at, started_at, finished_at, notes, metadata, created_at, updated_at
 		FROM logs
 		WHERE id = $1
 	`
@@ -122,7 +123,8 @@ func (r *logRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Log,
 	var metadataRaw []byte
 	err := r.pool.QueryRow(ctx, query, id).Scan(
 		&log.ID,
-		&log.PlanID,
+		&log.ProgramID,
+		&log.SessionName,
 		&log.PerformedAt,
 		&log.StartedAt,
 		&log.FinishedAt,
@@ -209,15 +211,16 @@ func (r *logRepository) Update(ctx context.Context, log *domain.Log) error {
 
 	query := `
 		UPDATE logs
-		SET plan_id = $2, performed_at = $3, started_at = $4, finished_at = $5,
-		    notes = $6, metadata = $7, updated_at = NOW()
+		SET program_id = $2, session_name = $3, performed_at = $4, started_at = $5, finished_at = $6,
+		    notes = $7, metadata = $8, updated_at = NOW()
 		WHERE id = $1
 		RETURNING updated_at
 	`
 
 	err = tx.QueryRow(ctx, query,
 		log.ID,
-		log.PlanID,
+		log.ProgramID,
+		log.SessionName,
 		log.PerformedAt,
 		log.StartedAt,
 		log.FinishedAt,
@@ -282,7 +285,7 @@ func (r *logRepository) listWithFilter(ctx context.Context, performedAtFrom, per
 	}
 
 	query := `
-		SELECT id, plan_id, performed_at, started_at, finished_at, notes, metadata, created_at, updated_at
+		SELECT id, program_id, session_name, performed_at, started_at, finished_at, notes, metadata, created_at, updated_at
 		FROM logs
 		WHERE ($1::uuid IS NULL OR id > $1)
 		  AND ($2::timestamptz IS NULL OR performed_at >= $2)
@@ -305,7 +308,8 @@ func (r *logRepository) listWithFilter(ctx context.Context, performedAtFrom, per
 		var metadataRaw []byte
 		err := rows.Scan(
 			&log.ID,
-			&log.PlanID,
+			&log.ProgramID,
+			&log.SessionName,
 			&log.PerformedAt,
 			&log.StartedAt,
 			&log.FinishedAt,
@@ -347,51 +351,28 @@ func (r *logRepository) listWithFilter(ctx context.Context, performedAtFrom, per
 	return logs, nextCursor, hasMore, nil
 }
 
-func (r *logRepository) ListByPlanID(ctx context.Context, planID uuid.UUID) ([]*domain.Log, error) {
+func (r *logRepository) ListDistinctLoggedSessionsByProgramID(ctx context.Context, programID uuid.UUID) ([]string, error) {
 	query := `
-		SELECT id, plan_id, performed_at, started_at, finished_at, notes, metadata, created_at, updated_at
+		SELECT DISTINCT session_name
 		FROM logs
-		WHERE plan_id = $1
-		ORDER BY performed_at DESC
+		WHERE program_id = $1 AND session_name IS NOT NULL
 	`
 
-	rows, err := r.pool.Query(ctx, query, planID)
+	rows, err := r.pool.Query(ctx, query, programID)
 	if err != nil {
-		slog.Error("Failed to list logs by plan ID", "plan_id", planID, "error", err)
+		slog.Error("Failed to list distinct logged sessions", "programID", programID, "error", err)
 		return nil, err
 	}
 	defer rows.Close()
 
-	logs := make([]*domain.Log, 0)
+	var sessions []string
 	for rows.Next() {
-		var log domain.Log
-		var metadataRaw []byte
-		err := rows.Scan(
-			&log.ID,
-			&log.PlanID,
-			&log.PerformedAt,
-			&log.StartedAt,
-			&log.FinishedAt,
-			&log.Notes,
-			&metadataRaw,
-			&log.CreatedAt,
-			&log.UpdatedAt,
-		)
-		if err != nil {
+		var sessionName string
+		if err := rows.Scan(&sessionName); err != nil {
 			return nil, err
 		}
-		if len(metadataRaw) > 0 {
-			log.Metadata = json.RawMessage(metadataRaw)
-		}
-
-		entries, err := r.getEntriesForLog(ctx, log.ID)
-		if err != nil {
-			return nil, err
-		}
-		log.Entries = entries
-
-		logs = append(logs, &log)
+		sessions = append(sessions, sessionName)
 	}
 
-	return logs, rows.Err()
+	return sessions, rows.Err()
 }

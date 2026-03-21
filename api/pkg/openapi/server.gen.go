@@ -18,50 +18,17 @@ const (
 	BearerAuthScopes = "bearerAuth.Scopes"
 )
 
-// ConvertProgramToPlanRequest defines model for ConvertProgramToPlanRequest.
-type ConvertProgramToPlanRequest struct {
-	// LoadIncrements Map of exercise_name to weight increment in kg for rounding.
-	// If not specified, weights are rounded to 0.1 kg precision.
-	LoadIncrements *map[string]float64 `json:"load_increments,omitempty"`
+// Defines values for ProgramStatus.
+const (
+	ProgramStatusActive    ProgramStatus = "active"
+	ProgramStatusCompleted ProgramStatus = "completed"
+)
 
-	// Name Name for the created plan (defaults to program name)
-	Name *string `json:"name,omitempty"`
-
-	// ProgramId ID of the program to convert
-	ProgramId openapi_types.UUID `json:"program_id"`
-
-	// TargetWeights Map of exercise_name to target weight in kg.
-	// For entries with percent_1rm: load_kg = percent_1rm * target_weight.
-	// For entries without percent_1rm: load_kg = target_weight (direct copy).
-	TargetWeights map[string]float64 `json:"target_weights"`
-}
-
-// ConvertProgramToPlansResponse defines model for ConvertProgramToPlansResponse.
-type ConvertProgramToPlansResponse struct {
-	Cycle Cycle  `json:"cycle"`
-	Plans []Plan `json:"plans"`
-}
-
-// Cycle defines model for Cycle.
-type Cycle struct {
-	CreatedAt time.Time          `json:"created_at"`
-	Id        openapi_types.UUID `json:"id"`
-
-	// Metadata Free-form JSON metadata (e.g., conversion parameters)
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
-	Name     string                  `json:"name"`
-	Notes    *string                 `json:"notes,omitempty"`
-
-	// ProgramId Reference to the source program
-	ProgramId openapi_types.UUID `json:"program_id"`
-}
-
-// CycleListResponse defines model for CycleListResponse.
-type CycleListResponse struct {
-	Data       []Cycle `json:"data"`
-	HasMore    bool    `json:"has_more"`
-	NextCursor *string `json:"next_cursor"`
-}
+// Defines values for ListProgramsParamsStatus.
+const (
+	ListProgramsParamsStatusActive    ListProgramsParamsStatus = "active"
+	ListProgramsParamsStatusCompleted ListProgramsParamsStatus = "completed"
+)
 
 // Error defines model for Error.
 type Error struct {
@@ -73,6 +40,21 @@ type Error struct {
 
 	// Message Human-readable error message
 	Message string `json:"message"`
+}
+
+// GenerateProgramRequest defines model for GenerateProgramRequest.
+type GenerateProgramRequest struct {
+	// LoadIncrements Map of exercise_name to weight increment in kg for rounding.
+	// If not specified, weights are rounded to 0.1 kg precision.
+	LoadIncrements *map[string]float64 `json:"load_increments,omitempty"`
+
+	// Name Name for the generated program (defaults to template name)
+	Name *string `json:"name,omitempty"`
+
+	// TargetWeights Map of exercise_name to target weight in kg.
+	// For entries with percent_1rm: load_kg = percent_1rm * target_weight.
+	// For entries without percent_1rm: load_kg = target_weight (direct copy).
+	TargetWeights map[string]float64 `json:"target_weights"`
 }
 
 // Log defines model for Log.
@@ -95,8 +77,11 @@ type Log struct {
 	// PerformedAt When the training was performed
 	PerformedAt time.Time `json:"performed_at"`
 
-	// PlanId Optional reference to the training plan
-	PlanId *openapi_types.UUID `json:"plan_id,omitempty"`
+	// ProgramId Optional reference to the training program
+	ProgramId *openapi_types.UUID `json:"program_id"`
+
+	// SessionName Session name within the referenced program (used when program_id is set)
+	SessionName *string `json:"session_name,omitempty"`
 
 	// StartedAt When the training session started (optional)
 	StartedAt *time.Time `json:"started_at,omitempty"`
@@ -110,8 +95,13 @@ type LogCreate struct {
 	Metadata    *map[string]interface{} `json:"metadata,omitempty"`
 	Notes       *string                 `json:"notes,omitempty"`
 	PerformedAt time.Time               `json:"performed_at"`
-	PlanId      *openapi_types.UUID     `json:"plan_id,omitempty"`
-	StartedAt   *time.Time              `json:"started_at,omitempty"`
+
+	// ProgramId Optional reference to a training program
+	ProgramId *openapi_types.UUID `json:"program_id,omitempty"`
+
+	// SessionName Session name within the referenced program
+	SessionName *string    `json:"session_name,omitempty"`
+	StartedAt   *time.Time `json:"started_at,omitempty"`
 }
 
 // LogEntry defines model for LogEntry.
@@ -167,49 +157,75 @@ type LogListResponse struct {
 	NextCursor *string `json:"next_cursor"`
 }
 
-// Plan defines model for Plan.
-type Plan struct {
-	CreatedAt time.Time `json:"created_at"`
+// Program defines model for Program.
+type Program struct {
+	CreatedAt time.Time          `json:"created_at"`
+	Id        openapi_types.UUID `json:"id"`
 
-	// CycleId Optional reference to the cycle this plan belongs to
-	CycleId *openapi_types.UUID `json:"cycle_id,omitempty"`
-
-	// Date Scheduled date for this session (YYYY-MM-DD)
-	Date        *openapi_types.Date `json:"date,omitempty"`
-	Description *string             `json:"description,omitempty"`
-
-	// Entries Training prescription entries
-	Entries *[]PlanEntry       `json:"entries,omitempty"`
-	Id      openapi_types.UUID `json:"id"`
-
-	// Metadata Free-form JSON metadata
+	// Metadata Free-form JSON metadata (e.g., generation parameters)
 	Metadata *map[string]interface{} `json:"metadata,omitempty"`
 	Name     string                  `json:"name"`
 	Notes    *string                 `json:"notes,omitempty"`
 
-	// SessionName Session name from the source program (e.g. "Day A", "Upper")
-	SessionName *string   `json:"session_name,omitempty"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	// ProgramTemplateId Reference to the source program template (null for manually created programs)
+	ProgramTemplateId *openapi_types.UUID `json:"program_template_id"`
+
+	// Sessions Ordered training sessions (each contains entries with absolute weights)
+	Sessions []ProgramSession `json:"sessions"`
+
+	// Status active = in progress, completed = all sessions have been logged
+	Status    ProgramStatus `json:"status"`
+	UpdatedAt time.Time     `json:"updated_at"`
 }
 
-// PlanCreate defines model for PlanCreate.
-type PlanCreate struct {
-	CycleId *openapi_types.UUID `json:"cycle_id,omitempty"`
+// ProgramStatus active = in progress, completed = all sessions have been logged
+type ProgramStatus string
 
-	// Date Scheduled date for this session (YYYY-MM-DD)
-	Date        *openapi_types.Date     `json:"date,omitempty"`
-	Description *string                 `json:"description,omitempty"`
-	Entries     *[]PlanEntryCreate      `json:"entries,omitempty"`
-	Metadata    *map[string]interface{} `json:"metadata,omitempty"`
-	Name        string                  `json:"name"`
-	Notes       *string                 `json:"notes,omitempty"`
+// ProgramCreate defines model for ProgramCreate.
+type ProgramCreate struct {
+	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	Name     string                  `json:"name"`
+	Notes    *string                 `json:"notes,omitempty"`
 
-	// SessionName Session name (e.g. "Day A", "Upper")
-	SessionName *string `json:"session_name,omitempty"`
+	// ProgramTemplateId Optional reference to source program template
+	ProgramTemplateId *openapi_types.UUID    `json:"program_template_id,omitempty"`
+	Sessions          []ProgramSessionCreate `json:"sessions"`
 }
 
-// PlanEntry defines model for PlanEntry.
-type PlanEntry struct {
+// ProgramListResponse defines model for ProgramListResponse.
+type ProgramListResponse struct {
+	Data       []Program `json:"data"`
+	HasMore    bool      `json:"has_more"`
+	NextCursor *string   `json:"next_cursor"`
+}
+
+// ProgramSession defines model for ProgramSession.
+type ProgramSession struct {
+	// Date Scheduled date for this session (YYYY-MM-DD, optional)
+	Date *openapi_types.Date `json:"date,omitempty"`
+
+	// Entries Exercise prescriptions with absolute weights
+	Entries []ProgramSessionEntry `json:"entries"`
+	Id      openapi_types.UUID    `json:"id"`
+
+	// Order Position in program (0-based)
+	Order     int                `json:"order"`
+	ProgramId openapi_types.UUID `json:"program_id"`
+
+	// SessionName Name of this training session (e.g., "Week 1 Day 1", "Day A")
+	SessionName string `json:"session_name"`
+}
+
+// ProgramSessionCreate defines model for ProgramSessionCreate.
+type ProgramSessionCreate struct {
+	Date        *openapi_types.Date          `json:"date,omitempty"`
+	Entries     *[]ProgramSessionEntryCreate `json:"entries,omitempty"`
+	Order       int                          `json:"order"`
+	SessionName string                       `json:"session_name"`
+}
+
+// ProgramSessionEntry defines model for ProgramSessionEntry.
+type ProgramSessionEntry struct {
 	// ExerciseName Exercise name (plain string)
 	ExerciseName string             `json:"exercise_name"`
 	Id           openapi_types.UUID `json:"id"`
@@ -221,18 +237,18 @@ type PlanEntry struct {
 	Metadata *map[string]interface{} `json:"metadata,omitempty"`
 	Notes    *string                 `json:"notes,omitempty"`
 
-	// Order Position in plan
-	Order  int                `json:"order"`
-	PlanId openapi_types.UUID `json:"plan_id"`
-	Reps   *int               `json:"reps,omitempty"`
+	// Order Position in session
+	Order int  `json:"order"`
+	Reps  *int `json:"reps,omitempty"`
 
 	// Rpe Rate of Perceived Exertion
-	Rpe  *int `json:"rpe,omitempty"`
-	Sets *int `json:"sets,omitempty"`
+	Rpe       *int               `json:"rpe,omitempty"`
+	SessionId openapi_types.UUID `json:"session_id"`
+	Sets      *int               `json:"sets,omitempty"`
 }
 
-// PlanEntryCreate defines model for PlanEntryCreate.
-type PlanEntryCreate struct {
+// ProgramSessionEntryCreate defines model for ProgramSessionEntryCreate.
+type ProgramSessionEntryCreate struct {
 	ExerciseName string                  `json:"exercise_name"`
 	LoadKg       *float64                `json:"load_kg,omitempty"`
 	Metadata     *map[string]interface{} `json:"metadata,omitempty"`
@@ -243,23 +259,16 @@ type PlanEntryCreate struct {
 	Sets         *int                    `json:"sets,omitempty"`
 }
 
-// PlanListResponse defines model for PlanListResponse.
-type PlanListResponse struct {
-	Data       []Plan  `json:"data"`
-	HasMore    bool    `json:"has_more"`
-	NextCursor *string `json:"next_cursor"`
-}
-
-// Program defines model for Program.
-type Program struct {
-	// ArchivedAt When set, the program is archived and hidden from default list results
+// ProgramTemplate defines model for ProgramTemplate.
+type ProgramTemplate struct {
+	// ArchivedAt When set, the program template is archived and hidden from default list results
 	ArchivedAt  *time.Time `json:"archived_at"`
 	CreatedAt   time.Time  `json:"created_at"`
 	Description *string    `json:"description,omitempty"`
 
 	// Entries Exercise prescription entries (RPE-based, no absolute weights)
-	Entries *[]ProgramEntry    `json:"entries,omitempty"`
-	Id      openapi_types.UUID `json:"id"`
+	Entries *[]ProgramTemplateEntry `json:"entries,omitempty"`
+	Id      openapi_types.UUID      `json:"id"`
 
 	// Metadata Free-form JSON metadata
 	Metadata  *map[string]interface{} `json:"metadata,omitempty"`
@@ -268,40 +277,40 @@ type Program struct {
 	UpdatedAt time.Time               `json:"updated_at"`
 }
 
-// ProgramCreate defines model for ProgramCreate.
-type ProgramCreate struct {
-	Description *string                 `json:"description,omitempty"`
-	Entries     *[]ProgramEntryCreate   `json:"entries,omitempty"`
-	Metadata    *map[string]interface{} `json:"metadata,omitempty"`
-	Name        string                  `json:"name"`
-	Notes       *string                 `json:"notes,omitempty"`
+// ProgramTemplateCreate defines model for ProgramTemplateCreate.
+type ProgramTemplateCreate struct {
+	Description *string                       `json:"description,omitempty"`
+	Entries     *[]ProgramTemplateEntryCreate `json:"entries,omitempty"`
+	Metadata    *map[string]interface{}       `json:"metadata,omitempty"`
+	Name        string                        `json:"name"`
+	Notes       *string                       `json:"notes,omitempty"`
 }
 
-// ProgramEntry defines model for ProgramEntry.
-type ProgramEntry struct {
+// ProgramTemplateEntry defines model for ProgramTemplateEntry.
+type ProgramTemplateEntry struct {
 	// ExerciseName Exercise name (plain string)
 	ExerciseName string             `json:"exercise_name"`
 	Id           openapi_types.UUID `json:"id"`
 
-	// Metadata Free-form JSON metadata
+	// Metadata Free-form JSON metadata (e.g., session grouping via metadata.session)
 	Metadata *map[string]interface{} `json:"metadata,omitempty"`
 	Notes    *string                 `json:"notes,omitempty"`
 
-	// Order Position in program
+	// Order Position in program template
 	Order int `json:"order"`
 
 	// Percent1rm Percentage of 1RM (0.0 to 1.0) for weight calculation
-	Percent1rm *float64           `json:"percent_1rm,omitempty"`
-	ProgramId  openapi_types.UUID `json:"program_id"`
-	Reps       *int               `json:"reps,omitempty"`
+	Percent1rm        *float64           `json:"percent_1rm,omitempty"`
+	ProgramTemplateId openapi_types.UUID `json:"program_template_id"`
+	Reps              *int               `json:"reps,omitempty"`
 
 	// Rpe Target Rate of Perceived Exertion
 	Rpe  *int `json:"rpe,omitempty"`
 	Sets *int `json:"sets,omitempty"`
 }
 
-// ProgramEntryCreate defines model for ProgramEntryCreate.
-type ProgramEntryCreate struct {
+// ProgramTemplateEntryCreate defines model for ProgramTemplateEntryCreate.
+type ProgramTemplateEntryCreate struct {
 	ExerciseName string                  `json:"exercise_name"`
 	Metadata     *map[string]interface{} `json:"metadata,omitempty"`
 	Notes        *string                 `json:"notes,omitempty"`
@@ -312,11 +321,11 @@ type ProgramEntryCreate struct {
 	Sets         *int                    `json:"sets,omitempty"`
 }
 
-// ProgramListResponse defines model for ProgramListResponse.
-type ProgramListResponse struct {
-	Data       []Program `json:"data"`
-	HasMore    bool      `json:"has_more"`
-	NextCursor *string   `json:"next_cursor"`
+// ProgramTemplateListResponse defines model for ProgramTemplateListResponse.
+type ProgramTemplateListResponse struct {
+	Data       []ProgramTemplate `json:"data"`
+	HasMore    bool              `json:"has_more"`
+	NextCursor *string           `json:"next_cursor"`
 }
 
 // VideoDownloadURLRequest defines model for VideoDownloadURLRequest.
@@ -361,20 +370,17 @@ type VideoUploadURLResponse struct {
 // After defines model for After.
 type After = string
 
-// CycleId defines model for CycleId.
-type CycleId = openapi_types.UUID
-
 // Limit defines model for Limit.
 type Limit = int
 
 // LogId defines model for LogId.
 type LogId = openapi_types.UUID
 
-// PlanId defines model for PlanId.
-type PlanId = openapi_types.UUID
-
 // ProgramId defines model for ProgramId.
 type ProgramId = openapi_types.UUID
+
+// ProgramTemplateId defines model for ProgramTemplateId.
+type ProgramTemplateId = openapi_types.UUID
 
 // Conflict defines model for Conflict.
 type Conflict = Error
@@ -387,18 +393,6 @@ type Unauthorized = Error
 
 // ValidationError defines model for ValidationError.
 type ValidationError = Error
-
-// ListCyclesParams defines parameters for ListCycles.
-type ListCyclesParams struct {
-	// Limit Maximum number of items to return
-	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
-
-	// After Cursor for pagination (from previous response)
-	After *After `form:"after,omitempty" json:"after,omitempty"`
-
-	// ProgramId Filter cycles by program ID
-	ProgramId *openapi_types.UUID `form:"program_id,omitempty" json:"program_id,omitempty"`
-}
 
 // ListLogsParams defines parameters for ListLogs.
 type ListLogsParams struct {
@@ -415,16 +409,16 @@ type ListLogsParams struct {
 	PerformedAtTo *time.Time `form:"performed_at_to,omitempty" json:"performed_at_to,omitempty"`
 }
 
-// ListPlansParams defines parameters for ListPlans.
-type ListPlansParams struct {
+// ListProgramTemplatesParams defines parameters for ListProgramTemplates.
+type ListProgramTemplatesParams struct {
 	// Limit Maximum number of items to return
 	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
 
 	// After Cursor for pagination (from previous response)
 	After *After `form:"after,omitempty" json:"after,omitempty"`
 
-	// CycleId Filter plans by cycle ID
-	CycleId *openapi_types.UUID `form:"cycle_id,omitempty" json:"cycle_id,omitempty"`
+	// IncludeArchived When true, archived program templates are included in results
+	IncludeArchived *bool `form:"include_archived,omitempty" json:"include_archived,omitempty"`
 }
 
 // ListProgramsParams defines parameters for ListPrograms.
@@ -435,9 +429,15 @@ type ListProgramsParams struct {
 	// After Cursor for pagination (from previous response)
 	After *After `form:"after,omitempty" json:"after,omitempty"`
 
-	// IncludeArchived When true, archived programs are included in results
-	IncludeArchived *bool `form:"include_archived,omitempty" json:"include_archived,omitempty"`
+	// ProgramTemplateId Filter programs by source program template ID
+	ProgramTemplateId *openapi_types.UUID `form:"program_template_id,omitempty" json:"program_template_id,omitempty"`
+
+	// Status Filter programs by status
+	Status *ListProgramsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
 }
+
+// ListProgramsParamsStatus defines parameters for ListPrograms.
+type ListProgramsParamsStatus string
 
 // CreateLogJSONRequestBody defines body for CreateLog for application/json ContentType.
 type CreateLogJSONRequestBody = LogCreate
@@ -445,14 +445,11 @@ type CreateLogJSONRequestBody = LogCreate
 // UpdateLogJSONRequestBody defines body for UpdateLog for application/json ContentType.
 type UpdateLogJSONRequestBody = LogCreate
 
-// CreatePlanJSONRequestBody defines body for CreatePlan for application/json ContentType.
-type CreatePlanJSONRequestBody = PlanCreate
+// CreateProgramTemplateJSONRequestBody defines body for CreateProgramTemplate for application/json ContentType.
+type CreateProgramTemplateJSONRequestBody = ProgramTemplateCreate
 
-// ConvertProgramToPlansJSONRequestBody defines body for ConvertProgramToPlans for application/json ContentType.
-type ConvertProgramToPlansJSONRequestBody = ConvertProgramToPlanRequest
-
-// UpdatePlanJSONRequestBody defines body for UpdatePlan for application/json ContentType.
-type UpdatePlanJSONRequestBody = PlanCreate
+// GenerateProgramJSONRequestBody defines body for GenerateProgram for application/json ContentType.
+type GenerateProgramJSONRequestBody = GenerateProgramRequest
 
 // CreateProgramJSONRequestBody defines body for CreateProgram for application/json ContentType.
 type CreateProgramJSONRequestBody = ProgramCreate
@@ -465,15 +462,6 @@ type GenerateVideoUploadURLJSONRequestBody = VideoUploadURLRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// List cycles
-	// (GET /cycles)
-	ListCycles(w http.ResponseWriter, r *http.Request, params ListCyclesParams)
-	// Delete cycle
-	// (DELETE /cycles/{id})
-	DeleteCycle(w http.ResponseWriter, r *http.Request, id CycleId)
-	// Get cycle by ID
-	// (GET /cycles/{id})
-	GetCycle(w http.ResponseWriter, r *http.Request, id CycleId)
 	// List logs
 	// (GET /logs)
 	ListLogs(w http.ResponseWriter, r *http.Request, params ListLogsParams)
@@ -489,24 +477,30 @@ type ServerInterface interface {
 	// Update log
 	// (PUT /logs/{id})
 	UpdateLog(w http.ResponseWriter, r *http.Request, id LogId)
-	// List plans
-	// (GET /plans)
-	ListPlans(w http.ResponseWriter, r *http.Request, params ListPlansParams)
-	// Create plan
-	// (POST /plans)
-	CreatePlan(w http.ResponseWriter, r *http.Request)
-	// Convert a program into plans (one per session)
-	// (POST /plans/from-program)
-	ConvertProgramToPlans(w http.ResponseWriter, r *http.Request)
-	// Delete plan
-	// (DELETE /plans/{id})
-	DeletePlan(w http.ResponseWriter, r *http.Request, id PlanId)
-	// Get plan by ID
-	// (GET /plans/{id})
-	GetPlan(w http.ResponseWriter, r *http.Request, id PlanId)
-	// Update plan
-	// (PUT /plans/{id})
-	UpdatePlan(w http.ResponseWriter, r *http.Request, id PlanId)
+	// List program templates
+	// (GET /program-templates)
+	ListProgramTemplates(w http.ResponseWriter, r *http.Request, params ListProgramTemplatesParams)
+	// Create program template
+	// (POST /program-templates)
+	CreateProgramTemplate(w http.ResponseWriter, r *http.Request)
+	// Delete program template
+	// (DELETE /program-templates/{id})
+	DeleteProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId)
+	// Get program template by ID
+	// (GET /program-templates/{id})
+	GetProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId)
+	// Archive program template
+	// (POST /program-templates/{id}/archive)
+	ArchiveProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId)
+	// Duplicate program template
+	// (POST /program-templates/{id}/duplicate)
+	DuplicateProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId)
+	// Generate a Program from this template
+	// (POST /program-templates/{id}/generate)
+	GenerateProgram(w http.ResponseWriter, r *http.Request, id ProgramTemplateId)
+	// Unarchive program template
+	// (POST /program-templates/{id}/unarchive)
+	UnarchiveProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId)
 	// List programs
 	// (GET /programs)
 	ListPrograms(w http.ResponseWriter, r *http.Request, params ListProgramsParams)
@@ -519,15 +513,6 @@ type ServerInterface interface {
 	// Get program by ID
 	// (GET /programs/{id})
 	GetProgram(w http.ResponseWriter, r *http.Request, id ProgramId)
-	// Archive program
-	// (POST /programs/{id}/archive)
-	ArchiveProgram(w http.ResponseWriter, r *http.Request, id ProgramId)
-	// Duplicate program
-	// (POST /programs/{id}/duplicate)
-	DuplicateProgram(w http.ResponseWriter, r *http.Request, id ProgramId)
-	// Unarchive program
-	// (POST /programs/{id}/unarchive)
-	UnarchiveProgram(w http.ResponseWriter, r *http.Request, id ProgramId)
 	// Generate pre-signed URL for video download
 	// (POST /videos/download-url)
 	GenerateVideoDownloadURL(w http.ResponseWriter, r *http.Request)
@@ -539,24 +524,6 @@ type ServerInterface interface {
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
 
 type Unimplemented struct{}
-
-// List cycles
-// (GET /cycles)
-func (_ Unimplemented) ListCycles(w http.ResponseWriter, r *http.Request, params ListCyclesParams) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Delete cycle
-// (DELETE /cycles/{id})
-func (_ Unimplemented) DeleteCycle(w http.ResponseWriter, r *http.Request, id CycleId) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Get cycle by ID
-// (GET /cycles/{id})
-func (_ Unimplemented) GetCycle(w http.ResponseWriter, r *http.Request, id CycleId) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
 
 // List logs
 // (GET /logs)
@@ -588,39 +555,51 @@ func (_ Unimplemented) UpdateLog(w http.ResponseWriter, r *http.Request, id LogI
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// List plans
-// (GET /plans)
-func (_ Unimplemented) ListPlans(w http.ResponseWriter, r *http.Request, params ListPlansParams) {
+// List program templates
+// (GET /program-templates)
+func (_ Unimplemented) ListProgramTemplates(w http.ResponseWriter, r *http.Request, params ListProgramTemplatesParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Create plan
-// (POST /plans)
-func (_ Unimplemented) CreatePlan(w http.ResponseWriter, r *http.Request) {
+// Create program template
+// (POST /program-templates)
+func (_ Unimplemented) CreateProgramTemplate(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Convert a program into plans (one per session)
-// (POST /plans/from-program)
-func (_ Unimplemented) ConvertProgramToPlans(w http.ResponseWriter, r *http.Request) {
+// Delete program template
+// (DELETE /program-templates/{id})
+func (_ Unimplemented) DeleteProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Delete plan
-// (DELETE /plans/{id})
-func (_ Unimplemented) DeletePlan(w http.ResponseWriter, r *http.Request, id PlanId) {
+// Get program template by ID
+// (GET /program-templates/{id})
+func (_ Unimplemented) GetProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Get plan by ID
-// (GET /plans/{id})
-func (_ Unimplemented) GetPlan(w http.ResponseWriter, r *http.Request, id PlanId) {
+// Archive program template
+// (POST /program-templates/{id}/archive)
+func (_ Unimplemented) ArchiveProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Update plan
-// (PUT /plans/{id})
-func (_ Unimplemented) UpdatePlan(w http.ResponseWriter, r *http.Request, id PlanId) {
+// Duplicate program template
+// (POST /program-templates/{id}/duplicate)
+func (_ Unimplemented) DuplicateProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Generate a Program from this template
+// (POST /program-templates/{id}/generate)
+func (_ Unimplemented) GenerateProgram(w http.ResponseWriter, r *http.Request, id ProgramTemplateId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Unarchive program template
+// (POST /program-templates/{id}/unarchive)
+func (_ Unimplemented) UnarchiveProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -648,24 +627,6 @@ func (_ Unimplemented) GetProgram(w http.ResponseWriter, r *http.Request, id Pro
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Archive program
-// (POST /programs/{id}/archive)
-func (_ Unimplemented) ArchiveProgram(w http.ResponseWriter, r *http.Request, id ProgramId) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Duplicate program
-// (POST /programs/{id}/duplicate)
-func (_ Unimplemented) DuplicateProgram(w http.ResponseWriter, r *http.Request, id ProgramId) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Unarchive program
-// (POST /programs/{id}/unarchive)
-func (_ Unimplemented) UnarchiveProgram(w http.ResponseWriter, r *http.Request, id ProgramId) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
 // Generate pre-signed URL for video download
 // (POST /videos/download-url)
 func (_ Unimplemented) GenerateVideoDownloadURL(w http.ResponseWriter, r *http.Request) {
@@ -686,117 +647,6 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
-
-// ListCycles operation middleware
-func (siw *ServerInterfaceWrapper) ListCycles(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params ListCyclesParams
-
-	// ------------- Optional query parameter "limit" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "after" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "after", r.URL.Query(), &params.After)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "after", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "program_id" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "program_id", r.URL.Query(), &params.ProgramId)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "program_id", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListCycles(w, r, params)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// DeleteCycle operation middleware
-func (siw *ServerInterfaceWrapper) DeleteCycle(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id CycleId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteCycle(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// GetCycle operation middleware
-func (siw *ServerInterfaceWrapper) GetCycle(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id CycleId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetCycle(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
 
 // ListLogs operation middleware
 func (siw *ServerInterfaceWrapper) ListLogs(w http.ResponseWriter, r *http.Request) {
@@ -968,8 +818,8 @@ func (siw *ServerInterfaceWrapper) UpdateLog(w http.ResponseWriter, r *http.Requ
 	handler.ServeHTTP(w, r)
 }
 
-// ListPlans operation middleware
-func (siw *ServerInterfaceWrapper) ListPlans(w http.ResponseWriter, r *http.Request) {
+// ListProgramTemplates operation middleware
+func (siw *ServerInterfaceWrapper) ListProgramTemplates(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
@@ -980,7 +830,7 @@ func (siw *ServerInterfaceWrapper) ListPlans(w http.ResponseWriter, r *http.Requ
 	r = r.WithContext(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
-	var params ListPlansParams
+	var params ListProgramTemplatesParams
 
 	// ------------- Optional query parameter "limit" -------------
 
@@ -998,16 +848,16 @@ func (siw *ServerInterfaceWrapper) ListPlans(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// ------------- Optional query parameter "cycle_id" -------------
+	// ------------- Optional query parameter "include_archived" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "cycle_id", r.URL.Query(), &params.CycleId)
+	err = runtime.BindQueryParameter("form", true, false, "include_archived", r.URL.Query(), &params.IncludeArchived)
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cycle_id", Err: err})
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_archived", Err: err})
 		return
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListPlans(w, r, params)
+		siw.Handler.ListProgramTemplates(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1017,8 +867,8 @@ func (siw *ServerInterfaceWrapper) ListPlans(w http.ResponseWriter, r *http.Requ
 	handler.ServeHTTP(w, r)
 }
 
-// CreatePlan operation middleware
-func (siw *ServerInterfaceWrapper) CreatePlan(w http.ResponseWriter, r *http.Request) {
+// CreateProgramTemplate operation middleware
+func (siw *ServerInterfaceWrapper) CreateProgramTemplate(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
@@ -1027,7 +877,7 @@ func (siw *ServerInterfaceWrapper) CreatePlan(w http.ResponseWriter, r *http.Req
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreatePlan(w, r)
+		siw.Handler.CreateProgramTemplate(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1037,33 +887,13 @@ func (siw *ServerInterfaceWrapper) CreatePlan(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
-// ConvertProgramToPlans operation middleware
-func (siw *ServerInterfaceWrapper) ConvertProgramToPlans(w http.ResponseWriter, r *http.Request) {
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ConvertProgramToPlans(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// DeletePlan operation middleware
-func (siw *ServerInterfaceWrapper) DeletePlan(w http.ResponseWriter, r *http.Request) {
+// DeleteProgramTemplate operation middleware
+func (siw *ServerInterfaceWrapper) DeleteProgramTemplate(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
 	// ------------- Path parameter "id" -------------
-	var id PlanId
+	var id ProgramTemplateId
 
 	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
@@ -1078,7 +908,7 @@ func (siw *ServerInterfaceWrapper) DeletePlan(w http.ResponseWriter, r *http.Req
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeletePlan(w, r, id)
+		siw.Handler.DeleteProgramTemplate(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1088,13 +918,13 @@ func (siw *ServerInterfaceWrapper) DeletePlan(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
-// GetPlan operation middleware
-func (siw *ServerInterfaceWrapper) GetPlan(w http.ResponseWriter, r *http.Request) {
+// GetProgramTemplate operation middleware
+func (siw *ServerInterfaceWrapper) GetProgramTemplate(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
 	// ------------- Path parameter "id" -------------
-	var id PlanId
+	var id ProgramTemplateId
 
 	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
@@ -1109,7 +939,7 @@ func (siw *ServerInterfaceWrapper) GetPlan(w http.ResponseWriter, r *http.Reques
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetPlan(w, r, id)
+		siw.Handler.GetProgramTemplate(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1119,13 +949,13 @@ func (siw *ServerInterfaceWrapper) GetPlan(w http.ResponseWriter, r *http.Reques
 	handler.ServeHTTP(w, r)
 }
 
-// UpdatePlan operation middleware
-func (siw *ServerInterfaceWrapper) UpdatePlan(w http.ResponseWriter, r *http.Request) {
+// ArchiveProgramTemplate operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveProgramTemplate(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
 	// ------------- Path parameter "id" -------------
-	var id PlanId
+	var id ProgramTemplateId
 
 	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
@@ -1140,7 +970,100 @@ func (siw *ServerInterfaceWrapper) UpdatePlan(w http.ResponseWriter, r *http.Req
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdatePlan(w, r, id)
+		siw.Handler.ArchiveProgramTemplate(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DuplicateProgramTemplate operation middleware
+func (siw *ServerInterfaceWrapper) DuplicateProgramTemplate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id ProgramTemplateId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DuplicateProgramTemplate(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GenerateProgram operation middleware
+func (siw *ServerInterfaceWrapper) GenerateProgram(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id ProgramTemplateId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GenerateProgram(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UnarchiveProgramTemplate operation middleware
+func (siw *ServerInterfaceWrapper) UnarchiveProgramTemplate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id ProgramTemplateId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnarchiveProgramTemplate(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1180,11 +1103,19 @@ func (siw *ServerInterfaceWrapper) ListPrograms(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// ------------- Optional query parameter "include_archived" -------------
+	// ------------- Optional query parameter "program_template_id" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "include_archived", r.URL.Query(), &params.IncludeArchived)
+	err = runtime.BindQueryParameter("form", true, false, "program_template_id", r.URL.Query(), &params.ProgramTemplateId)
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_archived", Err: err})
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "program_template_id", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "status", r.URL.Query(), &params.Status)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
 		return
 	}
 
@@ -1272,99 +1203,6 @@ func (siw *ServerInterfaceWrapper) GetProgram(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetProgram(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// ArchiveProgram operation middleware
-func (siw *ServerInterfaceWrapper) ArchiveProgram(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id ProgramId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ArchiveProgram(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// DuplicateProgram operation middleware
-func (siw *ServerInterfaceWrapper) DuplicateProgram(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id ProgramId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DuplicateProgram(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// UnarchiveProgram operation middleware
-func (siw *ServerInterfaceWrapper) UnarchiveProgram(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id ProgramId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UnarchiveProgram(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1528,15 +1366,6 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/cycles", wrapper.ListCycles)
-	})
-	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/cycles/{id}", wrapper.DeleteCycle)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/cycles/{id}", wrapper.GetCycle)
-	})
-	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/logs", wrapper.ListLogs)
 	})
 	r.Group(func(r chi.Router) {
@@ -1552,22 +1381,28 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Put(options.BaseURL+"/logs/{id}", wrapper.UpdateLog)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/plans", wrapper.ListPlans)
+		r.Get(options.BaseURL+"/program-templates", wrapper.ListProgramTemplates)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/plans", wrapper.CreatePlan)
+		r.Post(options.BaseURL+"/program-templates", wrapper.CreateProgramTemplate)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/plans/from-program", wrapper.ConvertProgramToPlans)
+		r.Delete(options.BaseURL+"/program-templates/{id}", wrapper.DeleteProgramTemplate)
 	})
 	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/plans/{id}", wrapper.DeletePlan)
+		r.Get(options.BaseURL+"/program-templates/{id}", wrapper.GetProgramTemplate)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/plans/{id}", wrapper.GetPlan)
+		r.Post(options.BaseURL+"/program-templates/{id}/archive", wrapper.ArchiveProgramTemplate)
 	})
 	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/plans/{id}", wrapper.UpdatePlan)
+		r.Post(options.BaseURL+"/program-templates/{id}/duplicate", wrapper.DuplicateProgramTemplate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/program-templates/{id}/generate", wrapper.GenerateProgram)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/program-templates/{id}/unarchive", wrapper.UnarchiveProgramTemplate)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/programs", wrapper.ListPrograms)
@@ -1580,15 +1415,6 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/programs/{id}", wrapper.GetProgram)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/programs/{id}/archive", wrapper.ArchiveProgram)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/programs/{id}/duplicate", wrapper.DuplicateProgram)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/programs/{id}/unarchive", wrapper.UnarchiveProgram)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/videos/download-url", wrapper.GenerateVideoDownloadURL)

@@ -169,16 +169,20 @@ func (s *logStore) listWithFilter(ctx context.Context, performedAtFrom, performe
 	return copies, nextCursor, hasMore, nil
 }
 
-func (s *logStore) ListByPlanID(ctx context.Context, planID uuid.UUID) ([]*domain.Log, error) {
+func (s *logStore) ListDistinctLoggedSessionsByProgramID(ctx context.Context, programID uuid.UUID) ([]string, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	var result []*domain.Log
+	seen := make(map[string]struct{})
 	for _, l := range s.logs {
-		if l.PlanID != nil && *l.PlanID == planID {
-			result = append(result, s.copyLog(l))
+		if l.ProgramID != nil && *l.ProgramID == programID && l.SessionName != nil {
+			seen[*l.SessionName] = struct{}{}
 		}
 	}
 
+	result := make([]string, 0, len(seen))
+	for name := range seen {
+		result = append(result, name)
+	}
 	return result, nil
 }

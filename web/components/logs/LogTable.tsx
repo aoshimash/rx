@@ -6,22 +6,21 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { Log, Plan } from '@/types/api';
+import type { Log } from '@/types/api';
 import Link from 'next/link';
 
 interface LogTableProps {
   logs: Log[];
-  planMap: Map<string, Plan>;
 }
 
-export function LogTable({ logs, planMap }: LogTableProps) {
+export function LogTable({ logs }: LogTableProps) {
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Date</TableHead>
-          <TableHead>Cycle</TableHead>
-          <TableHead>Plan</TableHead>
+          <TableHead>Session</TableHead>
+          <TableHead>Entries</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -31,7 +30,6 @@ export function LogTable({ logs, planMap }: LogTableProps) {
             month: 'short',
             day: 'numeric',
           });
-          const plan = log.plan_id ? planMap.get(log.plan_id) : undefined;
 
           return (
             <TableRow key={log.id} className="cursor-pointer">
@@ -42,16 +40,12 @@ export function LogTable({ logs, planMap }: LogTableProps) {
               </TableCell>
               <TableCell>
                 <Link href={`/logs/${log.id}`} className="block w-full">
-                  {plan?.cycle_id ? (
-                    plan.cycle_id.slice(0, 8)
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
+                  {log.session_name ?? <span className="text-muted-foreground">—</span>}
                 </Link>
               </TableCell>
               <TableCell>
                 <Link href={`/logs/${log.id}`} className="block w-full">
-                  {plan ? plan.name : <span className="text-muted-foreground">—</span>}
+                  {log.entries.length} exercise{log.entries.length !== 1 ? 's' : ''}
                 </Link>
               </TableCell>
             </TableRow>

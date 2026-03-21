@@ -1,4 +1,4 @@
-import type { LogEntry, PlanEntry } from '@/types/api';
+import type { LogEntry, ProgramSessionEntry } from '@/types/api';
 
 /**
  * Diff status indicator
@@ -21,7 +21,7 @@ export interface DiffResult {
  * RPE differences do NOT count as diff.
  */
 export function calculateDiff(
-  plan: PlanEntry | null | undefined,
+  plan: ProgramSessionEntry | null | undefined,
   actual: LogEntry | null | undefined
 ): DiffResult {
   if (!plan) {

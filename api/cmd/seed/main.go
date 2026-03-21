@@ -42,9 +42,8 @@ func main() {
 
 		pool := db.Pool()
 		err = seed.Run(ctx,
+			postgresstore.NewProgramTemplateRepository(pool),
 			postgresstore.NewProgramRepository(pool),
-			postgresstore.NewCycleRepository(pool),
-			postgresstore.NewPlanRepository(pool),
 			postgresstore.NewLogRepository(pool),
 		)
 		if err != nil {
@@ -53,12 +52,10 @@ func main() {
 		}
 	} else {
 		slog.Warn("STORAGE_TYPE is not postgres — seeding in-memory (data will not persist)")
-		logRepo := memory.NewLogRepository()
 		err := seed.Run(ctx,
+			memory.NewProgramTemplateRepository(),
 			memory.NewProgramRepository(),
-			memory.NewCycleRepository(),
-			memory.NewPlanRepository(logRepo),
-			logRepo,
+			memory.NewLogRepository(),
 		)
 		if err != nil {
 			slog.Error("Seeding failed", "error", err)
@@ -71,7 +68,7 @@ func main() {
 
 func resetDB(ctx context.Context, pool *pgxpool.Pool) error {
 	_, err := pool.Exec(ctx,
-		"TRUNCATE log_entries, logs, plan_entries, plans, cycles, program_entries, programs RESTART IDENTITY CASCADE",
+		"TRUNCATE log_entries, logs, program_session_entries, program_sessions, programs, program_template_entries, program_templates RESTART IDENTITY CASCADE",
 	)
 	return err
 }

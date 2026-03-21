@@ -1,7 +1,6 @@
 'use client';
 
 import { ProgramCard } from '@/components/programs/ProgramCard';
-import { ProgramForm } from '@/components/programs/ProgramForm';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -10,42 +9,66 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCreateProgram, usePrograms } from '@/lib/hooks/usePrograms';
-import type { ProgramEntryCreate } from '@/types/api';
-import { Archive, Plus } from 'lucide-react';
+import type { ProgramSessionCreate } from '@/types/api';
+import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
 
+interface SessionInput {
+  session_name: string;
+  order: number;
+}
+
 export default function ProgramsPage() {
-  const [showArchived, setShowArchived] = useState(false);
-  const { data: programsData, isLoading } = usePrograms(showArchived);
+  const { data: programsData, isLoading } = usePrograms();
   const createProgram = useCreateProgram();
   const programs = programsData?.data || [];
 
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
   const [notes, setNotes] = useState('');
+  const [sessions, setSessions] = useState<SessionInput[]>([{ session_name: '', order: 0 }]);
 
-  const handleSave = async (entries: ProgramEntryCreate[]) => {
+  const handleAddSession = () => {
+    setSessions([...sessions, { session_name: '', order: sessions.length }]);
+  };
+
+  const handleRemoveSession = (idx: number) => {
+    setSessions(sessions.filter((_, i) => i !== idx).map((s, i) => ({ ...s, order: i })));
+  };
+
+  const handleSessionNameChange = (idx: number, value: string) => {
+    const updated = [...sessions];
+    const s = updated[idx];
+    if (s) updated[idx] = { ...s, session_name: value };
+    setSessions(updated);
+  };
+
+  const handleSave = async () => {
+    const programSessions: ProgramSessionCreate[] = sessions
+      .filter((s) => s.session_name.trim())
+      .map((s) => ({ session_name: s.session_name.trim(), order: s.order }));
+
     await createProgram.mutateAsync({
       name,
-      description: description || undefined,
       notes: notes || undefined,
-      entries,
+      sessions: programSessions,
     });
     setOpen(false);
     setName('');
-    setDescription('');
     setNotes('');
+    setSessions([{ session_name: '', order: 0 }]);
   };
 
   const handleOpenChange = (value: boolean) => {
     setOpen(value);
     if (!value) {
       setName('');
-      setDescription('');
       setNotes('');
+      setSessions([{ session_name: '', order: 0 }]);
     }
   };
 
@@ -67,17 +90,9 @@ export default function ProgramsPage() {
         <div>
           <h1 className="text-3xl font-bold">Programs</h1>
           <p className="text-muted-foreground mt-1">
-            Reusable training templates. Convert to a Plan with target weights.
+            Concrete training programs with scheduled sessions.
           </p>
         </div>
-        <Button
-          variant={showArchived ? 'secondary' : 'outline'}
-          size="sm"
-          onClick={() => setShowArchived(!showArchived)}
-        >
-          <Archive className="h-4 w-4 mr-2" />
-          {showArchived ? 'Hide Archived' : 'Show Archived'}
-        </Button>
       </div>
 
       {programs.length === 0 ? (
@@ -107,21 +122,62 @@ export default function ProgramsPage() {
       )}
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Create Program</DialogTitle>
-            <DialogDescription>Define sessions and exercise prescriptions</DialogDescription>
+            <DialogDescription>Define the program name and session names.</DialogDescription>
           </DialogHeader>
-          <ProgramForm
-            programName={name}
-            programDescription={description}
-            programNotes={notes}
-            onNameChange={setName}
-            onDescriptionChange={setDescription}
-            onNotesChange={setNotes}
-            onSave={handleSave}
-            isSaving={createProgram.isPending}
-          />
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="program-name">Program Name</Label>
+              <Input
+                id="program-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g., SBD Block 1"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="program-notes">Notes</Label>
+              <Input
+                id="program-notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Optional notes"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Sessions</Label>
+              <div className="space-y-2">
+                {sessions.map((session, idx) => (
+                  <div key={idx} className="flex gap-2">
+                    <Input
+                      value={session.session_name}
+                      onChange={(e) => handleSessionNameChange(idx, e.target.value)}
+                      placeholder={`e.g., Week 1 Day ${idx + 1}`}
+                    />
+                    {sessions.length > 1 && (
+                      <Button variant="ghost" size="sm" onClick={() => handleRemoveSession(idx)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <Button variant="outline" size="sm" onClick={handleAddSession} className="w-full">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Session
+              </Button>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSave} disabled={createProgram.isPending || !name.trim()}>
+                {createProgram.isPending ? 'Creating...' : 'Create Program'}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </main>

@@ -3,8 +3,6 @@ package domain
 import (
 	"encoding/json"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // DateOnly is a date without time, formatted as "2006-01-02" in JSON.
@@ -25,33 +23,4 @@ func (d *DateOnly) UnmarshalJSON(data []byte) error {
 	}
 	*d = DateOnly(t)
 	return nil
-}
-
-// PlanEntry represents a single exercise prescription entry within a training plan.
-type PlanEntry struct {
-	ID           uuid.UUID       `json:"id"`
-	PlanID       uuid.UUID       `json:"plan_id"`
-	Order        int             `json:"order"`
-	ExerciseName string          `json:"exercise_name"`
-	Sets         *int            `json:"sets,omitempty"`
-	Reps         *int            `json:"reps,omitempty"`
-	LoadKg       *float64        `json:"load_kg,omitempty"`
-	RPE          *int            `json:"rpe,omitempty"`
-	Notes        *string         `json:"notes,omitempty"`
-	Metadata     json.RawMessage `json:"metadata,omitempty"`
-}
-
-// Plan represents a single workout session prescription, optionally derived from a Program via a Cycle.
-type Plan struct {
-	ID          uuid.UUID       `json:"id"`
-	CycleID     *uuid.UUID      `json:"cycle_id,omitempty"`
-	Name        string          `json:"name"`
-	Date        *DateOnly       `json:"date,omitempty"`
-	SessionName *string         `json:"session_name,omitempty"`
-	Description *string         `json:"description,omitempty"`
-	Notes       *string         `json:"notes,omitempty"`
-	Metadata    json.RawMessage `json:"metadata,omitempty"`
-	CreatedAt   time.Time       `json:"created_at"`
-	UpdatedAt   time.Time       `json:"updated_at"`
-	Entries     []PlanEntry     `json:"entries,omitempty"`
 }

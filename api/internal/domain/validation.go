@@ -79,17 +79,15 @@ func ValidateStringLength(field, value string, min, max int) error {
 	return nil
 }
 
-// ValidatePlanEntry validates a PlanEntry entity.
-// Metadata contents are not validated (free-form JSON).
-func ValidatePlanEntry(e *PlanEntry) error {
+// ValidateProgramTemplateEntry validates a ProgramTemplateEntry entity.
+func ValidateProgramTemplateEntry(e *ProgramTemplateEntry) error {
 	if e == nil {
 		return &ValidationError{
-			Field:   "plan_entry",
-			Message: "plan_entry cannot be nil",
+			Field:   "program_template_entry",
+			Message: "program_template_entry cannot be nil",
 		}
 	}
 
-	// Validate exercise_name
 	if err := ValidateRequiredString("exercise_name", e.ExerciseName); err != nil {
 		return err
 	}
@@ -97,7 +95,6 @@ func ValidatePlanEntry(e *PlanEntry) error {
 		return err
 	}
 
-	// Validate order
 	if e.Order < 0 {
 		return &ValidationError{
 			Field:   "order",
@@ -105,37 +102,25 @@ func ValidatePlanEntry(e *PlanEntry) error {
 		}
 	}
 
-	// Validate optional fields
 	if e.Sets != nil && *e.Sets <= 0 {
-		return &ValidationError{
-			Field:   "sets",
-			Message: "sets must be greater than 0",
-		}
+		return &ValidationError{Field: "sets", Message: "sets must be greater than 0"}
 	}
-
 	if e.Reps != nil && *e.Reps <= 0 {
-		return &ValidationError{
-			Field:   "reps",
-			Message: "reps must be greater than 0",
-		}
+		return &ValidationError{Field: "reps", Message: "reps must be greater than 0"}
 	}
-
-	if e.LoadKg != nil {
-		if *e.LoadKg < 0 {
-			return &ValidationError{
-				Field:   "load_kg",
-				Message: "load_kg must be greater than or equal to 0",
-			}
-		}
-		*e.LoadKg = RoundLoad(*e.LoadKg)
-	}
-
 	if e.RPE != nil {
 		if err := ValidateRPE(*e.RPE); err != nil {
 			return err
 		}
 	}
-
+	if e.Percent1RM != nil {
+		if *e.Percent1RM < 0 || *e.Percent1RM > 1 {
+			return &ValidationError{
+				Field:   "percent_1rm",
+				Message: "percent_1rm must be between 0.0 and 1.0",
+			}
+		}
+	}
 	if e.Notes != nil {
 		if err := ValidateStringLength("notes", *e.Notes, 0, 2000); err != nil {
 			return err
@@ -145,54 +130,41 @@ func ValidatePlanEntry(e *PlanEntry) error {
 	return nil
 }
 
-// ValidatePlan validates a Plan entity.
-func ValidatePlan(p *Plan) error {
+// ValidateProgramTemplate validates a ProgramTemplate entity.
+func ValidateProgramTemplate(p *ProgramTemplate) error {
 	if p == nil {
 		return &ValidationError{
-			Field:   "plan",
-			Message: "plan cannot be nil",
+			Field:   "program_template",
+			Message: "program_template cannot be nil",
 		}
 	}
 
-	// Validate required fields
 	if err := ValidateRequiredString("name", p.Name); err != nil {
 		return err
 	}
 	if err := ValidateStringLength("name", p.Name, 1, 200); err != nil {
 		return err
 	}
-
-	// Validate session_name length if provided
-	if p.SessionName != nil {
-		if err := ValidateStringLength("session_name", *p.SessionName, 1, 200); err != nil {
-			return err
-		}
-	}
-
-	// Validate description length if provided
 	if p.Description != nil {
 		if err := ValidateStringLength("description", *p.Description, 0, 2000); err != nil {
 			return err
 		}
 	}
-
-	// Validate notes length if provided
 	if p.Notes != nil {
 		if err := ValidateStringLength("notes", *p.Notes, 0, 5000); err != nil {
 			return err
 		}
 	}
 
-	// Validate entries (max 1000)
 	if len(p.Entries) > 1000 {
 		return &ValidationError{
 			Field:   "entries",
-			Message: "plan cannot have more than 1000 entries",
+			Message: "program template cannot have more than 1000 entries",
 		}
 	}
 
 	for i := range p.Entries {
-		if err := ValidatePlanEntry(&p.Entries[i]); err != nil {
+		if err := ValidateProgramTemplateEntry(&p.Entries[i]); err != nil {
 			return &ValidationError{
 				Field:   fmt.Sprintf("entries[%d]", i),
 				Message: err.Error(),
@@ -203,17 +175,15 @@ func ValidatePlan(p *Plan) error {
 	return nil
 }
 
-// ValidateProgramEntry validates a ProgramEntry entity.
-// Metadata contents are not validated (free-form JSON).
-func ValidateProgramEntry(e *ProgramEntry) error {
+// ValidateProgramSessionEntry validates a ProgramSessionEntry entity.
+func ValidateProgramSessionEntry(e *ProgramSessionEntry) error {
 	if e == nil {
 		return &ValidationError{
-			Field:   "program_entry",
-			Message: "program_entry cannot be nil",
+			Field:   "program_session_entry",
+			Message: "program_session_entry cannot be nil",
 		}
 	}
 
-	// Validate exercise_name
 	if err := ValidateRequiredString("exercise_name", e.ExerciseName); err != nil {
 		return err
 	}
@@ -221,7 +191,6 @@ func ValidateProgramEntry(e *ProgramEntry) error {
 		return err
 	}
 
-	// Validate order
 	if e.Order < 0 {
 		return &ValidationError{
 			Field:   "order",
@@ -229,39 +198,70 @@ func ValidateProgramEntry(e *ProgramEntry) error {
 		}
 	}
 
-	// Validate optional fields
 	if e.Sets != nil && *e.Sets <= 0 {
-		return &ValidationError{
-			Field:   "sets",
-			Message: "sets must be greater than 0",
-		}
+		return &ValidationError{Field: "sets", Message: "sets must be greater than 0"}
 	}
-
 	if e.Reps != nil && *e.Reps <= 0 {
-		return &ValidationError{
-			Field:   "reps",
-			Message: "reps must be greater than 0",
-		}
+		return &ValidationError{Field: "reps", Message: "reps must be greater than 0"}
 	}
-
+	if e.LoadKg != nil {
+		if *e.LoadKg < 0 {
+			return &ValidationError{
+				Field:   "load_kg",
+				Message: "load_kg must be greater than or equal to 0",
+			}
+		}
+		*e.LoadKg = RoundLoad(*e.LoadKg)
+	}
 	if e.RPE != nil {
 		if err := ValidateRPE(*e.RPE); err != nil {
 			return err
 		}
 	}
-
-	if e.Percent1RM != nil {
-		if *e.Percent1RM < 0 || *e.Percent1RM > 1 {
-			return &ValidationError{
-				Field:   "percent_1rm",
-				Message: "percent_1rm must be between 0.0 and 1.0",
-			}
-		}
-	}
-
 	if e.Notes != nil {
 		if err := ValidateStringLength("notes", *e.Notes, 0, 2000); err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+// ValidateProgramSession validates a ProgramSession entity.
+func ValidateProgramSession(s *ProgramSession) error {
+	if s == nil {
+		return &ValidationError{
+			Field:   "program_session",
+			Message: "program_session cannot be nil",
+		}
+	}
+
+	if err := ValidateRequiredString("session_name", s.SessionName); err != nil {
+		return err
+	}
+	if err := ValidateStringLength("session_name", s.SessionName, 1, 200); err != nil {
+		return err
+	}
+	if s.Order < 0 {
+		return &ValidationError{
+			Field:   "order",
+			Message: "order must be greater than or equal to 0",
+		}
+	}
+
+	if len(s.Entries) > 1000 {
+		return &ValidationError{
+			Field:   "entries",
+			Message: "session cannot have more than 1000 entries",
+		}
+	}
+
+	for i := range s.Entries {
+		if err := ValidateProgramSessionEntry(&s.Entries[i]); err != nil {
+			return &ValidationError{
+				Field:   fmt.Sprintf("entries[%d]", i),
+				Message: err.Error(),
+			}
 		}
 	}
 
@@ -277,7 +277,6 @@ func ValidateProgram(p *Program) error {
 		}
 	}
 
-	// Validate required fields
 	if err := ValidateRequiredString("name", p.Name); err != nil {
 		return err
 	}
@@ -285,35 +284,48 @@ func ValidateProgram(p *Program) error {
 		return err
 	}
 
-	// Validate description length if provided
-	if p.Description != nil {
-		if err := ValidateStringLength("description", *p.Description, 0, 2000); err != nil {
-			return err
+	if p.Status != ProgramStatusActive && p.Status != ProgramStatusCompleted {
+		return &ValidationError{
+			Field:   "status",
+			Message: "status must be 'active' or 'completed'",
 		}
 	}
 
-	// Validate notes length if provided
 	if p.Notes != nil {
 		if err := ValidateStringLength("notes", *p.Notes, 0, 5000); err != nil {
 			return err
 		}
 	}
 
-	// Validate entries (max 1000)
-	if len(p.Entries) > 1000 {
+	if len(p.Sessions) == 0 {
 		return &ValidationError{
-			Field:   "entries",
-			Message: "program cannot have more than 1000 entries",
+			Field:   "sessions",
+			Message: "program must have at least one session",
+		}
+	}
+	if len(p.Sessions) > 100 {
+		return &ValidationError{
+			Field:   "sessions",
+			Message: "program cannot have more than 100 sessions",
 		}
 	}
 
-	for i := range p.Entries {
-		if err := ValidateProgramEntry(&p.Entries[i]); err != nil {
+	seenSessionNames := make(map[string]struct{}, len(p.Sessions))
+	for i := range p.Sessions {
+		if err := ValidateProgramSession(&p.Sessions[i]); err != nil {
 			return &ValidationError{
-				Field:   fmt.Sprintf("entries[%d]", i),
+				Field:   fmt.Sprintf("sessions[%d]", i),
 				Message: err.Error(),
 			}
 		}
+		name := p.Sessions[i].SessionName
+		if _, exists := seenSessionNames[name]; exists {
+			return &ValidationError{
+				Field:   fmt.Sprintf("sessions[%d].session_name", i),
+				Message: fmt.Sprintf("duplicate session name: %s", name),
+			}
+		}
+		seenSessionNames[name] = struct{}{}
 	}
 
 	return nil
@@ -328,7 +340,6 @@ func ValidateLogEntry(e *LogEntry) error {
 		}
 	}
 
-	// Validate exercise_name
 	if err := ValidateRequiredString("exercise_name", e.ExerciseName); err != nil {
 		return err
 	}
@@ -336,7 +347,6 @@ func ValidateLogEntry(e *LogEntry) error {
 		return err
 	}
 
-	// Validate order
 	if e.Order < 0 {
 		return &ValidationError{
 			Field:   "order",
@@ -344,21 +354,12 @@ func ValidateLogEntry(e *LogEntry) error {
 		}
 	}
 
-	// Validate optional fields
 	if e.Sets != nil && *e.Sets <= 0 {
-		return &ValidationError{
-			Field:   "sets",
-			Message: "sets must be greater than 0",
-		}
+		return &ValidationError{Field: "sets", Message: "sets must be greater than 0"}
 	}
-
 	if e.Reps != nil && *e.Reps <= 0 {
-		return &ValidationError{
-			Field:   "reps",
-			Message: "reps must be greater than 0",
-		}
+		return &ValidationError{Field: "reps", Message: "reps must be greater than 0"}
 	}
-
 	if e.LoadKg != nil {
 		if *e.LoadKg < 0 {
 			return &ValidationError{
@@ -368,26 +369,21 @@ func ValidateLogEntry(e *LogEntry) error {
 		}
 		*e.LoadKg = RoundLoad(*e.LoadKg)
 	}
-
 	if e.RPE != nil {
 		if err := ValidateRPE(*e.RPE); err != nil {
 			return err
 		}
 	}
-
 	if e.Notes != nil {
 		if err := ValidateStringLength("notes", *e.Notes, 0, 2000); err != nil {
 			return err
 		}
 	}
-
 	if e.VideoObjectKey != nil {
 		if err := ValidateStringLength("video_object_key", *e.VideoObjectKey, 1, 500); err != nil {
 			return err
 		}
 	}
-
-	// Validate started_at / finished_at time range
 	if err := ValidateTimeRange("started_at", e.StartedAt, e.FinishedAt); err != nil {
 		return err
 	}
@@ -404,17 +400,13 @@ func ValidateLog(l *Log) error {
 		}
 	}
 
-	// Validate performed_at (not in future)
 	if err := ValidateTimestamp(l.PerformedAt); err != nil {
 		return err
 	}
-
-	// Validate started_at / finished_at time range
 	if err := ValidateTimeRange("started_at", l.StartedAt, l.FinishedAt); err != nil {
 		return err
 	}
 
-	// Validate entries (must have at least one, max 500)
 	if len(l.Entries) == 0 {
 		return &ValidationError{
 			Field:   "entries",
@@ -428,7 +420,6 @@ func ValidateLog(l *Log) error {
 		}
 	}
 
-	// Validate each entry
 	for i := range l.Entries {
 		if err := ValidateLogEntry(&l.Entries[i]); err != nil {
 			return &ValidationError{
@@ -438,9 +429,14 @@ func ValidateLog(l *Log) error {
 		}
 	}
 
-	// Validate notes length if provided
 	if l.Notes != nil {
 		if err := ValidateStringLength("notes", *l.Notes, 0, 5000); err != nil {
+			return err
+		}
+	}
+
+	if l.SessionName != nil {
+		if err := ValidateStringLength("session_name", *l.SessionName, 0, 200); err != nil {
 			return err
 		}
 	}
