@@ -6,23 +6,23 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { Log } from '@/types/api';
-import { Link as LinkIcon } from 'lucide-react';
+import type { Log, Plan, Program } from '@/types/api';
 import Link from 'next/link';
 
 interface LogTableProps {
   logs: Log[];
+  planMap: Map<string, Plan>;
+  programMap: Map<string, Program>;
 }
 
-export function LogTable({ logs }: LogTableProps) {
+export function LogTable({ logs, planMap, programMap }: LogTableProps) {
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Date</TableHead>
-          <TableHead>Exercises</TableHead>
-          <TableHead className="hidden sm:table-cell">Plan</TableHead>
-          <TableHead className="hidden md:table-cell">Notes</TableHead>
+          <TableHead>Program</TableHead>
+          <TableHead>Plan</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -32,7 +32,8 @@ export function LogTable({ logs }: LogTableProps) {
             month: 'short',
             day: 'numeric',
           });
-          const exerciseCount = log.entries.length;
+          const plan = log.plan_id ? planMap.get(log.plan_id) : undefined;
+          const program = plan?.program_id ? programMap.get(plan.program_id) : undefined;
 
           return (
             <TableRow key={log.id} className="cursor-pointer">
@@ -43,30 +44,12 @@ export function LogTable({ logs }: LogTableProps) {
               </TableCell>
               <TableCell>
                 <Link href={`/logs/${log.id}`} className="block w-full">
-                  {exerciseCount} {exerciseCount === 1 ? 'exercise' : 'exercises'}
+                  {program ? program.name : <span className="text-muted-foreground">—</span>}
                 </Link>
               </TableCell>
-              <TableCell className="hidden sm:table-cell">
+              <TableCell>
                 <Link href={`/logs/${log.id}`} className="block w-full">
-                  {log.plan_id ? (
-                    <span className="flex items-center gap-1 text-muted-foreground">
-                      <LinkIcon className="h-3 w-3" />
-                      Linked
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </Link>
-              </TableCell>
-              <TableCell className="hidden md:table-cell">
-                <Link href={`/logs/${log.id}`} className="block w-full">
-                  {log.notes ? (
-                    <span className="block max-w-[200px] truncate text-muted-foreground">
-                      {log.notes}
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
+                  {plan ? plan.name : <span className="text-muted-foreground">—</span>}
                 </Link>
               </TableCell>
             </TableRow>
