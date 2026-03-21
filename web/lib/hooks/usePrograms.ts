@@ -2,10 +2,10 @@ import { programsApi } from '@/lib/api/programs';
 import type { ConvertProgramToPlanRequest, ProgramCreate } from '@/types/api';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-export function usePrograms() {
+export function usePrograms(includeArchived = false) {
   return useQuery({
-    queryKey: ['programs'],
-    queryFn: () => programsApi.list({ limit: 100 }),
+    queryKey: ['programs', { includeArchived }],
+    queryFn: () => programsApi.list({ limit: 100, includeArchived }),
   });
 }
 
@@ -28,23 +28,46 @@ export function useCreateProgram() {
   });
 }
 
-export function useUpdateProgram() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: ProgramCreate }) => programsApi.update(id, data),
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['programs'] });
-      queryClient.invalidateQueries({ queryKey: ['programs', variables.id] });
-    },
-  });
-}
-
 export function useDeleteProgram() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (id: string) => programsApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['programs'] });
+    },
+  });
+}
+
+export function useArchiveProgram() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => programsApi.archive(id),
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: ['programs'] });
+      queryClient.invalidateQueries({ queryKey: ['programs', id] });
+    },
+  });
+}
+
+export function useUnarchiveProgram() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => programsApi.unarchive(id),
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: ['programs'] });
+      queryClient.invalidateQueries({ queryKey: ['programs', id] });
+    },
+  });
+}
+
+export function useDuplicateProgram() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => programsApi.duplicate(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['programs'] });
     },

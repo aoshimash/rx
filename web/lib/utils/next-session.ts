@@ -81,9 +81,9 @@ export function sortPlansByNext(statuses: PlanStatus[]): PlanStatus[] {
   return [...statuses.slice(nextIndex), ...statuses.slice(0, nextIndex)];
 }
 
-export interface ProgramGroup {
+export interface CycleGroup {
   groupKey: string;
-  programName: string;
+  cycleName: string;
   isStandalone: boolean;
   statuses: PlanStatus[];
 }
@@ -115,15 +115,15 @@ export function findActiveProgram(groups: Map<string, Plan[]>, logs: Log[]): str
 }
 
 /**
- * Build PlanStatus arrays for all program groups with a single global NEXT plan.
- * Only the active program's plans participate in NEXT detection.
- * Groups are ordered: active program first, then remaining groups.
+ * Build PlanStatus arrays for all cycle groups with a single global NEXT plan.
+ * Only the active cycle's plans participate in NEXT detection.
+ * Groups are ordered: active cycle first, then remaining groups.
  */
-export function buildGlobalPlanStatuses(plans: Plan[], logs: Log[]): ProgramGroup[] {
+export function buildGlobalPlanStatuses(plans: Plan[], logs: Log[]): CycleGroup[] {
   const grouped = groupPlansByCycle(plans);
   const activeKey = findActiveProgram(grouped, logs);
 
-  const result: ProgramGroup[] = [];
+  const result: CycleGroup[] = [];
 
   for (const [groupKey, groupPlans] of grouped) {
     const isStandalone = groupKey.startsWith('standalone:');
@@ -136,14 +136,14 @@ export function buildGlobalPlanStatuses(plans: Plan[], logs: Log[]): ProgramGrou
       statuses = buildInactiveStatuses(groupPlans, logs);
     }
 
-    const programName = isStandalone
+    const cycleName = isStandalone
       ? groupPlans[0]?.name || 'Unnamed'
       : groupPlans[0]?.name.split(' - ')[0] || 'Unnamed';
 
-    result.push({ groupKey, programName, isStandalone, statuses });
+    result.push({ groupKey, cycleName, isStandalone, statuses });
   }
 
-  // Sort: active program first
+  // Sort: active cycle first
   result.sort((a, b) => {
     if (a.groupKey === activeKey) return -1;
     if (b.groupKey === activeKey) return 1;

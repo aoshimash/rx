@@ -10,6 +10,7 @@ import { api } from './client';
 interface PaginationParams {
   limit?: number;
   after?: string;
+  includeArchived?: boolean;
 }
 
 export const programsApi = {
@@ -17,6 +18,7 @@ export const programsApi = {
     const searchParams = new URLSearchParams();
     if (params?.limit) searchParams.set('limit', params.limit.toString());
     if (params?.after) searchParams.set('after', params.after);
+    if (params?.includeArchived) searchParams.set('include_archived', 'true');
 
     return api.get(`programs?${searchParams}`).json<ProgramListResponse>();
   },
@@ -29,12 +31,20 @@ export const programsApi = {
     return api.post('programs', { json: data }).json<Program>();
   },
 
-  async update(id: string, data: ProgramCreate): Promise<Program> {
-    return api.put(`programs/${id}`, { json: data }).json<Program>();
-  },
-
   async delete(id: string): Promise<void> {
     await api.delete(`programs/${id}`);
+  },
+
+  async archive(id: string): Promise<Program> {
+    return api.post(`programs/${id}/archive`).json<Program>();
+  },
+
+  async unarchive(id: string): Promise<Program> {
+    return api.post(`programs/${id}/unarchive`).json<Program>();
+  },
+
+  async duplicate(id: string): Promise<Program> {
+    return api.post(`programs/${id}/duplicate`).json<Program>();
   },
 
   async convertToPlans(data: ConvertProgramToPlanRequest): Promise<ConvertProgramToPlansResponse> {

@@ -13,11 +13,12 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCreateProgram, usePrograms } from '@/lib/hooks/usePrograms';
 import type { ProgramEntryCreate } from '@/types/api';
-import { Plus } from 'lucide-react';
+import { Archive, Plus } from 'lucide-react';
 import { useState } from 'react';
 
 export default function ProgramsPage() {
-  const { data: programsData, isLoading } = usePrograms();
+  const [showArchived, setShowArchived] = useState(false);
+  const { data: programsData, isLoading } = usePrograms(showArchived);
   const createProgram = useCreateProgram();
   const programs = programsData?.data || [];
 
@@ -62,11 +63,21 @@ export default function ProgramsPage() {
 
   return (
     <main className="container mx-auto p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Programs</h1>
-        <p className="text-muted-foreground mt-1">
-          Reusable training templates. Convert to a Plan with target weights.
-        </p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Programs</h1>
+          <p className="text-muted-foreground mt-1">
+            Reusable training templates. Convert to a Plan with target weights.
+          </p>
+        </div>
+        <Button
+          variant={showArchived ? 'secondary' : 'outline'}
+          size="sm"
+          onClick={() => setShowArchived(!showArchived)}
+        >
+          <Archive className="h-4 w-4 mr-2" />
+          {showArchived ? 'Hide Archived' : 'Show Archived'}
+        </Button>
       </div>
 
       {programs.length === 0 ? (
@@ -80,11 +91,19 @@ export default function ProgramsPage() {
           </Button>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {programs.map((program) => (
-            <ProgramCard key={program.id} program={program} />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-4 md:grid-cols-2">
+            {programs.map((program) => (
+              <ProgramCard key={program.id} program={program} />
+            ))}
+          </div>
+          <div className="mt-6">
+            <Button variant="outline" onClick={() => setOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Program
+            </Button>
+          </div>
+        </>
       )}
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
