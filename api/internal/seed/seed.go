@@ -159,7 +159,7 @@ func conversionMeta(targetWeights map[string]float64) json.RawMessage {
 }
 
 var sbdTargetWeights = map[string]float64{
-	"スクワット":   145.0,
+	"スクワット":  145.0,
 	"ベンチプレス": 110.0,
 	"デッドリフト": 180.0,
 }
@@ -173,7 +173,7 @@ func sbdPlans(programID uuid.UUID) []domain.Plan {
 		{
 			ID:          uuid.New(),
 			ProgramID:   &programID,
-			Name:        "SBD 3-Week プログラム - Week 1 Day 1",
+			Name:        "Week 1 Day 1",
 			Date:        datePtr(2026, 2, 26),
 			SessionName: strPtr("Week 1 Day 1"),
 			Metadata:    planMeta,
@@ -192,7 +192,7 @@ func sbdPlans(programID uuid.UUID) []domain.Plan {
 		{
 			ID:          uuid.New(),
 			ProgramID:   &programID,
-			Name:        "SBD 3-Week プログラム - Week 1 Day 2",
+			Name:        "Week 1 Day 2",
 			Date:        datePtr(2026, 2, 28),
 			SessionName: strPtr("Week 1 Day 2"),
 			Metadata:    planMeta,
@@ -206,7 +206,7 @@ func sbdPlans(programID uuid.UUID) []domain.Plan {
 		{
 			ID:          uuid.New(),
 			ProgramID:   &programID,
-			Name:        "SBD 3-Week プログラム - Week 2 Day 1",
+			Name:        "Week 2 Day 1",
 			Date:        datePtr(2026, 3, 5),
 			SessionName: strPtr("Week 2 Day 1"),
 			Metadata:    planMeta,
@@ -225,7 +225,7 @@ func sbdPlans(programID uuid.UUID) []domain.Plan {
 		{
 			ID:          uuid.New(),
 			ProgramID:   &programID,
-			Name:        "SBD 3-Week プログラム - Week 2 Day 2",
+			Name:        "Week 2 Day 2",
 			Date:        datePtr(2026, 3, 7),
 			SessionName: strPtr("Week 2 Day 2"),
 			Metadata:    planMeta,
@@ -239,7 +239,7 @@ func sbdPlans(programID uuid.UUID) []domain.Plan {
 		{
 			ID:          uuid.New(),
 			ProgramID:   &programID,
-			Name:        "SBD 3-Week プログラム - Week 3 Day 1",
+			Name:        "Week 3 Day 1",
 			Date:        datePtr(2026, 3, 12),
 			SessionName: strPtr("Week 3 Day 1"),
 			Metadata:    planMeta,
@@ -258,7 +258,7 @@ func sbdPlans(programID uuid.UUID) []domain.Plan {
 		{
 			ID:          uuid.New(),
 			ProgramID:   &programID,
-			Name:        "SBD 3-Week プログラム - Week 3 Day 2",
+			Name:        "Week 3 Day 2",
 			Date:        datePtr(2026, 3, 14),
 			SessionName: strPtr("Week 3 Day 2"),
 			Metadata:    planMeta,
@@ -275,13 +275,13 @@ func accessoryWeek1Plan(programID uuid.UUID) domain.Plan {
 	return domain.Plan{
 		ID:          uuid.New(),
 		ProgramID:   &programID,
-		Name:        "補助種目 2-Week プログラム - Week 1 Day 1",
+		Name:        "Week 1 Day 1",
 		Date:        datePtr(2026, 3, 17),
 		SessionName: strPtr("Week 1 Day 1"),
 		Metadata: conversionMeta(map[string]float64{
 			"ルーマニアンデッドリフト": 80.0,
-			"バーベルロウ":             70.0,
-			"ハムストリングカール":     30.0,
+			"バーベルロウ":       70.0,
+			"ハムストリングカール":   30.0,
 		}),
 		Entries: []domain.PlanEntry{
 			{Order: 1, ExerciseName: "ルーマニアンデッドリフト", Sets: intPtr(3), Reps: intPtr(8), LoadKg: f64Ptr(80), RPE: intPtr(7), Metadata: sessionMeta("Week 1 Day 1")},

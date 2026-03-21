@@ -172,7 +172,7 @@ func ConvertProgramToPlans(program *Program, input *ConvertProgramToPlansInput) 
 		if g.name != "" {
 			sessionName = &g.name
 			if multiSession {
-				planName = baseName + " - " + g.name
+				planName = g.name
 			}
 		}
 

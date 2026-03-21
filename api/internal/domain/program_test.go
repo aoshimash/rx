@@ -273,7 +273,7 @@ func TestConvertProgramToPlans(t *testing.T) {
 		require.Len(t, plans, 2)
 
 		// First plan: Lower session
-		assert.Equal(t, "Upper/Lower Split - Lower", plans[0].Name)
+		assert.Equal(t, "Lower", plans[0].Name)
 		require.NotNil(t, plans[0].SessionName)
 		assert.Equal(t, "Lower", *plans[0].SessionName)
 		require.Len(t, plans[0].Entries, 2)
@@ -281,7 +281,7 @@ func TestConvertProgramToPlans(t *testing.T) {
 		assert.Equal(t, "Deadlift", plans[0].Entries[1].ExerciseName)
 
 		// Second plan: Upper session
-		assert.Equal(t, "Upper/Lower Split - Upper", plans[1].Name)
+		assert.Equal(t, "Upper", plans[1].Name)
 		require.NotNil(t, plans[1].SessionName)
 		assert.Equal(t, "Upper", *plans[1].SessionName)
 		require.Len(t, plans[1].Entries, 2)
