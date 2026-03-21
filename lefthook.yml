@@ -33,9 +33,9 @@ pre-push:
       root: "api/"
       run: |
         task generate
-        if [ -n "$(git status --porcelain)" ]; then
+        if [ -n "$(git status --porcelain -uno)" ]; then
           echo "❌ Generated code is stale. Run 'cd api && task generate' and commit the changes."
-          git status
+          git status -uno
           git diff
           exit 1
         fi
