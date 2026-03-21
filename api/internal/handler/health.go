@@ -27,7 +27,7 @@ func (h *HealthHandler) Health(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	// Check database connectivity by attempting a simple query
-	_, _, _, err := h.logRepo.List(ctx, 1, "")
+	_, _, _, err := h.logRepo.List(ctx, nil, 1, "")
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusServiceUnavailable)

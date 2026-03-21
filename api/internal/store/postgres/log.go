@@ -266,15 +266,15 @@ func (r *logRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (r *logRepository) List(ctx context.Context, limit int, after string) ([]*domain.Log, string, bool, error) {
-	return r.listWithFilter(ctx, nil, nil, limit, after)
+func (r *logRepository) List(ctx context.Context, programID *uuid.UUID, limit int, after string) ([]*domain.Log, string, bool, error) {
+	return r.listWithFilter(ctx, programID, nil, nil, limit, after)
 }
 
-func (r *logRepository) ListByPerformedAtRange(ctx context.Context, performedAtFrom, performedAtTo *time.Time, limit int, after string) ([]*domain.Log, string, bool, error) {
-	return r.listWithFilter(ctx, performedAtFrom, performedAtTo, limit, after)
+func (r *logRepository) ListByPerformedAtRange(ctx context.Context, programID *uuid.UUID, performedAtFrom, performedAtTo *time.Time, limit int, after string) ([]*domain.Log, string, bool, error) {
+	return r.listWithFilter(ctx, programID, performedAtFrom, performedAtTo, limit, after)
 }
 
-func (r *logRepository) listWithFilter(ctx context.Context, performedAtFrom, performedAtTo *time.Time, limit int, after string) ([]*domain.Log, string, bool, error) {
+func (r *logRepository) listWithFilter(ctx context.Context, programID *uuid.UUID, performedAtFrom, performedAtTo *time.Time, limit int, after string) ([]*domain.Log, string, bool, error) {
 	var startID uuid.UUID
 	if after != "" {
 		var err error
@@ -288,13 +288,14 @@ func (r *logRepository) listWithFilter(ctx context.Context, performedAtFrom, per
 		SELECT id, program_id, session_name, performed_at, started_at, finished_at, notes, metadata, created_at, updated_at
 		FROM logs
 		WHERE ($1::uuid IS NULL OR id > $1)
-		  AND ($2::timestamptz IS NULL OR performed_at >= $2)
-		  AND ($3::timestamptz IS NULL OR performed_at < $3)
+		  AND ($2::uuid IS NULL OR program_id = $2)
+		  AND ($3::timestamptz IS NULL OR performed_at >= $3)
+		  AND ($4::timestamptz IS NULL OR performed_at < $4)
 		ORDER BY id ASC
-		LIMIT $4
+		LIMIT $5
 	`
 
-	rows, err := r.pool.Query(ctx, query, startID, performedAtFrom, performedAtTo, limit+1)
+	rows, err := r.pool.Query(ctx, query, startID, programID, performedAtFrom, performedAtTo, limit+1)
 	if err != nil {
 		slog.Error("Failed to list logs", "error", err)
 		return nil, "", false, err

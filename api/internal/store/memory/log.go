@@ -104,20 +104,23 @@ func (s *logStore) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (s *logStore) List(ctx context.Context, limit int, after string) ([]*domain.Log, string, bool, error) {
-	return s.listWithFilter(ctx, nil, nil, limit, after)
+func (s *logStore) List(ctx context.Context, programID *uuid.UUID, limit int, after string) ([]*domain.Log, string, bool, error) {
+	return s.listWithFilter(ctx, programID, nil, nil, limit, after)
 }
 
-func (s *logStore) ListByPerformedAtRange(ctx context.Context, performedAtFrom, performedAtTo *time.Time, limit int, after string) ([]*domain.Log, string, bool, error) {
-	return s.listWithFilter(ctx, performedAtFrom, performedAtTo, limit, after)
+func (s *logStore) ListByPerformedAtRange(ctx context.Context, programID *uuid.UUID, performedAtFrom, performedAtTo *time.Time, limit int, after string) ([]*domain.Log, string, bool, error) {
+	return s.listWithFilter(ctx, programID, performedAtFrom, performedAtTo, limit, after)
 }
 
-func (s *logStore) listWithFilter(ctx context.Context, performedAtFrom, performedAtTo *time.Time, limit int, after string) ([]*domain.Log, string, bool, error) {
+func (s *logStore) listWithFilter(ctx context.Context, programID *uuid.UUID, performedAtFrom, performedAtTo *time.Time, limit int, after string) ([]*domain.Log, string, bool, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	logs := make([]*domain.Log, 0, len(s.logs))
 	for _, l := range s.logs {
+		if programID != nil && (l.ProgramID == nil || *l.ProgramID != *programID) {
+			continue
+		}
 		if performedAtFrom != nil && l.PerformedAt.Before(*performedAtFrom) {
 			continue
 		}

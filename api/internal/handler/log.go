@@ -344,6 +344,16 @@ func (h *LogHandler) ListLogs(w http.ResponseWriter, r *http.Request) {
 	}
 	after := r.URL.Query().Get("after")
 
+	var programID *uuid.UUID
+	if pidStr := r.URL.Query().Get("program_id"); pidStr != "" {
+		pid, err := uuid.Parse(pidStr)
+		if err != nil {
+			middleware.WriteValidationError(w, "Invalid program_id format", nil)
+			return
+		}
+		programID = &pid
+	}
+
 	var performedAtFrom, performedAtTo *time.Time
 	if fromStr := r.URL.Query().Get("performed_at_from"); fromStr != "" {
 		if t, err := time.Parse(time.RFC3339, fromStr); err == nil {
@@ -362,9 +372,9 @@ func (h *LogHandler) ListLogs(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	if performedAtFrom != nil || performedAtTo != nil {
-		logs, nextCursor, hasMore, err = h.repo.ListByPerformedAtRange(ctx, performedAtFrom, performedAtTo, limit, after)
+		logs, nextCursor, hasMore, err = h.repo.ListByPerformedAtRange(ctx, programID, performedAtFrom, performedAtTo, limit, after)
 	} else {
-		logs, nextCursor, hasMore, err = h.repo.List(ctx, limit, after)
+		logs, nextCursor, hasMore, err = h.repo.List(ctx, programID, limit, after)
 	}
 
 	if err != nil {

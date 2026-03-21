@@ -266,6 +266,12 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/After'
+        - name: program_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter logs by program ID
         - name: performed_at_from
           in: query
           schema:
