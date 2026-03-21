@@ -3,6 +3,7 @@ import type { LogCreate } from '@/types/api';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface LogFilters {
+  program_id?: string;
   performed_at_from?: string;
   performed_at_to?: string;
 }
