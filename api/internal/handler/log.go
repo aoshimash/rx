@@ -15,6 +15,8 @@ import (
 type logRequest struct {
 	PlanID      *string           `json:"plan_id,omitempty"`
 	PerformedAt string            `json:"performed_at"`
+	StartedAt   *string           `json:"started_at,omitempty"`
+	FinishedAt  *string           `json:"finished_at,omitempty"`
 	Notes       *string           `json:"notes,omitempty"`
 	Metadata    json.RawMessage   `json:"metadata,omitempty"`
 	Entries     []logEntryRequest `json:"entries"`
@@ -29,6 +31,8 @@ type logEntryRequest struct {
 	RPE            *int            `json:"rpe,omitempty"`
 	Notes          *string         `json:"notes,omitempty"`
 	VideoObjectKey *string         `json:"video_object_key,omitempty"`
+	StartedAt      *string         `json:"started_at,omitempty"`
+	FinishedAt     *string         `json:"finished_at,omitempty"`
 	Metadata       json.RawMessage `json:"metadata,omitempty"`
 }
 
@@ -58,6 +62,28 @@ func (h *LogHandler) parseLogRequest(req *logRequest) (*domain.Log, error) {
 		Metadata:    req.Metadata,
 	}
 
+	if req.StartedAt != nil {
+		t, err := time.Parse(time.RFC3339, *req.StartedAt)
+		if err != nil {
+			return nil, &domain.ValidationError{
+				Field:   "started_at",
+				Message: "invalid timestamp format: " + err.Error(),
+			}
+		}
+		log.StartedAt = &t
+	}
+
+	if req.FinishedAt != nil {
+		t, err := time.Parse(time.RFC3339, *req.FinishedAt)
+		if err != nil {
+			return nil, &domain.ValidationError{
+				Field:   "finished_at",
+				Message: "invalid timestamp format: " + err.Error(),
+			}
+		}
+		log.FinishedAt = &t
+	}
+
 	if req.PlanID != nil {
 		planID, err := uuid.Parse(*req.PlanID)
 		if err != nil {
@@ -71,7 +97,7 @@ func (h *LogHandler) parseLogRequest(req *logRequest) (*domain.Log, error) {
 
 	entries := make([]domain.LogEntry, len(req.Entries))
 	for i, entryReq := range req.Entries {
-		entries[i] = domain.LogEntry{
+		entry := domain.LogEntry{
 			ExerciseName:   entryReq.ExerciseName,
 			Order:          i,
 			Sets:           entryReq.Sets,
@@ -82,6 +108,30 @@ func (h *LogHandler) parseLogRequest(req *logRequest) (*domain.Log, error) {
 			VideoObjectKey: entryReq.VideoObjectKey,
 			Metadata:       entryReq.Metadata,
 		}
+
+		if entryReq.StartedAt != nil {
+			t, err := time.Parse(time.RFC3339, *entryReq.StartedAt)
+			if err != nil {
+				return nil, &domain.ValidationError{
+					Field:   "entries[].started_at",
+					Message: "invalid timestamp format: " + err.Error(),
+				}
+			}
+			entry.StartedAt = &t
+		}
+
+		if entryReq.FinishedAt != nil {
+			t, err := time.Parse(time.RFC3339, *entryReq.FinishedAt)
+			if err != nil {
+				return nil, &domain.ValidationError{
+					Field:   "entries[].finished_at",
+					Message: "invalid timestamp format: " + err.Error(),
+				}
+			}
+			entry.FinishedAt = &t
+		}
+
+		entries[i] = entry
 	}
 	log.Entries = entries
 

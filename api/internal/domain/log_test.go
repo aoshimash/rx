@@ -127,6 +127,42 @@ func TestValidateLogEntry(t *testing.T) {
 		err := ValidateLogEntry(e)
 		assert.NoError(t, err)
 	})
+
+	t.Run("valid started_at and finished_at", func(t *testing.T) {
+		e := validEntry()
+		start := time.Now().Add(-2 * time.Hour)
+		finish := time.Now().Add(-1 * time.Hour)
+		e.StartedAt = &start
+		e.FinishedAt = &finish
+		err := ValidateLogEntry(e)
+		assert.NoError(t, err)
+	})
+
+	t.Run("only started_at is valid", func(t *testing.T) {
+		e := validEntry()
+		start := time.Now().Add(-2 * time.Hour)
+		e.StartedAt = &start
+		err := ValidateLogEntry(e)
+		assert.NoError(t, err)
+	})
+
+	t.Run("only finished_at is valid", func(t *testing.T) {
+		e := validEntry()
+		finish := time.Now().Add(-1 * time.Hour)
+		e.FinishedAt = &finish
+		err := ValidateLogEntry(e)
+		assert.NoError(t, err)
+	})
+
+	t.Run("started_at after finished_at", func(t *testing.T) {
+		e := validEntry()
+		start := time.Now().Add(-1 * time.Hour)
+		finish := time.Now().Add(-2 * time.Hour)
+		e.StartedAt = &start
+		e.FinishedAt = &finish
+		err := ValidateLogEntry(e)
+		assert.Error(t, err)
+	})
 }
 
 func TestValidateLog(t *testing.T) {
@@ -206,5 +242,41 @@ func TestValidateLog(t *testing.T) {
 		l.Metadata = json.RawMessage(`{"body_weight_kg": 75.5, "fatigue_level": 3}`)
 		err := ValidateLog(l)
 		assert.NoError(t, err)
+	})
+
+	t.Run("valid started_at and finished_at", func(t *testing.T) {
+		l := validLog()
+		start := time.Now().Add(-2 * time.Hour)
+		finish := time.Now().Add(-1 * time.Hour)
+		l.StartedAt = &start
+		l.FinishedAt = &finish
+		err := ValidateLog(l)
+		assert.NoError(t, err)
+	})
+
+	t.Run("only started_at is valid", func(t *testing.T) {
+		l := validLog()
+		start := time.Now().Add(-2 * time.Hour)
+		l.StartedAt = &start
+		err := ValidateLog(l)
+		assert.NoError(t, err)
+	})
+
+	t.Run("only finished_at is valid", func(t *testing.T) {
+		l := validLog()
+		finish := time.Now().Add(-1 * time.Hour)
+		l.FinishedAt = &finish
+		err := ValidateLog(l)
+		assert.NoError(t, err)
+	})
+
+	t.Run("started_at after finished_at", func(t *testing.T) {
+		l := validLog()
+		start := time.Now().Add(-1 * time.Hour)
+		finish := time.Now().Add(-2 * time.Hour)
+		l.StartedAt = &start
+		l.FinishedAt = &finish
+		err := ValidateLog(l)
+		assert.Error(t, err)
 	})
 }

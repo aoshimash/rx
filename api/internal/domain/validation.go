@@ -43,6 +43,19 @@ func ValidateTimestamp(t time.Time) error {
 	return nil
 }
 
+// ValidateTimeRange checks that started_at is before finished_at when both are provided.
+func ValidateTimeRange(field string, startedAt, finishedAt *time.Time) error {
+	if startedAt != nil && finishedAt != nil {
+		if !startedAt.Before(*finishedAt) {
+			return &ValidationError{
+				Field:   field,
+				Message: "started_at must be before finished_at",
+			}
+		}
+	}
+	return nil
+}
+
 // ValidateRequiredString checks if a required string field is not empty.
 func ValidateRequiredString(field, value string) error {
 	if value == "" {
@@ -374,6 +387,11 @@ func ValidateLogEntry(e *LogEntry) error {
 		}
 	}
 
+	// Validate started_at / finished_at time range
+	if err := ValidateTimeRange("started_at", e.StartedAt, e.FinishedAt); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -388,6 +406,11 @@ func ValidateLog(l *Log) error {
 
 	// Validate performed_at (not in future)
 	if err := ValidateTimestamp(l.PerformedAt); err != nil {
+		return err
+	}
+
+	// Validate started_at / finished_at time range
+	if err := ValidateTimeRange("started_at", l.StartedAt, l.FinishedAt); err != nil {
 		return err
 	}
 

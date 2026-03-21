@@ -19,6 +19,8 @@ type LogEntry struct {
 	RPE            *int            `json:"rpe,omitempty"`
 	Notes          *string         `json:"notes,omitempty"`
 	VideoObjectKey *string         `json:"video_object_key,omitempty"`
+	StartedAt      *time.Time      `json:"started_at,omitempty"`
+	FinishedAt     *time.Time      `json:"finished_at,omitempty"`
 	Metadata       json.RawMessage `json:"metadata,omitempty"`
 }
 
@@ -27,6 +29,8 @@ type Log struct {
 	ID          uuid.UUID       `json:"id"`
 	PlanID      *uuid.UUID      `json:"plan_id,omitempty"`
 	PerformedAt time.Time       `json:"performed_at"`
+	StartedAt   *time.Time      `json:"started_at,omitempty"`
+	FinishedAt  *time.Time      `json:"finished_at,omitempty"`
 	Notes       *string         `json:"notes,omitempty"`
 	Metadata    json.RawMessage `json:"metadata,omitempty"`
 	CreatedAt   time.Time       `json:"created_at"`

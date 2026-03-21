@@ -1,6 +1,7 @@
 'use client';
 
 import { ExportButton } from '@/components/export/ExportButton';
+import type { LogSaveContext } from '@/components/log-input/LogModal';
 import { LogModal } from '@/components/log-input/LogModal';
 import { LogTable } from '@/components/logs/LogTable';
 import { Button } from '@/components/ui/button';
@@ -42,9 +43,15 @@ export default function LogsPage() {
     return map;
   }, [programsData]);
 
-  const handleSaveLog = async (entries: LogEntryCreate[], notes: string) => {
+  const handleSaveLog = async (
+    entries: LogEntryCreate[],
+    notes: string,
+    context?: LogSaveContext
+  ) => {
     await createLog.mutateAsync({
       performed_at: new Date().toISOString(),
+      started_at: context?.startedAt,
+      finished_at: context?.finishedAt,
       notes: notes || undefined,
       entries,
     });
