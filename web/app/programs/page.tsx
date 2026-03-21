@@ -25,7 +25,9 @@ interface SessionInput {
 export default function ProgramsPage() {
   const { data: programsData, isLoading } = usePrograms();
   const createProgram = useCreateProgram();
-  const programs = programsData?.data || [];
+  const programs = [...(programsData?.data || [])].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
 
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
@@ -76,9 +78,9 @@ export default function ProgramsPage() {
     return (
       <main className="container mx-auto p-6 space-y-4">
         <Skeleton className="h-12 w-[300px]" />
-        <div className="grid gap-4 md:grid-cols-2">
-          <Skeleton className="h-[200px]" />
-          <Skeleton className="h-[200px]" />
+        <div className="space-y-4">
+          <Skeleton className="h-[120px]" />
+          <Skeleton className="h-[120px]" />
         </div>
       </main>
     );
@@ -107,7 +109,7 @@ export default function ProgramsPage() {
         </div>
       ) : (
         <>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-4">
             {programs.map((program) => (
               <ProgramCard key={program.id} program={program} />
             ))}
