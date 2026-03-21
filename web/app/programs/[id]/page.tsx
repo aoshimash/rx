@@ -73,7 +73,7 @@ export default function ProgramDetailPage() {
   const deleteProgram = useDeleteProgram();
 
   const completedSessionNames = new Set(
-    logsData?.items?.map((log) => log.session_name).filter(Boolean) ?? []
+    logsData?.data?.map((log) => log.session_name).filter(Boolean) ?? []
   );
 
   if (isLoading) {
