@@ -19,8 +19,9 @@ func setupProgramTestRouter() (chi.Router, *ProgramHandler) {
 	programRepo := memory.NewProgramRepository()
 	logRepo := memory.NewLogRepository()
 	planRepo := memory.NewPlanRepository(logRepo)
+	cycleRepo := memory.NewCycleRepository()
 
-	handler := NewProgramHandler(programRepo, planRepo)
+	handler := NewProgramHandler(programRepo, planRepo, cycleRepo)
 
 	r := chi.NewRouter()
 	r.Use(middleware.AuthMiddleware(middleware.NewStubProvider()))

@@ -31,6 +31,7 @@ func main() {
 	var programRepo repository.ProgramRepository
 	var planRepo repository.PlanRepository
 	var logRepo repository.LogRepository
+	var cycleRepo repository.CycleRepository
 
 	ctx := context.Background()
 
@@ -47,11 +48,13 @@ func main() {
 		programRepo = postgresstore.NewProgramRepository(db.Pool())
 		planRepo = postgresstore.NewPlanRepository(db.Pool())
 		logRepo = postgresstore.NewLogRepository(db.Pool())
+		cycleRepo = postgresstore.NewCycleRepository(db.Pool())
 	} else {
 		slog.Info("Using in-memory storage backend")
 		programRepo = memory.NewProgramRepository()
 		logRepo = memory.NewLogRepository()
 		planRepo = memory.NewPlanRepository(logRepo)
+		cycleRepo = memory.NewCycleRepository()
 
 		if err := seed.Run(ctx, programRepo, planRepo, logRepo); err != nil {
 			slog.Error("Failed to seed development data", "error", err)
@@ -85,9 +88,10 @@ func main() {
 	}
 
 	// Initialize handlers
-	programHandler := handler.NewProgramHandler(programRepo, planRepo)
+	programHandler := handler.NewProgramHandler(programRepo, planRepo, cycleRepo)
 	planHandler := handler.NewPlanHandler(planRepo, logRepo)
 	logHandler := handler.NewLogHandler(logRepo)
+	cycleHandler := handler.NewCycleHandler(cycleRepo, planRepo)
 	videoHandler := handler.NewVideoHandler(storageProvider, logger)
 	healthHandler := handler.NewHealthHandler(planRepo)
 
@@ -133,6 +137,11 @@ func main() {
 		r.Get("/programs/{id}", programHandler.GetProgram)
 		r.Put("/programs/{id}", programHandler.UpdateProgram)
 		r.Delete("/programs/{id}", programHandler.DeleteProgram)
+
+		// Cycle routes
+		r.Get("/cycles", cycleHandler.ListCycles)
+		r.Get("/cycles/{id}", cycleHandler.GetCycle)
+		r.Delete("/cycles/{id}", cycleHandler.DeleteCycle)
 
 		// Plan routes
 		r.Post("/plans", planHandler.CreatePlan)

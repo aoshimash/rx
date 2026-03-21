@@ -25,15 +25,17 @@ type programEntryRequest struct {
 
 // ProgramHandler handles Program-related HTTP requests
 type ProgramHandler struct {
-	repo     repository.ProgramRepository
-	planRepo repository.PlanRepository
+	repo      repository.ProgramRepository
+	planRepo  repository.PlanRepository
+	cycleRepo repository.CycleRepository
 }
 
 // NewProgramHandler creates a new ProgramHandler
-func NewProgramHandler(repo repository.ProgramRepository, planRepo repository.PlanRepository) *ProgramHandler {
+func NewProgramHandler(repo repository.ProgramRepository, planRepo repository.PlanRepository, cycleRepo repository.CycleRepository) *ProgramHandler {
 	return &ProgramHandler{
-		repo:     repo,
-		planRepo: planRepo,
+		repo:      repo,
+		planRepo:  planRepo,
+		cycleRepo: cycleRepo,
 	}
 }
 
@@ -205,6 +207,23 @@ func (h *ProgramHandler) DeleteProgram(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		middleware.WriteInternalError(w, "Failed to retrieve program")
+		return
+	}
+
+	// Check for referential integrity: Program referenced by Cycles
+	hasCycles, err := h.cycleRepo.ExistsByProgramID(ctx, id)
+	if err != nil {
+		middleware.WriteInternalError(w, "Failed to check references")
+		return
+	}
+	if hasCycles {
+		middleware.WriteConflictError(w, "Cannot delete program - referenced by cycles", map[string]interface{}{
+			"blocking_references": []map[string]interface{}{
+				{
+					"type": "cycle",
+				},
+			},
+		})
 		return
 	}
 

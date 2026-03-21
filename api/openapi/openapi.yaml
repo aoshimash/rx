@@ -101,6 +101,64 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /cycles:
+    get:
+      summary: List cycles
+      operationId: listCycles
+      tags: [Cycle]
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/After'
+        - name: program_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter cycles by program ID
+      responses:
+        '200':
+          description: Paginated list of cycles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CycleListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /cycles/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CycleId'
+    get:
+      summary: Get cycle by ID
+      operationId: getCycle
+      tags: [Cycle]
+      responses:
+        '200':
+          description: Cycle found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cycle'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete cycle
+      operationId: deleteCycle
+      tags: [Cycle]
+      responses:
+        '204':
+          description: Cycle deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
 
   /plans:
     get:
@@ -451,6 +509,15 @@ components:
         format: uuid
       description: Program ID
 
+    CycleId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Cycle ID
+
     PlanId:
       name: id
       in: path
@@ -687,6 +754,55 @@ components:
         has_more:
           type: boolean
 
+    # ========================================
+    # Cycle
+    # ========================================
+    Cycle:
+      type: object
+      required:
+        - id
+        - program_id
+        - name
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        program_id:
+          type: string
+          format: uuid
+          description: Reference to the source program
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        notes:
+          type: string
+          maxLength: 5000
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Free-form JSON metadata (e.g., conversion parameters)
+        created_at:
+          type: string
+          format: date-time
+
+    CycleListResponse:
+      type: object
+      required:
+        - data
+        - has_more
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cycle'
+        next_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+
     ConvertProgramToPlanRequest:
       type: object
       required:
@@ -737,6 +853,10 @@ components:
           type: string
           format: uuid
           description: Optional reference to the source program template
+        cycle_id:
+          type: string
+          format: uuid
+          description: Optional reference to the source cycle
         name:
           type: string
           minLength: 1
@@ -777,6 +897,9 @@ components:
         - name
       properties:
         program_id:
+          type: string
+          format: uuid
+        cycle_id:
           type: string
           format: uuid
         name:

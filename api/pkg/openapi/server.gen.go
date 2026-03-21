@@ -36,6 +36,27 @@ type ConvertProgramToPlanRequest struct {
 	TargetWeights map[string]float64 `json:"target_weights"`
 }
 
+// Cycle defines model for Cycle.
+type Cycle struct {
+	CreatedAt time.Time          `json:"created_at"`
+	Id        openapi_types.UUID `json:"id"`
+
+	// Metadata Free-form JSON metadata (e.g., conversion parameters)
+	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	Name     string                  `json:"name"`
+	Notes    *string                 `json:"notes,omitempty"`
+
+	// ProgramId Reference to the source program
+	ProgramId openapi_types.UUID `json:"program_id"`
+}
+
+// CycleListResponse defines model for CycleListResponse.
+type CycleListResponse struct {
+	Data       []Cycle `json:"data"`
+	HasMore    bool    `json:"has_more"`
+	NextCursor *string `json:"next_cursor"`
+}
+
 // Error defines model for Error.
 type Error struct {
 	// Code Error code
@@ -144,6 +165,9 @@ type LogListResponse struct {
 type Plan struct {
 	CreatedAt time.Time `json:"created_at"`
 
+	// CycleId Optional reference to the source cycle
+	CycleId *openapi_types.UUID `json:"cycle_id,omitempty"`
+
 	// Date Scheduled date for this session (YYYY-MM-DD)
 	Date        *openapi_types.Date `json:"date,omitempty"`
 	Description *string             `json:"description,omitempty"`
@@ -167,6 +191,8 @@ type Plan struct {
 
 // PlanCreate defines model for PlanCreate.
 type PlanCreate struct {
+	CycleId *openapi_types.UUID `json:"cycle_id,omitempty"`
+
 	// Date Scheduled date for this session (YYYY-MM-DD)
 	Date        *openapi_types.Date     `json:"date,omitempty"`
 	Description *string                 `json:"description,omitempty"`
@@ -331,6 +357,9 @@ type VideoUploadURLResponse struct {
 // After defines model for After.
 type After = string
 
+// CycleId defines model for CycleId.
+type CycleId = openapi_types.UUID
+
 // Limit defines model for Limit.
 type Limit = int
 
@@ -354,6 +383,18 @@ type Unauthorized = Error
 
 // ValidationError defines model for ValidationError.
 type ValidationError = Error
+
+// ListCyclesParams defines parameters for ListCycles.
+type ListCyclesParams struct {
+	// Limit Maximum number of items to return
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// After Cursor for pagination (from previous response)
+	After *After `form:"after,omitempty" json:"after,omitempty"`
+
+	// ProgramId Filter cycles by program ID
+	ProgramId *openapi_types.UUID `form:"program_id,omitempty" json:"program_id,omitempty"`
+}
 
 // ListLogsParams defines parameters for ListLogs.
 type ListLogsParams struct {
@@ -420,6 +461,15 @@ type GenerateVideoUploadURLJSONRequestBody = VideoUploadURLRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// List cycles
+	// (GET /cycles)
+	ListCycles(w http.ResponseWriter, r *http.Request, params ListCyclesParams)
+	// Delete cycle
+	// (DELETE /cycles/{id})
+	DeleteCycle(w http.ResponseWriter, r *http.Request, id CycleId)
+	// Get cycle by ID
+	// (GET /cycles/{id})
+	GetCycle(w http.ResponseWriter, r *http.Request, id CycleId)
 	// List logs
 	// (GET /logs)
 	ListLogs(w http.ResponseWriter, r *http.Request, params ListLogsParams)
@@ -479,6 +529,24 @@ type ServerInterface interface {
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
 
 type Unimplemented struct{}
+
+// List cycles
+// (GET /cycles)
+func (_ Unimplemented) ListCycles(w http.ResponseWriter, r *http.Request, params ListCyclesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete cycle
+// (DELETE /cycles/{id})
+func (_ Unimplemented) DeleteCycle(w http.ResponseWriter, r *http.Request, id CycleId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get cycle by ID
+// (GET /cycles/{id})
+func (_ Unimplemented) GetCycle(w http.ResponseWriter, r *http.Request, id CycleId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
 
 // List logs
 // (GET /logs)
@@ -596,6 +664,117 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// ListCycles operation middleware
+func (siw *ServerInterfaceWrapper) ListCycles(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListCyclesParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "after" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "after", r.URL.Query(), &params.After)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "after", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "program_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "program_id", r.URL.Query(), &params.ProgramId)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "program_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListCycles(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteCycle operation middleware
+func (siw *ServerInterfaceWrapper) DeleteCycle(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id CycleId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteCycle(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCycle operation middleware
+func (siw *ServerInterfaceWrapper) GetCycle(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id CycleId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCycle(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // ListLogs operation middleware
 func (siw *ServerInterfaceWrapper) ListLogs(w http.ResponseWriter, r *http.Request) {
@@ -1256,6 +1435,15 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/cycles", wrapper.ListCycles)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/cycles/{id}", wrapper.DeleteCycle)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/cycles/{id}", wrapper.GetCycle)
+	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/logs", wrapper.ListLogs)
 	})

@@ -45,6 +45,7 @@ type PlanEntry struct {
 type Plan struct {
 	ID          uuid.UUID       `json:"id"`
 	ProgramID   *uuid.UUID      `json:"program_id,omitempty"`
+	CycleID     *uuid.UUID      `json:"cycle_id,omitempty"`
 	Name        string          `json:"name"`
 	Date        *DateOnly       `json:"date,omitempty"`
 	SessionName *string         `json:"session_name,omitempty"`

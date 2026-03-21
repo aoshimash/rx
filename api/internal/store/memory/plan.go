@@ -204,6 +204,19 @@ func (s *planStore) paginatePlans(plans []*domain.Plan, limit int, after string)
 	return copies, nextCursor, hasMore, nil
 }
 
+func (s *planStore) CountByCycleID(ctx context.Context, cycleID uuid.UUID) (int, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	count := 0
+	for _, p := range s.plans {
+		if p.CycleID != nil && *p.CycleID == cycleID {
+			count++
+		}
+	}
+	return count, nil
+}
+
 // encodePlanCursor encodes a (created_at, id) pair for plan cursor-based pagination
 func encodePlanCursor(createdAt time.Time, id uuid.UUID) string {
 	s := createdAt.Format(time.RFC3339Nano) + "|" + id.String()
