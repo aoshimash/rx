@@ -36,8 +36,8 @@ func (r *logRepository) Create(ctx context.Context, log *domain.Log) error {
 	}
 
 	query := `
-		INSERT INTO logs (id, plan_id, performed_at, notes, metadata, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+		INSERT INTO logs (id, plan_id, performed_at, started_at, finished_at, notes, metadata, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
 		RETURNING created_at, updated_at
 	`
 
@@ -45,6 +45,8 @@ func (r *logRepository) Create(ctx context.Context, log *domain.Log) error {
 		id,
 		log.PlanID,
 		log.PerformedAt,
+		log.StartedAt,
+		log.FinishedAt,
 		log.Notes,
 		log.Metadata,
 	).Scan(&log.CreatedAt, &log.UpdatedAt)
@@ -77,9 +79,9 @@ func (r *logRepository) insertEntries(ctx context.Context, tx pgx.Tx, logID uuid
 			INSERT INTO log_entries (
 				id, log_id, "order", exercise_name,
 				sets, reps, load_kg, rpe,
-				notes, video_object_key, metadata
+				notes, video_object_key, started_at, finished_at, metadata
 			)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		`
 
 		_, err := tx.Exec(ctx, query,
@@ -93,6 +95,8 @@ func (r *logRepository) insertEntries(ctx context.Context, tx pgx.Tx, logID uuid
 			entries[i].RPE,
 			entries[i].Notes,
 			entries[i].VideoObjectKey,
+			entries[i].StartedAt,
+			entries[i].FinishedAt,
 			entries[i].Metadata,
 		)
 		if err != nil {
@@ -109,7 +113,7 @@ func (r *logRepository) insertEntries(ctx context.Context, tx pgx.Tx, logID uuid
 
 func (r *logRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Log, error) {
 	query := `
-		SELECT id, plan_id, performed_at, notes, metadata, created_at, updated_at
+		SELECT id, plan_id, performed_at, started_at, finished_at, notes, metadata, created_at, updated_at
 		FROM logs
 		WHERE id = $1
 	`
@@ -120,6 +124,8 @@ func (r *logRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Log,
 		&log.ID,
 		&log.PlanID,
 		&log.PerformedAt,
+		&log.StartedAt,
+		&log.FinishedAt,
 		&log.Notes,
 		&metadataRaw,
 		&log.CreatedAt,
@@ -151,7 +157,7 @@ func (r *logRepository) getEntriesForLog(ctx context.Context, logID uuid.UUID) (
 	query := `
 		SELECT id, log_id, "order", exercise_name,
 		       sets, reps, load_kg, rpe,
-		       notes, video_object_key, metadata
+		       notes, video_object_key, started_at, finished_at, metadata
 		FROM log_entries
 		WHERE log_id = $1
 		ORDER BY "order" ASC
@@ -178,6 +184,8 @@ func (r *logRepository) getEntriesForLog(ctx context.Context, logID uuid.UUID) (
 			&entry.RPE,
 			&entry.Notes,
 			&entry.VideoObjectKey,
+			&entry.StartedAt,
+			&entry.FinishedAt,
 			&metadataRaw,
 		)
 		if err != nil {
@@ -201,7 +209,8 @@ func (r *logRepository) Update(ctx context.Context, log *domain.Log) error {
 
 	query := `
 		UPDATE logs
-		SET plan_id = $2, performed_at = $3, notes = $4, metadata = $5, updated_at = NOW()
+		SET plan_id = $2, performed_at = $3, started_at = $4, finished_at = $5,
+		    notes = $6, metadata = $7, updated_at = NOW()
 		WHERE id = $1
 		RETURNING updated_at
 	`
@@ -210,6 +219,8 @@ func (r *logRepository) Update(ctx context.Context, log *domain.Log) error {
 		log.ID,
 		log.PlanID,
 		log.PerformedAt,
+		log.StartedAt,
+		log.FinishedAt,
 		log.Notes,
 		log.Metadata,
 	).Scan(&log.UpdatedAt)
@@ -271,7 +282,7 @@ func (r *logRepository) listWithFilter(ctx context.Context, performedAtFrom, per
 	}
 
 	query := `
-		SELECT id, plan_id, performed_at, notes, metadata, created_at, updated_at
+		SELECT id, plan_id, performed_at, started_at, finished_at, notes, metadata, created_at, updated_at
 		FROM logs
 		WHERE ($1::uuid IS NULL OR id > $1)
 		  AND ($2::timestamptz IS NULL OR performed_at >= $2)
@@ -296,6 +307,8 @@ func (r *logRepository) listWithFilter(ctx context.Context, performedAtFrom, per
 			&log.ID,
 			&log.PlanID,
 			&log.PerformedAt,
+			&log.StartedAt,
+			&log.FinishedAt,
 			&log.Notes,
 			&metadataRaw,
 			&log.CreatedAt,
@@ -336,7 +349,7 @@ func (r *logRepository) listWithFilter(ctx context.Context, performedAtFrom, per
 
 func (r *logRepository) ListByPlanID(ctx context.Context, planID uuid.UUID) ([]*domain.Log, error) {
 	query := `
-		SELECT id, plan_id, performed_at, notes, metadata, created_at, updated_at
+		SELECT id, plan_id, performed_at, started_at, finished_at, notes, metadata, created_at, updated_at
 		FROM logs
 		WHERE plan_id = $1
 		ORDER BY performed_at DESC
@@ -357,6 +370,8 @@ func (r *logRepository) ListByPlanID(ctx context.Context, planID uuid.UUID) ([]*
 			&log.ID,
 			&log.PlanID,
 			&log.PerformedAt,
+			&log.StartedAt,
+			&log.FinishedAt,
 			&log.Notes,
 			&metadataRaw,
 			&log.CreatedAt,

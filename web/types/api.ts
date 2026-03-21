@@ -70,6 +70,8 @@ export interface Log {
   id: string;
   plan_id?: string;
   performed_at: string;
+  started_at?: string;
+  finished_at?: string;
   notes?: string;
   metadata?: Record<string, unknown>;
   entries: LogEntry[];
@@ -80,6 +82,8 @@ export interface Log {
 export interface LogCreate {
   plan_id?: string;
   performed_at: string;
+  started_at?: string;
+  finished_at?: string;
   notes?: string;
   metadata?: Record<string, unknown>;
   entries: LogEntryCreate[];
@@ -100,6 +104,8 @@ export interface LogEntry {
   rpe?: number;
   notes?: string;
   video_object_key?: string;
+  started_at?: string;
+  finished_at?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -111,6 +117,8 @@ export interface LogEntryCreate {
   rpe?: number;
   notes?: string;
   video_object_key?: string;
+  started_at?: string;
+  finished_at?: string;
   metadata?: Record<string, unknown>;
 }
 

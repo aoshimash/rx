@@ -119,6 +119,8 @@ export default function PlansPage() {
     await createLog.mutateAsync({
       plan_id: context?.planId,
       performed_at: new Date().toISOString(),
+      started_at: context?.startedAt,
+      finished_at: context?.finishedAt,
       notes: notes || undefined,
       entries,
     });

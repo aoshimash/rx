@@ -53,8 +53,11 @@ type Log struct {
 	CreatedAt time.Time `json:"created_at"`
 
 	// Entries Performed entries (ordered)
-	Entries []LogEntry         `json:"entries"`
-	Id      openapi_types.UUID `json:"id"`
+	Entries []LogEntry `json:"entries"`
+
+	// FinishedAt When the training session ended (optional)
+	FinishedAt *time.Time         `json:"finished_at,omitempty"`
+	Id         openapi_types.UUID `json:"id"`
 
 	// Metadata Free-form JSON metadata (e.g., body_weight_kg, fatigue_level)
 	Metadata *map[string]interface{} `json:"metadata,omitempty"`
@@ -66,24 +69,32 @@ type Log struct {
 	PerformedAt time.Time `json:"performed_at"`
 
 	// PlanId Optional reference to the training plan
-	PlanId    *openapi_types.UUID `json:"plan_id,omitempty"`
-	UpdatedAt time.Time           `json:"updated_at"`
+	PlanId *openapi_types.UUID `json:"plan_id,omitempty"`
+
+	// StartedAt When the training session started (optional)
+	StartedAt *time.Time `json:"started_at,omitempty"`
+	UpdatedAt time.Time  `json:"updated_at"`
 }
 
 // LogCreate defines model for LogCreate.
 type LogCreate struct {
 	Entries     []LogEntryCreate        `json:"entries"`
+	FinishedAt  *time.Time              `json:"finished_at,omitempty"`
 	Metadata    *map[string]interface{} `json:"metadata,omitempty"`
 	Notes       *string                 `json:"notes,omitempty"`
 	PerformedAt time.Time               `json:"performed_at"`
 	PlanId      *openapi_types.UUID     `json:"plan_id,omitempty"`
+	StartedAt   *time.Time              `json:"started_at,omitempty"`
 }
 
 // LogEntry defines model for LogEntry.
 type LogEntry struct {
 	// ExerciseName Exercise name (plain string)
-	ExerciseName string             `json:"exercise_name"`
-	Id           openapi_types.UUID `json:"id"`
+	ExerciseName string `json:"exercise_name"`
+
+	// FinishedAt When the exercise ended (optional)
+	FinishedAt *time.Time         `json:"finished_at,omitempty"`
+	Id         openapi_types.UUID `json:"id"`
 
 	// LoadKg Weight in kilograms (0.1 precision)
 	LoadKg *float64           `json:"load_kg,omitempty"`
@@ -101,6 +112,9 @@ type LogEntry struct {
 	Rpe  *int `json:"rpe,omitempty"`
 	Sets *int `json:"sets,omitempty"`
 
+	// StartedAt When the exercise started (optional)
+	StartedAt *time.Time `json:"started_at,omitempty"`
+
 	// VideoObjectKey Object key for uploaded video in storage (from upload-url response)
 	VideoObjectKey *string `json:"video_object_key,omitempty"`
 }
@@ -108,12 +122,14 @@ type LogEntry struct {
 // LogEntryCreate defines model for LogEntryCreate.
 type LogEntryCreate struct {
 	ExerciseName   string                  `json:"exercise_name"`
+	FinishedAt     *time.Time              `json:"finished_at,omitempty"`
 	LoadKg         *float64                `json:"load_kg,omitempty"`
 	Metadata       *map[string]interface{} `json:"metadata,omitempty"`
 	Notes          *string                 `json:"notes,omitempty"`
 	Reps           *int                    `json:"reps,omitempty"`
 	Rpe            *int                    `json:"rpe,omitempty"`
 	Sets           *int                    `json:"sets,omitempty"`
+	StartedAt      *time.Time              `json:"started_at,omitempty"`
 	VideoObjectKey *string                 `json:"video_object_key,omitempty"`
 }
 

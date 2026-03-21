@@ -918,6 +918,14 @@ components:
           type: object
           additionalProperties: true
           description: Free-form JSON metadata (e.g., body_weight_kg, fatigue_level)
+        started_at:
+          type: string
+          format: date-time
+          description: When the training session started (optional)
+        finished_at:
+          type: string
+          format: date-time
+          description: When the training session ended (optional)
         entries:
           type: array
           items:
@@ -946,6 +954,12 @@ components:
         notes:
           type: string
           maxLength: 5000
+        started_at:
+          type: string
+          format: date-time
+        finished_at:
+          type: string
+          format: date-time
         metadata:
           type: object
           additionalProperties: true
@@ -1001,6 +1015,14 @@ components:
           type: string
           maxLength: 500
           description: Object key for uploaded video in storage (from upload-url response)
+        started_at:
+          type: string
+          format: date-time
+          description: When the exercise started (optional)
+        finished_at:
+          type: string
+          format: date-time
+          description: When the exercise ended (optional)
         metadata:
           type: object
           additionalProperties: true
@@ -1035,6 +1057,12 @@ components:
         video_object_key:
           type: string
           maxLength: 500
+        started_at:
+          type: string
+          format: date-time
+        finished_at:
+          type: string
+          format: date-time
         metadata:
           type: object
           additionalProperties: true

@@ -12,6 +12,8 @@ import { ExerciseInputRow } from './ExerciseInputRow';
 export interface LogSaveContext {
   planId?: string;
   sessionName?: string;
+  startedAt?: string;
+  finishedAt?: string;
 }
 
 interface LogModalProps {
@@ -31,6 +33,8 @@ interface EntryInput {
   reps: number;
   load: number;
   rpe: number;
+  startedAt: string;
+  finishedAt: string;
   fromPlan: boolean;
   plan?: {
     sets?: number;
@@ -51,6 +55,8 @@ export function LogModal({
 }: LogModalProps) {
   const [entries, setEntries] = useState<EntryInput[]>([]);
   const [sessionNotes, setSessionNotes] = useState('');
+  const [sessionStartedAt, setSessionStartedAt] = useState('');
+  const [sessionFinishedAt, setSessionFinishedAt] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -62,6 +68,8 @@ export function LogModal({
         reps: entry.reps || 10,
         load: entry.load_kg || 0,
         rpe: entry.rpe || 7,
+        startedAt: '',
+        finishedAt: '',
         fromPlan: true,
         plan: {
           sets: entry.sets,
@@ -82,6 +90,8 @@ export function LogModal({
       reps: 10,
       load: 0,
       rpe: 7,
+      startedAt: '',
+      finishedAt: '',
       fromPlan: false,
     };
     setEntries([...entries, newEntry]);
@@ -100,14 +110,22 @@ export function LogModal({
         reps: entry.reps,
         load_kg: entry.load,
         rpe: entry.rpe,
+        started_at: entry.startedAt ? new Date(entry.startedAt).toISOString() : undefined,
+        finished_at: entry.finishedAt ? new Date(entry.finishedAt).toISOString() : undefined,
       }));
 
-      const context: LogSaveContext | undefined =
-        planId || sessionName ? { planId, sessionName } : undefined;
+      const context: LogSaveContext = {
+        planId,
+        sessionName,
+        startedAt: sessionStartedAt ? new Date(sessionStartedAt).toISOString() : undefined,
+        finishedAt: sessionFinishedAt ? new Date(sessionFinishedAt).toISOString() : undefined,
+      };
       await onSave(logEntries, sessionNotes, context);
       onOpenChange(false);
       setEntries([]);
       setSessionNotes('');
+      setSessionStartedAt('');
+      setSessionFinishedAt('');
     } catch (error) {
       console.error('Failed to save log:', error);
     } finally {
@@ -133,6 +151,27 @@ export function LogModal({
         </DialogHeader>
 
         <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 p-4 bg-muted/50 rounded-lg">
+            <div className="space-y-2">
+              <Label htmlFor="session-started-at">Session Start</Label>
+              <Input
+                id="session-started-at"
+                type="datetime-local"
+                value={sessionStartedAt}
+                onChange={(e) => setSessionStartedAt(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="session-finished-at">Session End</Label>
+              <Input
+                id="session-finished-at"
+                type="datetime-local"
+                value={sessionFinishedAt}
+                onChange={(e) => setSessionFinishedAt(e.target.value)}
+              />
+            </div>
+          </div>
+
           {entries.map((entry) => (
             <ExerciseInputRow
               key={entry.id}
@@ -152,6 +191,18 @@ export function LogModal({
               }}
               onRpeChange={(value) => {
                 setEntries(entries.map((e) => (e.id === entry.id ? { ...e, rpe: value } : e)));
+              }}
+              startedAt={entry.startedAt}
+              finishedAt={entry.finishedAt}
+              onStartedAtChange={(value) => {
+                setEntries(
+                  entries.map((e) => (e.id === entry.id ? { ...e, startedAt: value } : e))
+                );
+              }}
+              onFinishedAtChange={(value) => {
+                setEntries(
+                  entries.map((e) => (e.id === entry.id ? { ...e, finishedAt: value } : e))
+                );
               }}
               onRemove={!entry.fromPlan ? () => handleRemoveEntry(entry.id) : undefined}
               planValues={entry.plan}

@@ -1,7 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { X } from 'lucide-react';
+import { ChevronDown, ChevronRight, X } from 'lucide-react';
+import { useState } from 'react';
 
 interface ExerciseInputRowProps {
   exerciseName: string;
@@ -13,6 +14,10 @@ interface ExerciseInputRowProps {
   onRepsChange: (value: number) => void;
   onLoadChange: (value: number) => void;
   onRpeChange: (value: number) => void;
+  startedAt?: string;
+  finishedAt?: string;
+  onStartedAtChange?: (value: string) => void;
+  onFinishedAtChange?: (value: string) => void;
   onRemove?: () => void;
   planValues?: {
     sets?: number;
@@ -32,9 +37,15 @@ export function ExerciseInputRow({
   onRepsChange,
   onLoadChange,
   onRpeChange,
+  startedAt,
+  finishedAt,
+  onStartedAtChange,
+  onFinishedAtChange,
   onRemove,
   planValues,
 }: ExerciseInputRowProps) {
+  const [showTiming, setShowTiming] = useState(false);
+
   return (
     <div className="grid gap-4 border rounded-lg p-4">
       <div className="flex items-center justify-between">
@@ -102,6 +113,51 @@ export function ExerciseInputRow({
           />
         </div>
       </div>
+
+      {onStartedAtChange && onFinishedAtChange && (
+        <div>
+          <button
+            type="button"
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            onClick={() => setShowTiming(!showTiming)}
+          >
+            {showTiming ? (
+              <ChevronDown className="h-3 w-3" />
+            ) : (
+              <ChevronRight className="h-3 w-3" />
+            )}
+            Timing
+          </button>
+          {showTiming && (
+            <div className="grid grid-cols-2 gap-3 mt-2">
+              <div className="space-y-1">
+                <Label className="text-xs" htmlFor={`start-${exerciseName}`}>
+                  Start
+                </Label>
+                <Input
+                  id={`start-${exerciseName}`}
+                  type="datetime-local"
+                  className="text-xs h-8"
+                  value={startedAt || ''}
+                  onChange={(e) => onStartedAtChange(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs" htmlFor={`end-${exerciseName}`}>
+                  End
+                </Label>
+                <Input
+                  id={`end-${exerciseName}`}
+                  type="datetime-local"
+                  className="text-xs h-8"
+                  value={finishedAt || ''}
+                  onChange={(e) => onFinishedAtChange(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
