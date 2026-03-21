@@ -10,6 +10,7 @@ import (
 	"github.com/aoshimash/rx/api/internal/handler"
 	"github.com/aoshimash/rx/api/internal/middleware"
 	"github.com/aoshimash/rx/api/internal/repository"
+	"github.com/aoshimash/rx/api/internal/seed"
 	"github.com/aoshimash/rx/api/internal/storage"
 	s3storage "github.com/aoshimash/rx/api/internal/storage/s3"
 	"github.com/aoshimash/rx/api/internal/store/memory"
@@ -51,6 +52,12 @@ func main() {
 		programRepo = memory.NewProgramRepository()
 		logRepo = memory.NewLogRepository()
 		planRepo = memory.NewPlanRepository(logRepo)
+
+		if err := seed.Run(ctx, programRepo, planRepo, logRepo); err != nil {
+			slog.Error("Failed to seed development data", "error", err)
+			os.Exit(1)
+		}
+		slog.Info("Development seed data loaded")
 	}
 
 	// Initialize storage provider (optional)
