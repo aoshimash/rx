@@ -685,8 +685,9 @@ tasks:
       - go test -v -race ./...
 
   check:
-    desc: Run format, lint, and tests (pre-commit check)
+    desc: Generate code and run format, lint, and tests (pre-commit check)
     cmds:
+      - task: generate
       - task: format
       - task: lint
       - task: test
