@@ -2,24 +2,15 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { X } from 'lucide-react';
 
-export type SetType = 'top' | 'main' | 'backoff';
-
 interface ExerciseRowProps {
-  setType?: SetType;
+  label?: string;
   sets?: number;
   reps?: number;
   loadKg?: number;
   rpe?: number;
-  onSetTypeChange: (value: SetType | undefined) => void;
+  onLabelChange: (value: string | undefined) => void;
   onSetsChange: (value: number) => void;
   onRepsChange: (value: number) => void;
   onLoadKgChange: (value: number) => void;
@@ -28,12 +19,12 @@ interface ExerciseRowProps {
 }
 
 export function ExerciseRow({
-  setType,
+  label,
   sets,
   reps,
   loadKg,
   rpe,
-  onSetTypeChange,
+  onLabelChange,
   onSetsChange,
   onRepsChange,
   onLoadKgChange,
@@ -42,20 +33,12 @@ export function ExerciseRow({
 }: ExerciseRowProps) {
   return (
     <div className="flex items-center gap-2">
-      <Select
-        value={setType ?? 'none'}
-        onValueChange={(v) => onSetTypeChange(v === 'none' ? undefined : (v as SetType))}
-      >
-        <SelectTrigger className="w-[110px] h-8 text-xs">
-          <SelectValue placeholder="-" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="none">-</SelectItem>
-          <SelectItem value="top">Top</SelectItem>
-          <SelectItem value="main">メイン</SelectItem>
-          <SelectItem value="backoff">バックオフ</SelectItem>
-        </SelectContent>
-      </Select>
+      <Input
+        value={label ?? ''}
+        onChange={(e) => onLabelChange(e.target.value || undefined)}
+        placeholder="-"
+        className="w-[110px] h-8 text-xs"
+      />
 
       <Input
         type="number"

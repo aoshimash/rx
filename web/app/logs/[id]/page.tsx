@@ -11,12 +11,6 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
-const SET_TYPE_LABELS: Record<string, string> = {
-  top: 'Top',
-  main: 'メイン',
-  backoff: 'バックオフ',
-};
-
 type LogExerciseGroup = { name: string; entries: LogEntry[] };
 
 function groupByExercise(entries: LogEntry[]): LogExerciseGroup[] {
@@ -37,11 +31,11 @@ function findMatchingPlanEntry(
   logEntry: LogEntry,
   planEntries: PlanEntry[]
 ): PlanEntry | undefined {
-  const logSetType = logEntry.metadata?.set_type;
+  const logLabel = logEntry.metadata?.label;
   return planEntries.find(
     (pe) =>
       pe.exercise_name === logEntry.exercise_name &&
-      (pe.metadata?.set_type ?? undefined) === (logSetType ?? undefined)
+      (pe.metadata?.label ?? undefined) === (logLabel ?? undefined)
   );
 }
 
@@ -126,7 +120,7 @@ export default function LogDetailPage() {
             <CardContent>
               <div className="space-y-2">
                 {group.entries.map((entry) => {
-                  const setType = entry.metadata?.set_type as string | undefined;
+                  const label = entry.metadata?.label as string | undefined;
                   const matchedPlan = hasPlan
                     ? findMatchingPlanEntry(entry, planEntries)
                     : undefined;
@@ -136,9 +130,9 @@ export default function LogDetailPage() {
                     <div key={entry.id} className="rounded-md border px-3 py-2">
                       <div className="flex items-center justify-between mb-1.5">
                         <div>
-                          {setType ? (
-                            <Badge variant="secondary" className="text-xs">
-                              {SET_TYPE_LABELS[setType] ?? setType}
+                          {label ? (
+                            <Badge variant="outline" className="text-xs">
+                              {label}
                             </Badge>
                           ) : (
                             <span className="text-xs text-muted-foreground">-</span>

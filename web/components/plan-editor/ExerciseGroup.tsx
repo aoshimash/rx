@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { PlanEntryCreate } from '@/types/api';
 import { Plus, Trash2 } from 'lucide-react';
-import { ExerciseRow, type SetType } from './ExerciseRow';
+import { ExerciseRow } from './ExerciseRow';
 
 interface ExerciseGroupProps {
   exerciseName: string;
@@ -12,7 +12,7 @@ interface ExerciseGroupProps {
   onRename: (newName: string) => void;
   onRemoveExercise: () => void;
   onAddSet: () => void;
-  onSetTypeChange: (flatIndex: number, value: SetType | undefined) => void;
+  onLabelChange: (flatIndex: number, value: string | undefined) => void;
   onSetsChange: (flatIndex: number, value: number) => void;
   onRepsChange: (flatIndex: number, value: number) => void;
   onLoadKgChange: (flatIndex: number, value: number) => void;
@@ -26,7 +26,7 @@ export function ExerciseGroup({
   onRename,
   onRemoveExercise,
   onAddSet,
-  onSetTypeChange,
+  onLabelChange,
   onSetsChange,
   onRepsChange,
   onLoadKgChange,
@@ -56,7 +56,7 @@ export function ExerciseGroup({
       {/* Column headers */}
       {entries.length > 0 && (
         <div className="flex items-center gap-2 px-0.5">
-          <span className="w-[110px] text-xs text-muted-foreground">タイプ</span>
+          <span className="w-[110px] text-xs text-muted-foreground">Label</span>
           <span className="w-14 text-xs text-muted-foreground text-center">Sets</span>
           <span className="w-4" />
           <span className="w-14 text-xs text-muted-foreground text-center">Reps</span>
@@ -70,12 +70,12 @@ export function ExerciseGroup({
         {entries.map(({ entry, flatIndex }) => (
           <ExerciseRow
             key={flatIndex}
-            setType={(entry.metadata?.set_type as SetType) ?? undefined}
+            label={(entry.metadata?.label as string) ?? undefined}
             sets={entry.sets}
             reps={entry.reps}
             loadKg={entry.load_kg}
             rpe={entry.rpe}
-            onSetTypeChange={(val) => onSetTypeChange(flatIndex, val)}
+            onLabelChange={(val) => onLabelChange(flatIndex, val)}
             onSetsChange={(val) => onSetsChange(flatIndex, val)}
             onRepsChange={(val) => onRepsChange(flatIndex, val)}
             onLoadKgChange={(val) => onLoadKgChange(flatIndex, val)}

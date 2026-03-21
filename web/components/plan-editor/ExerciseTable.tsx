@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import type { PlanEntryCreate } from '@/types/api';
 import { Plus } from 'lucide-react';
 import { ExerciseGroup } from './ExerciseGroup';
-import type { SetType } from './ExerciseRow';
 
 interface ExerciseTableProps {
   exercises: PlanEntryCreate[];
@@ -79,10 +78,10 @@ export function ExerciseTable({ exercises, onChange }: ExerciseTableProps) {
     ]);
   };
 
-  const handleSetTypeChange = (index: number, value: SetType | undefined) => {
+  const handleLabelChange = (index: number, value: string | undefined) => {
     updateEntry(index, (e) => ({
       ...e,
-      metadata: { ...e.metadata, set_type: value },
+      metadata: { ...e.metadata, label: value },
     }));
   };
 
@@ -99,7 +98,7 @@ export function ExerciseTable({ exercises, onChange }: ExerciseTableProps) {
           onRename={(newName) => handleRename(group.name, newName)}
           onRemoveExercise={() => handleRemoveExercise(group.name)}
           onAddSet={() => handleAddSet(group.name)}
-          onSetTypeChange={handleSetTypeChange}
+          onLabelChange={handleLabelChange}
           onSetsChange={(i, val) => updateEntry(i, (e) => ({ ...e, sets: val }))}
           onRepsChange={(i, val) => updateEntry(i, (e) => ({ ...e, reps: val }))}
           onLoadKgChange={(i, val) => updateEntry(i, (e) => ({ ...e, load_kg: val }))}

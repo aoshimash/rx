@@ -44,9 +44,7 @@ export function ExerciseSummary({ exercises }: ExerciseSummaryProps) {
           <span className="w-40 shrink-0 font-medium truncate">{group.name}</span>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground">
             {group.entries.map((entry, idx) => {
-              const label = (entry.metadata?.label ?? entry.metadata?.set_type) as
-                | string
-                | undefined;
+              const label = entry.metadata?.label as string | undefined;
               return (
                 <span key={`${group.name}-${idx}`} className="inline-flex items-center gap-1.5">
                   {label && <Badge variant="outline">{label}</Badge>}
