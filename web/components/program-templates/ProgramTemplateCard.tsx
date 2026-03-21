@@ -24,7 +24,7 @@ export function ProgramTemplateCard({ template }: ProgramTemplateCardProps) {
   const isArchived = !!template.archived_at;
 
   const { data: programsData, isLoading: programsLoading } = useProgramsByTemplateId(template.id);
-  const programs = programsData?.items ?? [];
+  const programs = programsData?.data ?? [];
   const hasPrograms = programs.length > 0;
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
