@@ -32,3 +32,6 @@ packages:
 
   # Database migration tool
   - name: golang-migrate/migrate@v4.18.3
+
+  # Git hook manager
+  - name: evilmartians/lefthook@v2.1.4
