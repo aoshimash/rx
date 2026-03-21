@@ -5,6 +5,7 @@
 # (If upgrading from the old githooks/ setup: git config --unset core.hooksPath first)
 
 pre-commit:
+  parallel: false
   commands:
     api-format:
       glob: "api/**"
@@ -33,10 +34,8 @@ pre-push:
       root: "api/"
       run: |
         task generate
-        if [ -n "$(git status --porcelain -uno)" ]; then
+        if ! git diff --exit-code HEAD -- pkg/openapi/server.gen.go; then
           echo "❌ Generated code is stale. Run 'cd api && task generate' and commit the changes."
-          git status -uno
-          git diff
           exit 1
         fi
         echo "✅ Generated code is up to date."
