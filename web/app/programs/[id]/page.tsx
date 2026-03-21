@@ -14,6 +14,10 @@ type SessionGroup = { name: string; exerciseGroups: ExerciseGroup[] };
 
 function formatEntry(entry: ProgramEntry): string {
   const parts: string[] = [];
+  const label = entry.metadata?.label as string | undefined;
+  if (label) {
+    parts.push(label);
+  }
   if (entry.sets != null && entry.reps != null) {
     parts.push(`${entry.sets}×${entry.reps}`);
   } else if (entry.sets != null) {

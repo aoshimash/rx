@@ -10,9 +10,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
 import type { ProgramEntryCreate } from '@/types/api';
 import { Plus, Trash2, X } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 // ============================================================================
 // Types
@@ -24,6 +25,7 @@ interface SessionExercise {
   reps?: number;
   rpe?: number;
   percent_1rm_display?: number; // displayed as 0-100%, stored as 0-1 in API
+  label?: string;
 }
 
 interface SessionGroup {
@@ -52,6 +54,7 @@ function entriesToSessionGroups(entries: ProgramEntryCreate[]): SessionGroup[] {
       rpe: entry.rpe,
       percent_1rm_display:
         entry.percent_1rm !== undefined ? Math.round(entry.percent_1rm * 100) : undefined,
+      label: (entry.metadata?.label as string) || undefined,
     });
   }
 
@@ -75,13 +78,75 @@ function sessionGroupsToEntries(sessions: SessionGroup[]): ProgramEntryCreate[] 
         rpe: ex.rpe,
         percent_1rm:
           ex.percent_1rm_display !== undefined ? ex.percent_1rm_display / 100 : undefined,
-        metadata: { session: session.name },
+        metadata: {
+          session: session.name,
+          ...(ex.label ? { label: ex.label } : {}),
+        },
       });
       order++;
     }
   }
 
   return entries;
+}
+
+// ============================================================================
+// LabelCombobox
+// ============================================================================
+
+function LabelCombobox({
+  value,
+  onChange,
+  suggestions,
+}: {
+  value: string;
+  onChange: (value: string | undefined) => void;
+  suggestions: string[];
+}) {
+  const [open, setOpen] = useState(false);
+
+  const filtered = suggestions.filter(
+    (s) => s.toLowerCase().includes(value.toLowerCase()) && s !== value
+  );
+  const showDropdown = open && filtered.length > 0;
+
+  return (
+    <Popover open={showDropdown} onOpenChange={setOpen}>
+      <PopoverAnchor asChild>
+        <Input
+          value={value}
+          onChange={(e) => {
+            onChange(e.target.value || undefined);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 150)}
+          placeholder="e.g., Top, Main"
+        />
+      </PopoverAnchor>
+      <PopoverContent
+        className="p-1"
+        style={{ width: 'var(--radix-popper-anchor-width)' }}
+        align="start"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
+        {filtered.map((label) => (
+          <button
+            key={label}
+            type="button"
+            className="w-full text-left px-2 py-1.5 text-sm rounded-sm hover:bg-accent cursor-pointer"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              onChange(label);
+              setOpen(false);
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 // ============================================================================
@@ -92,9 +157,15 @@ interface ProgramExerciseRowProps {
   exercise: SessionExercise;
   onChange: (updated: SessionExercise) => void;
   onRemove: () => void;
+  labelSuggestions: string[];
 }
 
-function ProgramExerciseRow({ exercise, onChange, onRemove }: ProgramExerciseRowProps) {
+function ProgramExerciseRow({
+  exercise,
+  onChange,
+  onRemove,
+  labelSuggestions,
+}: ProgramExerciseRowProps) {
   return (
     <div className="grid gap-4 border rounded-lg p-4">
       <div className="flex items-center justify-between">
@@ -110,7 +181,7 @@ function ProgramExerciseRow({ exercise, onChange, onRemove }: ProgramExerciseRow
         placeholder="e.g., Squat, Bench Press"
       />
 
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-5 gap-3">
         <div className="space-y-2">
           <Label>Sets</Label>
           <Input
@@ -173,6 +244,14 @@ function ProgramExerciseRow({ exercise, onChange, onRemove }: ProgramExerciseRow
             placeholder="75"
           />
         </div>
+        <div className="space-y-2">
+          <Label>Label</Label>
+          <LabelCombobox
+            value={exercise.label ?? ''}
+            onChange={(v) => onChange({ ...exercise, label: v })}
+            suggestions={labelSuggestions}
+          />
+        </div>
       </div>
     </div>
   );
@@ -215,6 +294,16 @@ export function ProgramForm({
       ? entriesToSessionGroups(initialEntries)
       : [{ name: '', exercises: [] }]
   );
+
+  const labelSuggestions = useMemo(() => {
+    const labels = new Set<string>();
+    for (const session of sessions) {
+      for (const ex of session.exercises) {
+        if (ex.label) labels.add(ex.label);
+      }
+    }
+    return [...labels].sort();
+  }, [sessions]);
 
   const handleAddSession = () => {
     setSessions([...sessions, { name: '', exercises: [] }]);
@@ -332,6 +421,7 @@ export function ProgramForm({
                           exercise={exercise}
                           onChange={(updated) => handleExerciseChange(sessionIdx, exIdx, updated)}
                           onRemove={() => handleRemoveExercise(sessionIdx, exIdx)}
+                          labelSuggestions={labelSuggestions}
                         />
                       ))}
                     </div>
