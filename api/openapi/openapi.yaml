@@ -18,6 +18,12 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/After'
+        - name: include_archived
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: When true, archived programs are included in results
       responses:
         '200':
           description: Paginated list of programs
@@ -67,29 +73,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-    put:
-      summary: Update program
-      operationId: updateProgram
-      tags: [Program]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProgramCreate'
-      responses:
-        '200':
-          description: Program updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Program'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
     delete:
       summary: Delete program
       operationId: deleteProgram
@@ -103,6 +86,64 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+
+  /programs/{id}/archive:
+    parameters:
+      - $ref: '#/components/parameters/ProgramId'
+    post:
+      summary: Archive program
+      operationId: archiveProgram
+      tags: [Program]
+      responses:
+        '200':
+          description: Program archived
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Program'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /programs/{id}/unarchive:
+    parameters:
+      - $ref: '#/components/parameters/ProgramId'
+    post:
+      summary: Unarchive program
+      operationId: unarchiveProgram
+      tags: [Program]
+      responses:
+        '200':
+          description: Program unarchived
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Program'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /programs/{id}/duplicate:
+    parameters:
+      - $ref: '#/components/parameters/ProgramId'
+    post:
+      summary: Duplicate program
+      description: Creates a deep copy of the Program with all entries, appending " (copy)" to the name.
+      operationId: duplicateProgram
+      tags: [Program]
+      responses:
+        '201':
+          description: Program duplicated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Program'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /cycles:
     get:
@@ -630,6 +671,11 @@ components:
         updated_at:
           type: string
           format: date-time
+        archived_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When set, the program is archived and hidden from default list results
 
     ProgramCreate:
       type: object

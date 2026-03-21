@@ -135,7 +135,9 @@ func main() {
 		r.Post("/programs", programHandler.CreateProgram)
 		r.Get("/programs", programHandler.ListPrograms)
 		r.Get("/programs/{id}", programHandler.GetProgram)
-		r.Put("/programs/{id}", programHandler.UpdateProgram)
+		r.Post("/programs/{id}/archive", programHandler.ArchiveProgram)
+		r.Post("/programs/{id}/unarchive", programHandler.UnarchiveProgram)
+		r.Post("/programs/{id}/duplicate", programHandler.DuplicateProgram)
 		r.Delete("/programs/{id}", programHandler.DeleteProgram)
 
 		// Cycle routes

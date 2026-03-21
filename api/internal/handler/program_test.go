@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/aoshimash/rx/api/internal/domain"
 	"github.com/aoshimash/rx/api/internal/middleware"
 	"github.com/aoshimash/rx/api/internal/store/memory"
 	"github.com/go-chi/chi/v5"
@@ -28,7 +27,9 @@ func setupProgramTestRouter() (chi.Router, *ProgramHandler) {
 	r.Post("/programs", handler.CreateProgram)
 	r.Get("/programs", handler.ListPrograms)
 	r.Get("/programs/{id}", handler.GetProgram)
-	r.Put("/programs/{id}", handler.UpdateProgram)
+	r.Post("/programs/{id}/archive", handler.ArchiveProgram)
+	r.Post("/programs/{id}/unarchive", handler.UnarchiveProgram)
+	r.Post("/programs/{id}/duplicate", handler.DuplicateProgram)
 	r.Delete("/programs/{id}", handler.DeleteProgram)
 	r.Post("/plans/from-program", handler.ConvertToPlans)
 
@@ -156,27 +157,14 @@ func TestProgramHandler_GetProgram(t *testing.T) {
 	})
 }
 
-func TestProgramHandler_UpdateProgram(t *testing.T) {
+func TestProgramHandler_ArchiveProgram(t *testing.T) {
 	router, _ := setupProgramTestRouter()
 
-	t.Run("updates program", func(t *testing.T) {
+	t.Run("archives program", func(t *testing.T) {
 		created := createTestProgram(t, router)
 		id := created["id"].(string)
 
-		body := `{
-			"name": "Updated Program",
-			"entries": [
-				{
-					"exercise_name": "Deadlift",
-					"order": 0,
-					"sets": 1,
-					"reps": 5,
-					"percent_1rm": 0.90
-				}
-			]
-		}`
-		req := httptest.NewRequest(http.MethodPut, "/programs/"+id, bytes.NewBufferString(body))
-		req.Header.Set("Content-Type", "application/json")
+		req := httptest.NewRequest(http.MethodPost, "/programs/"+id+"/archive", nil)
 		req.Header.Set("Authorization", "Bearer test-token")
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
@@ -186,9 +174,78 @@ func TestProgramHandler_UpdateProgram(t *testing.T) {
 		var result map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &result)
 		require.NoError(t, err)
-		assert.Equal(t, "Updated Program", result["name"])
+		assert.NotNil(t, result["archived_at"])
+	})
+
+	t.Run("returns 404 for nonexistent program", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/programs/00000000-0000-0000-0000-000000000001/archive", nil)
+		req.Header.Set("Authorization", "Bearer test-token")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+}
+
+func TestProgramHandler_UnarchiveProgram(t *testing.T) {
+	router, _ := setupProgramTestRouter()
+
+	t.Run("unarchives program", func(t *testing.T) {
+		created := createTestProgram(t, router)
+		id := created["id"].(string)
+
+		// Archive first
+		req := httptest.NewRequest(http.MethodPost, "/programs/"+id+"/archive", nil)
+		req.Header.Set("Authorization", "Bearer test-token")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+		require.Equal(t, http.StatusOK, w.Code)
+
+		// Unarchive
+		req = httptest.NewRequest(http.MethodPost, "/programs/"+id+"/unarchive", nil)
+		req.Header.Set("Authorization", "Bearer test-token")
+		w = httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		var result map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &result)
+		require.NoError(t, err)
+		assert.Nil(t, result["archived_at"])
+	})
+}
+
+func TestProgramHandler_DuplicateProgram(t *testing.T) {
+	router, _ := setupProgramTestRouter()
+
+	t.Run("duplicates program", func(t *testing.T) {
+		created := createTestProgram(t, router)
+		id := created["id"].(string)
+
+		req := httptest.NewRequest(http.MethodPost, "/programs/"+id+"/duplicate", nil)
+		req.Header.Set("Authorization", "Bearer test-token")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusCreated, w.Code)
+
+		var result map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &result)
+		require.NoError(t, err)
+		assert.NotEqual(t, id, result["id"])
+		assert.Equal(t, "Strength Program (copy)", result["name"])
 		entries := result["entries"].([]interface{})
-		assert.Len(t, entries, 1)
+		assert.Len(t, entries, 3)
+	})
+
+	t.Run("returns 404 for nonexistent program", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/programs/00000000-0000-0000-0000-000000000001/duplicate", nil)
+		req.Header.Set("Authorization", "Bearer test-token")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
 	})
 }
 
@@ -235,6 +292,60 @@ func TestProgramHandler_ListPrograms(t *testing.T) {
 
 		data := result["data"].([]interface{})
 		assert.GreaterOrEqual(t, len(data), 2)
+	})
+
+	t.Run("excludes archived programs by default", func(t *testing.T) {
+		router2, _ := setupProgramTestRouter()
+
+		created := createTestProgram(t, router2)
+		id := created["id"].(string)
+
+		// Archive the program
+		req := httptest.NewRequest(http.MethodPost, "/programs/"+id+"/archive", nil)
+		req.Header.Set("Authorization", "Bearer test-token")
+		w := httptest.NewRecorder()
+		router2.ServeHTTP(w, req)
+		require.Equal(t, http.StatusOK, w.Code)
+
+		// List without include_archived
+		req = httptest.NewRequest(http.MethodGet, "/programs", nil)
+		req.Header.Set("Authorization", "Bearer test-token")
+		w = httptest.NewRecorder()
+		router2.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		var result map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &result)
+		require.NoError(t, err)
+		data := result["data"].([]interface{})
+		assert.Len(t, data, 0)
+	})
+
+	t.Run("includes archived programs with include_archived=true", func(t *testing.T) {
+		router3, _ := setupProgramTestRouter()
+
+		created := createTestProgram(t, router3)
+		id := created["id"].(string)
+
+		// Archive the program
+		req := httptest.NewRequest(http.MethodPost, "/programs/"+id+"/archive", nil)
+		req.Header.Set("Authorization", "Bearer test-token")
+		w := httptest.NewRecorder()
+		router3.ServeHTTP(w, req)
+		require.Equal(t, http.StatusOK, w.Code)
+
+		// List with include_archived=true
+		req = httptest.NewRequest(http.MethodGet, "/programs?include_archived=true", nil)
+		req.Header.Set("Authorization", "Bearer test-token")
+		w = httptest.NewRecorder()
+		router3.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		var result map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &result)
+		require.NoError(t, err)
+		data := result["data"].([]interface{})
+		assert.Len(t, data, 1)
 	})
 }
 
@@ -324,6 +435,3 @@ func TestProgramHandler_ConvertToPlans(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 	})
 }
-
-// Suppress unused import warning
-var _ = domain.ErrNotFound
