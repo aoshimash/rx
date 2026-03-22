@@ -40,4 +40,8 @@ export const programsApi = {
   async getLoggedSessions(id: string): Promise<LoggedSessionsResponse> {
     return api.get(`programs/${id}/logged-sessions`).json<LoggedSessionsResponse>();
   },
+
+  async updateStatus(id: string, status: string): Promise<Program> {
+    return api.patch(`programs/${id}/status`, { json: { status } }).json<Program>();
+  },
 };

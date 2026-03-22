@@ -134,7 +134,7 @@ export interface GenerateProgramRequest {
 // Program
 // ============================================================================
 
-export type ProgramStatus = 'active' | 'completed' | 'planned';
+export type ProgramStatus = 'created' | 'ongoing' | 'completed' | 'cancelled';
 
 export interface Program {
   id: string;
