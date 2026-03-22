@@ -32,6 +32,12 @@ const (
 	ListProgramsParamsStatusPlanned   ListProgramsParamsStatus = "planned"
 )
 
+// DuplicateProgramTemplateRequest defines model for DuplicateProgramTemplateRequest.
+type DuplicateProgramTemplateRequest struct {
+	// Name Custom name for the duplicate. If omitted, defaults to "{original name} (copy)".
+	Name *string `json:"name,omitempty"`
+}
+
 // Error defines model for Error.
 type Error struct {
 	// Code Error code
@@ -470,6 +476,9 @@ type UpdateLogJSONRequestBody = LogCreate
 
 // CreateProgramTemplateJSONRequestBody defines body for CreateProgramTemplate for application/json ContentType.
 type CreateProgramTemplateJSONRequestBody = ProgramTemplateCreate
+
+// DuplicateProgramTemplateJSONRequestBody defines body for DuplicateProgramTemplate for application/json ContentType.
+type DuplicateProgramTemplateJSONRequestBody = DuplicateProgramTemplateRequest
 
 // GenerateProgramJSONRequestBody defines body for GenerateProgram for application/json ContentType.
 type GenerateProgramJSONRequestBody = GenerateProgramRequest

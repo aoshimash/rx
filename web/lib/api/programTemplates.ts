@@ -43,8 +43,9 @@ export const programTemplatesApi = {
     return api.post(`program-templates/${id}/unarchive`).json<ProgramTemplate>();
   },
 
-  async duplicate(id: string): Promise<ProgramTemplate> {
-    return api.post(`program-templates/${id}/duplicate`).json<ProgramTemplate>();
+  async duplicate(id: string, name?: string): Promise<ProgramTemplate> {
+    const options = name ? { json: { name } } : undefined;
+    return api.post(`program-templates/${id}/duplicate`, options).json<ProgramTemplate>();
   },
 
   async generate(id: string, data: GenerateProgramRequest): Promise<Program> {

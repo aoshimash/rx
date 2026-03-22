@@ -1,9 +1,29 @@
 'use client';
 
 import { DeleteConfirmDialog } from '@/components/plan-editor/DeleteConfirmDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -73,6 +93,9 @@ export default function ProgramTemplateDetailPage() {
   const deleteTemplate = useDeleteProgramTemplate();
   const { data: programsData, isLoading: programsLoading } = useProgramsByTemplateId(templateId);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [duplicateName, setDuplicateName] = useState('');
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -95,8 +118,15 @@ export default function ProgramTemplateDetailPage() {
   const isArchived = !!template.archived_at;
   const hasPrograms = (programsData?.data ?? []).length > 0;
 
+  const openDuplicateDialog = () => {
+    setDuplicateName(`${template.name} (copy)`);
+    setDuplicateDialogOpen(true);
+  };
+
   const handleDuplicate = async () => {
-    await duplicateTemplate.mutateAsync(templateId);
+    const name = duplicateName.trim();
+    await duplicateTemplate.mutateAsync({ id: templateId, name: name || undefined });
+    setDuplicateDialogOpen(false);
     router.push('/program-templates');
   };
 
@@ -104,9 +134,14 @@ export default function ProgramTemplateDetailPage() {
     if (isArchived) {
       await unarchiveTemplate.mutateAsync(templateId);
     } else {
-      await archiveTemplate.mutateAsync(templateId);
-      router.push('/program-templates');
+      setArchiveDialogOpen(true);
     }
+  };
+
+  const handleArchive = async () => {
+    await archiveTemplate.mutateAsync(templateId);
+    setArchiveDialogOpen(false);
+    router.push('/program-templates');
   };
 
   const handleDelete = async () => {
@@ -152,7 +187,7 @@ export default function ProgramTemplateDetailPage() {
           <div className="flex gap-2">
             <Button
               variant="outline"
-              onClick={handleDuplicate}
+              onClick={openDuplicateDialog}
               disabled={duplicateTemplate.isPending}
             >
               <Copy className="h-4 w-4 mr-2" />
@@ -282,6 +317,54 @@ export default function ProgramTemplateDetailPage() {
         title="Delete template?"
         description="This will permanently delete this template. This action cannot be undone."
       />
+
+      <Dialog open={duplicateDialogOpen} onOpenChange={setDuplicateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Duplicate template</DialogTitle>
+            <DialogDescription>Enter a name for the duplicated template.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="duplicate-name">Name</Label>
+            <Input
+              id="duplicate-name"
+              value={duplicateName}
+              onChange={(e) => setDuplicateName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && duplicateName.trim() && !duplicateTemplate.isPending) {
+                  handleDuplicate();
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDuplicateDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDuplicate}
+              disabled={!duplicateName.trim() || duplicateTemplate.isPending}
+            >
+              Duplicate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={archiveDialogOpen} onOpenChange={setArchiveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archive template?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This template will be hidden from the main list. You can unarchive it later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleArchive}>Archive</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }

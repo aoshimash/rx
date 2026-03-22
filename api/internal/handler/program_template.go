@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"strings"
 
@@ -206,7 +207,20 @@ func (h *ProgramTemplateHandler) DuplicateProgramTemplate(w http.ResponseWriter,
 		return
 	}
 
+	// Parse optional request body for custom name
 	copyName := strings.TrimSpace(original.Name) + " (copy)"
+	if r.ContentLength != 0 {
+		var req struct {
+			Name string `json:"name,omitempty"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil && err != io.EOF {
+			middleware.WriteValidationError(w, "Invalid request body", nil)
+			return
+		}
+		if req.Name != "" {
+			copyName = req.Name
+		}
+	}
 
 	entries := make([]domain.ProgramTemplateEntry, len(original.Entries))
 	for i, e := range original.Entries {
