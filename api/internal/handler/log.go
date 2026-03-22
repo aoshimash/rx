@@ -175,10 +175,9 @@ func (h *LogHandler) CreateLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Auto-transition program from "created" to "ongoing" on first log
+	// Validate program exists before creating log
 	if log.ProgramID != nil {
-		program, err := h.programRepo.GetByID(ctx, *log.ProgramID)
-		if err != nil {
+		if _, err := h.programRepo.GetByID(ctx, *log.ProgramID); err != nil {
 			if err == domain.ErrNotFound {
 				middleware.WriteValidationError(w, "Program not found", map[string]interface{}{
 					"program_id": log.ProgramID.String(),
@@ -188,17 +187,19 @@ func (h *LogHandler) CreateLog(w http.ResponseWriter, r *http.Request) {
 			middleware.WriteInternalError(w, "Failed to retrieve program")
 			return
 		}
-		if program.Status == domain.ProgramStatusCreated {
-			if err := h.programRepo.UpdateStatus(ctx, *log.ProgramID, domain.ProgramStatusOngoing); err != nil {
-				middleware.WriteInternalError(w, "Failed to update program status")
-				return
-			}
-		}
 	}
 
 	if err := h.repo.Create(ctx, log); err != nil {
 		middleware.WriteInternalError(w, "Failed to create log")
 		return
+	}
+
+	// Auto-transition program from "created" to "ongoing" after successful log creation
+	if log.ProgramID != nil {
+		program, err := h.programRepo.GetByID(ctx, *log.ProgramID)
+		if err == nil && program.Status == domain.ProgramStatusCreated {
+			_ = h.programRepo.UpdateStatus(ctx, *log.ProgramID, domain.ProgramStatusOngoing)
+		}
 	}
 
 	writeJSON(w, http.StatusCreated, log)
