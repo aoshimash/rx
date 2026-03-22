@@ -30,16 +30,18 @@ function TemplateInfo({ program }: { program: Program }) {
   );
 }
 
-function statusBadgeVariant(status: string): 'default' | 'secondary' | 'outline' {
-  if (status === 'active') return 'default';
-  if (status === 'planned') return 'outline';
-  return 'secondary';
+function statusBadgeVariant(
+  status: string,
+): 'default' | 'secondary' | 'outline' | 'destructive' {
+  if (status === 'ongoing') return 'default';
+  if (status === 'completed') return 'secondary';
+  if (status === 'cancelled') return 'destructive';
+  return 'outline';
 }
 
-export function ProgramCard({ program }: ProgramCardProps) {
+export function OngoingProgramCard({ program }: ProgramCardProps) {
   const router = useRouter();
   const { data: loggedSessions } = useLoggedSessions(program.id);
-  const isCompleted = program.status === 'completed';
 
   const totalSessions = program.sessions.length;
   const loggedSet = new Set(loggedSessions?.sessions ?? []);
@@ -49,14 +51,14 @@ export function ProgramCard({ program }: ProgramCardProps) {
 
   return (
     <Card
-      className={`cursor-pointer transition-colors hover:bg-accent/50 ${isCompleted ? 'opacity-50' : ''}`}
+      className="cursor-pointer transition-colors hover:bg-accent/50"
       onClick={() => router.push(`/programs/${program.id}`)}
     >
       <CardHeader>
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <CardTitle className="text-xl">{program.name}</CardTitle>
-            <Badge variant={statusBadgeVariant(program.status)}>{program.status}</Badge>
+            <Badge variant="default">ongoing</Badge>
           </div>
           {program.notes && <p className="text-sm text-muted-foreground">{program.notes}</p>}
         </div>
@@ -77,9 +79,51 @@ export function ProgramCard({ program }: ProgramCardProps) {
               />
             </div>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Created {new Date(program.created_at).toLocaleDateString()}
-          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function CreatedProgramCard({ program }: ProgramCardProps) {
+  const router = useRouter();
+
+  return (
+    <Card
+      className="cursor-pointer transition-colors hover:bg-accent/50"
+      onClick={() => router.push(`/programs/${program.id}`)}
+    >
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">{program.name}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex justify-between text-sm text-muted-foreground">
+          <span>{program.sessions.length} sessions</span>
+          <span>{new Date(program.created_at).toLocaleDateString()}</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function FinishedProgramCard({ program }: ProgramCardProps) {
+  const router = useRouter();
+
+  return (
+    <Card
+      className="cursor-pointer transition-colors hover:bg-accent/50 opacity-50"
+      onClick={() => router.push(`/programs/${program.id}`)}
+    >
+      <CardHeader className="pb-2">
+        <div className="flex items-center gap-2">
+          <CardTitle className="text-base">{program.name}</CardTitle>
+          <Badge variant={statusBadgeVariant(program.status)}>{program.status}</Badge>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="flex justify-between text-sm text-muted-foreground">
+          <span>{program.sessions.length} sessions</span>
+          <span>{new Date(program.created_at).toLocaleDateString()}</span>
         </div>
       </CardContent>
     </Card>
