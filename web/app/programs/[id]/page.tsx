@@ -4,7 +4,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useDeleteProgram, useLoggedSessions, useProgram, useUpdateProgramStatus } from '@/lib/hooks/usePrograms';
+import {
+  useDeleteProgram,
+  useLoggedSessions,
+  useProgram,
+  useUpdateProgramStatus,
+} from '@/lib/hooks/usePrograms';
 import type { ProgramSession, ProgramSessionEntry } from '@/types/api';
 import { Trash2 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
@@ -139,7 +144,8 @@ export default function ProgramDetailPage() {
 
   const sortedSessions = program.sessions.slice().sort((a, b) => a.order - b.order);
   const completedSessionSet = buildCompletedSessionSet(loggedSessions?.sessions ?? []);
-  const allSessionsLogged = program.sessions.length > 0 &&
+  const allSessionsLogged =
+    program.sessions.length > 0 &&
     program.sessions.every((s) => completedSessionSet.has(s.session_name));
 
   let foundNextSession = false;
