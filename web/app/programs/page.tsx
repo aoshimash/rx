@@ -1,6 +1,10 @@
 'use client';
 
-import { ProgramCard } from '@/components/programs/ProgramCard';
+import {
+  CreatedProgramCard,
+  FinishedProgramCard,
+  OngoingProgramCard,
+} from '@/components/programs/ProgramCard';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,7 +21,8 @@ import type { ProgramSessionCreate } from '@/types/api';
 import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
 
-const SHOW_COMPLETED_KEY = 'programs:showCompleted';
+const SHOW_FINISHED_KEY = 'programs:showFinished';
+const OLD_SHOW_COMPLETED_KEY = 'programs:showCompleted';
 
 interface SessionInput {
   session_name: string;
@@ -27,9 +32,16 @@ interface SessionInput {
 export default function ProgramsPage() {
   const { data: programsData, isLoading } = usePrograms();
   const createProgram = useCreateProgram();
-  const [showCompleted, setShowCompleted] = useState(
-    () => typeof window !== 'undefined' && localStorage.getItem(SHOW_COMPLETED_KEY) === 'true'
-  );
+  const [showFinished, setShowFinished] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const oldValue = localStorage.getItem(OLD_SHOW_COMPLETED_KEY);
+    if (oldValue !== null) {
+      localStorage.setItem(SHOW_FINISHED_KEY, oldValue);
+      localStorage.removeItem(OLD_SHOW_COMPLETED_KEY);
+      return oldValue === 'true';
+    }
+    return localStorage.getItem(SHOW_FINISHED_KEY) === 'true';
+  });
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [notes, setNotes] = useState('');
@@ -78,15 +90,16 @@ export default function ProgramsPage() {
   const allPrograms = [...(programsData?.data || [])].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
-  const programs = showCompleted
-    ? allPrograms
-    : allPrograms.filter((p) => p.status !== 'completed');
-  const completedCount = allPrograms.filter((p) => p.status === 'completed').length;
+  const ongoingPrograms = allPrograms.filter((p) => p.status === 'ongoing');
+  const createdPrograms = allPrograms.filter((p) => p.status === 'created');
+  const finishedPrograms = allPrograms.filter(
+    (p) => p.status === 'completed' || p.status === 'cancelled'
+  );
 
-  const toggleShowCompleted = () => {
-    const next = !showCompleted;
-    setShowCompleted(next);
-    localStorage.setItem(SHOW_COMPLETED_KEY, String(next));
+  const toggleShowFinished = () => {
+    const next = !showFinished;
+    setShowFinished(next);
+    localStorage.setItem(SHOW_FINISHED_KEY, String(next));
   };
 
   if (isLoading) {
@@ -110,16 +123,9 @@ export default function ProgramsPage() {
             Concrete training programs with scheduled sessions.
           </p>
         </div>
-        {completedCount > 0 && (
-          <Button variant="ghost" size="sm" onClick={toggleShowCompleted}>
-            {showCompleted
-              ? `Hide completed (${completedCount})`
-              : `Show completed (${completedCount})`}
-          </Button>
-        )}
       </div>
 
-      {programs.length === 0 ? (
+      {allPrograms.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground mb-4">
             No programs yet. Create your first training program.
@@ -131,11 +137,49 @@ export default function ProgramsPage() {
         </div>
       ) : (
         <>
-          <div className="space-y-4">
-            {programs.map((program) => (
-              <ProgramCard key={program.id} program={program} />
-            ))}
-          </div>
+          {ongoingPrograms.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-3">
+                Ongoing
+              </h2>
+              <div className="space-y-4">
+                {ongoingPrograms.map((program) => (
+                  <OngoingProgramCard key={program.id} program={program} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {createdPrograms.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-3">
+                Programs
+              </h2>
+              <div className="grid grid-cols-2 gap-4">
+                {createdPrograms.map((program) => (
+                  <CreatedProgramCard key={program.id} program={program} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {finishedPrograms.length > 0 && (
+            <div className="mb-8">
+              <Button variant="ghost" size="sm" onClick={toggleShowFinished}>
+                {showFinished
+                  ? `Hide finished (${finishedPrograms.length})`
+                  : `Show finished (${finishedPrograms.length})`}
+              </Button>
+              {showFinished && (
+                <div className="grid grid-cols-2 gap-4 mt-3">
+                  {finishedPrograms.map((program) => (
+                    <FinishedProgramCard key={program.id} program={program} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="mt-6">
             <Button variant="outline" onClick={() => setOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />

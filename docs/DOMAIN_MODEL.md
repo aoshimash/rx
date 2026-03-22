@@ -26,8 +26,8 @@ A **Program** is a concrete training instance derived from a ProgramTemplate (vi
 
 - Contains **ProgramSessions** (named workout days with an order and optional date)
 - Each session has **ProgramSessionEntries** (exercises with absolute weights, not relative prescriptions)
-- Has a `status`: `active` (in progress) or `completed` (finished)
-- Status transitions automatically to `completed` when all sessions have been logged
+- Has a `status`: `created` (registered, not yet started), `ongoing` (in progress), `completed` (all sessions logged and confirmed), or `cancelled` (stopped mid-way)
+- Program status transitions are explicit user actions: `created` → `ongoing` (Start), `ongoing` → `completed` (Complete, requires all sessions logged), `ongoing` → `cancelled` (Cancel). Both `completed` and `cancelled` are terminal states.
 
 ### Log and Program (many:1)
 
@@ -71,9 +71,9 @@ ProgramTemplate (3 sessions: "W1D1", "W1D2", "W1D3")
           └── ProgramSession "W1D3": entries with calculated load_kg
 ```
 
-### Auto-Completion
+### Program Status Transitions
 
-When a Log is created with a `program_id` and `session_name`, the system checks whether all sessions in the referenced Program have been logged. If all sessions have been logged, the Program status transitions automatically from `active` to `completed`.
+Program status transitions are explicit user actions via the program detail page. The "Complete Program" button is only enabled when all sessions in the program have associated logs. There is no automatic status transition.
 
 ## Design Decisions
 

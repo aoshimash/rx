@@ -4,7 +4,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useDeleteProgram, useLoggedSessions, useProgram } from '@/lib/hooks/usePrograms';
+import {
+  useDeleteProgram,
+  useLoggedSessions,
+  useProgram,
+  useUpdateProgramStatus,
+} from '@/lib/hooks/usePrograms';
 import type { ProgramSession, ProgramSessionEntry } from '@/types/api';
 import { Trash2 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
@@ -113,6 +118,7 @@ export default function ProgramDetailPage() {
   const { data: program, isLoading } = useProgram(programId);
   const { data: loggedSessions } = useLoggedSessions(programId);
   const deleteProgram = useDeleteProgram();
+  const updateStatus = useUpdateProgramStatus();
 
   if (isLoading) {
     return (
@@ -138,6 +144,9 @@ export default function ProgramDetailPage() {
 
   const sortedSessions = program.sessions.slice().sort((a, b) => a.order - b.order);
   const completedSessionSet = buildCompletedSessionSet(loggedSessions?.sessions ?? []);
+  const allSessionsLogged =
+    program.sessions.length > 0 &&
+    program.sessions.every((s) => completedSessionSet.has(s.session_name));
 
   let foundNextSession = false;
   const sessionsWithStatus = sortedSessions.map((session) => {
@@ -153,16 +162,43 @@ export default function ProgramDetailPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-bold">{program.name}</h1>
-            <Badge variant={program.status === 'active' ? 'default' : 'secondary'}>
+            <Badge variant={program.status === 'ongoing' ? 'default' : 'secondary'}>
               {program.status}
             </Badge>
           </div>
           {program.notes && <p className="text-muted-foreground mt-1">{program.notes}</p>}
         </div>
-        <Button variant="outline" onClick={handleDelete} disabled={deleteProgram.isPending}>
-          <Trash2 className="h-4 w-4 mr-2" />
-          Delete
-        </Button>
+        <div className="flex items-center gap-2">
+          {program.status === 'created' && (
+            <Button
+              onClick={() => updateStatus.mutate({ id: programId, status: 'ongoing' })}
+              disabled={updateStatus.isPending}
+            >
+              {updateStatus.isPending ? 'Starting...' : 'Start Program'}
+            </Button>
+          )}
+          {program.status === 'ongoing' && (
+            <>
+              <Button
+                onClick={() => updateStatus.mutate({ id: programId, status: 'completed' })}
+                disabled={updateStatus.isPending || !allSessionsLogged}
+              >
+                {updateStatus.isPending ? 'Completing...' : 'Complete Program'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => updateStatus.mutate({ id: programId, status: 'cancelled' })}
+                disabled={updateStatus.isPending}
+              >
+                Cancel Program
+              </Button>
+            </>
+          )}
+          <Button variant="outline" onClick={handleDelete} disabled={deleteProgram.isPending}>
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </Button>
+        </div>
       </div>
 
       {sessionsWithStatus.length === 0 ? (

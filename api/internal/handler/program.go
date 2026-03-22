@@ -65,7 +65,7 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 
 	program := &domain.Program{
 		Name:     req.Name,
-		Status:   domain.ProgramStatusActive,
+		Status:   domain.ProgramStatusCreated,
 		Notes:    req.Notes,
 		Metadata: req.Metadata,
 		Sessions: make([]domain.ProgramSession, len(req.Sessions)),
@@ -219,6 +219,54 @@ func (h *ProgramHandler) ListPrograms(w http.ResponseWriter, r *http.Request) {
 		"next_cursor": nextCursor,
 		"has_more":    hasMore,
 	})
+}
+
+// UpdateProgramStatus handles PATCH /programs/{id}/status
+func (h *ProgramHandler) UpdateProgramStatus(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	id, err := parseUUIDParam(r, "id", "program")
+	if err != nil {
+		middleware.WriteValidationError(w, err.Error(), nil)
+		return
+	}
+
+	var req struct {
+		Status string `json:"status"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		middleware.WriteValidationError(w, "Invalid request body", nil)
+		return
+	}
+
+	newStatus := domain.ProgramStatus(req.Status)
+
+	program, err := h.repo.GetByID(ctx, id)
+	if err != nil {
+		if err == domain.ErrNotFound {
+			middleware.WriteNotFoundError(w, "Program not found")
+			return
+		}
+		middleware.WriteInternalError(w, "Failed to retrieve program")
+		return
+	}
+
+	if err := domain.ValidateProgramStatusTransition(program.Status, newStatus); err != nil {
+		middleware.WriteValidationError(w, err.Error(), nil)
+		return
+	}
+
+	if err := h.repo.UpdateStatus(ctx, id, newStatus); err != nil {
+		middleware.WriteInternalError(w, "Failed to update program status")
+		return
+	}
+
+	updated, err := h.repo.GetByID(ctx, id)
+	if err != nil {
+		middleware.WriteInternalError(w, "Failed to retrieve updated program")
+		return
+	}
+	writeJSON(w, http.StatusOK, updated)
 }
 
 // ListLoggedSessions handles GET /programs/{id}/logged-sessions

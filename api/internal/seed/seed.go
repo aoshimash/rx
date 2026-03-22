@@ -127,6 +127,9 @@ func Run(ctx context.Context, programTemplateRepo repository.ProgramTemplateRepo
 	if err := programRepo.Create(ctx, activeProgram); err != nil {
 		return fmt.Errorf("create active program: %w", err)
 	}
+	if err := programRepo.UpdateStatus(ctx, activeProgram.ID, domain.ProgramStatusOngoing); err != nil {
+		return fmt.Errorf("start active program: %w", err)
+	}
 	slog.Info("[seed] Created active program", "name", activeProgram.Name)
 
 	for _, l := range activeProgramLogs(activeProgram) {
@@ -144,7 +147,7 @@ func Run(ctx context.Context, programTemplateRepo repository.ProgramTemplateRepo
 		TargetWeights:  map[string]float64{"Squat": 150.0, "Bench": 115.0, "Deadlift": 190.0},
 		LoadIncrements: map[string]float64{"Squat": 2.5, "Bench": 2.5, "Deadlift": 2.5},
 	})
-	plannedProgram.Status = domain.ProgramStatusPlanned
+	plannedProgram.Status = domain.ProgramStatusCreated
 	plannedProgram.Notes = strPtr("Target: SQ 150 / BP 115 / DL 190 — competing at April meet")
 	if err := programRepo.Create(ctx, plannedProgram); err != nil {
 		return fmt.Errorf("create planned program: %w", err)

@@ -142,6 +142,7 @@ func main() {
 		r.Get("/programs", programHandler.ListPrograms)
 		r.Get("/programs/{id}", programHandler.GetProgram)
 		r.Delete("/programs/{id}", programHandler.DeleteProgram)
+		r.Patch("/programs/{id}/status", programHandler.UpdateProgramStatus)
 		r.Get("/programs/{id}/logged-sessions", programHandler.ListLoggedSessions)
 
 		// Log routes

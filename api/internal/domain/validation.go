@@ -294,10 +294,10 @@ func ValidateProgram(p *Program) error {
 		return err
 	}
 
-	if p.Status != ProgramStatusActive && p.Status != ProgramStatusCompleted && p.Status != ProgramStatusPlanned {
+	if p.Status != ProgramStatusCreated && p.Status != ProgramStatusOngoing && p.Status != ProgramStatusCompleted && p.Status != ProgramStatusCancelled {
 		return &ValidationError{
 			Field:   "status",
-			Message: "status must be 'active', 'completed', or 'planned'",
+			Message: "status must be 'created', 'ongoing', 'completed', or 'cancelled'",
 		}
 	}
 

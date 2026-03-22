@@ -20,16 +20,26 @@ const (
 
 // Defines values for ProgramStatus.
 const (
-	ProgramStatusActive    ProgramStatus = "active"
+	ProgramStatusCancelled ProgramStatus = "cancelled"
 	ProgramStatusCompleted ProgramStatus = "completed"
-	ProgramStatusPlanned   ProgramStatus = "planned"
+	ProgramStatusCreated   ProgramStatus = "created"
+	ProgramStatusOngoing   ProgramStatus = "ongoing"
 )
 
 // Defines values for ListProgramsParamsStatus.
 const (
-	ListProgramsParamsStatusActive    ListProgramsParamsStatus = "active"
+	ListProgramsParamsStatusCancelled ListProgramsParamsStatus = "cancelled"
 	ListProgramsParamsStatusCompleted ListProgramsParamsStatus = "completed"
-	ListProgramsParamsStatusPlanned   ListProgramsParamsStatus = "planned"
+	ListProgramsParamsStatusCreated   ListProgramsParamsStatus = "created"
+	ListProgramsParamsStatusOngoing   ListProgramsParamsStatus = "ongoing"
+)
+
+// Defines values for UpdateProgramStatusJSONBodyStatus.
+const (
+	Cancelled UpdateProgramStatusJSONBodyStatus = "cancelled"
+	Completed UpdateProgramStatusJSONBodyStatus = "completed"
+	Created   UpdateProgramStatusJSONBodyStatus = "created"
+	Ongoing   UpdateProgramStatusJSONBodyStatus = "ongoing"
 )
 
 // DuplicateProgramTemplateRequest defines model for DuplicateProgramTemplateRequest.
@@ -187,12 +197,12 @@ type Program struct {
 	// Sessions Ordered training sessions (each contains entries with absolute weights)
 	Sessions []ProgramSession `json:"sessions"`
 
-	// Status active = in progress, completed = all sessions have been logged, planned = not yet started
+	// Status created = registered not yet started, ongoing = in progress, completed = all sessions logged and confirmed, cancelled = stopped mid-way
 	Status    ProgramStatus `json:"status"`
 	UpdatedAt time.Time     `json:"updated_at"`
 }
 
-// ProgramStatus active = in progress, completed = all sessions have been logged, planned = not yet started
+// ProgramStatus created = registered not yet started, ongoing = in progress, completed = all sessions logged and confirmed, cancelled = stopped mid-way
 type ProgramStatus string
 
 // ProgramCreate defines model for ProgramCreate.
@@ -468,6 +478,14 @@ type ListProgramsParams struct {
 // ListProgramsParamsStatus defines parameters for ListPrograms.
 type ListProgramsParamsStatus string
 
+// UpdateProgramStatusJSONBody defines parameters for UpdateProgramStatus.
+type UpdateProgramStatusJSONBody struct {
+	Status UpdateProgramStatusJSONBodyStatus `json:"status"`
+}
+
+// UpdateProgramStatusJSONBodyStatus defines parameters for UpdateProgramStatus.
+type UpdateProgramStatusJSONBodyStatus string
+
 // CreateLogJSONRequestBody defines body for CreateLog for application/json ContentType.
 type CreateLogJSONRequestBody = LogCreate
 
@@ -485,6 +503,9 @@ type GenerateProgramJSONRequestBody = GenerateProgramRequest
 
 // CreateProgramJSONRequestBody defines body for CreateProgram for application/json ContentType.
 type CreateProgramJSONRequestBody = ProgramCreate
+
+// UpdateProgramStatusJSONRequestBody defines body for UpdateProgramStatus for application/json ContentType.
+type UpdateProgramStatusJSONRequestBody UpdateProgramStatusJSONBody
 
 // GenerateVideoDownloadURLJSONRequestBody defines body for GenerateVideoDownloadURL for application/json ContentType.
 type GenerateVideoDownloadURLJSONRequestBody = VideoDownloadURLRequest
@@ -548,6 +569,9 @@ type ServerInterface interface {
 	// List distinct logged session names for a program
 	// (GET /programs/{id}/logged-sessions)
 	ListLoggedSessions(w http.ResponseWriter, r *http.Request, id ProgramId)
+	// Update program status
+	// (PATCH /programs/{id}/status)
+	UpdateProgramStatus(w http.ResponseWriter, r *http.Request, id ProgramId)
 	// Generate pre-signed URL for video download
 	// (POST /videos/download-url)
 	GenerateVideoDownloadURL(w http.ResponseWriter, r *http.Request)
@@ -665,6 +689,12 @@ func (_ Unimplemented) GetProgram(w http.ResponseWriter, r *http.Request, id Pro
 // List distinct logged session names for a program
 // (GET /programs/{id}/logged-sessions)
 func (_ Unimplemented) ListLoggedSessions(w http.ResponseWriter, r *http.Request, id ProgramId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update program status
+// (PATCH /programs/{id}/status)
+func (_ Unimplemented) UpdateProgramStatus(w http.ResponseWriter, r *http.Request, id ProgramId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1292,6 +1322,37 @@ func (siw *ServerInterfaceWrapper) ListLoggedSessions(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// UpdateProgramStatus operation middleware
+func (siw *ServerInterfaceWrapper) UpdateProgramStatus(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id ProgramId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateProgramStatus(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GenerateVideoDownloadURL operation middleware
 func (siw *ServerInterfaceWrapper) GenerateVideoDownloadURL(w http.ResponseWriter, r *http.Request) {
 
@@ -1498,6 +1559,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/programs/{id}/logged-sessions", wrapper.ListLoggedSessions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/programs/{id}/status", wrapper.UpdateProgramStatus)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/videos/download-url", wrapper.GenerateVideoDownloadURL)
