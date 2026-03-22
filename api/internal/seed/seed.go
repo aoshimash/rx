@@ -127,6 +127,9 @@ func Run(ctx context.Context, programTemplateRepo repository.ProgramTemplateRepo
 	if err := programRepo.Create(ctx, activeProgram); err != nil {
 		return fmt.Errorf("create active program: %w", err)
 	}
+	if err := programRepo.UpdateStatus(ctx, activeProgram.ID, domain.ProgramStatusOngoing); err != nil {
+		return fmt.Errorf("start active program: %w", err)
+	}
 	slog.Info("[seed] Created active program", "name", activeProgram.Name)
 
 	for _, l := range activeProgramLogs(activeProgram) {
