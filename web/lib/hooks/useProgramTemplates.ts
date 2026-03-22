@@ -67,7 +67,8 @@ export function useDuplicateProgramTemplate() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => programTemplatesApi.duplicate(id),
+    mutationFn: ({ id, name }: { id: string; name?: string }) =>
+      programTemplatesApi.duplicate(id, name),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['program-templates'] });
     },
