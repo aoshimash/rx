@@ -130,9 +130,14 @@ paths:
       - $ref: '#/components/parameters/ProgramTemplateId'
     post:
       summary: Duplicate program template
-      description: Creates a deep copy of the ProgramTemplate with all entries, appending " (copy)" to the name.
+      description: Creates a deep copy of the ProgramTemplate with all entries. Optionally accepts a custom name; defaults to appending " (copy)".
       operationId: duplicateProgramTemplate
       tags: [ProgramTemplate]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DuplicateProgramTemplateRequest'
       responses:
         '201':
           description: Program template duplicated
@@ -766,6 +771,14 @@ components:
           nullable: true
         has_more:
           type: boolean
+
+    DuplicateProgramTemplateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 200
+          description: Custom name for the duplicate. If omitted, defaults to "{original name} (copy)".
 
     GenerateProgramRequest:
       type: object
