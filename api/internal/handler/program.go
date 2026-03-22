@@ -261,8 +261,12 @@ func (h *ProgramHandler) UpdateProgramStatus(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	program.Status = newStatus
-	writeJSON(w, http.StatusOK, program)
+	updated, err := h.repo.GetByID(ctx, id)
+	if err != nil {
+		middleware.WriteInternalError(w, "Failed to retrieve updated program")
+		return
+	}
+	writeJSON(w, http.StatusOK, updated)
 }
 
 // ListLoggedSessions handles GET /programs/{id}/logged-sessions
