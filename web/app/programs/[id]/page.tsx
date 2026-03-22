@@ -5,9 +5,29 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDeleteProgram, useLoggedSessions, useProgram } from '@/lib/hooks/usePrograms';
-import type { ProgramSession } from '@/types/api';
+import type { ProgramSession, ProgramSessionEntry } from '@/types/api';
 import { Trash2 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
+
+function buildCompletedSessionSet(sessions: string[]): Set<string> {
+  return new Set(sessions);
+}
+
+type ExerciseGroup = { name: string; entries: ProgramSessionEntry[] };
+
+function groupByExercise(entries: ProgramSessionEntry[]): ExerciseGroup[] {
+  const groups: ExerciseGroup[] = [];
+  const map = new Map<string, ExerciseGroup>();
+  for (const entry of [...entries].sort((a, b) => a.order - b.order)) {
+    if (!map.has(entry.exercise_name)) {
+      const g: ExerciseGroup = { name: entry.exercise_name, entries: [] };
+      groups.push(g);
+      map.set(entry.exercise_name, g);
+    }
+    map.get(entry.exercise_name)?.entries.push(entry);
+  }
+  return groups;
+}
 
 function sessionCardClassName(isCompleted: boolean, isNext: boolean): string | undefined {
   if (isCompleted) return 'opacity-50';
@@ -33,29 +53,52 @@ function SessionCard({
           <p className="text-sm text-muted-foreground">No exercises</p>
         ) : (
           <div className="divide-y">
-            {session.entries
-              .slice()
-              .sort((a, b) => a.order - b.order)
-              .map((entry) => (
-                <div
-                  key={entry.id}
-                  className="flex items-baseline gap-3 py-1.5 first:pt-0 last:pb-0"
-                >
-                  <span className="w-40 shrink-0 font-medium text-sm truncate">
-                    {entry.exercise_name}
-                  </span>
-                  <span className="text-sm text-muted-foreground">
-                    {[
-                      entry.sets != null && `${entry.sets}sets`,
-                      entry.reps != null && `${entry.reps}reps`,
-                      entry.load_kg != null && `${entry.load_kg}kg`,
-                      entry.rpe != null && `RPE${entry.rpe}`,
-                    ]
-                      .filter(Boolean)
-                      .join(' ')}
-                  </span>
-                </div>
-              ))}
+            {groupByExercise(session.entries).map((group) => (
+              <div key={group.name} className="py-2 first:pt-0 last:pb-0">
+                <p className="font-medium text-sm mb-1">{group.name}</p>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-xs text-muted-foreground">
+                      {group.entries.some((e) => e.metadata?.label) && (
+                        <th className="text-left font-normal pb-1 w-16" />
+                      )}
+                      <th className="text-right font-normal pb-1 pr-4">RPE</th>
+                      {group.entries.some((e) => e.load_kg != null) && (
+                        <th className="text-right font-normal pb-1 pr-4">Load</th>
+                      )}
+                      <th className="text-right font-normal pb-1 pr-4">Reps</th>
+                      <th className="text-right font-normal pb-1 pr-4">Sets</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {group.entries.map((entry) => {
+                      const label = entry.metadata?.label as string | undefined;
+                      const hasLabel = group.entries.some((e) => e.metadata?.label);
+                      const hasLoad = group.entries.some((e) => e.load_kg != null);
+                      return (
+                        <tr key={entry.id} className="text-muted-foreground">
+                          {hasLabel && <td className="text-xs pr-3 py-0.5">{label ?? ''}</td>}
+                          <td className="text-right tabular-nums pr-4 py-0.5">
+                            {entry.rpe ?? '—'}
+                          </td>
+                          {hasLoad && (
+                            <td className="text-right tabular-nums pr-4 py-0.5">
+                              {entry.load_kg != null ? `${entry.load_kg}kg` : '—'}
+                            </td>
+                          )}
+                          <td className="text-right tabular-nums pr-4 py-0.5">
+                            {entry.reps ?? '—'}
+                          </td>
+                          <td className="text-right tabular-nums pr-4 py-0.5">
+                            {entry.sets ?? '—'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ))}
           </div>
         )}
       </CardContent>
@@ -70,8 +113,6 @@ export default function ProgramDetailPage() {
   const { data: program, isLoading } = useProgram(programId);
   const { data: loggedSessions } = useLoggedSessions(programId);
   const deleteProgram = useDeleteProgram();
-
-  const completedSessionNames = new Set(loggedSessions?.sessions ?? []);
 
   if (isLoading) {
     return (
@@ -96,9 +137,11 @@ export default function ProgramDetailPage() {
   };
 
   const sortedSessions = program.sessions.slice().sort((a, b) => a.order - b.order);
+  const completedSessionSet = buildCompletedSessionSet(loggedSessions?.sessions ?? []);
+
   let foundNextSession = false;
   const sessionsWithStatus = sortedSessions.map((session) => {
-    const isCompleted = completedSessionNames.has(session.session_name);
+    const isCompleted = completedSessionSet.has(session.session_name);
     const isNext = !isCompleted && !foundNextSession;
     if (isNext) foundNextSession = true;
     return { session, isCompleted, isNext };
@@ -125,7 +168,7 @@ export default function ProgramDetailPage() {
       {sessionsWithStatus.length === 0 ? (
         <p className="text-muted-foreground">No sessions in this program.</p>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {sessionsWithStatus.map(({ session, isCompleted, isNext }) => (
             <SessionCard
               key={session.id}

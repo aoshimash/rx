@@ -195,7 +195,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [active, completed]
+            enum: [active, completed, planned]
           description: Filter programs by status
       responses:
         '200':
@@ -664,7 +664,7 @@ components:
         order:
           type: integer
           minimum: 0
-          description: Position in program template
+          description: Position within the session
         exercise_name:
           type: string
           minLength: 1
@@ -693,7 +693,6 @@ components:
         metadata:
           type: object
           additionalProperties: true
-          description: Free-form JSON metadata (e.g., session grouping via metadata.session)
 
     ProgramTemplateEntryCreate:
       type: object
@@ -800,8 +799,8 @@ components:
           maxLength: 200
         status:
           type: string
-          enum: [active, completed]
-          description: active = in progress, completed = all sessions have been logged
+          enum: [active, completed, planned]
+          description: active = in progress, completed = all sessions have been logged, planned = not yet started
         notes:
           type: string
           maxLength: 5000
@@ -867,11 +866,11 @@ components:
           type: string
           minLength: 1
           maxLength: 200
-          description: Name of this training session (e.g., "Week 1 Day 1", "Day A")
+          description: Day name within the week (e.g., "Day 1", "Heavy", "Volume")
         order:
           type: integer
           minimum: 0
-          description: Position in program (0-based)
+          description: Global position in program (0-based)
         date:
           type: string
           format: date
@@ -1035,7 +1034,7 @@ components:
         session_name:
           type: string
           maxLength: 200
-          description: Session name within the referenced program (used when program_id is set)
+          description: Session name (used together with program_id)
         performed_at:
           type: string
           format: date-time
@@ -1082,7 +1081,7 @@ components:
         session_name:
           type: string
           maxLength: 200
-          description: Session name within the referenced program
+          description: Session name (used together with program_id)
         performed_at:
           type: string
           format: date-time

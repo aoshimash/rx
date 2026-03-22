@@ -177,15 +177,20 @@ func (s *logStore) ListDistinctLoggedSessionsByProgramID(ctx context.Context, pr
 	defer s.mu.RUnlock()
 
 	seen := make(map[string]struct{})
+	var result []string
+
 	for _, l := range s.logs {
-		if l.ProgramID != nil && *l.ProgramID == programID && l.SessionName != nil {
+		if l.ProgramID == nil || *l.ProgramID != programID || l.SessionName == nil {
+			continue
+		}
+		if _, exists := seen[*l.SessionName]; !exists {
 			seen[*l.SessionName] = struct{}{}
+			result = append(result, *l.SessionName)
 		}
 	}
 
-	result := make([]string, 0, len(seen))
-	for name := range seen {
-		result = append(result, name)
+	if result == nil {
+		result = []string{}
 	}
 	return result, nil
 }

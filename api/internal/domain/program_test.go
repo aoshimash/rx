@@ -481,13 +481,20 @@ func TestValidateProgram(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("duplicate session names are invalid", func(t *testing.T) {
+	t.Run("duplicate session_name is invalid", func(t *testing.T) {
 		p := validProgram()
 		p.Sessions = append(p.Sessions, ProgramSession{
 			ID:          uuid.New(),
 			ProgramID:   p.ID,
-			SessionName: "Day 1", // duplicate
+			SessionName: "Day 1", // same session_name → duplicate
 			Order:       1,
+			Entries: []ProgramSessionEntry{
+				{
+					ID:           uuid.New(),
+					Order:        0,
+					ExerciseName: "Bench Press",
+				},
+			},
 		})
 		err := ValidateProgram(p)
 		assert.Error(t, err)

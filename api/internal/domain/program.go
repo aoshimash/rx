@@ -13,6 +13,7 @@ type ProgramStatus string
 const (
 	ProgramStatusActive    ProgramStatus = "active"
 	ProgramStatusCompleted ProgramStatus = "completed"
+	ProgramStatusPlanned   ProgramStatus = "planned"
 )
 
 // ProgramSessionEntry represents a single exercise prescription within a program session.

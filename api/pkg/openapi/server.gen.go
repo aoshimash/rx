@@ -22,12 +22,14 @@ const (
 const (
 	ProgramStatusActive    ProgramStatus = "active"
 	ProgramStatusCompleted ProgramStatus = "completed"
+	ProgramStatusPlanned   ProgramStatus = "planned"
 )
 
 // Defines values for ListProgramsParamsStatus.
 const (
 	ListProgramsParamsStatusActive    ListProgramsParamsStatus = "active"
 	ListProgramsParamsStatusCompleted ListProgramsParamsStatus = "completed"
+	ListProgramsParamsStatusPlanned   ListProgramsParamsStatus = "planned"
 )
 
 // Error defines model for Error.
@@ -80,12 +82,15 @@ type Log struct {
 	// ProgramId Optional reference to the training program
 	ProgramId *openapi_types.UUID `json:"program_id"`
 
-	// SessionName Session name within the referenced program (used when program_id is set)
+	// SessionName Day name within the week (used together with program_id, week)
 	SessionName *string `json:"session_name,omitempty"`
 
 	// StartedAt When the training session started (optional)
 	StartedAt *time.Time `json:"started_at,omitempty"`
 	UpdatedAt time.Time  `json:"updated_at"`
+
+	// Week Week number within the program
+	Week *int `json:"week,omitempty"`
 }
 
 // LogCreate defines model for LogCreate.
@@ -99,9 +104,10 @@ type LogCreate struct {
 	// ProgramId Optional reference to a training program
 	ProgramId *openapi_types.UUID `json:"program_id,omitempty"`
 
-	// SessionName Session name within the referenced program
+	// SessionName Day name within the week (used together with program_id, week)
 	SessionName *string    `json:"session_name,omitempty"`
 	StartedAt   *time.Time `json:"started_at,omitempty"`
+	Week        *int       `json:"week,omitempty"`
 }
 
 // LogEntry defines model for LogEntry.
@@ -157,10 +163,16 @@ type LogListResponse struct {
 	NextCursor *string `json:"next_cursor"`
 }
 
+// LoggedSession defines model for LoggedSession.
+type LoggedSession struct {
+	SessionName string `json:"session_name"`
+	Week        int    `json:"week"`
+}
+
 // LoggedSessionsResponse defines model for LoggedSessionsResponse.
 type LoggedSessionsResponse struct {
-	// Sessions Distinct session names that have at least one log for this program
-	Sessions []string `json:"sessions"`
+	// Sessions Distinct (week, session_name) tuples that have at least one log for this program
+	Sessions []LoggedSession `json:"sessions"`
 }
 
 // Program defines model for Program.
@@ -179,12 +191,12 @@ type Program struct {
 	// Sessions Ordered training sessions (each contains entries with absolute weights)
 	Sessions []ProgramSession `json:"sessions"`
 
-	// Status active = in progress, completed = all sessions have been logged
+	// Status active = in progress, completed = all sessions have been logged, planned = not yet started
 	Status    ProgramStatus `json:"status"`
 	UpdatedAt time.Time     `json:"updated_at"`
 }
 
-// ProgramStatus active = in progress, completed = all sessions have been logged
+// ProgramStatus active = in progress, completed = all sessions have been logged, planned = not yet started
 type ProgramStatus string
 
 // ProgramCreate defines model for ProgramCreate.
@@ -214,12 +226,15 @@ type ProgramSession struct {
 	Entries []ProgramSessionEntry `json:"entries"`
 	Id      openapi_types.UUID    `json:"id"`
 
-	// Order Position in program (0-based)
+	// Order Global position in program (0-based)
 	Order     int                `json:"order"`
 	ProgramId openapi_types.UUID `json:"program_id"`
 
-	// SessionName Name of this training session (e.g., "Week 1 Day 1", "Day A")
+	// SessionName Day name within the week (e.g., "Day 1", "Heavy", "Volume")
 	SessionName string `json:"session_name"`
+
+	// Week Week number within the program
+	Week int `json:"week"`
 }
 
 // ProgramSessionCreate defines model for ProgramSessionCreate.
@@ -228,6 +243,7 @@ type ProgramSessionCreate struct {
 	Entries     *[]ProgramSessionEntryCreate `json:"entries,omitempty"`
 	Order       int                          `json:"order"`
 	SessionName string                       `json:"session_name"`
+	Week        int                          `json:"week"`
 }
 
 // ProgramSessionEntry defines model for ProgramSessionEntry.
@@ -295,14 +311,12 @@ type ProgramTemplateCreate struct {
 // ProgramTemplateEntry defines model for ProgramTemplateEntry.
 type ProgramTemplateEntry struct {
 	// ExerciseName Exercise name (plain string)
-	ExerciseName string             `json:"exercise_name"`
-	Id           openapi_types.UUID `json:"id"`
+	ExerciseName string                  `json:"exercise_name"`
+	Id           openapi_types.UUID      `json:"id"`
+	Metadata     *map[string]interface{} `json:"metadata,omitempty"`
+	Notes        *string                 `json:"notes,omitempty"`
 
-	// Metadata Free-form JSON metadata (e.g., session grouping via metadata.session)
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
-	Notes    *string                 `json:"notes,omitempty"`
-
-	// Order Position in program template
+	// Order Position within the session
 	Order int `json:"order"`
 
 	// Percent1rm Percentage of 1RM (0.0 to 1.0) for weight calculation
@@ -311,8 +325,14 @@ type ProgramTemplateEntry struct {
 	Reps              *int               `json:"reps,omitempty"`
 
 	// Rpe Target Rate of Perceived Exertion
-	Rpe  *int `json:"rpe,omitempty"`
-	Sets *int `json:"sets,omitempty"`
+	Rpe *int `json:"rpe,omitempty"`
+
+	// SessionName Day name within the week (e.g., "Day 1", "Heavy", "Volume")
+	SessionName *string `json:"session_name,omitempty"`
+	Sets        *int    `json:"sets,omitempty"`
+
+	// Week Week number within the program
+	Week int `json:"week"`
 }
 
 // ProgramTemplateEntryCreate defines model for ProgramTemplateEntryCreate.
@@ -324,7 +344,11 @@ type ProgramTemplateEntryCreate struct {
 	Percent1rm   *float64                `json:"percent_1rm,omitempty"`
 	Reps         *int                    `json:"reps,omitempty"`
 	Rpe          *int                    `json:"rpe,omitempty"`
-	Sets         *int                    `json:"sets,omitempty"`
+
+	// SessionName Day name within the week (e.g., "Day 1", "Heavy")
+	SessionName *string `json:"session_name,omitempty"`
+	Sets        *int    `json:"sets,omitempty"`
+	Week        int     `json:"week"`
 }
 
 // ProgramTemplateListResponse defines model for ProgramTemplateListResponse.

@@ -7,12 +7,14 @@ import { LogTable } from '@/components/logs/LogTable';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCreateLog, useLogs } from '@/lib/hooks/useLogs';
+import { usePrograms } from '@/lib/hooks/usePrograms';
 import type { LogEntryCreate } from '@/types/api';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
 export default function LogsPage() {
   const { data: logsData, isLoading: logsLoading, error: logsError } = useLogs();
+  const { data: programsData } = usePrograms();
   const createLog = useCreateLog();
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -20,6 +22,8 @@ export default function LogsPage() {
   const sortedLogs = [...logs].sort(
     (a, b) => new Date(b.performed_at).getTime() - new Date(a.performed_at).getTime()
   );
+
+  const programMap = new Map<string, string>((programsData?.data ?? []).map((p) => [p.id, p.name]));
 
   const handleSaveLog = async (
     entries: LogEntryCreate[],
@@ -80,7 +84,7 @@ export default function LogsPage() {
           </Button>
         </div>
       ) : (
-        <LogTable logs={sortedLogs} />
+        <LogTable logs={sortedLogs} programMap={programMap} />
       )}
 
       <LogModal open={modalOpen} onOpenChange={setModalOpen} onSave={handleSaveLog} />

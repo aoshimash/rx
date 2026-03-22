@@ -368,11 +368,15 @@ func (r *logRepository) ListDistinctLoggedSessionsByProgramID(ctx context.Contex
 
 	var sessions []string
 	for rows.Next() {
-		var sessionName string
-		if err := rows.Scan(&sessionName); err != nil {
+		var name string
+		if err := rows.Scan(&name); err != nil {
 			return nil, err
 		}
-		sessions = append(sessions, sessionName)
+		sessions = append(sessions, name)
+	}
+
+	if sessions == nil {
+		sessions = []string{}
 	}
 
 	return sessions, rows.Err()

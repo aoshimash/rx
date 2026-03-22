@@ -36,10 +36,15 @@ export default function LogDetailPage() {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
       })
     : '';
+
+  const formatTime = (iso: string) =>
+    new Date(iso).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
 
   if (logLoading) {
     return (
@@ -78,6 +83,22 @@ export default function LogDetailPage() {
         <h1 className="text-3xl font-bold">{performedDate}</h1>
         {log.session_name && (
           <p className="text-muted-foreground mt-1">Session: {log.session_name}</p>
+        )}
+        {(log.started_at || log.finished_at) && (
+          <p className="text-muted-foreground mt-1 text-sm">
+            {log.started_at && <>Start: {formatTime(log.started_at)}</>}
+            {log.started_at && log.finished_at && <span className="mx-2">·</span>}
+            {log.finished_at && <>End: {formatTime(log.finished_at)}</>}
+            {log.started_at && log.finished_at && (
+              <>
+                <span className="mx-2">·</span>
+                {Math.round(
+                  (new Date(log.finished_at).getTime() - new Date(log.started_at).getTime()) / 60000
+                )}{' '}
+                min
+              </>
+            )}
+          </p>
         )}
         {log.notes && <p className="text-muted-foreground mt-2">{log.notes}</p>}
       </div>
