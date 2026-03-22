@@ -91,6 +91,8 @@ export interface ProgramTemplateCreate {
   description?: string;
   notes?: string;
   metadata?: Record<string, unknown>;
+  weeks?: string;
+  days_per_week?: string;
   entries?: ProgramTemplateEntryCreate[];
 }
 
