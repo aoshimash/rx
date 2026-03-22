@@ -30,9 +30,7 @@ function TemplateInfo({ program }: { program: Program }) {
   );
 }
 
-function statusBadgeVariant(
-  status: string,
-): 'default' | 'secondary' | 'outline' | 'destructive' {
+function statusBadgeVariant(status: string): 'default' | 'secondary' | 'outline' | 'destructive' {
   if (status === 'ongoing') return 'default';
   if (status === 'completed') return 'secondary';
   if (status === 'cancelled') return 'destructive';
