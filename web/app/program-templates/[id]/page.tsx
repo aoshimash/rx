@@ -331,7 +331,7 @@ export default function ProgramTemplateDetailPage() {
               value={duplicateName}
               onChange={(e) => setDuplicateName(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && duplicateName.trim()) {
+                if (e.key === 'Enter' && duplicateName.trim() && !duplicateTemplate.isPending) {
                   handleDuplicate();
                 }
               }}
