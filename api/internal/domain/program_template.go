@@ -32,6 +32,7 @@ type ProgramTemplate struct {
 	Description *string                `json:"description,omitempty"`
 	Notes       *string                `json:"notes,omitempty"`
 	Metadata    json.RawMessage        `json:"metadata,omitempty"`
+	CreatedBy   *string                `json:"created_by,omitempty"`
 	CreatedAt   time.Time              `json:"created_at"`
 	UpdatedAt   time.Time              `json:"updated_at"`
 	ArchivedAt  *time.Time             `json:"archived_at,omitempty"`

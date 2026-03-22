@@ -1,18 +1,23 @@
 'use client';
 
+import { DeleteConfirmDialog } from '@/components/plan-editor/DeleteConfirmDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   useArchiveProgramTemplate,
+  useDeleteProgramTemplate,
   useDuplicateProgramTemplate,
   useProgramTemplate,
   useUnarchiveProgramTemplate,
 } from '@/lib/hooks/useProgramTemplates';
+import { useProgramsByTemplateId } from '@/lib/hooks/usePrograms';
 import type { ProgramTemplateEntry } from '@/types/api';
-import { Archive, ArchiveRestore, Copy } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowLeft, Copy, Info, Trash2, User } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 type ExerciseGroup = { name: string; entries: ProgramTemplateEntry[] };
 type SessionGroup = { sessionName: string; exerciseGroups: ExerciseGroup[] };
@@ -65,6 +70,9 @@ export default function ProgramTemplateDetailPage() {
   const archiveTemplate = useArchiveProgramTemplate();
   const unarchiveTemplate = useUnarchiveProgramTemplate();
   const duplicateTemplate = useDuplicateProgramTemplate();
+  const deleteTemplate = useDeleteProgramTemplate();
+  const { data: programsData, isLoading: programsLoading } = useProgramsByTemplateId(templateId);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -85,6 +93,7 @@ export default function ProgramTemplateDetailPage() {
 
   const sessionGroups = groupBySession(template.entries || []);
   const isArchived = !!template.archived_at;
+  const hasPrograms = (programsData?.data ?? []).length > 0;
 
   const handleDuplicate = async () => {
     await duplicateTemplate.mutateAsync(templateId);
@@ -100,45 +109,96 @@ export default function ProgramTemplateDetailPage() {
     }
   };
 
+  const handleDelete = async () => {
+    await deleteTemplate.mutateAsync(templateId);
+    router.push('/program-templates');
+  };
+
   return (
     <main className="container mx-auto p-6">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-bold">{template.name}</h1>
-            {isArchived && <Badge variant="secondary">Archived</Badge>}
-          </div>
-          {template.description && (
-            <p className="text-muted-foreground mt-1">{template.description}</p>
-          )}
-          {template.notes && <p className="text-sm text-muted-foreground mt-1">{template.notes}</p>}
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={handleDuplicate}
-            disabled={duplicateTemplate.isPending}
-          >
-            <Copy className="h-4 w-4 mr-2" />
-            Duplicate
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleArchiveToggle}
-            disabled={archiveTemplate.isPending || unarchiveTemplate.isPending}
-          >
-            {isArchived ? (
-              <>
-                <ArchiveRestore className="h-4 w-4 mr-2" />
-                Unarchive
-              </>
-            ) : (
-              <>
-                <Archive className="h-4 w-4 mr-2" />
-                Archive
-              </>
+      <div className="mb-6">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </button>
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold">{template.name}</h1>
+              {isArchived && <Badge variant="secondary">Archived</Badge>}
+            </div>
+            {template.description && (
+              <p className="text-muted-foreground mt-1">{template.description}</p>
             )}
-          </Button>
+            {template.notes && (
+              <p className="text-sm text-muted-foreground mt-1">{template.notes}</p>
+            )}
+            <div className="flex items-center gap-4 mt-2">
+              {template.created_by && (
+                <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <User className="h-3 w-3" />
+                  {template.created_by}
+                </span>
+              )}
+              <span className="text-sm text-muted-foreground">
+                Created {new Date(template.created_at).toLocaleDateString()}
+              </span>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleDuplicate}
+              disabled={duplicateTemplate.isPending}
+            >
+              <Copy className="h-4 w-4 mr-2" />
+              Duplicate
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleArchiveToggle}
+              disabled={archiveTemplate.isPending || unarchiveTemplate.isPending}
+            >
+              {isArchived ? (
+                <>
+                  <ArchiveRestore className="h-4 w-4 mr-2" />
+                  Unarchive
+                </>
+              ) : (
+                <>
+                  <Archive className="h-4 w-4 mr-2" />
+                  Archive
+                </>
+              )}
+            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                onClick={() => setDeleteDialogOpen(true)}
+                disabled={deleteTemplate.isPending || hasPrograms || programsLoading}
+                className="text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+              {hasPrograms && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button type="button" className="text-muted-foreground hover:text-foreground">
+                      <Info className="h-4 w-4" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto px-3 py-2 text-xs">
+                    This template is used by programs and cannot be deleted.
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -214,6 +274,14 @@ export default function ProgramTemplateDetailPage() {
           ))}
         </div>
       )}
+
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDelete}
+        title="Delete template?"
+        description="This will permanently delete this template. This action cannot be undone."
+      />
     </main>
   );
 }

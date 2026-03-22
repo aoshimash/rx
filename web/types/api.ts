@@ -78,6 +78,7 @@ export interface ProgramTemplate {
   notes?: string;
   metadata?: Record<string, unknown>;
   entries?: ProgramTemplateEntry[];
+  created_by?: string;
   archived_at?: string;
   created_at: string;
   updated_at: string;

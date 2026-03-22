@@ -162,6 +162,7 @@ func sbdPeakingTemplate() *domain.ProgramTemplate {
 	return &domain.ProgramTemplate{
 		Name:        "SBD 3-Week Peaking",
 		Description: strPtr("3-week Squat / Bench / Deadlift peaking cycle (2 days/week). Intensity rises each week toward a peak single."),
+		CreatedBy:   strPtr("seed-user"),
 		Entries: []domain.ProgramTemplateEntry{
 			// ── Week 1 Day 1: Heavy ──
 			{Order: 1, ExerciseName: "Squat", Sets: intPtr(1), Reps: intPtr(1), RPE: intPtr(9), Metadata: sessionLabelMeta("Week 1 Day 1", "top")},
@@ -212,6 +213,7 @@ func sbdPeakingTemplate() *domain.ProgramTemplate {
 func upperLower4WeekTemplate() *domain.ProgramTemplate {
 	return &domain.ProgramTemplate{
 		Name:        "Upper/Lower 4-Week Strength",
+		CreatedBy:   strPtr("seed-user"),
 		Description: strPtr("4-week upper/lower split (2 days/week). Volume decreases and intensity increases each week."),
 		Entries: []domain.ProgramTemplateEntry{
 			// ── Week 1 Upper (Volume) ──
@@ -256,6 +258,7 @@ func upperLower4WeekTemplate() *domain.ProgramTemplate {
 func pushPullLegs3WeekTemplate() *domain.ProgramTemplate {
 	return &domain.ProgramTemplate{
 		Name:        "Push/Pull/Legs 3-Week",
+		CreatedBy:   strPtr("seed-user"),
 		Description: strPtr("3-week push/pull/legs split (3 days/week). Archived — superseded by Upper/Lower program."),
 		Entries: []domain.ProgramTemplateEntry{
 			// ── Week 1 Push ──
@@ -305,6 +308,7 @@ func pushPullLegs3WeekTemplate() *domain.ProgramTemplate {
 func sbdBlockPeriodizationTemplate() *domain.ProgramTemplate {
 	return &domain.ProgramTemplate{
 		Name:        "SBD 8-Week Block Periodization",
+		CreatedBy:   strPtr("seed-user"),
 		Description: strPtr("8-week SBD program with 4-week blocks: Accumulation (volume) → Intensification (strength). 2 days/week per block."),
 		Entries: []domain.ProgramTemplateEntry{
 			// ── Block 1: Accumulation ──────────────────────────────
@@ -383,6 +387,7 @@ func sbdBlockPeriodizationTemplate() *domain.ProgramTemplate {
 func sbdCompetitionPeakTemplate() *domain.ProgramTemplate {
 	return &domain.ProgramTemplate{
 		Name:        "SBD 4-Week Competition Peak",
+		CreatedBy:   strPtr("seed-user"),
 		Description: strPtr("4-week competition peak block (2 days/week). Designed to peak strength for meet day. All 4 weeks form a single Peak Block."),
 		Entries: []domain.ProgramTemplateEntry{
 			// ── Peak Block W1 ──

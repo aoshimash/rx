@@ -270,9 +270,12 @@ type ProgramSessionEntryCreate struct {
 // ProgramTemplate defines model for ProgramTemplate.
 type ProgramTemplate struct {
 	// ArchivedAt When set, the program template is archived and hidden from default list results
-	ArchivedAt  *time.Time `json:"archived_at"`
-	CreatedAt   time.Time  `json:"created_at"`
-	Description *string    `json:"description,omitempty"`
+	ArchivedAt *time.Time `json:"archived_at"`
+	CreatedAt  time.Time  `json:"created_at"`
+
+	// CreatedBy User ID of the creator
+	CreatedBy   *string `json:"created_by"`
+	Description *string `json:"description,omitempty"`
 
 	// Entries Exercise prescription entries (RPE-based, no absolute weights)
 	Entries *[]ProgramTemplateEntry `json:"entries,omitempty"`

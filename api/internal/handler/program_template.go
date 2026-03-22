@@ -55,11 +55,16 @@ func (h *ProgramTemplateHandler) CreateProgramTemplate(w http.ResponseWriter, r 
 		return
 	}
 
+	var createdBy *string
+	if userID := middleware.GetUserID(ctx); userID != "" {
+		createdBy = &userID
+	}
 	tmpl := &domain.ProgramTemplate{
 		Name:        req.Name,
 		Description: req.Description,
 		Notes:       req.Notes,
 		Metadata:    req.Metadata,
+		CreatedBy:   createdBy,
 		Entries:     make([]domain.ProgramTemplateEntry, len(req.Entries)),
 	}
 

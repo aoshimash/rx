@@ -611,6 +611,10 @@ components:
           items:
             $ref: '#/components/schemas/ProgramTemplateEntry'
           description: Exercise prescription entries (RPE-based, no absolute weights)
+        created_by:
+          type: string
+          nullable: true
+          description: User ID of the creator
         created_at:
           type: string
           format: date-time
