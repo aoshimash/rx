@@ -231,6 +231,11 @@ func (h *ProgramTemplateHandler) DuplicateProgramTemplate(w http.ResponseWriter,
 		copy(copyMeta, original.Metadata)
 	}
 
+	var duplicatedBy *string
+	if userID := middleware.GetUserID(ctx); userID != "" {
+		duplicatedBy = &userID
+	}
+
 	duplicate := &domain.ProgramTemplate{
 		Name:        copyName,
 		Description: original.Description,
@@ -238,6 +243,7 @@ func (h *ProgramTemplateHandler) DuplicateProgramTemplate(w http.ResponseWriter,
 		Metadata:    copyMeta,
 		Weeks:       original.Weeks,
 		DaysPerWeek: original.DaysPerWeek,
+		CreatedBy:   duplicatedBy,
 		Entries:     entries,
 	}
 
