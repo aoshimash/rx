@@ -1,6 +1,5 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLog } from '@/lib/hooks/useLogs';
@@ -110,50 +109,41 @@ export default function LogDetailPage() {
               <CardTitle className="text-base">{group.name}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                {group.entries.map((entry) => {
-                  const label = entry.metadata?.label as string | undefined;
-
-                  return (
-                    <div key={entry.id} className="rounded-md border px-3 py-2">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <div>
-                          {label ? (
-                            <Badge variant="outline" className="text-xs">
-                              {label}
-                            </Badge>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">-</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-4 gap-3 text-sm">
-                        <div>
-                          <span className="text-muted-foreground block text-xs">Sets</span>
-                          <span className="font-medium">{entry.sets ?? '-'}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground block text-xs">Reps</span>
-                          <span className="font-medium">{entry.reps ?? '-'}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground block text-xs">Load</span>
-                          <span className="font-medium">
-                            {entry.load_kg != null ? `${entry.load_kg}kg` : '-'}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground block text-xs">RPE</span>
-                          <span className="font-medium">{entry.rpe ?? '-'}</span>
-                        </div>
-                      </div>
-                      {entry.notes && (
-                        <p className="text-xs text-muted-foreground mt-2">{entry.notes}</p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-xs text-muted-foreground">
+                    {group.entries.some((e) => e.metadata?.label) && (
+                      <th className="text-left font-normal pb-1 w-16" />
+                    )}
+                    <th className="text-right font-normal pb-1 pr-4">RPE</th>
+                    {group.entries.some((e) => e.load_kg != null) && (
+                      <th className="text-right font-normal pb-1 pr-4">Load</th>
+                    )}
+                    <th className="text-right font-normal pb-1 pr-4">Reps</th>
+                    <th className="text-right font-normal pb-1 pr-4">Sets</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {group.entries.map((entry) => {
+                    const label = entry.metadata?.label as string | undefined;
+                    const hasLabel = group.entries.some((e) => e.metadata?.label);
+                    const hasLoad = group.entries.some((e) => e.load_kg != null);
+                    return (
+                      <tr key={entry.id} className="text-muted-foreground">
+                        {hasLabel && <td className="text-xs pr-3 py-0.5">{label ?? ''}</td>}
+                        <td className="text-right tabular-nums pr-4 py-0.5">{entry.rpe ?? '—'}</td>
+                        {hasLoad && (
+                          <td className="text-right tabular-nums pr-4 py-0.5">
+                            {entry.load_kg != null ? `${entry.load_kg}kg` : '—'}
+                          </td>
+                        )}
+                        <td className="text-right tabular-nums pr-4 py-0.5">{entry.reps ?? '—'}</td>
+                        <td className="text-right tabular-nums pr-4 py-0.5">{entry.sets ?? '—'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </CardContent>
           </Card>
         ))}
