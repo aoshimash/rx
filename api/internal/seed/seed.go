@@ -517,9 +517,9 @@ func activeProgramLogs(program *domain.Program) []domain.Log {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-func intPtr(v int) *int         { return &v }
-func f64Ptr(v float64) *float64 { return &v }
-func strPtr(v string) *string   { return &v }
+func intPtr(v int) *int              { return &v }
+func f64Ptr(v float64) *float64      { return &v }
+func strPtr(v string) *string        { return &v }
 func timePtr(v time.Time) *time.Time { return &v }
 
 func labelMeta(label string) json.RawMessage {

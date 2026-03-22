@@ -82,15 +82,12 @@ type Log struct {
 	// ProgramId Optional reference to the training program
 	ProgramId *openapi_types.UUID `json:"program_id"`
 
-	// SessionName Day name within the week (used together with program_id, week)
+	// SessionName Session name (used together with program_id)
 	SessionName *string `json:"session_name,omitempty"`
 
 	// StartedAt When the training session started (optional)
 	StartedAt *time.Time `json:"started_at,omitempty"`
 	UpdatedAt time.Time  `json:"updated_at"`
-
-	// Week Week number within the program
-	Week *int `json:"week,omitempty"`
 }
 
 // LogCreate defines model for LogCreate.
@@ -104,10 +101,9 @@ type LogCreate struct {
 	// ProgramId Optional reference to a training program
 	ProgramId *openapi_types.UUID `json:"program_id,omitempty"`
 
-	// SessionName Day name within the week (used together with program_id, week)
+	// SessionName Session name (used together with program_id)
 	SessionName *string    `json:"session_name,omitempty"`
 	StartedAt   *time.Time `json:"started_at,omitempty"`
-	Week        *int       `json:"week,omitempty"`
 }
 
 // LogEntry defines model for LogEntry.
@@ -163,16 +159,10 @@ type LogListResponse struct {
 	NextCursor *string `json:"next_cursor"`
 }
 
-// LoggedSession defines model for LoggedSession.
-type LoggedSession struct {
-	SessionName string `json:"session_name"`
-	Week        int    `json:"week"`
-}
-
 // LoggedSessionsResponse defines model for LoggedSessionsResponse.
 type LoggedSessionsResponse struct {
-	// Sessions Distinct (week, session_name) tuples that have at least one log for this program
-	Sessions []LoggedSession `json:"sessions"`
+	// Sessions Distinct session names that have at least one log for this program
+	Sessions []string `json:"sessions"`
 }
 
 // Program defines model for Program.
@@ -232,9 +222,6 @@ type ProgramSession struct {
 
 	// SessionName Day name within the week (e.g., "Day 1", "Heavy", "Volume")
 	SessionName string `json:"session_name"`
-
-	// Week Week number within the program
-	Week int `json:"week"`
 }
 
 // ProgramSessionCreate defines model for ProgramSessionCreate.
@@ -243,7 +230,6 @@ type ProgramSessionCreate struct {
 	Entries     *[]ProgramSessionEntryCreate `json:"entries,omitempty"`
 	Order       int                          `json:"order"`
 	SessionName string                       `json:"session_name"`
-	Week        int                          `json:"week"`
 }
 
 // ProgramSessionEntry defines model for ProgramSessionEntry.
@@ -325,14 +311,8 @@ type ProgramTemplateEntry struct {
 	Reps              *int               `json:"reps,omitempty"`
 
 	// Rpe Target Rate of Perceived Exertion
-	Rpe *int `json:"rpe,omitempty"`
-
-	// SessionName Day name within the week (e.g., "Day 1", "Heavy", "Volume")
-	SessionName *string `json:"session_name,omitempty"`
-	Sets        *int    `json:"sets,omitempty"`
-
-	// Week Week number within the program
-	Week int `json:"week"`
+	Rpe  *int `json:"rpe,omitempty"`
+	Sets *int `json:"sets,omitempty"`
 }
 
 // ProgramTemplateEntryCreate defines model for ProgramTemplateEntryCreate.
@@ -344,11 +324,7 @@ type ProgramTemplateEntryCreate struct {
 	Percent1rm   *float64                `json:"percent_1rm,omitempty"`
 	Reps         *int                    `json:"reps,omitempty"`
 	Rpe          *int                    `json:"rpe,omitempty"`
-
-	// SessionName Day name within the week (e.g., "Day 1", "Heavy")
-	SessionName *string `json:"session_name,omitempty"`
-	Sets        *int    `json:"sets,omitempty"`
-	Week        int     `json:"week"`
+	Sets         *int                    `json:"sets,omitempty"`
 }
 
 // ProgramTemplateListResponse defines model for ProgramTemplateListResponse.
