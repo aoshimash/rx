@@ -36,6 +36,7 @@ func createTestProgram(t *testing.T, router chi.Router) map[string]interface{} {
 		"name": "Strength Program",
 		"sessions": [
 			{
+				"week": 1,
 				"session_name": "Day 1",
 				"order": 0,
 				"entries": [

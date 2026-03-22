@@ -22,12 +22,14 @@ const (
 const (
 	ProgramStatusActive    ProgramStatus = "active"
 	ProgramStatusCompleted ProgramStatus = "completed"
+	ProgramStatusPlanned   ProgramStatus = "planned"
 )
 
 // Defines values for ListProgramsParamsStatus.
 const (
 	ListProgramsParamsStatusActive    ListProgramsParamsStatus = "active"
 	ListProgramsParamsStatusCompleted ListProgramsParamsStatus = "completed"
+	ListProgramsParamsStatusPlanned   ListProgramsParamsStatus = "planned"
 )
 
 // Error defines model for Error.
@@ -80,7 +82,7 @@ type Log struct {
 	// ProgramId Optional reference to the training program
 	ProgramId *openapi_types.UUID `json:"program_id"`
 
-	// SessionName Session name within the referenced program (used when program_id is set)
+	// SessionName Session name (used together with program_id)
 	SessionName *string `json:"session_name,omitempty"`
 
 	// StartedAt When the training session started (optional)
@@ -99,7 +101,7 @@ type LogCreate struct {
 	// ProgramId Optional reference to a training program
 	ProgramId *openapi_types.UUID `json:"program_id,omitempty"`
 
-	// SessionName Session name within the referenced program
+	// SessionName Session name (used together with program_id)
 	SessionName *string    `json:"session_name,omitempty"`
 	StartedAt   *time.Time `json:"started_at,omitempty"`
 }
@@ -179,12 +181,12 @@ type Program struct {
 	// Sessions Ordered training sessions (each contains entries with absolute weights)
 	Sessions []ProgramSession `json:"sessions"`
 
-	// Status active = in progress, completed = all sessions have been logged
+	// Status active = in progress, completed = all sessions have been logged, planned = not yet started
 	Status    ProgramStatus `json:"status"`
 	UpdatedAt time.Time     `json:"updated_at"`
 }
 
-// ProgramStatus active = in progress, completed = all sessions have been logged
+// ProgramStatus active = in progress, completed = all sessions have been logged, planned = not yet started
 type ProgramStatus string
 
 // ProgramCreate defines model for ProgramCreate.
@@ -214,11 +216,11 @@ type ProgramSession struct {
 	Entries []ProgramSessionEntry `json:"entries"`
 	Id      openapi_types.UUID    `json:"id"`
 
-	// Order Position in program (0-based)
+	// Order Global position in program (0-based)
 	Order     int                `json:"order"`
 	ProgramId openapi_types.UUID `json:"program_id"`
 
-	// SessionName Name of this training session (e.g., "Week 1 Day 1", "Day A")
+	// SessionName Day name within the week (e.g., "Day 1", "Heavy", "Volume")
 	SessionName string `json:"session_name"`
 }
 
@@ -295,14 +297,12 @@ type ProgramTemplateCreate struct {
 // ProgramTemplateEntry defines model for ProgramTemplateEntry.
 type ProgramTemplateEntry struct {
 	// ExerciseName Exercise name (plain string)
-	ExerciseName string             `json:"exercise_name"`
-	Id           openapi_types.UUID `json:"id"`
+	ExerciseName string                  `json:"exercise_name"`
+	Id           openapi_types.UUID      `json:"id"`
+	Metadata     *map[string]interface{} `json:"metadata,omitempty"`
+	Notes        *string                 `json:"notes,omitempty"`
 
-	// Metadata Free-form JSON metadata (e.g., session grouping via metadata.session)
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
-	Notes    *string                 `json:"notes,omitempty"`
-
-	// Order Position in program template
+	// Order Position within the session
 	Order int `json:"order"`
 
 	// Percent1rm Percentage of 1RM (0.0 to 1.0) for weight calculation

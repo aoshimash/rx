@@ -129,7 +129,7 @@ export interface GenerateProgramRequest {
 // Program
 // ============================================================================
 
-export type ProgramStatus = 'active' | 'completed';
+export type ProgramStatus = 'active' | 'completed' | 'planned';
 
 export interface Program {
   id: string;

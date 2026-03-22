@@ -284,10 +284,10 @@ func ValidateProgram(p *Program) error {
 		return err
 	}
 
-	if p.Status != ProgramStatusActive && p.Status != ProgramStatusCompleted {
+	if p.Status != ProgramStatusActive && p.Status != ProgramStatusCompleted && p.Status != ProgramStatusPlanned {
 		return &ValidationError{
 			Field:   "status",
-			Message: "status must be 'active' or 'completed'",
+			Message: "status must be 'active', 'completed', or 'planned'",
 		}
 	}
 
@@ -310,7 +310,7 @@ func ValidateProgram(p *Program) error {
 		}
 	}
 
-	seenSessionNames := make(map[string]struct{}, len(p.Sessions))
+	seenSessions := make(map[string]struct{}, len(p.Sessions))
 	for i := range p.Sessions {
 		if err := ValidateProgramSession(&p.Sessions[i]); err != nil {
 			return &ValidationError{
@@ -318,14 +318,14 @@ func ValidateProgram(p *Program) error {
 				Message: err.Error(),
 			}
 		}
-		name := p.Sessions[i].SessionName
-		if _, exists := seenSessionNames[name]; exists {
+		s := &p.Sessions[i]
+		if _, exists := seenSessions[s.SessionName]; exists {
 			return &ValidationError{
-				Field:   fmt.Sprintf("sessions[%d].session_name", i),
-				Message: fmt.Sprintf("duplicate session name: %s", name),
+				Field:   fmt.Sprintf("sessions[%d]", i),
+				Message: fmt.Sprintf("duplicate session_name: %s", s.SessionName),
 			}
 		}
-		seenSessionNames[name] = struct{}{}
+		seenSessions[s.SessionName] = struct{}{}
 	}
 
 	return nil

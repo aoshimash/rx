@@ -187,18 +187,19 @@ func (h *LogHandler) CreateLog(w http.ResponseWriter, r *http.Request) {
 		if err == nil && program.Status == domain.ProgramStatusActive {
 			loggedSessions, err := h.repo.ListDistinctLoggedSessionsByProgramID(ctx, *log.ProgramID)
 			if err == nil {
-				// Build set of program session names
-				programSessionNames := make(map[string]struct{}, len(program.Sessions))
+				// Build set of program sessions by session_name
+				programSessions := make(map[string]struct{}, len(program.Sessions))
 				for _, s := range program.Sessions {
-					programSessionNames[s.SessionName] = struct{}{}
+					programSessions[s.SessionName] = struct{}{}
+				}
+				// Build set of logged session names
+				loggedSet := make(map[string]struct{}, len(loggedSessions))
+				for _, name := range loggedSessions {
+					loggedSet[name] = struct{}{}
 				}
 				// Check if all program sessions have been logged
-				loggedSet := make(map[string]struct{}, len(loggedSessions))
-				for _, s := range loggedSessions {
-					loggedSet[s] = struct{}{}
-				}
-				allLogged := len(programSessionNames) > 0
-				for name := range programSessionNames {
+				allLogged := len(programSessions) > 0
+				for name := range programSessions {
 					if _, ok := loggedSet[name]; !ok {
 						allLogged = false
 						break

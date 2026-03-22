@@ -1,11 +1,9 @@
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useProgramTemplate } from '@/lib/hooks/useProgramTemplates';
-import { useDeleteProgram } from '@/lib/hooks/usePrograms';
+import { useLoggedSessions } from '@/lib/hooks/usePrograms';
 import type { Program } from '@/types/api';
-import { Eye, Trash2 } from 'lucide-react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface ProgramCardProps {
   program: Program;
@@ -32,43 +30,53 @@ function TemplateInfo({ program }: { program: Program }) {
   );
 }
 
+function statusBadgeVariant(status: string): 'default' | 'secondary' | 'outline' {
+  if (status === 'active') return 'default';
+  if (status === 'planned') return 'outline';
+  return 'secondary';
+}
+
 export function ProgramCard({ program }: ProgramCardProps) {
-  const deleteProgram = useDeleteProgram();
+  const router = useRouter();
+  const { data: loggedSessions } = useLoggedSessions(program.id);
   const isCompleted = program.status === 'completed';
 
+  const totalSessions = program.sessions.length;
+  const loggedSet = new Set(loggedSessions?.sessions ?? []);
+  const completedCount =
+    totalSessions > 0 ? program.sessions.filter((s) => loggedSet.has(s.session_name)).length : 0;
+  const progressPct = totalSessions > 0 ? (completedCount / totalSessions) * 100 : 0;
+
   return (
-    <Card className={isCompleted ? 'opacity-50' : undefined}>
+    <Card
+      className={`cursor-pointer transition-colors hover:bg-accent/50 ${isCompleted ? 'opacity-50' : ''}`}
+      onClick={() => router.push(`/programs/${program.id}`)}
+    >
       <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-xl">{program.name}</CardTitle>
-              <Badge variant={program.status === 'active' ? 'default' : 'secondary'}>
-                {program.status}
-              </Badge>
-            </div>
-            {program.notes && <p className="text-sm text-muted-foreground">{program.notes}</p>}
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-xl">{program.name}</CardTitle>
+            <Badge variant={statusBadgeVariant(program.status)}>{program.status}</Badge>
           </div>
-          <div className="flex gap-1">
-            <Link href={`/programs/${program.id}`}>
-              <Button variant="ghost" size="sm">
-                <Eye className="h-4 w-4" />
-              </Button>
-            </Link>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => deleteProgram.mutate(program.id)}
-              disabled={deleteProgram.isPending}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+          {program.notes && <p className="text-sm text-muted-foreground">{program.notes}</p>}
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-1">
+        <div className="space-y-2">
           {program.program_template_id && <TemplateInfo program={program} />}
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>
+                {completedCount} / {totalSessions} sessions
+              </span>
+            </div>
+            <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
+              <div
+                className="h-full rounded-full bg-primary transition-all"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+          </div>
           <p className="text-sm text-muted-foreground">
             Created {new Date(program.created_at).toLocaleDateString()}
           </p>

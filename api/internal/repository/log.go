@@ -38,7 +38,7 @@ type LogRepository interface {
 	// Returns: logs, next cursor (empty string if no more), has_more flag
 	ListByPerformedAtRange(ctx context.Context, programID *uuid.UUID, performedAtFrom, performedAtTo *time.Time, limit int, after string) ([]*domain.Log, string, bool, error)
 
-	// ListDistinctLoggedSessionsByProgramID returns distinct session_names that have at least one log for the given program.
+	// ListDistinctLoggedSessionsByProgramID returns distinct session names that have at least one log for the given program.
 	// Used to check program completion when a new log is created.
 	ListDistinctLoggedSessionsByProgramID(ctx context.Context, programID uuid.UUID) ([]string, error)
 }

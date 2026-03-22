@@ -17,6 +17,8 @@ import type { ProgramSessionCreate } from '@/types/api';
 import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
 
+const SHOW_COMPLETED_KEY = 'programs:showCompleted';
+
 interface SessionInput {
   session_name: string;
   order: number;
@@ -25,10 +27,9 @@ interface SessionInput {
 export default function ProgramsPage() {
   const { data: programsData, isLoading } = usePrograms();
   const createProgram = useCreateProgram();
-  const programs = [...(programsData?.data || [])].sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  const [showCompleted, setShowCompleted] = useState(
+    () => typeof window !== 'undefined' && localStorage.getItem(SHOW_COMPLETED_KEY) === 'true'
   );
-
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [notes, setNotes] = useState('');
@@ -74,6 +75,20 @@ export default function ProgramsPage() {
     }
   };
 
+  const allPrograms = [...(programsData?.data || [])].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+  const programs = showCompleted
+    ? allPrograms
+    : allPrograms.filter((p) => p.status !== 'completed');
+  const completedCount = allPrograms.filter((p) => p.status === 'completed').length;
+
+  const toggleShowCompleted = () => {
+    const next = !showCompleted;
+    setShowCompleted(next);
+    localStorage.setItem(SHOW_COMPLETED_KEY, String(next));
+  };
+
   if (isLoading) {
     return (
       <main className="container mx-auto p-6 space-y-4">
@@ -95,6 +110,13 @@ export default function ProgramsPage() {
             Concrete training programs with scheduled sessions.
           </p>
         </div>
+        {completedCount > 0 && (
+          <Button variant="ghost" size="sm" onClick={toggleShowCompleted}>
+            {showCompleted
+              ? `Hide completed (${completedCount})`
+              : `Show completed (${completedCount})`}
+          </Button>
+        )}
       </div>
 
       {programs.length === 0 ? (

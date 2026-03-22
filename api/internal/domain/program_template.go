@@ -60,45 +60,47 @@ func RoundToIncrement(weight float64, increment float64) float64 {
 	return math.Round(weight/increment) * increment
 }
 
-// getSessionName extracts the "session" field from a ProgramTemplateEntry's metadata.
-// Returns empty string if metadata is nil or has no "session" key.
-func getSessionName(metadata json.RawMessage) string {
-	if metadata == nil {
+// getSessionName extracts the session name from entry metadata ("session" key).
+// Returns empty string if not present.
+func getSessionName(e ProgramTemplateEntry) string {
+	if e.Metadata == nil {
 		return ""
 	}
-	var m map[string]interface{}
-	if err := json.Unmarshal(metadata, &m); err != nil {
+	var meta map[string]interface{}
+	if err := json.Unmarshal(e.Metadata, &meta); err != nil {
 		return ""
 	}
-	if s, ok := m["session"].(string); ok {
+	if s, ok := meta["session"].(string); ok {
 		return s
 	}
 	return ""
 }
 
-// templateSessionGroup holds ProgramTemplateEntries belonging to the same session.
 type templateSessionGroup struct {
-	name    string
-	entries []ProgramTemplateEntry
+	sessionName string
+	entries     []ProgramTemplateEntry
 }
 
-// groupTemplateBySession groups ProgramTemplateEntries by their metadata.session value.
+// groupTemplateBySession groups ProgramTemplateEntries by metadata.session.
 // Entries are grouped in the order of first appearance.
 func groupTemplateBySession(entries []ProgramTemplateEntry) []templateSessionGroup {
 	var order []string
 	groups := make(map[string][]ProgramTemplateEntry)
 
 	for _, e := range entries {
-		name := getSessionName(e.Metadata)
-		if _, exists := groups[name]; !exists {
-			order = append(order, name)
+		key := getSessionName(e)
+		if _, exists := groups[key]; !exists {
+			order = append(order, key)
 		}
-		groups[name] = append(groups[name], e)
+		groups[key] = append(groups[key], e)
 	}
 
 	result := make([]templateSessionGroup, len(order))
-	for i, name := range order {
-		result[i] = templateSessionGroup{name: name, entries: groups[name]}
+	for i, key := range order {
+		result[i] = templateSessionGroup{
+			sessionName: key,
+			entries:     groups[key],
+		}
 	}
 	return result
 }
@@ -152,8 +154,7 @@ func convertTemplateEntry(te ProgramTemplateEntry, input *GenerateProgramInput) 
 }
 
 // GenerateProgramFromTemplate converts a ProgramTemplate into a Program with embedded sessions.
-// Entries are grouped by metadata.session. If no session metadata exists,
-// all entries become a single ProgramSession.
+// Entries are grouped by metadata.session — one ProgramSession per session group.
 func GenerateProgramFromTemplate(template *ProgramTemplate, input *GenerateProgramInput) *Program {
 	name := template.Name
 	if input.Name != "" {
@@ -165,7 +166,7 @@ func GenerateProgramFromTemplate(template *ProgramTemplate, input *GenerateProgr
 
 	sessions := make([]ProgramSession, 0, len(groups))
 	for i, g := range groups {
-		sessionName := g.name
+		sessionName := g.sessionName
 		if sessionName == "" {
 			sessionName = name
 		}

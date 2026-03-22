@@ -15,15 +15,12 @@ import { Archive, ArchiveRestore, Copy } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 
 type ExerciseGroup = { name: string; entries: ProgramTemplateEntry[] };
-type SessionGroup = { name: string; exerciseGroups: ExerciseGroup[] };
+type SessionGroup = { sessionName: string; exerciseGroups: ExerciseGroup[] };
 
-function formatEntryText(entry: ProgramTemplateEntry): string {
-  const parts: string[] = [];
-  if (entry.rpe != null) parts.push(`RPE${entry.rpe}`);
-  if (entry.reps != null) parts.push(`${entry.reps}reps`);
-  if (entry.sets != null) parts.push(`${entry.sets}sets`);
-  if (entry.percent_1rm != null) parts.push(`${Math.round(entry.percent_1rm * 100)}%`);
-  return parts.join(' ');
+function getSessionName(entry: ProgramTemplateEntry): string {
+  const session = entry.metadata?.session;
+  if (typeof session === 'string') return session;
+  return '';
 }
 
 function groupBySession(entries: ProgramTemplateEntry[]): SessionGroup[] {
@@ -32,7 +29,7 @@ function groupBySession(entries: ProgramTemplateEntry[]): SessionGroup[] {
   const sessionMap = new Map<string, ProgramTemplateEntry[]>();
 
   for (const entry of sorted) {
-    const session = (entry.metadata?.session as string) || '';
+    const session = getSessionName(entry);
     if (!sessionMap.has(session)) {
       sessionOrder.push(session);
       sessionMap.set(session, []);
@@ -40,9 +37,9 @@ function groupBySession(entries: ProgramTemplateEntry[]): SessionGroup[] {
     sessionMap.get(session)?.push(entry);
   }
 
-  return sessionOrder.map((session) => ({
-    name: session,
-    exerciseGroups: groupByExercise(sessionMap.get(session) ?? []),
+  return sessionOrder.map((sessionName) => ({
+    sessionName,
+    exerciseGroups: groupByExercise(sessionMap.get(sessionName) ?? []),
   }));
 }
 
@@ -86,7 +83,7 @@ export default function ProgramTemplateDetailPage() {
     );
   }
 
-  const sessions = groupBySession(template.entries || []);
+  const sessionGroups = groupBySession(template.entries || []);
   const isArchived = !!template.archived_at;
 
   const handleDuplicate = async () => {
@@ -145,40 +142,72 @@ export default function ProgramTemplateDetailPage() {
         </div>
       </div>
 
-      {sessions.length === 0 ? (
+      {sessionGroups.length === 0 ? (
         <p className="text-muted-foreground">No entries in this template.</p>
       ) : (
         <div className="space-y-4">
-          {sessions.map((session) => (
-            <Card key={session.name}>
-              {session.name && (
+          {sessionGroups.map((session) => (
+            <Card key={session.sessionName || '__default__'}>
+              {session.sessionName && (
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base">{session.name}</CardTitle>
+                  <CardTitle className="text-base">{session.sessionName}</CardTitle>
                 </CardHeader>
               )}
-              <CardContent className={session.name ? '' : 'pt-4'}>
+              <CardContent className={session.sessionName ? '' : 'pt-4'}>
                 <div className="divide-y">
-                  {session.exerciseGroups.map((group) => (
-                    <div
-                      key={`${session.name}-${group.name}`}
-                      className="flex items-baseline gap-3 py-1.5 first:pt-0 last:pb-0"
-                    >
-                      <span className="w-40 shrink-0 font-medium text-sm truncate">
-                        {group.name}
-                      </span>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                        {group.entries.map((entry) => {
-                          const label = entry.metadata?.label as string | undefined;
-                          return (
-                            <span key={entry.id} className="inline-flex items-center gap-1.5">
-                              {label && <Badge variant="outline">{label}</Badge>}
-                              {formatEntryText(entry)}
-                            </span>
-                          );
-                        })}
+                  {session.exerciseGroups.map((group) => {
+                    const hasLabel = group.entries.some((e) => e.metadata?.label);
+                    const hasPercent1rm = group.entries.some((e) => e.percent_1rm != null);
+                    return (
+                      <div
+                        key={`${session.sessionName}-${group.name}`}
+                        className="py-2 first:pt-0 last:pb-0"
+                      >
+                        <p className="font-medium text-sm mb-1.5">{group.name}</p>
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="text-xs text-muted-foreground">
+                              {hasLabel && <th className="text-left font-normal pb-1 w-16" />}
+                              <th className="text-right font-normal pb-1 pr-4">RPE</th>
+                              <th className="text-right font-normal pb-1 pr-4">Reps</th>
+                              <th className="text-right font-normal pb-1 pr-4">Sets</th>
+                              {hasPercent1rm && (
+                                <th className="text-right font-normal pb-1">%1RM</th>
+                              )}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {group.entries.map((entry) => {
+                              const label = entry.metadata?.label as string | undefined;
+                              return (
+                                <tr key={entry.id} className="text-muted-foreground">
+                                  {hasLabel && (
+                                    <td className="text-xs pr-3 py-0.5">{label ?? ''}</td>
+                                  )}
+                                  <td className="text-right tabular-nums pr-4 py-0.5">
+                                    {entry.rpe ?? '—'}
+                                  </td>
+                                  <td className="text-right tabular-nums pr-4 py-0.5">
+                                    {entry.reps ?? '—'}
+                                  </td>
+                                  <td className="text-right tabular-nums pr-4 py-0.5">
+                                    {entry.sets ?? '—'}
+                                  </td>
+                                  {hasPercent1rm && (
+                                    <td className="text-right tabular-nums py-0.5">
+                                      {entry.percent_1rm != null
+                                        ? `${Math.round(entry.percent_1rm * 100)}%`
+                                        : '—'}
+                                    </td>
+                                  )}
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
