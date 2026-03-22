@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"log/slog"
 	"net/http"
 	"time"
 
@@ -179,39 +178,6 @@ func (h *LogHandler) CreateLog(w http.ResponseWriter, r *http.Request) {
 	if err := h.repo.Create(ctx, log); err != nil {
 		middleware.WriteInternalError(w, "Failed to create log")
 		return
-	}
-
-	// Auto-completion: check if all sessions of the referenced program have been logged
-	if log.ProgramID != nil && h.programRepo != nil {
-		program, err := h.programRepo.GetByID(ctx, *log.ProgramID)
-		if err == nil && program.Status == domain.ProgramStatusActive {
-			loggedSessions, err := h.repo.ListDistinctLoggedSessionsByProgramID(ctx, *log.ProgramID)
-			if err == nil {
-				// Build set of program sessions by session_name
-				programSessions := make(map[string]struct{}, len(program.Sessions))
-				for _, s := range program.Sessions {
-					programSessions[s.SessionName] = struct{}{}
-				}
-				// Build set of logged session names
-				loggedSet := make(map[string]struct{}, len(loggedSessions))
-				for _, name := range loggedSessions {
-					loggedSet[name] = struct{}{}
-				}
-				// Check if all program sessions have been logged
-				allLogged := len(programSessions) > 0
-				for name := range programSessions {
-					if _, ok := loggedSet[name]; !ok {
-						allLogged = false
-						break
-					}
-				}
-				if allLogged {
-					if err := h.programRepo.UpdateStatus(ctx, *log.ProgramID, domain.ProgramStatusCompleted); err != nil {
-						slog.Warn("Failed to auto-complete program", "program_id", log.ProgramID, "error", err)
-					}
-				}
-			}
-		}
 	}
 
 	writeJSON(w, http.StatusCreated, log)

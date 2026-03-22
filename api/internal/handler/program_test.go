@@ -26,6 +26,7 @@ func setupProgramTestRouter() (chi.Router, *ProgramHandler) {
 	r.Get("/programs", h.ListPrograms)
 	r.Get("/programs/{id}", h.GetProgram)
 	r.Delete("/programs/{id}", h.DeleteProgram)
+	r.Patch("/programs/{id}/status", h.UpdateProgramStatus)
 
 	return r, h
 }
@@ -83,7 +84,7 @@ func TestProgramHandler_CreateProgram(t *testing.T) {
 
 		assert.NotEmpty(t, result["id"])
 		assert.Equal(t, "Strength Program", result["name"])
-		assert.Equal(t, "active", result["status"])
+		assert.Equal(t, "created", result["status"])
 		sessions := result["sessions"].([]interface{})
 		assert.Len(t, sessions, 1)
 
@@ -158,6 +159,53 @@ func TestProgramHandler_DeleteProgram(t *testing.T) {
 	})
 }
 
+func TestProgramHandler_UpdateProgramStatus(t *testing.T) {
+	router, _ := setupProgramTestRouter()
+
+	t.Run("transitions created to ongoing", func(t *testing.T) {
+		created := createTestProgram(t, router)
+		id := created["id"].(string)
+
+		body := `{"status": "ongoing"}`
+		req := httptest.NewRequest(http.MethodPatch, "/programs/"+id+"/status", bytes.NewBufferString(body))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer test-token")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		var result map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &result)
+		require.NoError(t, err)
+		assert.Equal(t, "ongoing", result["status"])
+	})
+
+	t.Run("rejects invalid transition created to completed", func(t *testing.T) {
+		created := createTestProgram(t, router)
+		id := created["id"].(string)
+
+		body := `{"status": "completed"}`
+		req := httptest.NewRequest(http.MethodPatch, "/programs/"+id+"/status", bytes.NewBufferString(body))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer test-token")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("returns 404 for non-existent program", func(t *testing.T) {
+		body := `{"status": "ongoing"}`
+		req := httptest.NewRequest(http.MethodPatch, "/programs/00000000-0000-0000-0000-000000000001/status", bytes.NewBufferString(body))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer test-token")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+}
+
 func TestProgramHandler_ListPrograms(t *testing.T) {
 	router, _ := setupProgramTestRouter()
 
@@ -185,7 +233,7 @@ func TestProgramHandler_ListPrograms(t *testing.T) {
 
 		createTestProgram(t, router2)
 
-		req := httptest.NewRequest(http.MethodGet, "/programs?status=active", nil)
+		req := httptest.NewRequest(http.MethodGet, "/programs?status=created", nil)
 		req.Header.Set("Authorization", "Bearer test-token")
 		w := httptest.NewRecorder()
 		router2.ServeHTTP(w, req)
