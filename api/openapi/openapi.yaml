@@ -200,7 +200,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [active, completed, planned]
+            enum: [created, ongoing, completed, cancelled]
           description: Filter programs by status
       responses:
         '200':
@@ -258,6 +258,38 @@ paths:
       responses:
         '204':
           description: Program deleted (sessions and entries cascade deleted, referencing logs have program_id cleared)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /programs/{id}/status:
+    parameters:
+      - $ref: '#/components/parameters/ProgramId'
+    patch:
+      summary: Update program status
+      operationId: updateProgramStatus
+      tags: [Program]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [created, ongoing, completed, cancelled]
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Program'
+        '400':
+          $ref: '#/components/responses/ValidationError'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -834,8 +866,8 @@ components:
           maxLength: 200
         status:
           type: string
-          enum: [active, completed, planned]
-          description: active = in progress, completed = all sessions have been logged, planned = not yet started
+          enum: [created, ongoing, completed, cancelled]
+          description: created = registered not yet started, ongoing = in progress, completed = all sessions logged and confirmed, cancelled = stopped mid-way
         notes:
           type: string
           maxLength: 5000
