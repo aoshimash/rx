@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"strings"
 
@@ -212,7 +213,7 @@ func (h *ProgramTemplateHandler) DuplicateProgramTemplate(w http.ResponseWriter,
 		var req struct {
 			Name string `json:"name,omitempty"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil && err != io.EOF {
 			middleware.WriteValidationError(w, "Invalid request body", nil)
 			return
 		}
