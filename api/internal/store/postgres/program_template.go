@@ -35,12 +35,12 @@ func (r *programTemplateRepository) Create(ctx context.Context, tmpl *domain.Pro
 	}
 
 	query := `
-		INSERT INTO program_templates (id, name, description, notes, metadata, created_by, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+		INSERT INTO program_templates (id, name, description, notes, metadata, weeks, days_per_week, created_by, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
 		RETURNING created_at, updated_at
 	`
 
-	err = tx.QueryRow(ctx, query, id, tmpl.Name, tmpl.Description, tmpl.Notes, tmpl.Metadata, tmpl.CreatedBy).Scan(
+	err = tx.QueryRow(ctx, query, id, tmpl.Name, tmpl.Description, tmpl.Notes, tmpl.Metadata, tmpl.Weeks, tmpl.DaysPerWeek, tmpl.CreatedBy).Scan(
 		&tmpl.CreatedAt, &tmpl.UpdatedAt,
 	)
 	if err != nil {
@@ -100,7 +100,7 @@ func (r *programTemplateRepository) insertEntries(ctx context.Context, tx pgx.Tx
 
 func (r *programTemplateRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.ProgramTemplate, error) {
 	query := `
-		SELECT id, name, description, notes, metadata, created_by, created_at, updated_at, archived_at
+		SELECT id, name, description, notes, metadata, weeks, days_per_week, created_by, created_at, updated_at, archived_at
 		FROM program_templates
 		WHERE id = $1
 	`
@@ -113,6 +113,8 @@ func (r *programTemplateRepository) GetByID(ctx context.Context, id uuid.UUID) (
 		&tmpl.Description,
 		&tmpl.Notes,
 		&metadataRaw,
+		&tmpl.Weeks,
+		&tmpl.DaysPerWeek,
 		&tmpl.CreatedBy,
 		&tmpl.CreatedAt,
 		&tmpl.UpdatedAt,
@@ -238,7 +240,7 @@ func (r *programTemplateRepository) List(ctx context.Context, limit int, after s
 	var query string
 	if includeArchived {
 		query = `
-			SELECT id, name, description, notes, metadata, created_by, created_at, updated_at, archived_at
+			SELECT id, name, description, notes, metadata, weeks, days_per_week, created_by, created_at, updated_at, archived_at
 			FROM program_templates
 			WHERE ($1::uuid IS NULL OR id > $1)
 			ORDER BY id ASC
@@ -246,7 +248,7 @@ func (r *programTemplateRepository) List(ctx context.Context, limit int, after s
 		`
 	} else {
 		query = `
-			SELECT id, name, description, notes, metadata, created_by, created_at, updated_at, archived_at
+			SELECT id, name, description, notes, metadata, weeks, days_per_week, created_by, created_at, updated_at, archived_at
 			FROM program_templates
 			WHERE ($1::uuid IS NULL OR id > $1) AND archived_at IS NULL
 			ORDER BY id ASC
@@ -271,6 +273,8 @@ func (r *programTemplateRepository) List(ctx context.Context, limit int, after s
 			&tmpl.Description,
 			&tmpl.Notes,
 			&metadataRaw,
+			&tmpl.Weeks,
+			&tmpl.DaysPerWeek,
 			&tmpl.CreatedBy,
 			&tmpl.CreatedAt,
 			&tmpl.UpdatedAt,

@@ -1,15 +1,23 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { ProgramTemplate } from '@/types/api';
-import { User } from 'lucide-react';
+import { Calendar, User } from 'lucide-react';
 import Link from 'next/link';
 
 interface ProgramTemplateCardProps {
   template: ProgramTemplate;
 }
 
+function formatDuration(template: ProgramTemplate): string | null {
+  const parts: string[] = [];
+  if (template.weeks) parts.push(`${template.weeks}w`);
+  if (template.days_per_week) parts.push(`${template.days_per_week} days/w`);
+  return parts.length > 0 ? parts.join(' · ') : null;
+}
+
 export function ProgramTemplateCard({ template }: ProgramTemplateCardProps) {
   const isArchived = !!template.archived_at;
+  const duration = formatDuration(template);
 
   return (
     <Link href={`/program-templates/${template.id}`} className="block">
@@ -26,16 +34,19 @@ export function ProgramTemplateCard({ template }: ProgramTemplateCardProps) {
           )}
         </CardHeader>
         <CardContent>
-          <div className="space-y-1">
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            {duration && (
+              <span className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                {duration}
+              </span>
+            )}
             {template.created_by && (
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1">
                 <User className="h-3 w-3" />
                 {template.created_by}
-              </div>
+              </span>
             )}
-            <div className="text-sm text-muted-foreground">
-              Created {new Date(template.created_at).toLocaleDateString()}
-            </div>
           </div>
         </CardContent>
       </Card>

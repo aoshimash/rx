@@ -611,6 +611,16 @@ components:
           items:
             $ref: '#/components/schemas/ProgramTemplateEntry'
           description: Exercise prescription entries (RPE-based, no absolute weights)
+        weeks:
+          type: string
+          nullable: true
+          maxLength: 50
+          description: Duration in weeks (e.g., "3", "6~8")
+        days_per_week:
+          type: string
+          nullable: true
+          maxLength: 50
+          description: Training days per week (e.g., "2", "2~3")
         created_by:
           type: string
           nullable: true
@@ -645,6 +655,14 @@ components:
         metadata:
           type: object
           additionalProperties: true
+        weeks:
+          type: string
+          maxLength: 50
+          description: Duration in weeks (e.g., "3", "6~8")
+        days_per_week:
+          type: string
+          maxLength: 50
+          description: Training days per week (e.g., "2", "2~3")
         entries:
           type: array
           items:
