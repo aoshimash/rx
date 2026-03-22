@@ -208,7 +208,7 @@ func (h *ProgramTemplateHandler) DuplicateProgramTemplate(w http.ResponseWriter,
 
 	// Parse optional request body for custom name
 	copyName := strings.TrimSpace(original.Name) + " (copy)"
-	if r.ContentLength > 0 {
+	if r.ContentLength != 0 {
 		var req struct {
 			Name string `json:"name,omitempty"`
 		}
