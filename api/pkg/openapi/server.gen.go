@@ -270,9 +270,15 @@ type ProgramSessionEntryCreate struct {
 // ProgramTemplate defines model for ProgramTemplate.
 type ProgramTemplate struct {
 	// ArchivedAt When set, the program template is archived and hidden from default list results
-	ArchivedAt  *time.Time `json:"archived_at"`
-	CreatedAt   time.Time  `json:"created_at"`
-	Description *string    `json:"description,omitempty"`
+	ArchivedAt *time.Time `json:"archived_at"`
+	CreatedAt  time.Time  `json:"created_at"`
+
+	// CreatedBy User ID of the creator
+	CreatedBy *string `json:"created_by"`
+
+	// DaysPerWeek Training days per week (e.g., "2", "2~3")
+	DaysPerWeek *string `json:"days_per_week"`
+	Description *string `json:"description,omitempty"`
 
 	// Entries Exercise prescription entries (RPE-based, no absolute weights)
 	Entries *[]ProgramTemplateEntry `json:"entries,omitempty"`
@@ -283,15 +289,23 @@ type ProgramTemplate struct {
 	Name      string                  `json:"name"`
 	Notes     *string                 `json:"notes,omitempty"`
 	UpdatedAt time.Time               `json:"updated_at"`
+
+	// Weeks Duration in weeks (e.g., "3", "6~8")
+	Weeks *string `json:"weeks"`
 }
 
 // ProgramTemplateCreate defines model for ProgramTemplateCreate.
 type ProgramTemplateCreate struct {
+	// DaysPerWeek Training days per week (e.g., "2", "2~3")
+	DaysPerWeek *string                       `json:"days_per_week,omitempty"`
 	Description *string                       `json:"description,omitempty"`
 	Entries     *[]ProgramTemplateEntryCreate `json:"entries,omitempty"`
 	Metadata    *map[string]interface{}       `json:"metadata,omitempty"`
 	Name        string                        `json:"name"`
 	Notes       *string                       `json:"notes,omitempty"`
+
+	// Weeks Duration in weeks (e.g., "3", "6~8")
+	Weeks *string `json:"weeks,omitempty"`
 }
 
 // ProgramTemplateEntry defines model for ProgramTemplateEntry.

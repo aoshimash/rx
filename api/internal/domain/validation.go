@@ -155,6 +155,16 @@ func ValidateProgramTemplate(p *ProgramTemplate) error {
 			return err
 		}
 	}
+	if p.Weeks != nil {
+		if err := ValidateStringLength("weeks", *p.Weeks, 0, 50); err != nil {
+			return err
+		}
+	}
+	if p.DaysPerWeek != nil {
+		if err := ValidateStringLength("days_per_week", *p.DaysPerWeek, 0, 50); err != nil {
+			return err
+		}
+	}
 
 	if len(p.Entries) > 1000 {
 		return &ValidationError{

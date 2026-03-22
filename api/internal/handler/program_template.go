@@ -45,6 +45,8 @@ func (h *ProgramTemplateHandler) CreateProgramTemplate(w http.ResponseWriter, r 
 		Description *string                       `json:"description,omitempty"`
 		Notes       *string                       `json:"notes,omitempty"`
 		Metadata    json.RawMessage               `json:"metadata,omitempty"`
+		Weeks       *string                       `json:"weeks,omitempty"`
+		DaysPerWeek *string                       `json:"days_per_week,omitempty"`
 		Entries     []programTemplateEntryRequest `json:"entries,omitempty"`
 	}
 
@@ -55,11 +57,18 @@ func (h *ProgramTemplateHandler) CreateProgramTemplate(w http.ResponseWriter, r 
 		return
 	}
 
+	var createdBy *string
+	if userID := middleware.GetUserID(ctx); userID != "" {
+		createdBy = &userID
+	}
 	tmpl := &domain.ProgramTemplate{
 		Name:        req.Name,
 		Description: req.Description,
 		Notes:       req.Notes,
 		Metadata:    req.Metadata,
+		Weeks:       req.Weeks,
+		DaysPerWeek: req.DaysPerWeek,
+		CreatedBy:   createdBy,
 		Entries:     make([]domain.ProgramTemplateEntry, len(req.Entries)),
 	}
 
@@ -222,11 +231,19 @@ func (h *ProgramTemplateHandler) DuplicateProgramTemplate(w http.ResponseWriter,
 		copy(copyMeta, original.Metadata)
 	}
 
+	var duplicatedBy *string
+	if userID := middleware.GetUserID(ctx); userID != "" {
+		duplicatedBy = &userID
+	}
+
 	duplicate := &domain.ProgramTemplate{
 		Name:        copyName,
 		Description: original.Description,
 		Notes:       original.Notes,
 		Metadata:    copyMeta,
+		Weeks:       original.Weeks,
+		DaysPerWeek: original.DaysPerWeek,
+		CreatedBy:   duplicatedBy,
 		Entries:     entries,
 	}
 
