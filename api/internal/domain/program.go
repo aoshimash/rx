@@ -2,6 +2,7 @@ package domain
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,10 +12,29 @@ import (
 type ProgramStatus string
 
 const (
-	ProgramStatusActive    ProgramStatus = "active"
+	ProgramStatusCreated   ProgramStatus = "created"
+	ProgramStatusOngoing   ProgramStatus = "ongoing"
 	ProgramStatusCompleted ProgramStatus = "completed"
-	ProgramStatusPlanned   ProgramStatus = "planned"
+	ProgramStatusCancelled ProgramStatus = "cancelled"
 )
+
+// ValidateProgramStatusTransition checks if a status transition is allowed.
+// Allowed: created→ongoing, ongoing→completed, ongoing→cancelled.
+func ValidateProgramStatusTransition(from, to ProgramStatus) error {
+	switch {
+	case from == ProgramStatusCreated && to == ProgramStatusOngoing:
+		return nil
+	case from == ProgramStatusOngoing && to == ProgramStatusCompleted:
+		return nil
+	case from == ProgramStatusOngoing && to == ProgramStatusCancelled:
+		return nil
+	default:
+		return &ValidationError{
+			Field:   "status",
+			Message: fmt.Sprintf("invalid status transition from '%s' to '%s'", from, to),
+		}
+	}
+}
 
 // ProgramSessionEntry represents a single exercise prescription within a program session.
 type ProgramSessionEntry struct {
@@ -42,7 +62,7 @@ type ProgramSession struct {
 
 // Program represents a concrete, immutable training program with embedded sessions.
 // Generated from a ProgramTemplate or created manually.
-// Status transitions from "active" to "completed" when all sessions have been logged.
+// Status transitions: created → ongoing → completed/cancelled. All transitions are explicit user actions.
 type Program struct {
 	ID                uuid.UUID        `json:"id"`
 	ProgramTemplateID *uuid.UUID       `json:"program_template_id,omitempty"`

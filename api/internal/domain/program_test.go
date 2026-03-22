@@ -432,7 +432,7 @@ func TestValidateProgram(t *testing.T) {
 		return &Program{
 			ID:     uuid.New(),
 			Name:   "Test Program",
-			Status: ProgramStatusActive,
+			Status: ProgramStatusCreated,
 			Sessions: []ProgramSession{
 				{
 					ID:          uuid.New(),
@@ -475,7 +475,7 @@ func TestValidateProgram(t *testing.T) {
 		p := &Program{
 			ID:     uuid.New(),
 			Name:   "Empty Program",
-			Status: ProgramStatusActive,
+			Status: ProgramStatusCreated,
 		}
 		err := ValidateProgram(p)
 		assert.Error(t, err)
@@ -497,6 +497,78 @@ func TestValidateProgram(t *testing.T) {
 			},
 		})
 		err := ValidateProgram(p)
+		assert.Error(t, err)
+	})
+
+	t.Run("valid with ongoing status", func(t *testing.T) {
+		p := validProgram()
+		p.Status = ProgramStatusOngoing
+		err := ValidateProgram(p)
+		assert.NoError(t, err)
+	})
+
+	t.Run("valid with completed status", func(t *testing.T) {
+		p := validProgram()
+		p.Status = ProgramStatusCompleted
+		err := ValidateProgram(p)
+		assert.NoError(t, err)
+	})
+
+	t.Run("valid with cancelled status", func(t *testing.T) {
+		p := validProgram()
+		p.Status = ProgramStatusCancelled
+		err := ValidateProgram(p)
+		assert.NoError(t, err)
+	})
+
+	t.Run("invalid status", func(t *testing.T) {
+		p := validProgram()
+		p.Status = "invalid"
+		err := ValidateProgram(p)
+		assert.Error(t, err)
+	})
+
+	t.Run("old active status is invalid", func(t *testing.T) {
+		p := validProgram()
+		p.Status = "active"
+		err := ValidateProgram(p)
+		assert.Error(t, err)
+	})
+}
+
+func TestValidateProgramStatusTransition(t *testing.T) {
+	t.Run("created to ongoing is valid", func(t *testing.T) {
+		err := ValidateProgramStatusTransition(ProgramStatusCreated, ProgramStatusOngoing)
+		assert.NoError(t, err)
+	})
+
+	t.Run("ongoing to completed is valid", func(t *testing.T) {
+		err := ValidateProgramStatusTransition(ProgramStatusOngoing, ProgramStatusCompleted)
+		assert.NoError(t, err)
+	})
+
+	t.Run("ongoing to cancelled is valid", func(t *testing.T) {
+		err := ValidateProgramStatusTransition(ProgramStatusOngoing, ProgramStatusCancelled)
+		assert.NoError(t, err)
+	})
+
+	t.Run("created to completed is invalid", func(t *testing.T) {
+		err := ValidateProgramStatusTransition(ProgramStatusCreated, ProgramStatusCompleted)
+		assert.Error(t, err)
+	})
+
+	t.Run("completed to ongoing is invalid", func(t *testing.T) {
+		err := ValidateProgramStatusTransition(ProgramStatusCompleted, ProgramStatusOngoing)
+		assert.Error(t, err)
+	})
+
+	t.Run("cancelled to ongoing is invalid", func(t *testing.T) {
+		err := ValidateProgramStatusTransition(ProgramStatusCancelled, ProgramStatusOngoing)
+		assert.Error(t, err)
+	})
+
+	t.Run("cancelled to created is invalid", func(t *testing.T) {
+		err := ValidateProgramStatusTransition(ProgramStatusCancelled, ProgramStatusCreated)
 		assert.Error(t, err)
 	})
 }

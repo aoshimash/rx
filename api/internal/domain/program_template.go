@@ -191,7 +191,7 @@ func GenerateProgramFromTemplate(template *ProgramTemplate, input *GenerateProgr
 	return &Program{
 		ProgramTemplateID: &templateID,
 		Name:              name,
-		Status:            ProgramStatusActive,
+		Status:            ProgramStatusCreated,
 		Notes:             template.Notes,
 		Metadata:          generationMeta,
 		Sessions:          sessions,
