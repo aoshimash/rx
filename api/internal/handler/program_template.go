@@ -448,13 +448,8 @@ func (h *ProgramTemplateHandler) EditProgramTemplate(w http.ResponseWriter, r *h
 		Entries:          entries,
 	}
 
-	if err := h.repo.Create(ctx, newTmpl); err != nil {
+	if err := h.repo.CreateAndArchive(ctx, newTmpl, id); err != nil {
 		middleware.WriteInternalError(w, "Failed to create new program template version")
-		return
-	}
-
-	if err := h.repo.Archive(ctx, id); err != nil {
-		middleware.WriteInternalError(w, "Failed to archive old program template")
 		return
 	}
 

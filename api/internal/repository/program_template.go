@@ -36,6 +36,10 @@ type ProgramTemplateRepository interface {
 	// Returns: templates, next cursor (empty string if no more), has_more flag
 	List(ctx context.Context, limit int, after string, includeArchived bool) ([]*domain.ProgramTemplate, string, bool, error)
 
+	// CreateAndArchive atomically creates a new ProgramTemplate and archives the one identified by archiveID.
+	// If either operation fails, neither change is persisted.
+	CreateAndArchive(ctx context.Context, tmpl *domain.ProgramTemplate, archiveID uuid.UUID) error
+
 	// ExistsByID checks if a ProgramTemplate with the given ID exists
 	ExistsByID(ctx context.Context, id uuid.UUID) (bool, error)
 }
