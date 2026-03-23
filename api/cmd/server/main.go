@@ -135,6 +135,7 @@ func main() {
 		r.Post("/program-templates/{id}/unarchive", programTemplateHandler.UnarchiveProgramTemplate)
 		r.Post("/program-templates/{id}/duplicate", programTemplateHandler.DuplicateProgramTemplate)
 		r.Post("/program-templates/{id}/generate", programTemplateHandler.GenerateProgram)
+		r.Post("/program-templates/{id}/edit", programTemplateHandler.EditProgramTemplate)
 		r.Delete("/program-templates/{id}", programTemplateHandler.DeleteProgramTemplate)
 
 		// Program routes
