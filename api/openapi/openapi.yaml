@@ -182,6 +182,43 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /program-templates/{id}/edit:
+    parameters:
+      - $ref: '#/components/parameters/ProgramTemplateId'
+    post:
+      summary: Edit program template
+      description: |
+        Edits a program template. If no Programs reference this template, it is updated in-place (200).
+        If Programs reference it, a new template is created with source_template_id pointing to the
+        original, and the original is archived (201).
+      operationId: editProgramTemplate
+      tags: [ProgramTemplate]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramTemplateCreate'
+      responses:
+        '200':
+          description: Template updated in-place (no linked programs)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramTemplate'
+        '201':
+          description: New template version created (linked programs exist, original archived)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramTemplate'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /programs:
     get:
       summary: List programs
@@ -673,6 +710,11 @@ components:
           format: date-time
           nullable: true
           description: When set, the program template is archived and hidden from default list results
+        source_template_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the template this was derived from (version lineage)
 
     ProgramTemplateCreate:
       type: object
