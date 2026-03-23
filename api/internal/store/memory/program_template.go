@@ -110,6 +110,31 @@ func (s *programTemplateStore) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
+func (s *programTemplateStore) Update(ctx context.Context, tmpl *domain.ProgramTemplate) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	existing, exists := s.templates[tmpl.ID]
+	if !exists {
+		return domain.ErrNotFound
+	}
+
+	now := time.Now()
+	tmpl.CreatedAt = existing.CreatedAt
+	tmpl.CreatedBy = existing.CreatedBy
+	tmpl.ArchivedAt = existing.ArchivedAt
+	tmpl.SourceTemplateID = existing.SourceTemplateID
+	tmpl.UpdatedAt = now
+
+	for i := range tmpl.Entries {
+		tmpl.Entries[i].ID = uuid.New()
+		tmpl.Entries[i].ProgramTemplateID = tmpl.ID
+	}
+
+	s.templates[tmpl.ID] = tmpl
+	return nil
+}
+
 func (s *programTemplateStore) List(ctx context.Context, limit int, after string, includeArchived bool) ([]*domain.ProgramTemplate, string, bool, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

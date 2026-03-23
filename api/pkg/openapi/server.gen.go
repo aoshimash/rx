@@ -301,10 +301,13 @@ type ProgramTemplate struct {
 	Id      openapi_types.UUID      `json:"id"`
 
 	// Metadata Free-form JSON metadata
-	Metadata  *map[string]interface{} `json:"metadata,omitempty"`
-	Name      string                  `json:"name"`
-	Notes     *string                 `json:"notes,omitempty"`
-	UpdatedAt time.Time               `json:"updated_at"`
+	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	Name     string                  `json:"name"`
+	Notes    *string                 `json:"notes,omitempty"`
+
+	// SourceTemplateId ID of the template this was derived from (version lineage)
+	SourceTemplateId *openapi_types.UUID `json:"source_template_id"`
+	UpdatedAt        time.Time           `json:"updated_at"`
 
 	// Weeks Duration in weeks (e.g., "3", "6~8")
 	Weeks *string `json:"weeks"`
@@ -498,6 +501,9 @@ type CreateProgramTemplateJSONRequestBody = ProgramTemplateCreate
 // DuplicateProgramTemplateJSONRequestBody defines body for DuplicateProgramTemplate for application/json ContentType.
 type DuplicateProgramTemplateJSONRequestBody = DuplicateProgramTemplateRequest
 
+// EditProgramTemplateJSONRequestBody defines body for EditProgramTemplate for application/json ContentType.
+type EditProgramTemplateJSONRequestBody = ProgramTemplateCreate
+
 // GenerateProgramJSONRequestBody defines body for GenerateProgram for application/json ContentType.
 type GenerateProgramJSONRequestBody = GenerateProgramRequest
 
@@ -548,6 +554,9 @@ type ServerInterface interface {
 	// Duplicate program template
 	// (POST /program-templates/{id}/duplicate)
 	DuplicateProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId)
+	// Edit program template
+	// (POST /program-templates/{id}/edit)
+	EditProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId)
 	// Generate a Program from this template
 	// (POST /program-templates/{id}/generate)
 	GenerateProgram(w http.ResponseWriter, r *http.Request, id ProgramTemplateId)
@@ -647,6 +656,12 @@ func (_ Unimplemented) ArchiveProgramTemplate(w http.ResponseWriter, r *http.Req
 // Duplicate program template
 // (POST /program-templates/{id}/duplicate)
 func (_ Unimplemented) DuplicateProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Edit program template
+// (POST /program-templates/{id}/edit)
+func (_ Unimplemented) EditProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1081,6 +1096,37 @@ func (siw *ServerInterfaceWrapper) DuplicateProgramTemplate(w http.ResponseWrite
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DuplicateProgramTemplate(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// EditProgramTemplate operation middleware
+func (siw *ServerInterfaceWrapper) EditProgramTemplate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id ProgramTemplateId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EditProgramTemplate(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1538,6 +1584,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/program-templates/{id}/duplicate", wrapper.DuplicateProgramTemplate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/program-templates/{id}/edit", wrapper.EditProgramTemplate)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/program-templates/{id}/generate", wrapper.GenerateProgram)

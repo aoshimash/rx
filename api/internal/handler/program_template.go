@@ -342,6 +342,125 @@ func (h *ProgramTemplateHandler) GenerateProgram(w http.ResponseWriter, r *http.
 	writeJSON(w, http.StatusCreated, program)
 }
 
+// EditProgramTemplate handles POST /program-templates/{id}/edit
+func (h *ProgramTemplateHandler) EditProgramTemplate(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	id, err := parseUUIDParam(r, "id", "program_template")
+	if err != nil {
+		middleware.WriteValidationError(w, err.Error(), nil)
+		return
+	}
+
+	existing, err := h.repo.GetByID(ctx, id)
+	if err != nil {
+		if err == domain.ErrNotFound {
+			middleware.WriteNotFoundError(w, "Program template not found")
+			return
+		}
+		middleware.WriteInternalError(w, "Failed to retrieve program template")
+		return
+	}
+
+	if existing.ArchivedAt != nil {
+		middleware.WriteValidationError(w, "Cannot edit archived program template", nil)
+		return
+	}
+
+	var req struct {
+		Name        string                        `json:"name"`
+		Description *string                       `json:"description,omitempty"`
+		Notes       *string                       `json:"notes,omitempty"`
+		Metadata    json.RawMessage               `json:"metadata,omitempty"`
+		Weeks       *string                       `json:"weeks,omitempty"`
+		DaysPerWeek *string                       `json:"days_per_week,omitempty"`
+		Entries     []programTemplateEntryRequest `json:"entries,omitempty"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		middleware.WriteValidationError(w, "Invalid request body", map[string]interface{}{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	entries := make([]domain.ProgramTemplateEntry, len(req.Entries))
+	for i, e := range req.Entries {
+		entries[i] = convertProgramTemplateEntry(e)
+	}
+
+	newContent := &domain.ProgramTemplate{
+		Name:        req.Name,
+		Description: req.Description,
+		Notes:       req.Notes,
+		Metadata:    req.Metadata,
+		Weeks:       req.Weeks,
+		DaysPerWeek: req.DaysPerWeek,
+		Entries:     entries,
+	}
+
+	if err := domain.ValidateProgramTemplate(newContent); err != nil {
+		if handleValidationError(w, err) {
+			return
+		}
+		middleware.WriteValidationError(w, "Validation failed", map[string]interface{}{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	hasPrograms, err := h.programRepo.ExistsByProgramTemplateID(ctx, id)
+	if err != nil {
+		middleware.WriteInternalError(w, "Failed to check references")
+		return
+	}
+
+	if !hasPrograms {
+		newContent.ID = existing.ID
+		if err := h.repo.Update(ctx, newContent); err != nil {
+			middleware.WriteInternalError(w, "Failed to update program template")
+			return
+		}
+		updated, err := h.repo.GetByID(ctx, newContent.ID)
+		if err != nil {
+			middleware.WriteInternalError(w, "Failed to retrieve updated program template")
+			return
+		}
+		writeJSON(w, http.StatusOK, updated)
+		return
+	}
+
+	// New version: create new template + archive old
+	var createdBy *string
+	if userID := middleware.GetUserID(ctx); userID != "" {
+		createdBy = &userID
+	}
+
+	newTmpl := &domain.ProgramTemplate{
+		Name:             req.Name,
+		Description:      req.Description,
+		Notes:            req.Notes,
+		Metadata:         req.Metadata,
+		Weeks:            req.Weeks,
+		DaysPerWeek:      req.DaysPerWeek,
+		CreatedBy:        createdBy,
+		SourceTemplateID: &id,
+		Entries:          entries,
+	}
+
+	if err := h.repo.Create(ctx, newTmpl); err != nil {
+		middleware.WriteInternalError(w, "Failed to create new program template version")
+		return
+	}
+
+	if err := h.repo.Archive(ctx, id); err != nil {
+		middleware.WriteInternalError(w, "Failed to archive old program template")
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, newTmpl)
+}
+
 // DeleteProgramTemplate handles DELETE /program-templates/{id}
 func (h *ProgramTemplateHandler) DeleteProgramTemplate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
