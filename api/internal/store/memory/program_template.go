@@ -123,6 +123,7 @@ func (s *programTemplateStore) Update(ctx context.Context, tmpl *domain.ProgramT
 	tmpl.CreatedAt = existing.CreatedAt
 	tmpl.CreatedBy = existing.CreatedBy
 	tmpl.ArchivedAt = existing.ArchivedAt
+	tmpl.SourceTemplateID = existing.SourceTemplateID
 	tmpl.UpdatedAt = now
 
 	for i := range tmpl.Entries {

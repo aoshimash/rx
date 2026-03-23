@@ -332,14 +332,14 @@ func (r *programTemplateRepository) Update(ctx context.Context, tmpl *domain.Pro
 	query := `
 		UPDATE program_templates
 		SET name = $2, description = $3, notes = $4, metadata = $5,
-		    weeks = $6, days_per_week = $7, source_template_id = $8, updated_at = NOW()
+		    weeks = $6, days_per_week = $7, updated_at = NOW()
 		WHERE id = $1
-		RETURNING updated_at
+		RETURNING updated_at, source_template_id
 	`
 	err = tx.QueryRow(ctx, query,
 		tmpl.ID, tmpl.Name, tmpl.Description, tmpl.Notes, tmpl.Metadata,
-		tmpl.Weeks, tmpl.DaysPerWeek, tmpl.SourceTemplateID,
-	).Scan(&tmpl.UpdatedAt)
+		tmpl.Weeks, tmpl.DaysPerWeek,
+	).Scan(&tmpl.UpdatedAt, &tmpl.SourceTemplateID)
 	if err == pgx.ErrNoRows {
 		return domain.ErrNotFound
 	}

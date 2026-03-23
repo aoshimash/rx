@@ -417,7 +417,6 @@ func (h *ProgramTemplateHandler) EditProgramTemplate(w http.ResponseWriter, r *h
 
 	if !hasPrograms {
 		newContent.ID = existing.ID
-		newContent.SourceTemplateID = existing.SourceTemplateID
 		if err := h.repo.Update(ctx, newContent); err != nil {
 			middleware.WriteInternalError(w, "Failed to update program template")
 			return
