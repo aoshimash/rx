@@ -35,12 +35,12 @@ func (r *programTemplateRepository) Create(ctx context.Context, tmpl *domain.Pro
 	}
 
 	query := `
-		INSERT INTO program_templates (id, name, description, notes, metadata, weeks, days_per_week, created_by, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+		INSERT INTO program_templates (id, name, description, notes, metadata, weeks, days_per_week, created_by, source_template_id, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
 		RETURNING created_at, updated_at
 	`
 
-	err = tx.QueryRow(ctx, query, id, tmpl.Name, tmpl.Description, tmpl.Notes, tmpl.Metadata, tmpl.Weeks, tmpl.DaysPerWeek, tmpl.CreatedBy).Scan(
+	err = tx.QueryRow(ctx, query, id, tmpl.Name, tmpl.Description, tmpl.Notes, tmpl.Metadata, tmpl.Weeks, tmpl.DaysPerWeek, tmpl.CreatedBy, tmpl.SourceTemplateID).Scan(
 		&tmpl.CreatedAt, &tmpl.UpdatedAt,
 	)
 	if err != nil {
@@ -100,7 +100,7 @@ func (r *programTemplateRepository) insertEntries(ctx context.Context, tx pgx.Tx
 
 func (r *programTemplateRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.ProgramTemplate, error) {
 	query := `
-		SELECT id, name, description, notes, metadata, weeks, days_per_week, created_by, created_at, updated_at, archived_at
+		SELECT id, name, description, notes, metadata, weeks, days_per_week, created_by, created_at, updated_at, archived_at, source_template_id
 		FROM program_templates
 		WHERE id = $1
 	`
@@ -119,6 +119,7 @@ func (r *programTemplateRepository) GetByID(ctx context.Context, id uuid.UUID) (
 		&tmpl.CreatedAt,
 		&tmpl.UpdatedAt,
 		&tmpl.ArchivedAt,
+		&tmpl.SourceTemplateID,
 	)
 	if err == pgx.ErrNoRows {
 		return nil, domain.ErrNotFound
@@ -240,7 +241,7 @@ func (r *programTemplateRepository) List(ctx context.Context, limit int, after s
 	var query string
 	if includeArchived {
 		query = `
-			SELECT id, name, description, notes, metadata, weeks, days_per_week, created_by, created_at, updated_at, archived_at
+			SELECT id, name, description, notes, metadata, weeks, days_per_week, created_by, created_at, updated_at, archived_at, source_template_id
 			FROM program_templates
 			WHERE ($1::uuid IS NULL OR id > $1)
 			ORDER BY id ASC
@@ -248,7 +249,7 @@ func (r *programTemplateRepository) List(ctx context.Context, limit int, after s
 		`
 	} else {
 		query = `
-			SELECT id, name, description, notes, metadata, weeks, days_per_week, created_by, created_at, updated_at, archived_at
+			SELECT id, name, description, notes, metadata, weeks, days_per_week, created_by, created_at, updated_at, archived_at, source_template_id
 			FROM program_templates
 			WHERE ($1::uuid IS NULL OR id > $1) AND archived_at IS NULL
 			ORDER BY id ASC
@@ -279,6 +280,7 @@ func (r *programTemplateRepository) List(ctx context.Context, limit int, after s
 			&tmpl.CreatedAt,
 			&tmpl.UpdatedAt,
 			&tmpl.ArchivedAt,
+			&tmpl.SourceTemplateID,
 		)
 		if err != nil {
 			return nil, "", false, err
@@ -312,6 +314,47 @@ func (r *programTemplateRepository) List(ctx context.Context, limit int, after s
 	}
 
 	return templates, nextCursor, hasMore, nil
+}
+
+func (r *programTemplateRepository) Update(ctx context.Context, tmpl *domain.ProgramTemplate) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	_, err = tx.Exec(ctx, `DELETE FROM program_template_entries WHERE program_template_id = $1`, tmpl.ID)
+	if err != nil {
+		slog.Error("Failed to delete old program template entries", "id", tmpl.ID, "error", err)
+		return err
+	}
+
+	query := `
+		UPDATE program_templates
+		SET name = $2, description = $3, notes = $4, metadata = $5,
+		    weeks = $6, days_per_week = $7, source_template_id = $8, updated_at = NOW()
+		WHERE id = $1
+		RETURNING updated_at
+	`
+	err = tx.QueryRow(ctx, query,
+		tmpl.ID, tmpl.Name, tmpl.Description, tmpl.Notes, tmpl.Metadata,
+		tmpl.Weeks, tmpl.DaysPerWeek, tmpl.SourceTemplateID,
+	).Scan(&tmpl.UpdatedAt)
+	if err == pgx.ErrNoRows {
+		return domain.ErrNotFound
+	}
+	if err != nil {
+		slog.Error("Failed to update program template", "id", tmpl.ID, "error", err)
+		return err
+	}
+
+	if len(tmpl.Entries) > 0 {
+		if err = r.insertEntries(ctx, tx, tmpl.ID, tmpl.Entries); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit(ctx)
 }
 
 func (r *programTemplateRepository) ExistsByID(ctx context.Context, id uuid.UUID) (bool, error) {
