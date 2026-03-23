@@ -186,6 +186,57 @@ func (r *programTemplateRepository) getEntriesForTemplate(ctx context.Context, t
 	return entries, rows.Err()
 }
 
+func (r *programTemplateRepository) CreateAndArchive(ctx context.Context, tmpl *domain.ProgramTemplate, archiveID uuid.UUID) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	// Create new template
+	id := uuid.New()
+	if tmpl.ID != uuid.Nil {
+		id = tmpl.ID
+	}
+
+	query := `
+		INSERT INTO program_templates (id, name, description, notes, metadata, weeks, days_per_week, created_by, source_template_id, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+		RETURNING created_at, updated_at
+	`
+
+	err = tx.QueryRow(ctx, query, id, tmpl.Name, tmpl.Description, tmpl.Notes, tmpl.Metadata, tmpl.Weeks, tmpl.DaysPerWeek, tmpl.CreatedBy, tmpl.SourceTemplateID).Scan(
+		&tmpl.CreatedAt, &tmpl.UpdatedAt,
+	)
+	if err != nil {
+		slog.Error("Failed to create program template in CreateAndArchive", "error", err)
+		return err
+	}
+
+	tmpl.ID = id
+
+	if len(tmpl.Entries) > 0 {
+		if err = r.insertEntries(ctx, tx, id, tmpl.Entries); err != nil {
+			return err
+		}
+	}
+
+	// Archive old template
+	result, err := tx.Exec(ctx,
+		`UPDATE program_templates SET archived_at = NOW() WHERE id = $1`,
+		archiveID,
+	)
+	if err != nil {
+		slog.Error("Failed to archive program template in CreateAndArchive", "id", archiveID, "error", err)
+		return err
+	}
+	if result.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+
+	return tx.Commit(ctx)
+}
+
 func (r *programTemplateRepository) Archive(ctx context.Context, id uuid.UUID) error {
 	result, err := r.pool.Exec(ctx,
 		`UPDATE program_templates SET archived_at = NOW() WHERE id = $1`,

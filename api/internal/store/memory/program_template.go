@@ -71,6 +71,33 @@ func (s *programTemplateStore) copyTemplate(t *domain.ProgramTemplate) *domain.P
 	return &cp
 }
 
+func (s *programTemplateStore) CreateAndArchive(ctx context.Context, tmpl *domain.ProgramTemplate, archiveID uuid.UUID) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	existing, exists := s.templates[archiveID]
+	if !exists {
+		return domain.ErrNotFound
+	}
+
+	now := time.Now()
+	tmpl.ID = uuid.New()
+	tmpl.CreatedAt = now
+	tmpl.UpdatedAt = now
+
+	for i := range tmpl.Entries {
+		tmpl.Entries[i].ID = uuid.New()
+		tmpl.Entries[i].ProgramTemplateID = tmpl.ID
+	}
+
+	s.templates[tmpl.ID] = tmpl
+
+	archivedAt := now
+	existing.ArchivedAt = &archivedAt
+
+	return nil
+}
+
 func (s *programTemplateStore) Archive(ctx context.Context, id uuid.UUID) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
