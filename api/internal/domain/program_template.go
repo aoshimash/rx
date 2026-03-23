@@ -28,19 +28,19 @@ type ProgramTemplateEntry struct {
 // ProgramTemplates can be edited via the Edit endpoint, which either updates in-place
 // (no linked Programs) or creates a new version with source_template_id pointing to the original.
 type ProgramTemplate struct {
-	ID              uuid.UUID              `json:"id"`
-	Name            string                 `json:"name"`
-	Description     *string                `json:"description,omitempty"`
-	Notes           *string                `json:"notes,omitempty"`
-	Metadata        json.RawMessage        `json:"metadata,omitempty"`
-	Weeks           *string                `json:"weeks,omitempty"`
-	DaysPerWeek     *string                `json:"days_per_week,omitempty"`
-	CreatedBy       *string                `json:"created_by,omitempty"`
-	CreatedAt       time.Time              `json:"created_at"`
-	UpdatedAt       time.Time              `json:"updated_at"`
-	ArchivedAt      *time.Time             `json:"archived_at,omitempty"`
+	ID               uuid.UUID              `json:"id"`
+	Name             string                 `json:"name"`
+	Description      *string                `json:"description,omitempty"`
+	Notes            *string                `json:"notes,omitempty"`
+	Metadata         json.RawMessage        `json:"metadata,omitempty"`
+	Weeks            *string                `json:"weeks,omitempty"`
+	DaysPerWeek      *string                `json:"days_per_week,omitempty"`
+	CreatedBy        *string                `json:"created_by,omitempty"`
+	CreatedAt        time.Time              `json:"created_at"`
+	UpdatedAt        time.Time              `json:"updated_at"`
+	ArchivedAt       *time.Time             `json:"archived_at,omitempty"`
 	SourceTemplateID *uuid.UUID             `json:"source_template_id,omitempty"`
-	Entries         []ProgramTemplateEntry `json:"entries,omitempty"`
+	Entries          []ProgramTemplateEntry `json:"entries,omitempty"`
 }
 
 // GenerateProgramInput holds the user-supplied inputs needed to generate a Program from a ProgramTemplate.
