@@ -8,10 +8,14 @@ import (
 )
 
 // ProgramTemplateRepository defines the interface for ProgramTemplate storage operations.
-// ProgramTemplates are immutable after creation; use Archive/Unarchive instead of Update.
 type ProgramTemplateRepository interface {
 	// Create stores a new ProgramTemplate and returns it with generated ID and timestamps
 	Create(ctx context.Context, tmpl *domain.ProgramTemplate) error
+
+	// Update replaces the content of an existing ProgramTemplate (name, description, notes, metadata, weeks, days_per_week, entries).
+	// The template ID, created_at, created_by, and archived_at are preserved. updated_at is set to NOW().
+	// Entries are replaced entirely (old entries deleted, new entries inserted).
+	Update(ctx context.Context, tmpl *domain.ProgramTemplate) error
 
 	// GetByID retrieves a ProgramTemplate by its ID including all ProgramTemplateEntry records, returns domain.ErrNotFound if not found
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.ProgramTemplate, error)
