@@ -36,10 +36,42 @@ import {
   useUnarchiveProgramTemplate,
 } from '@/lib/hooks/useProgramTemplates';
 import { useProgramsByTemplateId } from '@/lib/hooks/usePrograms';
-import type { ProgramTemplateEntry, ProgramTemplateEntryCreate } from '@/types/api';
+import type { Program, ProgramTemplateEntry, ProgramTemplateEntryCreate } from '@/types/api';
 import { Archive, ArchiveRestore, ArrowLeft, Copy, Info, Pencil, Trash2, User } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
+
+function LinkedProgramList({
+  programs,
+  onLinkClick,
+}: {
+  programs: Program[];
+  onLinkClick: () => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <p>
+        Editing this template will create a new version and archive the current one. The following
+        programs reference this template and will not be affected:
+      </p>
+      <ul className="space-y-1">
+        {programs.map((program) => (
+          <li key={program.id}>
+            <a
+              href={`/programs/${program.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary underline underline-offset-2 hover:opacity-80"
+              onClick={onLinkClick}
+            >
+              {program.name}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 type ExerciseGroup = { name: string; entries: ProgramTemplateEntry[] };
 type SessionGroup = { sessionName: string; exerciseGroups: ExerciseGroup[] };
@@ -126,18 +158,14 @@ export default function ProgramTemplateDetailPage() {
   const isArchived = !!template.archived_at;
   const hasPrograms = (programsData?.data ?? []).length > 0;
 
-  const openEditDialog = () => {
-    setEditName(template.name);
-    setEditDescription(template.description ?? '');
-    setEditNotes(template.notes ?? '');
-    setEditDialogOpen(true);
-  };
-
   const handleEditClick = () => {
     if (hasPrograms) {
       setEditConfirmOpen(true);
     } else {
-      openEditDialog();
+      setEditName(template.name);
+      setEditDescription(template.description ?? '');
+      setEditNotes(template.notes ?? '');
+      setEditDialogOpen(true);
     }
   };
 
@@ -417,9 +445,11 @@ export default function ProgramTemplateDetailPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Create a new version?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This template is used by existing programs. Editing it will create a new version of
-              the template and archive the current one. Existing programs will not be affected.
+            <AlertDialogDescription asChild>
+              <LinkedProgramList
+                programs={programsData?.data ?? []}
+                onLinkClick={() => setEditConfirmOpen(false)}
+              />
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -427,7 +457,10 @@ export default function ProgramTemplateDetailPage() {
             <AlertDialogAction
               onClick={() => {
                 setEditConfirmOpen(false);
-                openEditDialog();
+                setEditName(template.name);
+                setEditDescription(template.description ?? '');
+                setEditNotes(template.notes ?? '');
+                setEditDialogOpen(true);
               }}
             >
               Continue
