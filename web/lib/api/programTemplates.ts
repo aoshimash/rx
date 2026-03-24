@@ -51,4 +51,13 @@ export const programTemplatesApi = {
   async generate(id: string, data: GenerateProgramRequest): Promise<Program> {
     return api.post(`program-templates/${id}/generate`, { json: data }).json<Program>();
   },
+
+  async edit(
+    id: string,
+    data: ProgramTemplateCreate
+  ): Promise<{ template: ProgramTemplate; isNewVersion: boolean }> {
+    const response = await api.post(`program-templates/${id}/edit`, { json: data });
+    const template = await response.json<ProgramTemplate>();
+    return { template, isNewVersion: response.status === 201 };
+  },
 };
