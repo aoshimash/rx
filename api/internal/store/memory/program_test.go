@@ -10,21 +10,38 @@ import (
 )
 
 func TestProgramMemoryStore_ExistsByName(t *testing.T) {
-	store := NewProgramRepository()
-	ctx := context.Background()
+	tests := []struct {
+		name           string
+		programToCreate *domain.Program
+		queryName      string
+		wantExists     bool
+	}{
+		{
+			name:           "returns false when empty",
+			programToCreate: nil,
+			queryName:      "Test",
+			wantExists:     false,
+		},
+		{
+			name:           "returns true after create",
+			programToCreate: &domain.Program{Name: "Test", Status: domain.ProgramStatusCreated},
+			queryName:      "Test",
+			wantExists:     true,
+		},
+	}
 
-	t.Run("returns false when empty", func(t *testing.T) {
-		exists, err := store.ExistsByName(ctx, "Test")
-		require.NoError(t, err)
-		assert.False(t, exists)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := NewProgramRepository()
+			ctx := context.Background()
 
-	t.Run("returns true after create", func(t *testing.T) {
-		p := &domain.Program{Name: "Test", Status: domain.ProgramStatusCreated}
-		require.NoError(t, store.Create(ctx, p))
+			if tt.programToCreate != nil {
+				require.NoError(t, store.Create(ctx, tt.programToCreate))
+			}
 
-		exists, err := store.ExistsByName(ctx, "Test")
-		require.NoError(t, err)
-		assert.True(t, exists)
-	})
+			exists, err := store.ExistsByName(ctx, tt.queryName)
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantExists, exists)
+		})
+	}
 }
