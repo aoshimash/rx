@@ -1,6 +1,7 @@
 'use client';
 
 import { DeleteConfirmDialog } from '@/components/plan-editor/DeleteConfirmDialog';
+import { ProgramForm } from '@/components/programs/ProgramForm';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,12 +31,13 @@ import {
   useArchiveProgramTemplate,
   useDeleteProgramTemplate,
   useDuplicateProgramTemplate,
+  useEditProgramTemplate,
   useProgramTemplate,
   useUnarchiveProgramTemplate,
 } from '@/lib/hooks/useProgramTemplates';
 import { useProgramsByTemplateId } from '@/lib/hooks/usePrograms';
-import type { ProgramTemplateEntry } from '@/types/api';
-import { Archive, ArchiveRestore, ArrowLeft, Copy, Info, Trash2, User } from 'lucide-react';
+import type { ProgramTemplateEntry, ProgramTemplateEntryCreate } from '@/types/api';
+import { Archive, ArchiveRestore, ArrowLeft, Copy, Info, Pencil, Trash2, User } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -91,11 +93,17 @@ export default function ProgramTemplateDetailPage() {
   const unarchiveTemplate = useUnarchiveProgramTemplate();
   const duplicateTemplate = useDuplicateProgramTemplate();
   const deleteTemplate = useDeleteProgramTemplate();
+  const editTemplate = useEditProgramTemplate();
   const { data: programsData, isLoading: programsLoading } = useProgramsByTemplateId(templateId);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
   const [duplicateName, setDuplicateName] = useState('');
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
+  const [editConfirmOpen, setEditConfirmOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editNotes, setEditNotes] = useState('');
 
   if (isLoading) {
     return (
@@ -117,6 +125,37 @@ export default function ProgramTemplateDetailPage() {
   const sessionGroups = groupBySession(template.entries || []);
   const isArchived = !!template.archived_at;
   const hasPrograms = (programsData?.data ?? []).length > 0;
+
+  const openEditDialog = () => {
+    setEditName(template.name);
+    setEditDescription(template.description ?? '');
+    setEditNotes(template.notes ?? '');
+    setEditDialogOpen(true);
+  };
+
+  const handleEditClick = () => {
+    if (hasPrograms) {
+      setEditConfirmOpen(true);
+    } else {
+      openEditDialog();
+    }
+  };
+
+  const handleEditSave = async (entries: ProgramTemplateEntryCreate[]) => {
+    const result = await editTemplate.mutateAsync({
+      id: templateId,
+      data: {
+        name: editName,
+        description: editDescription || undefined,
+        notes: editNotes || undefined,
+        entries,
+      },
+    });
+    setEditDialogOpen(false);
+    if (result.isNewVersion) {
+      router.push(`/program-templates/${result.template.id}`);
+    }
+  };
 
   const openDuplicateDialog = () => {
     setDuplicateName(`${template.name} (copy)`);
@@ -185,6 +224,14 @@ export default function ProgramTemplateDetailPage() {
             </div>
           </div>
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleEditClick}
+              disabled={isArchived || editTemplate.isPending}
+            >
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
             <Button
               variant="outline"
               onClick={openDuplicateDialog}
@@ -365,6 +412,53 @@ export default function ProgramTemplateDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={editConfirmOpen} onOpenChange={setEditConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Create a new version?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This template is used by existing programs. Editing it will create a new version of
+              the template and archive the current one. Existing programs will not be affected.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setEditConfirmOpen(false);
+                openEditDialog();
+              }}
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Template</DialogTitle>
+            <DialogDescription>
+              Update the template's sessions and exercise prescriptions.
+            </DialogDescription>
+          </DialogHeader>
+          <ProgramForm
+            programName={editName}
+            programDescription={editDescription}
+            programNotes={editNotes}
+            initialEntries={template.entries?.map(
+              ({ id: _id, ...rest }) => rest as ProgramTemplateEntryCreate
+            )}
+            onNameChange={setEditName}
+            onDescriptionChange={setEditDescription}
+            onNotesChange={setEditNotes}
+            onSave={handleEditSave}
+            isSaving={editTemplate.isPending}
+          />
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
