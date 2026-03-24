@@ -170,3 +170,14 @@ func (s *programStore) ExistsByProgramTemplateID(ctx context.Context, programTem
 	}
 	return false, nil
 }
+
+func (s *programStore) ExistsByName(ctx context.Context, name string) (bool, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	for _, p := range s.programs {
+		if p.Name == name {
+			return true, nil
+		}
+	}
+	return false, nil
+}
