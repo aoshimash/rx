@@ -32,4 +32,7 @@ type ProgramRepository interface {
 
 	// ExistsByProgramTemplateID checks if any Programs reference the given program template
 	ExistsByProgramTemplateID(ctx context.Context, programTemplateID uuid.UUID) (bool, error)
+
+	// ExistsByName checks if a Program with the given name already exists.
+	ExistsByName(ctx context.Context, name string) (bool, error)
 }
