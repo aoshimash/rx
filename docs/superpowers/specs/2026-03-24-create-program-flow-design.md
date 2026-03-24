@@ -181,7 +181,7 @@ POST /programs
 }
 ```
 
-If a program with the same name already exists, the API permits it (no uniqueness constraint). No UI warning is shown for duplicate names.
+If a program with the same name already exists, the API returns a `409 Conflict` error. The UI surfaces this as an inline error on the name field ("A program with this name already exists").
 
 
 ---
@@ -209,9 +209,18 @@ components/programs/
 
 ## Export
 
-An **Export** option is added to the action menu on the Program detail page. Clicking it **copies the JSON to the clipboard** and shows a brief toast ("Copied to clipboard"). A `.json` file download is not provided to keep the implementation simple.
+An **Export** option is added to the action menu on the Program detail page. Two actions are provided:
+
+- **Copy to clipboard** — copies the JSON and shows a brief toast ("Copied to clipboard")
+- **Download .json** — triggers a file download named `{program-name}.json`
 
 The exported JSON uses the format described in [Flow 2: Import](#flow-2-import).
+
+---
+
+## API changes required
+
+- **Program name uniqueness**: Add a uniqueness constraint on `programs.name` (DB migration + domain validation + `409 Conflict` response). Program names serve as natural identifiers for API/CLI/AI consumers.
 
 ---
 
