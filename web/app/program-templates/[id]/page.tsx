@@ -255,7 +255,7 @@ export default function ProgramTemplateDetailPage() {
             <Button
               variant="outline"
               onClick={handleEditClick}
-              disabled={isArchived || editTemplate.isPending}
+              disabled={isArchived || editTemplate.isPending || programsLoading}
             >
               <Pencil className="h-4 w-4 mr-2" />
               Edit
