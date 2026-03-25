@@ -13,7 +13,7 @@ type ProgramTemplateRepository interface {
 	Create(ctx context.Context, tmpl *domain.ProgramTemplate) error
 
 	// Update replaces the content of an existing ProgramTemplate (name, description, notes, metadata, weeks, days_per_week, entries).
-	// The template ID, source_template_id, created_at, created_by, and archived_at are preserved and must not be changed by Update.
+	// The template ID, created_at, created_by, and archived_at are preserved and must not be changed by Update.
 	// updated_at is set to NOW(). Entries are replaced entirely (old entries deleted, new entries inserted).
 	Update(ctx context.Context, tmpl *domain.ProgramTemplate) error
 
@@ -36,10 +36,10 @@ type ProgramTemplateRepository interface {
 	// Returns: templates, next cursor (empty string if no more), has_more flag
 	List(ctx context.Context, limit int, after string, includeArchived bool) ([]*domain.ProgramTemplate, string, bool, error)
 
-	// CreateAndArchive atomically creates a new ProgramTemplate and archives the one identified by archiveID.
-	// If either operation fails, neither change is persisted.
-	CreateAndArchive(ctx context.Context, tmpl *domain.ProgramTemplate, archiveID uuid.UUID) error
-
 	// ExistsByID checks if a ProgramTemplate with the given ID exists
 	ExistsByID(ctx context.Context, id uuid.UUID) (bool, error)
+
+	// ExistsByName checks if an active (non-archived) ProgramTemplate with the given name exists.
+	// If excludeID is non-nil, the template with that ID is excluded from the check.
+	ExistsByName(ctx context.Context, name string, excludeID *uuid.UUID) (bool, error)
 }

@@ -27,18 +27,20 @@ func setupProgramTemplateTestRouter() (chi.Router, *ProgramTemplateHandler) {
 	r.Get("/program-templates/{id}", h.GetProgramTemplate)
 	r.Post("/program-templates/{id}/edit", h.EditProgramTemplate)
 	r.Post("/program-templates/{id}/archive", h.ArchiveProgramTemplate)
+	r.Post("/program-templates/{id}/unarchive", h.UnarchiveProgramTemplate)
+	r.Post("/program-templates/{id}/duplicate", h.DuplicateProgramTemplate)
 	r.Post("/program-templates/{id}/generate", h.GenerateProgram)
 	return r, h
 }
 
-func createTestTemplate(t *testing.T, router chi.Router) map[string]any {
+func createTestTemplateWithName(t *testing.T, router chi.Router, name string) map[string]any {
 	t.Helper()
-	body := `{
-		"name": "Test Template",
+	body := fmt.Sprintf(`{
+		"name": %q,
 		"entries": [
 			{"exercise_name": "Squat", "order": 0, "sets": 3, "reps": 5, "rpe": 8}
 		]
-	}`
+	}`, name)
 	req := httptest.NewRequest(http.MethodPost, "/program-templates", bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer test-user")
@@ -49,6 +51,60 @@ func createTestTemplate(t *testing.T, router chi.Router) map[string]any {
 	var result map[string]any
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &result))
 	return result
+}
+
+func createTestTemplate(t *testing.T, router chi.Router) map[string]any {
+	t.Helper()
+	return createTestTemplateWithName(t, router, "Test Template")
+}
+
+func TestCreateProgramTemplate(t *testing.T) {
+	t.Run("returns 409 when active template with same name exists", func(t *testing.T) {
+		router, _ := setupProgramTemplateTestRouter()
+		createTestTemplate(t, router)
+
+		body := `{
+			"name": "Test Template",
+			"entries": [
+				{"exercise_name": "Bench", "order": 0, "sets": 3, "reps": 5}
+			]
+		}`
+		req := httptest.NewRequest(http.MethodPost, "/program-templates", bytes.NewBufferString(body))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer test-user")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusConflict, w.Code)
+	})
+
+	t.Run("allows same name when existing template is archived", func(t *testing.T) {
+		router, _ := setupProgramTemplateTestRouter()
+		tmpl := createTestTemplate(t, router)
+		id := tmpl["id"].(string)
+
+		// Archive it
+		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/program-templates/%s/archive", id), nil)
+		req.Header.Set("Authorization", "Bearer test-user")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+		require.Equal(t, http.StatusOK, w.Code)
+
+		// Create with same name — should succeed
+		body := `{
+			"name": "Test Template",
+			"entries": [
+				{"exercise_name": "Bench", "order": 0, "sets": 3, "reps": 5}
+			]
+		}`
+		req = httptest.NewRequest(http.MethodPost, "/program-templates", bytes.NewBufferString(body))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer test-user")
+		w = httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusCreated, w.Code)
+	})
 }
 
 func TestEditProgramTemplate(t *testing.T) {
@@ -80,7 +136,7 @@ func TestEditProgramTemplate(t *testing.T) {
 		assert.Equal(t, "Bench Press", entries[0].(map[string]any)["exercise_name"])
 	})
 
-	t.Run("new version when linked programs exist", func(t *testing.T) {
+	t.Run("returns 409 when linked programs exist", func(t *testing.T) {
 		router, _ := setupProgramTemplateTestRouter()
 		tmpl := createTestTemplate(t, router)
 		id := tmpl["id"].(string)
@@ -94,7 +150,7 @@ func TestEditProgramTemplate(t *testing.T) {
 		router.ServeHTTP(w, req)
 		require.Equal(t, http.StatusCreated, w.Code)
 
-		// Now edit — should create new version
+		// Now edit — should return 409
 		editBody := `{
 			"name": "Version 2",
 			"entries": [
@@ -107,24 +163,28 @@ func TestEditProgramTemplate(t *testing.T) {
 		w = httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusCreated, w.Code)
+		assert.Equal(t, http.StatusConflict, w.Code)
+	})
 
-		var result map[string]any
-		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &result))
-		assert.NotEqual(t, id, result["id"], "new version should have a new ID")
-		assert.Equal(t, "Version 2", result["name"])
-		assert.Equal(t, id, result["source_template_id"])
+	t.Run("returns 409 when name conflicts with another active template", func(t *testing.T) {
+		router, _ := setupProgramTemplateTestRouter()
+		createTestTemplateWithName(t, router, "Template A")
+		tmplB := createTestTemplateWithName(t, router, "Template B")
+		idB := tmplB["id"].(string)
 
-		// Verify old template is archived
-		req = httptest.NewRequest(http.MethodGet, fmt.Sprintf("/program-templates/%s", id), nil)
+		editBody := `{
+			"name": "Template A",
+			"entries": [
+				{"exercise_name": "Squat", "order": 0, "sets": 3, "reps": 5}
+			]
+		}`
+		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/program-templates/%s/edit", idB), bytes.NewBufferString(editBody))
+		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer test-user")
-		w = httptest.NewRecorder()
+		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
-		require.Equal(t, http.StatusOK, w.Code)
 
-		var old map[string]any
-		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &old))
-		assert.NotNil(t, old["archived_at"], "old template should be archived")
+		assert.Equal(t, http.StatusConflict, w.Code)
 	})
 
 	t.Run("rejects editing archived template", func(t *testing.T) {
@@ -176,5 +236,85 @@ func TestEditProgramTemplate(t *testing.T) {
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+}
+
+func TestDuplicateProgramTemplate(t *testing.T) {
+	t.Run("auto-generates unique name", func(t *testing.T) {
+		router, _ := setupProgramTemplateTestRouter()
+		tmpl := createTestTemplate(t, router)
+		id := tmpl["id"].(string)
+
+		// Duplicate without custom name
+		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/program-templates/%s/duplicate", id), nil)
+		req.Header.Set("Authorization", "Bearer test-user")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusCreated, w.Code)
+		var result map[string]any
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &result))
+		assert.Equal(t, "Test Template (copy)", result["name"])
+	})
+
+	t.Run("auto-increments when copy name already exists", func(t *testing.T) {
+		router, _ := setupProgramTemplateTestRouter()
+		tmpl := createTestTemplate(t, router)
+		id := tmpl["id"].(string)
+
+		// Create "Test Template (copy)" manually
+		createTestTemplateWithName(t, router, "Test Template (copy)")
+
+		// Duplicate — should auto-increment to "Test Template (copy 2)"
+		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/program-templates/%s/duplicate", id), nil)
+		req.Header.Set("Authorization", "Bearer test-user")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusCreated, w.Code)
+		var result map[string]any
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &result))
+		assert.Equal(t, "Test Template (copy 2)", result["name"])
+	})
+
+	t.Run("returns 409 when custom name conflicts", func(t *testing.T) {
+		router, _ := setupProgramTemplateTestRouter()
+		tmpl := createTestTemplate(t, router)
+		id := tmpl["id"].(string)
+
+		body := `{"name": "Test Template"}`
+		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/program-templates/%s/duplicate", id), bytes.NewBufferString(body))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer test-user")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusConflict, w.Code)
+	})
+}
+
+func TestUnarchiveProgramTemplate(t *testing.T) {
+	t.Run("returns 409 when active template with same name exists", func(t *testing.T) {
+		router, _ := setupProgramTemplateTestRouter()
+		tmpl := createTestTemplate(t, router)
+		id := tmpl["id"].(string)
+
+		// Archive it
+		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/program-templates/%s/archive", id), nil)
+		req.Header.Set("Authorization", "Bearer test-user")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+		require.Equal(t, http.StatusOK, w.Code)
+
+		// Create a new template with the same name
+		createTestTemplate(t, router)
+
+		// Try to unarchive — should return 409
+		req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/program-templates/%s/unarchive", id), nil)
+		req.Header.Set("Authorization", "Bearer test-user")
+		w = httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusConflict, w.Code)
 	})
 }
