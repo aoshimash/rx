@@ -3,8 +3,10 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 
 	"github.com/aoshimash/rx/api/internal/middleware"
@@ -13,6 +15,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+var programCounter atomic.Int64
 
 func setupProgramTestRouter() (chi.Router, *ProgramHandler) {
 	programRepo := memory.NewProgramRepository()
@@ -33,8 +37,9 @@ func setupProgramTestRouter() (chi.Router, *ProgramHandler) {
 
 func createTestProgram(t *testing.T, router chi.Router) map[string]interface{} {
 	t.Helper()
-	body := `{
-		"name": "Strength Program",
+	name := fmt.Sprintf("Strength Program %d", programCounter.Add(1))
+	body := fmt.Sprintf(`{
+		"name": %q,`, name) + `
 		"sessions": [
 			{
 				"week": 1,
@@ -83,7 +88,7 @@ func TestProgramHandler_CreateProgram(t *testing.T) {
 		result := createTestProgram(t, router)
 
 		assert.NotEmpty(t, result["id"])
-		assert.Equal(t, "Strength Program", result["name"])
+		assert.Contains(t, result["name"], "Strength Program")
 		assert.Equal(t, "created", result["status"])
 		sessions := result["sessions"].([]interface{})
 		assert.Len(t, sessions, 1)
@@ -204,6 +209,32 @@ func TestProgramHandler_UpdateProgramStatus(t *testing.T) {
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
 	})
+}
+
+func TestCreateProgram_ConflictOnDuplicateName(t *testing.T) {
+	router, _ := setupProgramTestRouter()
+
+	body := `{"name":"Duplicate Program","sessions":[{"session_name":"Day 1","order":0,"entries":[{"exercise_name":"Squat","order":0,"sets":3,"reps":5,"load_kg":100.0,"rpe":8}]}]}`
+
+	// First creation — should succeed
+	req1 := httptest.NewRequest(http.MethodPost, "/programs", bytes.NewBufferString(body))
+	req1.Header.Set("Content-Type", "application/json")
+	req1.Header.Set("Authorization", "Bearer user1")
+	w1 := httptest.NewRecorder()
+	router.ServeHTTP(w1, req1)
+	require.Equal(t, http.StatusCreated, w1.Code)
+
+	// Second creation — same name, should conflict
+	req2 := httptest.NewRequest(http.MethodPost, "/programs", bytes.NewBufferString(body))
+	req2.Header.Set("Content-Type", "application/json")
+	req2.Header.Set("Authorization", "Bearer user1")
+	w2 := httptest.NewRecorder()
+	router.ServeHTTP(w2, req2)
+
+	assert.Equal(t, http.StatusConflict, w2.Code)
+	var resp map[string]interface{}
+	require.NoError(t, json.NewDecoder(w2.Body).Decode(&resp))
+	assert.Equal(t, "CONFLICT", resp["code"])
 }
 
 func TestProgramHandler_ListPrograms(t *testing.T) {
