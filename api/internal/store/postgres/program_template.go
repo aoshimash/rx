@@ -35,12 +35,12 @@ func (r *programTemplateRepository) Create(ctx context.Context, tmpl *domain.Pro
 	}
 
 	query := `
-		INSERT INTO program_templates (id, name, description, notes, metadata, weeks, days_per_week, created_by, source_template_id, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+		INSERT INTO program_templates (id, name, description, notes, metadata, weeks, days_per_week, created_by, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
 		RETURNING created_at, updated_at
 	`
 
-	err = tx.QueryRow(ctx, query, id, tmpl.Name, tmpl.Description, tmpl.Notes, tmpl.Metadata, tmpl.Weeks, tmpl.DaysPerWeek, tmpl.CreatedBy, tmpl.SourceTemplateID).Scan(
+	err = tx.QueryRow(ctx, query, id, tmpl.Name, tmpl.Description, tmpl.Notes, tmpl.Metadata, tmpl.Weeks, tmpl.DaysPerWeek, tmpl.CreatedBy).Scan(
 		&tmpl.CreatedAt, &tmpl.UpdatedAt,
 	)
 	if err != nil {
@@ -100,7 +100,7 @@ func (r *programTemplateRepository) insertEntries(ctx context.Context, tx pgx.Tx
 
 func (r *programTemplateRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.ProgramTemplate, error) {
 	query := `
-		SELECT id, name, description, notes, metadata, weeks, days_per_week, created_by, created_at, updated_at, archived_at, source_template_id
+		SELECT id, name, description, notes, metadata, weeks, days_per_week, created_by, created_at, updated_at, archived_at
 		FROM program_templates
 		WHERE id = $1
 	`
@@ -119,7 +119,6 @@ func (r *programTemplateRepository) GetByID(ctx context.Context, id uuid.UUID) (
 		&tmpl.CreatedAt,
 		&tmpl.UpdatedAt,
 		&tmpl.ArchivedAt,
-		&tmpl.SourceTemplateID,
 	)
 	if err == pgx.ErrNoRows {
 		return nil, domain.ErrNotFound
@@ -186,57 +185,6 @@ func (r *programTemplateRepository) getEntriesForTemplate(ctx context.Context, t
 	return entries, rows.Err()
 }
 
-func (r *programTemplateRepository) CreateAndArchive(ctx context.Context, tmpl *domain.ProgramTemplate, archiveID uuid.UUID) error {
-	tx, err := r.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = tx.Rollback(ctx) }()
-
-	// Create new template
-	id := uuid.New()
-	if tmpl.ID != uuid.Nil {
-		id = tmpl.ID
-	}
-
-	query := `
-		INSERT INTO program_templates (id, name, description, notes, metadata, weeks, days_per_week, created_by, source_template_id, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
-		RETURNING created_at, updated_at
-	`
-
-	err = tx.QueryRow(ctx, query, id, tmpl.Name, tmpl.Description, tmpl.Notes, tmpl.Metadata, tmpl.Weeks, tmpl.DaysPerWeek, tmpl.CreatedBy, tmpl.SourceTemplateID).Scan(
-		&tmpl.CreatedAt, &tmpl.UpdatedAt,
-	)
-	if err != nil {
-		slog.Error("Failed to create program template in CreateAndArchive", "error", err)
-		return err
-	}
-
-	tmpl.ID = id
-
-	if len(tmpl.Entries) > 0 {
-		if err = r.insertEntries(ctx, tx, id, tmpl.Entries); err != nil {
-			return err
-		}
-	}
-
-	// Archive old template
-	result, err := tx.Exec(ctx,
-		`UPDATE program_templates SET archived_at = NOW() WHERE id = $1`,
-		archiveID,
-	)
-	if err != nil {
-		slog.Error("Failed to archive program template in CreateAndArchive", "id", archiveID, "error", err)
-		return err
-	}
-	if result.RowsAffected() == 0 {
-		return domain.ErrNotFound
-	}
-
-	return tx.Commit(ctx)
-}
-
 func (r *programTemplateRepository) Archive(ctx context.Context, id uuid.UUID) error {
 	result, err := r.pool.Exec(ctx,
 		`UPDATE program_templates SET archived_at = NOW() WHERE id = $1`,
@@ -292,7 +240,7 @@ func (r *programTemplateRepository) List(ctx context.Context, limit int, after s
 	var query string
 	if includeArchived {
 		query = `
-			SELECT id, name, description, notes, metadata, weeks, days_per_week, created_by, created_at, updated_at, archived_at, source_template_id
+			SELECT id, name, description, notes, metadata, weeks, days_per_week, created_by, created_at, updated_at, archived_at
 			FROM program_templates
 			WHERE ($1::uuid IS NULL OR id > $1)
 			ORDER BY id ASC
@@ -300,7 +248,7 @@ func (r *programTemplateRepository) List(ctx context.Context, limit int, after s
 		`
 	} else {
 		query = `
-			SELECT id, name, description, notes, metadata, weeks, days_per_week, created_by, created_at, updated_at, archived_at, source_template_id
+			SELECT id, name, description, notes, metadata, weeks, days_per_week, created_by, created_at, updated_at, archived_at
 			FROM program_templates
 			WHERE ($1::uuid IS NULL OR id > $1) AND archived_at IS NULL
 			ORDER BY id ASC
@@ -331,7 +279,6 @@ func (r *programTemplateRepository) List(ctx context.Context, limit int, after s
 			&tmpl.CreatedAt,
 			&tmpl.UpdatedAt,
 			&tmpl.ArchivedAt,
-			&tmpl.SourceTemplateID,
 		)
 		if err != nil {
 			return nil, "", false, err
@@ -385,12 +332,12 @@ func (r *programTemplateRepository) Update(ctx context.Context, tmpl *domain.Pro
 		SET name = $2, description = $3, notes = $4, metadata = $5,
 		    weeks = $6, days_per_week = $7, updated_at = NOW()
 		WHERE id = $1
-		RETURNING updated_at, source_template_id
+		RETURNING updated_at
 	`
 	err = tx.QueryRow(ctx, query,
 		tmpl.ID, tmpl.Name, tmpl.Description, tmpl.Notes, tmpl.Metadata,
 		tmpl.Weeks, tmpl.DaysPerWeek,
-	).Scan(&tmpl.UpdatedAt, &tmpl.SourceTemplateID)
+	).Scan(&tmpl.UpdatedAt)
 	if err == pgx.ErrNoRows {
 		return domain.ErrNotFound
 	}
@@ -416,6 +363,19 @@ func (r *programTemplateRepository) ExistsByID(ctx context.Context, id uuid.UUID
 	).Scan(&exists)
 	if err != nil {
 		slog.Error("Failed to check program template existence", "id", id, "error", err)
+		return false, err
+	}
+	return exists, nil
+}
+
+func (r *programTemplateRepository) ExistsByName(ctx context.Context, name string, excludeID *uuid.UUID) (bool, error) {
+	var exists bool
+	err := r.pool.QueryRow(ctx,
+		`SELECT EXISTS(SELECT 1 FROM program_templates WHERE name = $1 AND archived_at IS NULL AND ($2::uuid IS NULL OR id != $2))`,
+		name, excludeID,
+	).Scan(&exists)
+	if err != nil {
+		slog.Error("Failed to check program template name existence", "name", name, "error", err)
 		return false, err
 	}
 	return exists, nil

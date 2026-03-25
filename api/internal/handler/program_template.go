@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -87,6 +88,16 @@ func (h *ProgramTemplateHandler) CreateProgramTemplate(w http.ResponseWriter, r 
 		return
 	}
 
+	exists, err := h.repo.ExistsByName(ctx, tmpl.Name, nil)
+	if err != nil {
+		middleware.WriteInternalError(w, "Failed to check name uniqueness")
+		return
+	}
+	if exists {
+		middleware.WriteConflictError(w, "An active program template with this name already exists", nil)
+		return
+	}
+
 	if err := h.repo.Create(ctx, tmpl); err != nil {
 		middleware.WriteInternalError(w, "Failed to create program template")
 		return
@@ -169,6 +180,27 @@ func (h *ProgramTemplateHandler) UnarchiveProgramTemplate(w http.ResponseWriter,
 		return
 	}
 
+	// Check name conflict before unarchiving
+	tmpl, err := h.repo.GetByID(ctx, id)
+	if err != nil {
+		if err == domain.ErrNotFound {
+			middleware.WriteNotFoundError(w, "Program template not found")
+			return
+		}
+		middleware.WriteInternalError(w, "Failed to retrieve program template")
+		return
+	}
+
+	exists, err := h.repo.ExistsByName(ctx, tmpl.Name, &id)
+	if err != nil {
+		middleware.WriteInternalError(w, "Failed to check name uniqueness")
+		return
+	}
+	if exists {
+		middleware.WriteConflictError(w, "Cannot unarchive - an active program template with this name already exists", nil)
+		return
+	}
+
 	if err := h.repo.Unarchive(ctx, id); err != nil {
 		if err == domain.ErrNotFound {
 			middleware.WriteNotFoundError(w, "Program template not found")
@@ -178,7 +210,7 @@ func (h *ProgramTemplateHandler) UnarchiveProgramTemplate(w http.ResponseWriter,
 		return
 	}
 
-	tmpl, err := h.repo.GetByID(ctx, id)
+	tmpl, err = h.repo.GetByID(ctx, id)
 	if err != nil {
 		middleware.WriteInternalError(w, "Failed to retrieve program template")
 		return
@@ -208,7 +240,7 @@ func (h *ProgramTemplateHandler) DuplicateProgramTemplate(w http.ResponseWriter,
 	}
 
 	// Parse optional request body for custom name
-	copyName := strings.TrimSpace(original.Name) + " (copy)"
+	copyName := ""
 	if r.ContentLength != 0 {
 		var req struct {
 			Name string `json:"name,omitempty"`
@@ -217,8 +249,36 @@ func (h *ProgramTemplateHandler) DuplicateProgramTemplate(w http.ResponseWriter,
 			middleware.WriteValidationError(w, "Invalid request body", nil)
 			return
 		}
-		if req.Name != "" {
-			copyName = req.Name
+		copyName = req.Name
+	}
+
+	// Generate a unique name if not explicitly provided
+	if copyName == "" {
+		baseName := strings.TrimSpace(original.Name)
+		copyName = baseName + " (copy)"
+		exists, err := h.repo.ExistsByName(ctx, copyName, nil)
+		if err != nil {
+			middleware.WriteInternalError(w, "Failed to check name uniqueness")
+			return
+		}
+		for i := 2; exists; i++ {
+			copyName = fmt.Sprintf("%s (copy %d)", baseName, i)
+			exists, err = h.repo.ExistsByName(ctx, copyName, nil)
+			if err != nil {
+				middleware.WriteInternalError(w, "Failed to check name uniqueness")
+				return
+			}
+		}
+	} else {
+		// Custom name provided — check uniqueness, return 409 if conflict
+		exists, err := h.repo.ExistsByName(ctx, copyName, nil)
+		if err != nil {
+			middleware.WriteInternalError(w, "Failed to check name uniqueness")
+			return
+		}
+		if exists {
+			middleware.WriteConflictError(w, "An active program template with this name already exists", nil)
+			return
 		}
 	}
 
@@ -367,6 +427,16 @@ func (h *ProgramTemplateHandler) EditProgramTemplate(w http.ResponseWriter, r *h
 		return
 	}
 
+	hasPrograms, err := h.programRepo.ExistsByProgramTemplateID(ctx, id)
+	if err != nil {
+		middleware.WriteInternalError(w, "Failed to check references")
+		return
+	}
+	if hasPrograms {
+		middleware.WriteConflictError(w, "Cannot edit program template - referenced by programs", nil)
+		return
+	}
+
 	var req struct {
 		Name        string                        `json:"name"`
 		Description *string                       `json:"description,omitempty"`
@@ -390,6 +460,7 @@ func (h *ProgramTemplateHandler) EditProgramTemplate(w http.ResponseWriter, r *h
 	}
 
 	newContent := &domain.ProgramTemplate{
+		ID:          existing.ID,
 		Name:        req.Name,
 		Description: req.Description,
 		Notes:       req.Notes,
@@ -409,51 +480,29 @@ func (h *ProgramTemplateHandler) EditProgramTemplate(w http.ResponseWriter, r *h
 		return
 	}
 
-	hasPrograms, err := h.programRepo.ExistsByProgramTemplateID(ctx, id)
-	if err != nil {
-		middleware.WriteInternalError(w, "Failed to check references")
-		return
-	}
-
-	if !hasPrograms {
-		newContent.ID = existing.ID
-		if err := h.repo.Update(ctx, newContent); err != nil {
-			middleware.WriteInternalError(w, "Failed to update program template")
-			return
-		}
-		updated, err := h.repo.GetByID(ctx, newContent.ID)
+	// Check name uniqueness (exclude current template)
+	if req.Name != existing.Name {
+		nameExists, err := h.repo.ExistsByName(ctx, req.Name, &id)
 		if err != nil {
-			middleware.WriteInternalError(w, "Failed to retrieve updated program template")
+			middleware.WriteInternalError(w, "Failed to check name uniqueness")
 			return
 		}
-		writeJSON(w, http.StatusOK, updated)
+		if nameExists {
+			middleware.WriteConflictError(w, "An active program template with this name already exists", nil)
+			return
+		}
+	}
+
+	if err := h.repo.Update(ctx, newContent); err != nil {
+		middleware.WriteInternalError(w, "Failed to update program template")
 		return
 	}
-
-	// New version: create new template + archive old
-	var createdBy *string
-	if userID := middleware.GetUserID(ctx); userID != "" {
-		createdBy = &userID
-	}
-
-	newTmpl := &domain.ProgramTemplate{
-		Name:             req.Name,
-		Description:      req.Description,
-		Notes:            req.Notes,
-		Metadata:         req.Metadata,
-		Weeks:            req.Weeks,
-		DaysPerWeek:      req.DaysPerWeek,
-		CreatedBy:        createdBy,
-		SourceTemplateID: &id,
-		Entries:          entries,
-	}
-
-	if err := h.repo.CreateAndArchive(ctx, newTmpl, id); err != nil {
-		middleware.WriteInternalError(w, "Failed to create new program template version")
+	updated, err := h.repo.GetByID(ctx, newContent.ID)
+	if err != nil {
+		middleware.WriteInternalError(w, "Failed to retrieve updated program template")
 		return
 	}
-
-	writeJSON(w, http.StatusCreated, newTmpl)
+	writeJSON(w, http.StatusOK, updated)
 }
 
 // DeleteProgramTemplate handles DELETE /program-templates/{id}

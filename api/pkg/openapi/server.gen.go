@@ -301,13 +301,10 @@ type ProgramTemplate struct {
 	Id      openapi_types.UUID      `json:"id"`
 
 	// Metadata Free-form JSON metadata
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
-	Name     string                  `json:"name"`
-	Notes    *string                 `json:"notes,omitempty"`
-
-	// SourceTemplateId ID of the template this was derived from (version lineage)
-	SourceTemplateId *openapi_types.UUID `json:"source_template_id"`
-	UpdatedAt        time.Time           `json:"updated_at"`
+	Metadata  *map[string]interface{} `json:"metadata,omitempty"`
+	Name      string                  `json:"name"`
+	Notes     *string                 `json:"notes,omitempty"`
+	UpdatedAt time.Time               `json:"updated_at"`
 
 	// Weeks Duration in weeks (e.g., "3", "6~8")
 	Weeks *string `json:"weeks"`
