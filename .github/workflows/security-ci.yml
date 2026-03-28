@@ -41,12 +41,14 @@ jobs:
 
       - name: Upload Go scan results to GitHub Security
         uses: github/codeql-action/upload-sarif@3b1a19a80ab047f35cbb237b5bd9bdc1e14f166c # v3
-        if: always()
+        if: '!cancelled()'
+        continue-on-error: true  # May fail if GitHub Advanced Security is not enabled
         with:
           sarif_file: go-vuln-results.sarif
           category: go-dependency-scan
 
       - name: Scan Node.js dependencies
+        if: '!cancelled()'
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
           scan-type: fs
@@ -59,7 +61,8 @@ jobs:
 
       - name: Upload Node.js scan results to GitHub Security
         uses: github/codeql-action/upload-sarif@3b1a19a80ab047f35cbb237b5bd9bdc1e14f166c # v3
-        if: always()
+        if: '!cancelled()'
+        continue-on-error: true
         with:
           sarif_file: node-vuln-results.sarif
           category: node-dependency-scan
@@ -95,12 +98,14 @@ jobs:
 
       - name: Upload misconfig results to GitHub Security
         uses: github/codeql-action/upload-sarif@3b1a19a80ab047f35cbb237b5bd9bdc1e14f166c # v3
-        if: always()
+        if: '!cancelled()'
+        continue-on-error: true
         with:
           sarif_file: misconfig-results.sarif
           category: misconfig-scan
 
       - name: Scan for secrets
+        if: '!cancelled()'
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
           scan-type: fs
@@ -113,7 +118,8 @@ jobs:
 
       - name: Upload secret results to GitHub Security
         uses: github/codeql-action/upload-sarif@3b1a19a80ab047f35cbb237b5bd9bdc1e14f166c # v3
-        if: always()
+        if: '!cancelled()'
+        continue-on-error: true
         with:
           sarif_file: secret-results.sarif
           category: secret-scan
@@ -146,6 +152,7 @@ jobs:
           trivy-config: trivy.yaml
 
       - name: Scan Node.js licenses
+        if: '!cancelled()'
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
           scan-type: fs
@@ -202,7 +209,8 @@ jobs:
 
       - name: Upload container scan results to GitHub Security
         uses: github/codeql-action/upload-sarif@3b1a19a80ab047f35cbb237b5bd9bdc1e14f166c # v3
-        if: always()
+        if: '!cancelled()'
+        continue-on-error: true
         with:
           sarif_file: container-results.sarif
           category: container-scan-${{ matrix.arch }}
