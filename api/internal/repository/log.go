@@ -44,4 +44,8 @@ type LogRepository interface {
 
 	// ExistsByProgramIDAndSessionName checks if a Log with the given (program_id, session_name) pair already exists.
 	ExistsByProgramIDAndSessionName(ctx context.Context, programID uuid.UUID, sessionName string) (bool, error)
+
+	// ExistsByProgramIDAndSessionNameExcluding checks if a Log with the given (program_id, session_name) pair exists,
+	// excluding the log with the given excludeID. Used by UpdateLog to allow no-op updates.
+	ExistsByProgramIDAndSessionNameExcluding(ctx context.Context, programID uuid.UUID, sessionName string, excludeID uuid.UUID) (bool, error)
 }

@@ -209,3 +209,15 @@ func (s *logStore) ExistsByProgramIDAndSessionName(ctx context.Context, programI
 	}
 	return false, nil
 }
+
+func (s *logStore) ExistsByProgramIDAndSessionNameExcluding(ctx context.Context, programID uuid.UUID, sessionName string, excludeID uuid.UUID) (bool, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	for _, l := range s.logs {
+		if l.ProgramID != nil && *l.ProgramID == programID && l.SessionName != nil && *l.SessionName == sessionName && l.ID != excludeID {
+			return true, nil
+		}
+	}
+	return false, nil
+}

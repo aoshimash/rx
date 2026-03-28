@@ -294,6 +294,22 @@ func (h *LogHandler) UpdateLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Enforce one log per (program_id, session_name) pair, excluding the log being updated
+	if updated.ProgramID != nil && updated.SessionName != nil {
+		exists, err := h.repo.ExistsByProgramIDAndSessionNameExcluding(ctx, *updated.ProgramID, *updated.SessionName, updated.ID)
+		if err != nil {
+			middleware.WriteInternalError(w, "Failed to check for duplicate log")
+			return
+		}
+		if exists {
+			middleware.WriteConflictError(w, "A log already exists for this session", map[string]interface{}{
+				"program_id":   updated.ProgramID.String(),
+				"session_name": *updated.SessionName,
+			})
+			return
+		}
+	}
+
 	if err := h.repo.Update(ctx, updated); err != nil {
 		if err == domain.ErrNotFound {
 			middleware.WriteNotFoundError(w, "Log not found")

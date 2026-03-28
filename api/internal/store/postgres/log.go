@@ -391,3 +391,12 @@ func (r *logRepository) ExistsByProgramIDAndSessionName(ctx context.Context, pro
 	}
 	return exists, nil
 }
+
+func (r *logRepository) ExistsByProgramIDAndSessionNameExcluding(ctx context.Context, programID uuid.UUID, sessionName string, excludeID uuid.UUID) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM logs WHERE program_id = $1 AND session_name = $2 AND id != $3)`
+	var exists bool
+	if err := r.pool.QueryRow(ctx, query, programID, sessionName, excludeID).Scan(&exists); err != nil {
+		return false, err
+	}
+	return exists, nil
+}
