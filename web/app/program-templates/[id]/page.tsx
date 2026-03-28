@@ -294,8 +294,8 @@ export default function ProgramTemplateDetailPage() {
     router.push('/program-templates');
   };
 
-  const handleCopyToClipboard = () => {
-    navigator.clipboard.writeText(templateToExportJson(template));
+  const handleCopyToClipboard = async () => {
+    await navigator.clipboard.writeText(templateToExportJson(template));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
