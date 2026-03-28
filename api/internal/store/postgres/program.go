@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 
 	"github.com/aoshimash/rx/api/internal/domain"
@@ -352,6 +353,18 @@ func (r *programRepository) ExistsByProgramTemplateID(ctx context.Context, progr
 	if err != nil {
 		slog.Error("Failed to check program existence by template ID", "programTemplateID", programTemplateID, "error", err)
 		return false, err
+	}
+	return exists, nil
+}
+
+func (r *programRepository) ExistsByName(ctx context.Context, name string) (bool, error) {
+	var exists bool
+	err := r.pool.QueryRow(ctx,
+		`SELECT EXISTS(SELECT 1 FROM programs WHERE name = $1)`,
+		name,
+	).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("check program name exists: %w", err)
 	}
 	return exists, nil
 }

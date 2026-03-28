@@ -3,6 +3,12 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   useDeleteProgram,
@@ -10,10 +16,34 @@ import {
   useProgram,
   useUpdateProgramStatus,
 } from '@/lib/hooks/usePrograms';
-import type { ProgramSession, ProgramSessionEntry } from '@/types/api';
-import { ClipboardPen, Trash2 } from 'lucide-react';
+import type { Program, ProgramSession, ProgramSessionEntry } from '@/types/api';
+import { ClipboardPen, Copy, Download, Share2, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { useState } from 'react';
+
+function programToExportJson(program: Program): string {
+  const payload = {
+    rx_version: '1',
+    name: program.name,
+    ...(program.notes ? { notes: program.notes } : {}),
+    sessions: program.sessions.map((s) => ({
+      session_name: s.session_name,
+      order: s.order,
+      ...(s.date ? { date: s.date } : {}),
+      entries: s.entries.map((e) => ({
+        exercise_name: e.exercise_name,
+        order: e.order,
+        ...(e.sets != null ? { sets: e.sets } : {}),
+        ...(e.reps != null ? { reps: e.reps } : {}),
+        ...(e.load_kg != null ? { load_kg: e.load_kg } : {}),
+        ...(e.rpe != null ? { rpe: e.rpe } : {}),
+        ...(e.notes ? { notes: e.notes } : {}),
+      })),
+    })),
+  };
+  return JSON.stringify(payload, null, 2);
+}
 
 function buildCompletedSessionSet(sessions: string[]): Set<string> {
   return new Set(sessions);
@@ -133,6 +163,7 @@ export default function ProgramDetailPage() {
   const { data: loggedSessions } = useLoggedSessions(programId);
   const deleteProgram = useDeleteProgram();
   const updateStatus = useUpdateProgramStatus();
+  const [copied, setCopied] = useState(false);
 
   if (isLoading) {
     return (
@@ -154,6 +185,23 @@ export default function ProgramDetailPage() {
   const handleDelete = async () => {
     await deleteProgram.mutateAsync(programId);
     router.push('/programs');
+  };
+
+  const handleCopyToClipboard = async () => {
+    await navigator.clipboard.writeText(programToExportJson(program));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownload = () => {
+    const json = programToExportJson(program);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${program.name}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const sortedSessions = program.sessions.slice().sort((a, b) => a.order - b.order);
@@ -208,6 +256,24 @@ export default function ProgramDetailPage() {
               </Button>
             </>
           )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Share2 className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleCopyToClipboard}>
+                <Copy className="h-4 w-4 mr-2" />
+                {copied ? 'Copied!' : 'Copy to clipboard'}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDownload}>
+                <Download className="h-4 w-4 mr-2" />
+                Download .json
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="outline" onClick={handleDelete} disabled={deleteProgram.isPending}>
             <Trash2 className="h-4 w-4 mr-2" />
             Delete

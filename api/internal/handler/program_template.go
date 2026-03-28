@@ -394,6 +394,18 @@ func (h *ProgramTemplateHandler) GenerateProgram(w http.ResponseWriter, r *http.
 		return
 	}
 
+	exists, err := h.programRepo.ExistsByName(ctx, program.Name)
+	if err != nil {
+		middleware.WriteInternalError(w, "Failed to check program name")
+		return
+	}
+	if exists {
+		middleware.WriteConflictError(w, "A program with this name already exists", map[string]interface{}{
+			"field": "name",
+		})
+		return
+	}
+
 	if err := h.programRepo.Create(ctx, program); err != nil {
 		middleware.WriteInternalError(w, "Failed to create generated program")
 		return
