@@ -16,8 +16,8 @@ import {
   useProgram,
   useUpdateProgramStatus,
 } from '@/lib/hooks/usePrograms';
-import type { Program, ProgramSession, ProgramSessionEntry } from '@/types/api';
-import { ClipboardPen, Copy, Download, Share2, Trash2 } from 'lucide-react';
+import type { LoggedSession, Program, ProgramSession, ProgramSessionEntry } from '@/types/api';
+import { ClipboardList, ClipboardPen, Copy, Download, Share2, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -45,8 +45,8 @@ function programToExportJson(program: Program): string {
   return JSON.stringify(payload, null, 2);
 }
 
-function buildCompletedSessionSet(sessions: string[]): Set<string> {
-  return new Set(sessions);
+function buildCompletedSessionMap(sessions: LoggedSession[]): Map<string, string> {
+  return new Map(sessions.map((s) => [s.session_name, s.log_id]));
 }
 
 type ExerciseGroup = { name: string; entries: ProgramSessionEntry[] };
@@ -76,7 +76,14 @@ function SessionCard({
   programId,
   isCompleted,
   isNext,
-}: { session: ProgramSession; programId: string; isCompleted: boolean; isNext: boolean }) {
+  logId,
+}: {
+  session: ProgramSession;
+  programId: string;
+  isCompleted: boolean;
+  isNext: boolean;
+  logId?: string;
+}) {
   return (
     <Card className={sessionCardClassName(isCompleted, isNext)}>
       <CardHeader className="pb-2">
@@ -85,15 +92,24 @@ function SessionCard({
             <CardTitle className="text-base">{session.session_name}</CardTitle>
             {session.date && <span className="text-sm text-muted-foreground">{session.date}</span>}
           </div>
-          {!isCompleted && (
+          {isCompleted && logId ? (
             <Button variant="outline" size="sm" asChild>
-              <Link
-                href={`/logs/new?programId=${programId}&session=${encodeURIComponent(session.session_name)}`}
-              >
-                <ClipboardPen className="h-4 w-4 mr-1" />
-                Record
+              <Link href={`/logs/${logId}`}>
+                <ClipboardList className="h-4 w-4 mr-1" />
+                View Log
               </Link>
             </Button>
+          ) : (
+            !isCompleted && (
+              <Button variant="outline" size="sm" asChild>
+                <Link
+                  href={`/logs/new?programId=${programId}&session=${encodeURIComponent(session.session_name)}`}
+                >
+                  <ClipboardPen className="h-4 w-4 mr-1" />
+                  Record
+                </Link>
+              </Button>
+            )
           )}
         </div>
       </CardHeader>
@@ -205,17 +221,18 @@ export default function ProgramDetailPage() {
   };
 
   const sortedSessions = program.sessions.slice().sort((a, b) => a.order - b.order);
-  const completedSessionSet = buildCompletedSessionSet(loggedSessions?.sessions ?? []);
+  const completedSessionMap = buildCompletedSessionMap(loggedSessions?.sessions ?? []);
   const allSessionsLogged =
     program.sessions.length > 0 &&
-    program.sessions.every((s) => completedSessionSet.has(s.session_name));
+    program.sessions.every((s) => completedSessionMap.has(s.session_name));
 
   let foundNextSession = false;
   const sessionsWithStatus = sortedSessions.map((session) => {
-    const isCompleted = completedSessionSet.has(session.session_name);
+    const logId = completedSessionMap.get(session.session_name);
+    const isCompleted = logId !== undefined;
     const isNext = !isCompleted && !foundNextSession;
     if (isNext) foundNextSession = true;
-    return { session, isCompleted, isNext };
+    return { session, isCompleted, isNext, logId };
   });
 
   return (
@@ -285,13 +302,14 @@ export default function ProgramDetailPage() {
         <p className="text-muted-foreground">No sessions in this program.</p>
       ) : (
         <div className="space-y-3">
-          {sessionsWithStatus.map(({ session, isCompleted, isNext }) => (
+          {sessionsWithStatus.map(({ session, isCompleted, isNext, logId }) => (
             <SessionCard
               key={session.id}
               session={session}
               programId={programId}
               isCompleted={isCompleted}
               isNext={isNext}
+              logId={logId}
             />
           ))}
         </div>

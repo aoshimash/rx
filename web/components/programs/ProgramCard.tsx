@@ -42,7 +42,7 @@ export function OngoingProgramCard({ program }: ProgramCardProps) {
   const { data: loggedSessions } = useLoggedSessions(program.id);
 
   const totalSessions = program.sessions.length;
-  const loggedSet = new Set(loggedSessions?.sessions ?? []);
+  const loggedSet = new Set((loggedSessions?.sessions ?? []).map((s) => s.session_name));
   const completedCount =
     totalSessions > 0 ? program.sessions.filter((s) => loggedSet.has(s.session_name)).length : 0;
   const progressPct = totalSessions > 0 ? (completedCount / totalSessions) * 100 : 0;

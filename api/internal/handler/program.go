@@ -301,14 +301,14 @@ func (h *ProgramHandler) ListLoggedSessions(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	sessions, err := h.logRepo.ListDistinctLoggedSessionsByProgramID(ctx, id)
+	sessions, err := h.logRepo.ListLoggedSessionsByProgramID(ctx, id)
 	if err != nil {
 		middleware.WriteInternalError(w, "Failed to list logged sessions")
 		return
 	}
 
 	if sessions == nil {
-		sessions = []string{}
+		sessions = []domain.LoggedSession{}
 	}
 
 	writeJSON(w, http.StatusOK, map[string]interface{}{

@@ -24,6 +24,12 @@ type LogEntry struct {
 	Metadata       json.RawMessage `json:"metadata,omitempty"`
 }
 
+// LoggedSession represents a session that has a recorded log, used for navigation.
+type LoggedSession struct {
+	SessionName string    `json:"session_name"`
+	LogID       uuid.UUID `json:"log_id"`
+}
+
 // Log represents a record of actual training performed.
 type Log struct {
 	ID          uuid.UUID       `json:"id"`

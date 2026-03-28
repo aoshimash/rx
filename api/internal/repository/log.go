@@ -38,7 +38,14 @@ type LogRepository interface {
 	// Returns: logs, next cursor (empty string if no more), has_more flag
 	ListByPerformedAtRange(ctx context.Context, programID *uuid.UUID, performedAtFrom, performedAtTo *time.Time, limit int, after string) ([]*domain.Log, string, bool, error)
 
-	// ListDistinctLoggedSessionsByProgramID returns distinct session names that have at least one log for the given program.
-	// Used to check program completion when a new log is created.
-	ListDistinctLoggedSessionsByProgramID(ctx context.Context, programID uuid.UUID) ([]string, error)
+	// ListLoggedSessionsByProgramID returns sessions that have a log for the given program,
+	// each including the session name and its log ID for navigation.
+	ListLoggedSessionsByProgramID(ctx context.Context, programID uuid.UUID) ([]domain.LoggedSession, error)
+
+	// ExistsByProgramIDAndSessionName checks if a Log with the given (program_id, session_name) pair already exists.
+	ExistsByProgramIDAndSessionName(ctx context.Context, programID uuid.UUID, sessionName string) (bool, error)
+
+	// ExistsByProgramIDAndSessionNameExcluding checks if a Log with the given (program_id, session_name) pair exists,
+	// excluding the log with the given excludeID. Used by UpdateLog to allow no-op updates.
+	ExistsByProgramIDAndSessionNameExcluding(ctx context.Context, programID uuid.UUID, sessionName string, excludeID uuid.UUID) (bool, error)
 }

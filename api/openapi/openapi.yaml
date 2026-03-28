@@ -415,6 +415,8 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
 
   /logs/{id}:
     parameters:
@@ -457,6 +459,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
     delete:
       summary: Delete log
       operationId: deleteLog
@@ -1107,6 +1111,18 @@ components:
         has_more:
           type: boolean
 
+    LoggedSession:
+      type: object
+      required:
+        - session_name
+        - log_id
+      properties:
+        session_name:
+          type: string
+        log_id:
+          type: string
+          format: uuid
+
     LoggedSessionsResponse:
       type: object
       required:
@@ -1115,8 +1131,8 @@ components:
         sessions:
           type: array
           items:
-            type: string
-          description: Distinct session names that have at least one log for this program
+            $ref: '#/components/schemas/LoggedSession'
+          description: Sessions that have a log for this program, each including the log ID for navigation
 
     # ========================================
     # Log

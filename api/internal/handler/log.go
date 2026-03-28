@@ -189,6 +189,22 @@ func (h *LogHandler) CreateLog(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Enforce one log per (program_id, session_name) pair
+	if log.ProgramID != nil && log.SessionName != nil {
+		exists, err := h.repo.ExistsByProgramIDAndSessionName(ctx, *log.ProgramID, *log.SessionName)
+		if err != nil {
+			middleware.WriteInternalError(w, "Failed to check for duplicate log")
+			return
+		}
+		if exists {
+			middleware.WriteConflictError(w, "A log already exists for this session", map[string]interface{}{
+				"program_id":   log.ProgramID.String(),
+				"session_name": *log.SessionName,
+			})
+			return
+		}
+	}
+
 	if err := h.repo.Create(ctx, log); err != nil {
 		middleware.WriteInternalError(w, "Failed to create log")
 		return
@@ -276,6 +292,22 @@ func (h *LogHandler) UpdateLog(w http.ResponseWriter, r *http.Request) {
 			"error": err.Error(),
 		})
 		return
+	}
+
+	// Enforce one log per (program_id, session_name) pair, excluding the log being updated
+	if updated.ProgramID != nil && updated.SessionName != nil {
+		exists, err := h.repo.ExistsByProgramIDAndSessionNameExcluding(ctx, *updated.ProgramID, *updated.SessionName, updated.ID)
+		if err != nil {
+			middleware.WriteInternalError(w, "Failed to check for duplicate log")
+			return
+		}
+		if exists {
+			middleware.WriteConflictError(w, "A log already exists for this session", map[string]interface{}{
+				"program_id":   updated.ProgramID.String(),
+				"session_name": *updated.SessionName,
+			})
+			return
+		}
 	}
 
 	if err := h.repo.Update(ctx, updated); err != nil {

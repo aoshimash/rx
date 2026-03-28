@@ -175,10 +175,16 @@ type LogListResponse struct {
 	NextCursor *string `json:"next_cursor"`
 }
 
+// LoggedSession defines model for LoggedSession.
+type LoggedSession struct {
+	LogId       openapi_types.UUID `json:"log_id"`
+	SessionName string             `json:"session_name"`
+}
+
 // LoggedSessionsResponse defines model for LoggedSessionsResponse.
 type LoggedSessionsResponse struct {
-	// Sessions Distinct session names that have at least one log for this program
-	Sessions []string `json:"sessions"`
+	// Sessions Sessions that have a log for this program, each including the log ID for navigation
+	Sessions []LoggedSession `json:"sessions"`
 }
 
 // Program defines model for Program.
