@@ -63,6 +63,10 @@ function convertEntryToProgramEntry(
     }
   }
 
+  if (entry.percent_1rm != null) {
+    programEntry.metadata = { ...(programEntry.metadata ?? {}), percent_1rm: entry.percent_1rm };
+  }
+
   return programEntry;
 }
 
