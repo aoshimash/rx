@@ -188,6 +188,9 @@ func (s *logStore) ListLoggedSessionsByProgramID(ctx context.Context, programID 
 			result = append(result, domain.LoggedSession{
 				SessionName: *l.SessionName,
 				LogID:       l.ID,
+				PerformedAt: l.PerformedAt,
+				StartedAt:   l.StartedAt,
+				FinishedAt:  l.FinishedAt,
 			})
 		}
 	}
