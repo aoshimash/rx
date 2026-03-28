@@ -185,8 +185,8 @@ jobs:
           context: ./api
           file: ./api/Dockerfile
           platforms: linux/${{ matrix.arch }}
-          # Output as OCI tarball — --load only works for the native arch
-          outputs: type=oci,dest=/tmp/image-${{ matrix.arch }}.tar
+          # Output as Docker tarball for Trivy compatibility (--load only works for native arch)
+          outputs: type=docker,dest=/tmp/image-${{ matrix.arch }}.tar
           cache-from: type=gha,scope=api-${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=api-${{ matrix.arch }}
 

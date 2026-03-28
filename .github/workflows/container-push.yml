@@ -47,14 +47,14 @@ jobs:
             type=raw,value=${{ inputs.tag }}
             type=sha,prefix=
 
-      # Build AMD64 image as OCI tarball for scanning
+      # Build AMD64 image as Docker tarball for scanning
       - name: Build AMD64 image for scanning
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7
         with:
           context: ./api
           file: ./api/Dockerfile
           platforms: linux/amd64
-          outputs: type=oci,dest=/tmp/image-amd64.tar
+          outputs: type=docker,dest=/tmp/image-amd64.tar
           cache-from: type=gha,scope=api-amd64
           cache-to: type=gha,mode=max,scope=api-amd64
 
