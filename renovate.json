@@ -8,6 +8,13 @@
   "schedule": [
     "after 6pm on friday"
   ],
+  "pinDigests": true,
+  "minimumReleaseAge": "3 days",
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "schedule": ["at any time"],
+    "minimumReleaseAge": null
+  },
   "postUpdateOptions": [
     "gomodTidy"
   ],
@@ -142,6 +149,51 @@
       "schedule": [
         "after 6pm on friday"
       ]
+    },
+    {
+      "description": "Suppress digest-only updates — version bumps carry security fixes",
+      "matchUpdateTypes": ["digest"],
+      "enabled": false
+    },
+    {
+      "description": "Group Radix UI component updates",
+      "matchManagers": ["npm"],
+      "matchPackagePatterns": ["^@radix-ui/"],
+      "groupName": "Radix UI",
+      "schedule": ["after 6pm on friday"]
+    },
+    {
+      "description": "Group TanStack updates",
+      "matchManagers": ["npm"],
+      "matchPackagePatterns": ["^@tanstack/"],
+      "groupName": "TanStack",
+      "schedule": ["after 6pm on friday"]
+    },
+    {
+      "description": "Group dnd-kit updates",
+      "matchManagers": ["npm"],
+      "matchPackagePatterns": ["^@dnd-kit/"],
+      "groupName": "dnd-kit",
+      "schedule": ["after 6pm on friday"]
+    },
+    {
+      "description": "Group Tailwind ecosystem updates",
+      "matchManagers": ["npm"],
+      "matchPackageNames": [
+        "tailwindcss",
+        "@tailwindcss/postcss",
+        "tailwind-merge",
+        "tw-animate-css"
+      ],
+      "groupName": "Tailwind ecosystem",
+      "schedule": ["after 6pm on friday"]
+    },
+    {
+      "description": "Group Next.js updates",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["next"],
+      "groupName": "Next.js",
+      "schedule": ["after 6pm on friday"]
     }
   ]
 }
