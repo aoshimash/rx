@@ -36,42 +36,10 @@ import {
   useUnarchiveProgramTemplate,
 } from '@/lib/hooks/useProgramTemplates';
 import { useProgramsByTemplateId } from '@/lib/hooks/usePrograms';
-import type { Program, ProgramTemplateEntry, ProgramTemplateEntryCreate } from '@/types/api';
+import type { ProgramTemplateEntry, ProgramTemplateEntryCreate } from '@/types/api';
 import { Archive, ArchiveRestore, ArrowLeft, Copy, Info, Pencil, Trash2, User } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
-
-function LinkedProgramList({
-  programs,
-  onLinkClick,
-}: {
-  programs: Program[];
-  onLinkClick: () => void;
-}) {
-  return (
-    <div className="space-y-3">
-      <p>
-        Editing this template will create a new version and archive the current one. The following
-        programs reference this template and will not be affected:
-      </p>
-      <ul className="space-y-1">
-        {programs.map((program) => (
-          <li key={program.id}>
-            <a
-              href={`/programs/${program.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary underline underline-offset-2 hover:opacity-80"
-              onClick={onLinkClick}
-            >
-              {program.name}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
 
 type ExerciseGroup = { name: string; entries: ProgramTemplateEntry[] };
 type SessionGroup = { sessionName: string; exerciseGroups: ExerciseGroup[] };
@@ -116,6 +84,71 @@ function groupByExercise(entries: ProgramTemplateEntry[]): ExerciseGroup[] {
   return groups;
 }
 
+function SessionCard({ session }: { session: SessionGroup }) {
+  return (
+    <Card key={session.sessionName || '__default__'}>
+      {session.sessionName && (
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">{session.sessionName}</CardTitle>
+        </CardHeader>
+      )}
+      <CardContent className={session.sessionName ? '' : 'pt-4'}>
+        <div className="divide-y">
+          {session.exerciseGroups.map((group) => {
+            const hasLabel = group.entries.some((e) => e.metadata?.label);
+            const hasPercent1rm = group.entries.some((e) => e.percent_1rm != null);
+            return (
+              <div
+                key={`${session.sessionName}-${group.name}`}
+                className="py-2 first:pt-0 last:pb-0"
+              >
+                <p className="font-medium text-sm mb-1.5">{group.name}</p>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-xs text-muted-foreground">
+                      {hasLabel && <th className="text-left font-normal pb-1 w-16" />}
+                      <th className="text-right font-normal pb-1 pr-4">RPE</th>
+                      <th className="text-right font-normal pb-1 pr-4">Reps</th>
+                      <th className="text-right font-normal pb-1 pr-4">Sets</th>
+                      {hasPercent1rm && <th className="text-right font-normal pb-1">%1RM</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {group.entries.map((entry) => {
+                      const label = entry.metadata?.label as string | undefined;
+                      return (
+                        <tr key={entry.id} className="text-muted-foreground">
+                          {hasLabel && <td className="text-xs pr-3 py-0.5">{label ?? ''}</td>}
+                          <td className="text-right tabular-nums pr-4 py-0.5">
+                            {entry.rpe ?? '—'}
+                          </td>
+                          <td className="text-right tabular-nums pr-4 py-0.5">
+                            {entry.reps ?? '—'}
+                          </td>
+                          <td className="text-right tabular-nums pr-4 py-0.5">
+                            {entry.sets ?? '—'}
+                          </td>
+                          {hasPercent1rm && (
+                            <td className="text-right tabular-nums py-0.5">
+                              {entry.percent_1rm != null
+                                ? `${Math.round(entry.percent_1rm * 100)}%`
+                                : '—'}
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function ProgramTemplateDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -131,7 +164,6 @@ export default function ProgramTemplateDetailPage() {
   const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
   const [duplicateName, setDuplicateName] = useState('');
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
-  const [editConfirmOpen, setEditConfirmOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
@@ -159,18 +191,14 @@ export default function ProgramTemplateDetailPage() {
   const hasPrograms = (programsData?.data ?? []).length > 0;
 
   const handleEditClick = () => {
-    if (hasPrograms) {
-      setEditConfirmOpen(true);
-    } else {
-      setEditName(template.name);
-      setEditDescription(template.description ?? '');
-      setEditNotes(template.notes ?? '');
-      setEditDialogOpen(true);
-    }
+    setEditName(template.name);
+    setEditDescription(template.description ?? '');
+    setEditNotes(template.notes ?? '');
+    setEditDialogOpen(true);
   };
 
   const handleEditSave = async (entries: ProgramTemplateEntryCreate[]) => {
-    const result = await editTemplate.mutateAsync({
+    await editTemplate.mutateAsync({
       id: templateId,
       data: {
         name: editName,
@@ -180,9 +208,6 @@ export default function ProgramTemplateDetailPage() {
       },
     });
     setEditDialogOpen(false);
-    if (result.isNewVersion) {
-      router.push(`/program-templates/${result.template.id}`);
-    }
   };
 
   const openDuplicateDialog = () => {
@@ -252,14 +277,29 @@ export default function ProgramTemplateDetailPage() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={handleEditClick}
-              disabled={isArchived || editTemplate.isPending || programsLoading}
-            >
-              <Pencil className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                onClick={handleEditClick}
+                disabled={isArchived || hasPrograms || editTemplate.isPending || programsLoading}
+              >
+                <Pencil className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+              {hasPrograms && !isArchived && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button type="button" className="text-muted-foreground hover:text-foreground">
+                      <Info className="h-4 w-4" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 px-3 py-2 text-xs">
+                    This template is used by programs and cannot be edited. Use Duplicate to create
+                    a copy and modify it.
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
             <Button
               variant="outline"
               onClick={openDuplicateDialog}
@@ -317,70 +357,7 @@ export default function ProgramTemplateDetailPage() {
       ) : (
         <div className="space-y-4">
           {sessionGroups.map((session) => (
-            <Card key={session.sessionName || '__default__'}>
-              {session.sessionName && (
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">{session.sessionName}</CardTitle>
-                </CardHeader>
-              )}
-              <CardContent className={session.sessionName ? '' : 'pt-4'}>
-                <div className="divide-y">
-                  {session.exerciseGroups.map((group) => {
-                    const hasLabel = group.entries.some((e) => e.metadata?.label);
-                    const hasPercent1rm = group.entries.some((e) => e.percent_1rm != null);
-                    return (
-                      <div
-                        key={`${session.sessionName}-${group.name}`}
-                        className="py-2 first:pt-0 last:pb-0"
-                      >
-                        <p className="font-medium text-sm mb-1.5">{group.name}</p>
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="text-xs text-muted-foreground">
-                              {hasLabel && <th className="text-left font-normal pb-1 w-16" />}
-                              <th className="text-right font-normal pb-1 pr-4">RPE</th>
-                              <th className="text-right font-normal pb-1 pr-4">Reps</th>
-                              <th className="text-right font-normal pb-1 pr-4">Sets</th>
-                              {hasPercent1rm && (
-                                <th className="text-right font-normal pb-1">%1RM</th>
-                              )}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {group.entries.map((entry) => {
-                              const label = entry.metadata?.label as string | undefined;
-                              return (
-                                <tr key={entry.id} className="text-muted-foreground">
-                                  {hasLabel && (
-                                    <td className="text-xs pr-3 py-0.5">{label ?? ''}</td>
-                                  )}
-                                  <td className="text-right tabular-nums pr-4 py-0.5">
-                                    {entry.rpe ?? '—'}
-                                  </td>
-                                  <td className="text-right tabular-nums pr-4 py-0.5">
-                                    {entry.reps ?? '—'}
-                                  </td>
-                                  <td className="text-right tabular-nums pr-4 py-0.5">
-                                    {entry.sets ?? '—'}
-                                  </td>
-                                  {hasPercent1rm && (
-                                    <td className="text-right tabular-nums py-0.5">
-                                      {entry.percent_1rm != null
-                                        ? `${Math.round(entry.percent_1rm * 100)}%`
-                                        : '—'}
-                                    </td>
-                                  )}
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+            <SessionCard key={session.sessionName || '__default__'} session={session} />
           ))}
         </div>
       )}
@@ -437,34 +414,6 @@ export default function ProgramTemplateDetailPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleArchive}>Archive</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={editConfirmOpen} onOpenChange={setEditConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Create a new version?</AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <LinkedProgramList
-                programs={programsData?.data ?? []}
-                onLinkClick={() => setEditConfirmOpen(false)}
-              />
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setEditConfirmOpen(false);
-                setEditName(template.name);
-                setEditDescription(template.description ?? '');
-                setEditNotes(template.notes ?? '');
-                setEditDialogOpen(true);
-              }}
-            >
-              Continue
-            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

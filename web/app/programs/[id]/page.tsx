@@ -17,7 +17,8 @@ import {
   useUpdateProgramStatus,
 } from '@/lib/hooks/usePrograms';
 import type { Program, ProgramSession, ProgramSessionEntry } from '@/types/api';
-import { Copy, Download, Share2, Trash2 } from 'lucide-react';
+import { ClipboardPen, Copy, Download, Share2, Trash2 } from 'lucide-react';
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -72,15 +73,28 @@ function sessionCardClassName(isCompleted: boolean, isNext: boolean): string | u
 
 function SessionCard({
   session,
+  programId,
   isCompleted,
   isNext,
-}: { session: ProgramSession; isCompleted: boolean; isNext: boolean }) {
+}: { session: ProgramSession; programId: string; isCompleted: boolean; isNext: boolean }) {
   return (
     <Card className={sessionCardClassName(isCompleted, isNext)}>
       <CardHeader className="pb-2">
-        <div className="flex items-center gap-2">
-          <CardTitle className="text-base">{session.session_name}</CardTitle>
-          {session.date && <span className="text-sm text-muted-foreground">{session.date}</span>}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-base">{session.session_name}</CardTitle>
+            {session.date && <span className="text-sm text-muted-foreground">{session.date}</span>}
+          </div>
+          {!isCompleted && (
+            <Button variant="outline" size="sm" asChild>
+              <Link
+                href={`/logs/new?programId=${programId}&session=${encodeURIComponent(session.session_name)}`}
+              >
+                <ClipboardPen className="h-4 w-4 mr-1" />
+                Record
+              </Link>
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent>
@@ -275,6 +289,7 @@ export default function ProgramDetailPage() {
             <SessionCard
               key={session.id}
               session={session}
+              programId={programId}
               isCompleted={isCompleted}
               isNext={isNext}
             />

@@ -54,6 +54,8 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
 
   /program-templates/{id}:
     parameters:
@@ -124,6 +126,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
 
   /program-templates/{id}/duplicate:
     parameters:
@@ -149,6 +153,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
 
   /program-templates/{id}/generate:
     parameters:
@@ -188,9 +194,8 @@ paths:
     post:
       summary: Edit program template
       description: |
-        Edits a program template. If no Programs reference this template, it is updated in-place (200).
-        If Programs reference it, a new template is created with source_template_id pointing to the
-        original, and the original is archived (201).
+        Edits a program template in-place. Templates linked to one or more Programs cannot be edited
+        and return 409 Conflict. Only unlinked templates can be modified.
       operationId: editProgramTemplate
       tags: [ProgramTemplate]
       requestBody:
@@ -201,13 +206,7 @@ paths:
               $ref: '#/components/schemas/ProgramTemplateCreate'
       responses:
         '200':
-          description: Template updated in-place (no linked programs)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProgramTemplate'
-        '201':
-          description: New template version created (linked programs exist, original archived)
+          description: Template updated in-place
           content:
             application/json:
               schema:
@@ -218,6 +217,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
 
   /programs:
     get:
@@ -710,11 +711,6 @@ components:
           format: date-time
           nullable: true
           description: When set, the program template is archived and hidden from default list results
-        source_template_id:
-          type: string
-          format: uuid
-          nullable: true
-          description: ID of the template this was derived from (version lineage)
 
     ProgramTemplateCreate:
       type: object

@@ -1,5 +1,5 @@
 import { programTemplatesApi } from '@/lib/api/programTemplates';
-import type { GenerateProgramRequest, ProgramTemplate, ProgramTemplateCreate } from '@/types/api';
+import type { GenerateProgramRequest, ProgramTemplateCreate } from '@/types/api';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export function useProgramTemplates(includeArchived = false) {
@@ -93,7 +93,7 @@ export function useEditProgramTemplate() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: ProgramTemplateCreate }) =>
       programTemplatesApi.edit(id, data),
-    onSuccess: (_result: { template: ProgramTemplate; isNewVersion: boolean }, { id }) => {
+    onSuccess: (_result, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['program-templates'] });
       queryClient.invalidateQueries({ queryKey: ['program-templates', id] });
     },
