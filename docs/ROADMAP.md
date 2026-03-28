@@ -38,7 +38,7 @@ This philosophy mirrors engineering methodologies like Test Driven Development a
 
 ## Web Frontend
 - Next.js (App Router) with TypeScript
-- Plan editor, dashboard, e1RM chart
+- Plan editor, dashboard
 - Ongoing UX improvements
 
 ## Future

@@ -24,7 +24,6 @@ func (e *DomainError) Error() string {
 // Error codes
 const (
 	ErrCodeInvalidTimestamp     = "INVALID_TIMESTAMP"
-	ErrCodeInvalidRPE           = "INVALID_RPE"
 	ErrCodeMissingRequiredField = "MISSING_REQUIRED_FIELD"
 )
 

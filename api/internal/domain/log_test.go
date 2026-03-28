@@ -15,7 +15,7 @@ func TestValidateLogEntry(t *testing.T) {
 		sets := 3
 		reps := 10
 		loadKg := 60.0
-		rpe := 8
+
 		return &LogEntry{
 			ID:           uuid.New(),
 			LogID:        uuid.New(),
@@ -24,7 +24,6 @@ func TestValidateLogEntry(t *testing.T) {
 			Sets:         &sets,
 			Reps:         &reps,
 			LoadKg:       &loadKg,
-			RPE:          &rpe,
 		}
 	}
 
@@ -84,14 +83,6 @@ func TestValidateLogEntry(t *testing.T) {
 		err := ValidateLogEntry(e)
 		require.NoError(t, err)
 		assert.Equal(t, 60.2, *e.LoadKg)
-	})
-
-	t.Run("invalid RPE", func(t *testing.T) {
-		e := validEntry()
-		rpe := 11
-		e.RPE = &rpe
-		err := ValidateLogEntry(e)
-		assert.Error(t, err)
 	})
 
 	t.Run("nil optional fields are valid", func(t *testing.T) {
@@ -170,7 +161,7 @@ func TestValidateLog(t *testing.T) {
 		sets := 3
 		reps := 10
 		loadKg := 60.0
-		rpe := 8
+
 		return &Log{
 			ID:          uuid.New(),
 			PerformedAt: time.Now().Add(-1 * time.Hour),
@@ -183,7 +174,6 @@ func TestValidateLog(t *testing.T) {
 					Sets:         &sets,
 					Reps:         &reps,
 					LoadKg:       &loadKg,
-					RPE:          &rpe,
 				},
 			},
 		}

@@ -28,7 +28,6 @@ func main() {
 	cfg := config.Load()
 
 	// Initialize repositories based on storage type
-	var programTemplateRepo repository.ProgramTemplateRepository
 	var programRepo repository.ProgramRepository
 	var logRepo repository.LogRepository
 
@@ -44,16 +43,14 @@ func main() {
 		defer db.Close()
 
 		slog.Info("Using PostgreSQL storage backend")
-		programTemplateRepo = postgresstore.NewProgramTemplateRepository(db.Pool())
 		programRepo = postgresstore.NewProgramRepository(db.Pool())
 		logRepo = postgresstore.NewLogRepository(db.Pool())
 	} else {
 		slog.Info("Using in-memory storage backend")
-		programTemplateRepo = memory.NewProgramTemplateRepository()
 		programRepo = memory.NewProgramRepository()
 		logRepo = memory.NewLogRepository()
 
-		if err := seed.Run(ctx, programTemplateRepo, programRepo, logRepo); err != nil {
+		if err := seed.Run(ctx, programRepo, logRepo); err != nil {
 			slog.Error("Failed to seed development data", "error", err)
 			os.Exit(1)
 		}
@@ -85,7 +82,6 @@ func main() {
 	}
 
 	// Initialize handlers
-	programTemplateHandler := handler.NewProgramTemplateHandler(programTemplateRepo, programRepo)
 	programHandler := handler.NewProgramHandler(programRepo, logRepo)
 	logHandler := handler.NewLogHandler(logRepo, programRepo)
 	videoHandler := handler.NewVideoHandler(storageProvider, logger)
@@ -126,17 +122,6 @@ func main() {
 	// API routes require authentication
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Use(middleware.AuthMiddleware(authProvider))
-
-		// ProgramTemplate routes
-		r.Post("/program-templates", programTemplateHandler.CreateProgramTemplate)
-		r.Get("/program-templates", programTemplateHandler.ListProgramTemplates)
-		r.Get("/program-templates/{id}", programTemplateHandler.GetProgramTemplate)
-		r.Post("/program-templates/{id}/archive", programTemplateHandler.ArchiveProgramTemplate)
-		r.Post("/program-templates/{id}/unarchive", programTemplateHandler.UnarchiveProgramTemplate)
-		r.Post("/program-templates/{id}/duplicate", programTemplateHandler.DuplicateProgramTemplate)
-		r.Post("/program-templates/{id}/generate", programTemplateHandler.GenerateProgram)
-		r.Post("/program-templates/{id}/edit", programTemplateHandler.EditProgramTemplate)
-		r.Delete("/program-templates/{id}", programTemplateHandler.DeleteProgramTemplate)
 
 		// Program routes
 		r.Post("/programs", programHandler.CreateProgram)

@@ -4,65 +4,53 @@ This package contains the core domain entities for Rx.
 
 ## Entities
 
-### Exercise
-A catalog entry representing a canonical exercise.
-
-**Required fields**: `id`, `name`, `created_at`, `updated_at`  
-**Optional fields**: `description`, `aliases`, `muscle_groups`, `load_increment`
-
-### Workout
-A completed training session containing performed entries.
-
-**Required fields**: `id`, `timestamp`, `entries`, `created_at`, `updated_at`  
-**Optional fields**: `session_start`, `session_end`, `body_weight_kg`, `fatigue_level`, `sleep_hours`, `condition_notes`, `program_node_id`, `program_context`, `notes`
-
-### WorkoutEntry
-A single performed exercise entry within a workout session.
-
-**Required fields**: `id`, `workout_id`, `order`, `exercise_id`, `entry_type`, `sets`, `reps`, `load_kg`, `rpe`  
-**Optional fields**: `display_name`, `entry_start`, `entry_end`, `planned_rest_seconds`, `performed_rest_seconds`, `per_set_rest_overrides`, `program_node_id`, `plan_snapshot`, `notes`
-
-### PlanSnapshot
-A snapshot of planned values at execution time (embedded in WorkoutEntry).
-
-**All fields optional**: `program_node_id`, `target_sets`, `target_reps`, `target_rpe`, `target_load_kg`, `percent_1rm`, `planned_rest_seconds`
-
 ### Program
-A training program containing a recursive tree of nodes.
+A training program containing sessions with scheduled exercises.
 
-**Required fields**: `id`, `name`, `created_at`, `updated_at`  
-**Optional fields**: `description`, `root_nodes`
+**Required fields**: `id`, `name`, `status`, `sessions`, `created_at`, `updated_at`
+**Optional fields**: `notes`, `metadata`
 
-### ProgramNode
-A node in the program tree (cycle, week, day, block, or exercise prescription).
+### ProgramSession
+A named training day within a program.
 
-**Required fields**: `id`, `program_id`, `name`, `node_type`, `order`  
-**Optional fields**: `parent_id`, `children`, `exercise_id`, `target_sets`, `target_reps`, `target_rpe`, `percent_1rm`, `planned_rest_seconds`, `muscle_groups`, `notes`
+**Required fields**: `id`, `program_id`, `session_name`, `order`
+**Optional fields**: `date`, `entries`
 
-### TelemetryPoint
-A time-series metric data point.
+### ProgramSessionEntry
+An exercise prescription within a session.
 
-**Required fields**: `id`, `timestamp`, `metric_name`, `value`, `unit`, `created_at`  
-**Optional fields**: `workout_id`
+**Required fields**: `id`, `session_id`, `order`, `exercise_name`
+**Optional fields**: `sets`, `reps`, `load_kg`, `notes`, `metadata`
+
+### Log
+A completed training session recording what was actually performed.
+
+**Required fields**: `id`, `performed_at`, `entries`, `created_at`, `updated_at`
+**Optional fields**: `program_id`, `session_name`, `started_at`, `finished_at`, `notes`, `metadata`
+
+### LogEntry
+A single performed exercise entry within a log.
+
+**Required fields**: `id`, `log_id`, `order`, `exercise_name`
+**Optional fields**: `sets`, `reps`, `load_kg`, `notes`, `video_object_key`, `started_at`, `finished_at`, `metadata`
 
 ## Validation
 
 All entities have corresponding validation functions:
 
-- `ValidateExercise(e *Exercise) error`
-- `ValidateWorkout(w *Workout) error`
-- `ValidateWorkoutEntry(e *WorkoutEntry) error`
 - `ValidateProgram(p *Program) error`
-- `ValidateProgramNode(n *ProgramNode) error`
-- `ValidateTelemetryPoint(t *TelemetryPoint) error`
+- `ValidateProgramSession(s *ProgramSession) error`
+- `ValidateProgramSessionEntry(e *ProgramSessionEntry) error`
+- `ValidateProgramStatusTransition(from, to ProgramStatus) error`
+- `ValidateLog(l *Log) error`
+- `ValidateLogEntry(e *LogEntry) error`
 
 ### Common Validation Helpers
 
-- `RoundLoad(kg float64) float64` - Round to 0.1kg precision
-- `ValidateRPE(rpe int) error` - Check 1-10 range
-- `ValidateFatigueLevel(level int) error` - Check 1-5 range
 - `ValidateTimestamp(t time.Time) error` - Check not in future
-- `ValidateEntryType(entryType string) error` - Check enum values
+- `ValidateTimeRange(field string, startedAt, finishedAt *time.Time) error` - Check start before end
+- `ValidateRequiredString(field, value string) error` - Check non-empty
+- `ValidateStringLength(field, value string, min, max int) error` - Check length bounds
 
 ## Error Types
 
@@ -73,10 +61,7 @@ See `errors.go` for error code constants.
 
 ## Testing
 
-All validation functions have comprehensive table-driven tests in `*_test.go` files.
-
 Run tests:
 ```bash
 go test ./internal/domain/...
 ```
-

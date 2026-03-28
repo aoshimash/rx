@@ -47,7 +47,6 @@ type ProgramSessionEntry struct {
 	Sets         *int            `json:"sets,omitempty"`
 	Reps         *int            `json:"reps,omitempty"`
 	LoadKg       *float64        `json:"load_kg,omitempty"`
-	RPE          *int            `json:"rpe,omitempty"`
 	Notes        *string         `json:"notes,omitempty"`
 	Metadata     json.RawMessage `json:"metadata,omitempty"`
 }
@@ -62,17 +61,15 @@ type ProgramSession struct {
 	Entries     []ProgramSessionEntry `json:"entries,omitempty"`
 }
 
-// Program represents a concrete, immutable training program with embedded sessions.
-// Generated from a ProgramTemplate or created manually.
+// Program represents a concrete training program with embedded sessions.
 // Status transitions: created → ongoing → completed/cancelled, cancelled → ongoing. All transitions are explicit user actions.
 type Program struct {
-	ID                uuid.UUID        `json:"id"`
-	ProgramTemplateID *uuid.UUID       `json:"program_template_id,omitempty"`
-	Name              string           `json:"name"`
-	Status            ProgramStatus    `json:"status"`
-	Notes             *string          `json:"notes,omitempty"`
-	Metadata          json.RawMessage  `json:"metadata,omitempty"`
-	Sessions          []ProgramSession `json:"sessions,omitempty"`
-	CreatedAt         time.Time        `json:"created_at"`
-	UpdatedAt         time.Time        `json:"updated_at"`
+	ID        uuid.UUID        `json:"id"`
+	Name      string           `json:"name"`
+	Status    ProgramStatus    `json:"status"`
+	Notes     *string          `json:"notes,omitempty"`
+	Metadata  json.RawMessage  `json:"metadata,omitempty"`
+	Sessions  []ProgramSession `json:"sessions,omitempty"`
+	CreatedAt time.Time        `json:"created_at"`
+	UpdatedAt time.Time        `json:"updated_at"`
 }

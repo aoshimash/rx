@@ -1,33 +1,11 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useProgramTemplate } from '@/lib/hooks/useProgramTemplates';
 import { useLoggedSessions } from '@/lib/hooks/usePrograms';
 import type { LoggedSession, Program } from '@/types/api';
 import { useRouter } from 'next/navigation';
 
 interface ProgramCardProps {
   program: Program;
-}
-
-function TemplateInfo({ program }: { program: Program }) {
-  const { data: template } = useProgramTemplate(program.program_template_id ?? null);
-  const targetWeights = program.metadata?.target_weights as Record<string, number> | undefined;
-
-  if (!template && !targetWeights) return null;
-
-  return (
-    <div className="text-sm text-muted-foreground space-y-0.5">
-      {template && <p>Template: {template.name}</p>}
-      {targetWeights && (
-        <p>
-          Targets:{' '}
-          {Object.entries(targetWeights)
-            .map(([exercise, weight]) => `${exercise}: ${weight}kg`)
-            .join(', ')}
-        </p>
-      )}
-    </div>
-  );
 }
 
 function statusBadgeVariant(status: string): 'default' | 'secondary' | 'outline' | 'destructive' {
@@ -80,7 +58,6 @@ export function OngoingProgramCard({ program }: ProgramCardProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          {program.program_template_id && <TemplateInfo program={program} />}
           {startDate && (
             <p className="text-xs text-muted-foreground">Start: {startDate.toLocaleDateString()}</p>
           )}

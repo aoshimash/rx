@@ -79,10 +79,10 @@ func (r *logRepository) insertEntries(ctx context.Context, tx pgx.Tx, logID uuid
 		query := `
 			INSERT INTO log_entries (
 				id, log_id, "order", exercise_name,
-				sets, reps, load_kg, rpe,
+				sets, reps, load_kg,
 				notes, video_object_key, started_at, finished_at, metadata
 			)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		`
 
 		_, err := tx.Exec(ctx, query,
@@ -93,7 +93,6 @@ func (r *logRepository) insertEntries(ctx context.Context, tx pgx.Tx, logID uuid
 			entries[i].Sets,
 			entries[i].Reps,
 			entries[i].LoadKg,
-			entries[i].RPE,
 			entries[i].Notes,
 			entries[i].VideoObjectKey,
 			entries[i].StartedAt,
@@ -158,7 +157,7 @@ func (r *logRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Log,
 func (r *logRepository) getEntriesForLog(ctx context.Context, logID uuid.UUID) ([]domain.LogEntry, error) {
 	query := `
 		SELECT id, log_id, "order", exercise_name,
-		       sets, reps, load_kg, rpe,
+		       sets, reps, load_kg,
 		       notes, video_object_key, started_at, finished_at, metadata
 		FROM log_entries
 		WHERE log_id = $1
@@ -183,7 +182,6 @@ func (r *logRepository) getEntriesForLog(ctx context.Context, logID uuid.UUID) (
 			&entry.Sets,
 			&entry.Reps,
 			&entry.LoadKg,
-			&entry.RPE,
 			&entry.Notes,
 			&entry.VideoObjectKey,
 			&entry.StartedAt,

@@ -29,13 +29,9 @@ type ProgramRepository interface {
 	// List retrieves Programs with pagination.
 	// limit: maximum number of records (1-100)
 	// after: cursor for pagination (UUID string, base64-encoded)
-	// programTemplateID: optional filter by source template
 	// status: optional filter by status ("active", "completed", or "" for all)
 	// Returns: programs, next cursor (empty string if no more), has_more flag
-	List(ctx context.Context, limit int, after string, programTemplateID *uuid.UUID, status string) ([]*domain.Program, string, bool, error)
-
-	// ExistsByProgramTemplateID checks if any Programs reference the given program template
-	ExistsByProgramTemplateID(ctx context.Context, programTemplateID uuid.UUID) (bool, error)
+	List(ctx context.Context, limit int, after string, status string) ([]*domain.Program, string, bool, error)
 
 	// ExistsByName checks if a Program with the given name already exists.
 	ExistsByName(ctx context.Context, name string) (bool, error)

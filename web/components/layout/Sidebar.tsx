@@ -1,13 +1,12 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { BookOpen, ClipboardList, Dumbbell, Home, Settings } from 'lucide-react';
+import { ClipboardList, Dumbbell, Home, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: Home },
-  { href: '/program-templates', label: 'Templates', icon: BookOpen },
   { href: '/programs', label: 'Programs', icon: Dumbbell },
   { href: '/logs', label: 'Logs', icon: ClipboardList },
   { href: '/settings', label: 'Settings', icon: Settings },

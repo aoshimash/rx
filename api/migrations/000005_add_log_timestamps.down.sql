@@ -1,5 +1,0 @@
-ALTER TABLE log_entries DROP COLUMN IF EXISTS finished_at;
-ALTER TABLE log_entries DROP COLUMN IF EXISTS started_at;
-
-ALTER TABLE logs DROP COLUMN IF EXISTS finished_at;
-ALTER TABLE logs DROP COLUMN IF EXISTS started_at;

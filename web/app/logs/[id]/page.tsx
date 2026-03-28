@@ -124,7 +124,6 @@ export default function LogDetailPage() {
                     {group.entries.some((e) => e.metadata?.label) && (
                       <th className="text-left font-normal pb-1 w-16" />
                     )}
-                    <th className="text-right font-normal pb-1 pr-4">RPE</th>
                     {group.entries.some((e) => e.load_kg != null) && (
                       <th className="text-right font-normal pb-1 pr-4">Load</th>
                     )}
@@ -140,7 +139,6 @@ export default function LogDetailPage() {
                     return (
                       <tr key={entry.id} className="text-muted-foreground">
                         {hasLabel && <td className="text-xs pr-3 py-0.5">{label ?? ''}</td>}
-                        <td className="text-right tabular-nums pr-4 py-0.5">{entry.rpe ?? '—'}</td>
                         {hasLoad && (
                           <td className="text-right tabular-nums pr-4 py-0.5">
                             {entry.load_kg != null ? `${entry.load_kg}kg` : '—'}

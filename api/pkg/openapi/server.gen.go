@@ -42,12 +42,6 @@ const (
 	Ongoing   UpdateProgramStatusJSONBodyStatus = "ongoing"
 )
 
-// DuplicateProgramTemplateRequest defines model for DuplicateProgramTemplateRequest.
-type DuplicateProgramTemplateRequest struct {
-	// Name Custom name for the duplicate. If omitted, defaults to "{original name} (copy)".
-	Name *string `json:"name,omitempty"`
-}
-
 // Error defines model for Error.
 type Error struct {
 	// Code Error code
@@ -58,21 +52,6 @@ type Error struct {
 
 	// Message Human-readable error message
 	Message string `json:"message"`
-}
-
-// GenerateProgramRequest defines model for GenerateProgramRequest.
-type GenerateProgramRequest struct {
-	// LoadIncrements Map of exercise_name to weight increment in kg for rounding.
-	// If not specified, weights are rounded to 0.1 kg precision.
-	LoadIncrements *map[string]float64 `json:"load_increments,omitempty"`
-
-	// Name Name for the generated program (defaults to template name)
-	Name *string `json:"name,omitempty"`
-
-	// TargetWeights Map of exercise_name to target weight in kg.
-	// For entries with percent_1rm: load_kg = percent_1rm * target_weight.
-	// For entries without percent_1rm: load_kg = target_weight (direct copy).
-	TargetWeights map[string]float64 `json:"target_weights"`
 }
 
 // Log defines model for Log.
@@ -142,10 +121,7 @@ type LogEntry struct {
 	// Order Position in log
 	Order int  `json:"order"`
 	Reps  *int `json:"reps,omitempty"`
-
-	// Rpe Rate of Perceived Exertion
-	Rpe  *int `json:"rpe,omitempty"`
-	Sets *int `json:"sets,omitempty"`
+	Sets  *int `json:"sets,omitempty"`
 
 	// StartedAt When the exercise started (optional)
 	StartedAt *time.Time `json:"started_at,omitempty"`
@@ -162,7 +138,6 @@ type LogEntryCreate struct {
 	Metadata       *map[string]interface{} `json:"metadata,omitempty"`
 	Notes          *string                 `json:"notes,omitempty"`
 	Reps           *int                    `json:"reps,omitempty"`
-	Rpe            *int                    `json:"rpe,omitempty"`
 	Sets           *int                    `json:"sets,omitempty"`
 	StartedAt      *time.Time              `json:"started_at,omitempty"`
 	VideoObjectKey *string                 `json:"video_object_key,omitempty"`
@@ -205,9 +180,6 @@ type Program struct {
 	Name     string                  `json:"name"`
 	Notes    *string                 `json:"notes,omitempty"`
 
-	// ProgramTemplateId Reference to the source program template (null for manually created programs)
-	ProgramTemplateId *openapi_types.UUID `json:"program_template_id"`
-
 	// Sessions Ordered training sessions (each contains entries with absolute weights)
 	Sessions []ProgramSession `json:"sessions"`
 
@@ -224,10 +196,7 @@ type ProgramCreate struct {
 	Metadata *map[string]interface{} `json:"metadata,omitempty"`
 	Name     string                  `json:"name"`
 	Notes    *string                 `json:"notes,omitempty"`
-
-	// ProgramTemplateId Optional reference to source program template
-	ProgramTemplateId *openapi_types.UUID    `json:"program_template_id,omitempty"`
-	Sessions          []ProgramSessionCreate `json:"sessions"`
+	Sessions []ProgramSessionCreate  `json:"sessions"`
 }
 
 // ProgramListResponse defines model for ProgramListResponse.
@@ -276,11 +245,8 @@ type ProgramSessionEntry struct {
 	Notes    *string                 `json:"notes,omitempty"`
 
 	// Order Position in session
-	Order int  `json:"order"`
-	Reps  *int `json:"reps,omitempty"`
-
-	// Rpe Rate of Perceived Exertion
-	Rpe       *int               `json:"rpe,omitempty"`
+	Order     int                `json:"order"`
+	Reps      *int               `json:"reps,omitempty"`
 	SessionId openapi_types.UUID `json:"session_id"`
 	Sets      *int               `json:"sets,omitempty"`
 }
@@ -293,89 +259,7 @@ type ProgramSessionEntryCreate struct {
 	Notes        *string                 `json:"notes,omitempty"`
 	Order        int                     `json:"order"`
 	Reps         *int                    `json:"reps,omitempty"`
-	Rpe          *int                    `json:"rpe,omitempty"`
 	Sets         *int                    `json:"sets,omitempty"`
-}
-
-// ProgramTemplate defines model for ProgramTemplate.
-type ProgramTemplate struct {
-	// ArchivedAt When set, the program template is archived and hidden from default list results
-	ArchivedAt *time.Time `json:"archived_at"`
-	CreatedAt  time.Time  `json:"created_at"`
-
-	// CreatedBy User ID of the creator
-	CreatedBy *string `json:"created_by"`
-
-	// DaysPerWeek Training days per week (e.g., "2", "2~3")
-	DaysPerWeek *string `json:"days_per_week"`
-	Description *string `json:"description,omitempty"`
-
-	// Entries Exercise prescription entries (RPE-based, no absolute weights)
-	Entries *[]ProgramTemplateEntry `json:"entries,omitempty"`
-	Id      openapi_types.UUID      `json:"id"`
-
-	// Metadata Free-form JSON metadata
-	Metadata  *map[string]interface{} `json:"metadata,omitempty"`
-	Name      string                  `json:"name"`
-	Notes     *string                 `json:"notes,omitempty"`
-	UpdatedAt time.Time               `json:"updated_at"`
-
-	// Weeks Duration in weeks (e.g., "3", "6~8")
-	Weeks *string `json:"weeks"`
-}
-
-// ProgramTemplateCreate defines model for ProgramTemplateCreate.
-type ProgramTemplateCreate struct {
-	// DaysPerWeek Training days per week (e.g., "2", "2~3")
-	DaysPerWeek *string                       `json:"days_per_week,omitempty"`
-	Description *string                       `json:"description,omitempty"`
-	Entries     *[]ProgramTemplateEntryCreate `json:"entries,omitempty"`
-	Metadata    *map[string]interface{}       `json:"metadata,omitempty"`
-	Name        string                        `json:"name"`
-	Notes       *string                       `json:"notes,omitempty"`
-
-	// Weeks Duration in weeks (e.g., "3", "6~8")
-	Weeks *string `json:"weeks,omitempty"`
-}
-
-// ProgramTemplateEntry defines model for ProgramTemplateEntry.
-type ProgramTemplateEntry struct {
-	// ExerciseName Exercise name (plain string)
-	ExerciseName string                  `json:"exercise_name"`
-	Id           openapi_types.UUID      `json:"id"`
-	Metadata     *map[string]interface{} `json:"metadata,omitempty"`
-	Notes        *string                 `json:"notes,omitempty"`
-
-	// Order Position within the session
-	Order int `json:"order"`
-
-	// Percent1rm Percentage of 1RM (0.0 to 1.0) for weight calculation
-	Percent1rm        *float64           `json:"percent_1rm,omitempty"`
-	ProgramTemplateId openapi_types.UUID `json:"program_template_id"`
-	Reps              *int               `json:"reps,omitempty"`
-
-	// Rpe Target Rate of Perceived Exertion
-	Rpe  *int `json:"rpe,omitempty"`
-	Sets *int `json:"sets,omitempty"`
-}
-
-// ProgramTemplateEntryCreate defines model for ProgramTemplateEntryCreate.
-type ProgramTemplateEntryCreate struct {
-	ExerciseName string                  `json:"exercise_name"`
-	Metadata     *map[string]interface{} `json:"metadata,omitempty"`
-	Notes        *string                 `json:"notes,omitempty"`
-	Order        int                     `json:"order"`
-	Percent1rm   *float64                `json:"percent_1rm,omitempty"`
-	Reps         *int                    `json:"reps,omitempty"`
-	Rpe          *int                    `json:"rpe,omitempty"`
-	Sets         *int                    `json:"sets,omitempty"`
-}
-
-// ProgramTemplateListResponse defines model for ProgramTemplateListResponse.
-type ProgramTemplateListResponse struct {
-	Data       []ProgramTemplate `json:"data"`
-	HasMore    bool              `json:"has_more"`
-	NextCursor *string           `json:"next_cursor"`
 }
 
 // ProgramUpdate defines model for ProgramUpdate.
@@ -437,9 +321,6 @@ type LogId = openapi_types.UUID
 // ProgramId defines model for ProgramId.
 type ProgramId = openapi_types.UUID
 
-// ProgramTemplateId defines model for ProgramTemplateId.
-type ProgramTemplateId = openapi_types.UUID
-
 // Conflict defines model for Conflict.
 type Conflict = Error
 
@@ -470,18 +351,6 @@ type ListLogsParams struct {
 	PerformedAtTo *time.Time `form:"performed_at_to,omitempty" json:"performed_at_to,omitempty"`
 }
 
-// ListProgramTemplatesParams defines parameters for ListProgramTemplates.
-type ListProgramTemplatesParams struct {
-	// Limit Maximum number of items to return
-	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
-
-	// After Cursor for pagination (from previous response)
-	After *After `form:"after,omitempty" json:"after,omitempty"`
-
-	// IncludeArchived When true, archived program templates are included in results
-	IncludeArchived *bool `form:"include_archived,omitempty" json:"include_archived,omitempty"`
-}
-
 // ListProgramsParams defines parameters for ListPrograms.
 type ListProgramsParams struct {
 	// Limit Maximum number of items to return
@@ -489,9 +358,6 @@ type ListProgramsParams struct {
 
 	// After Cursor for pagination (from previous response)
 	After *After `form:"after,omitempty" json:"after,omitempty"`
-
-	// ProgramTemplateId Filter programs by source program template ID
-	ProgramTemplateId *openapi_types.UUID `form:"program_template_id,omitempty" json:"program_template_id,omitempty"`
 
 	// Status Filter programs by status
 	Status *ListProgramsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
@@ -513,18 +379,6 @@ type CreateLogJSONRequestBody = LogCreate
 
 // UpdateLogJSONRequestBody defines body for UpdateLog for application/json ContentType.
 type UpdateLogJSONRequestBody = LogCreate
-
-// CreateProgramTemplateJSONRequestBody defines body for CreateProgramTemplate for application/json ContentType.
-type CreateProgramTemplateJSONRequestBody = ProgramTemplateCreate
-
-// DuplicateProgramTemplateJSONRequestBody defines body for DuplicateProgramTemplate for application/json ContentType.
-type DuplicateProgramTemplateJSONRequestBody = DuplicateProgramTemplateRequest
-
-// EditProgramTemplateJSONRequestBody defines body for EditProgramTemplate for application/json ContentType.
-type EditProgramTemplateJSONRequestBody = ProgramTemplateCreate
-
-// GenerateProgramJSONRequestBody defines body for GenerateProgram for application/json ContentType.
-type GenerateProgramJSONRequestBody = GenerateProgramRequest
 
 // CreateProgramJSONRequestBody defines body for CreateProgram for application/json ContentType.
 type CreateProgramJSONRequestBody = ProgramCreate
@@ -558,33 +412,6 @@ type ServerInterface interface {
 	// Update log
 	// (PUT /logs/{id})
 	UpdateLog(w http.ResponseWriter, r *http.Request, id LogId)
-	// List program templates
-	// (GET /program-templates)
-	ListProgramTemplates(w http.ResponseWriter, r *http.Request, params ListProgramTemplatesParams)
-	// Create program template
-	// (POST /program-templates)
-	CreateProgramTemplate(w http.ResponseWriter, r *http.Request)
-	// Delete program template
-	// (DELETE /program-templates/{id})
-	DeleteProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId)
-	// Get program template by ID
-	// (GET /program-templates/{id})
-	GetProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId)
-	// Archive program template
-	// (POST /program-templates/{id}/archive)
-	ArchiveProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId)
-	// Duplicate program template
-	// (POST /program-templates/{id}/duplicate)
-	DuplicateProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId)
-	// Edit program template
-	// (POST /program-templates/{id}/edit)
-	EditProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId)
-	// Generate a Program from this template
-	// (POST /program-templates/{id}/generate)
-	GenerateProgram(w http.ResponseWriter, r *http.Request, id ProgramTemplateId)
-	// Unarchive program template
-	// (POST /program-templates/{id}/unarchive)
-	UnarchiveProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId)
 	// List programs
 	// (GET /programs)
 	ListPrograms(w http.ResponseWriter, r *http.Request, params ListProgramsParams)
@@ -645,60 +472,6 @@ func (_ Unimplemented) GetLog(w http.ResponseWriter, r *http.Request, id LogId) 
 // Update log
 // (PUT /logs/{id})
 func (_ Unimplemented) UpdateLog(w http.ResponseWriter, r *http.Request, id LogId) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// List program templates
-// (GET /program-templates)
-func (_ Unimplemented) ListProgramTemplates(w http.ResponseWriter, r *http.Request, params ListProgramTemplatesParams) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Create program template
-// (POST /program-templates)
-func (_ Unimplemented) CreateProgramTemplate(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Delete program template
-// (DELETE /program-templates/{id})
-func (_ Unimplemented) DeleteProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Get program template by ID
-// (GET /program-templates/{id})
-func (_ Unimplemented) GetProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Archive program template
-// (POST /program-templates/{id}/archive)
-func (_ Unimplemented) ArchiveProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Duplicate program template
-// (POST /program-templates/{id}/duplicate)
-func (_ Unimplemented) DuplicateProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Edit program template
-// (POST /program-templates/{id}/edit)
-func (_ Unimplemented) EditProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Generate a Program from this template
-// (POST /program-templates/{id}/generate)
-func (_ Unimplemented) GenerateProgram(w http.ResponseWriter, r *http.Request, id ProgramTemplateId) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Unarchive program template
-// (POST /program-templates/{id}/unarchive)
-func (_ Unimplemented) UnarchiveProgramTemplate(w http.ResponseWriter, r *http.Request, id ProgramTemplateId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -943,292 +716,6 @@ func (siw *ServerInterfaceWrapper) UpdateLog(w http.ResponseWriter, r *http.Requ
 	handler.ServeHTTP(w, r)
 }
 
-// ListProgramTemplates operation middleware
-func (siw *ServerInterfaceWrapper) ListProgramTemplates(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params ListProgramTemplatesParams
-
-	// ------------- Optional query parameter "limit" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "after" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "after", r.URL.Query(), &params.After)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "after", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "include_archived" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "include_archived", r.URL.Query(), &params.IncludeArchived)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_archived", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListProgramTemplates(w, r, params)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// CreateProgramTemplate operation middleware
-func (siw *ServerInterfaceWrapper) CreateProgramTemplate(w http.ResponseWriter, r *http.Request) {
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreateProgramTemplate(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// DeleteProgramTemplate operation middleware
-func (siw *ServerInterfaceWrapper) DeleteProgramTemplate(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id ProgramTemplateId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteProgramTemplate(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// GetProgramTemplate operation middleware
-func (siw *ServerInterfaceWrapper) GetProgramTemplate(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id ProgramTemplateId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetProgramTemplate(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// ArchiveProgramTemplate operation middleware
-func (siw *ServerInterfaceWrapper) ArchiveProgramTemplate(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id ProgramTemplateId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ArchiveProgramTemplate(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// DuplicateProgramTemplate operation middleware
-func (siw *ServerInterfaceWrapper) DuplicateProgramTemplate(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id ProgramTemplateId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DuplicateProgramTemplate(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// EditProgramTemplate operation middleware
-func (siw *ServerInterfaceWrapper) EditProgramTemplate(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id ProgramTemplateId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.EditProgramTemplate(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// GenerateProgram operation middleware
-func (siw *ServerInterfaceWrapper) GenerateProgram(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id ProgramTemplateId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GenerateProgram(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// UnarchiveProgramTemplate operation middleware
-func (siw *ServerInterfaceWrapper) UnarchiveProgramTemplate(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id ProgramTemplateId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UnarchiveProgramTemplate(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
 // ListPrograms operation middleware
 func (siw *ServerInterfaceWrapper) ListPrograms(w http.ResponseWriter, r *http.Request) {
 
@@ -1256,14 +743,6 @@ func (siw *ServerInterfaceWrapper) ListPrograms(w http.ResponseWriter, r *http.R
 	err = runtime.BindQueryParameter("form", true, false, "after", r.URL.Query(), &params.After)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "after", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "program_template_id" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "program_template_id", r.URL.Query(), &params.ProgramTemplateId)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "program_template_id", Err: err})
 		return
 	}
 
@@ -1628,33 +1107,6 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/logs/{id}", wrapper.UpdateLog)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/program-templates", wrapper.ListProgramTemplates)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/program-templates", wrapper.CreateProgramTemplate)
-	})
-	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/program-templates/{id}", wrapper.DeleteProgramTemplate)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/program-templates/{id}", wrapper.GetProgramTemplate)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/program-templates/{id}/archive", wrapper.ArchiveProgramTemplate)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/program-templates/{id}/duplicate", wrapper.DuplicateProgramTemplate)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/program-templates/{id}/edit", wrapper.EditProgramTemplate)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/program-templates/{id}/generate", wrapper.GenerateProgram)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/program-templates/{id}/unarchive", wrapper.UnarchiveProgramTemplate)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/programs", wrapper.ListPrograms)

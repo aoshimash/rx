@@ -10,216 +10,6 @@ security:
   - bearerAuth: []
 
 paths:
-  /program-templates:
-    get:
-      summary: List program templates
-      operationId: listProgramTemplates
-      tags: [ProgramTemplate]
-      parameters:
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/After'
-        - name: include_archived
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: When true, archived program templates are included in results
-      responses:
-        '200':
-          description: Paginated list of program templates
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProgramTemplateListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-    post:
-      summary: Create program template
-      operationId: createProgramTemplate
-      tags: [ProgramTemplate]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProgramTemplateCreate'
-      responses:
-        '201':
-          description: Program template created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProgramTemplate'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '409':
-          $ref: '#/components/responses/Conflict'
-
-  /program-templates/{id}:
-    parameters:
-      - $ref: '#/components/parameters/ProgramTemplateId'
-    get:
-      summary: Get program template by ID
-      operationId: getProgramTemplate
-      tags: [ProgramTemplate]
-      responses:
-        '200':
-          description: Program template found (includes all entries)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProgramTemplate'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    delete:
-      summary: Delete program template
-      operationId: deleteProgramTemplate
-      tags: [ProgramTemplate]
-      responses:
-        '204':
-          description: Program template deleted (entries cascade deleted)
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-
-  /program-templates/{id}/archive:
-    parameters:
-      - $ref: '#/components/parameters/ProgramTemplateId'
-    post:
-      summary: Archive program template
-      operationId: archiveProgramTemplate
-      tags: [ProgramTemplate]
-      responses:
-        '200':
-          description: Program template archived
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProgramTemplate'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /program-templates/{id}/unarchive:
-    parameters:
-      - $ref: '#/components/parameters/ProgramTemplateId'
-    post:
-      summary: Unarchive program template
-      operationId: unarchiveProgramTemplate
-      tags: [ProgramTemplate]
-      responses:
-        '200':
-          description: Program template unarchived
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProgramTemplate'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-
-  /program-templates/{id}/duplicate:
-    parameters:
-      - $ref: '#/components/parameters/ProgramTemplateId'
-    post:
-      summary: Duplicate program template
-      description: Creates a deep copy of the ProgramTemplate with all entries. Optionally accepts a custom name; defaults to appending " (copy)".
-      operationId: duplicateProgramTemplate
-      tags: [ProgramTemplate]
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DuplicateProgramTemplateRequest'
-      responses:
-        '201':
-          description: Program template duplicated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProgramTemplate'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-
-  /program-templates/{id}/generate:
-    parameters:
-      - $ref: '#/components/parameters/ProgramTemplateId'
-    post:
-      summary: Generate a Program from this template
-      description: |
-        Creates a concrete Program from a ProgramTemplate by calculating working weights
-        from RPE/percent_1rm values and target weights, rounded to equipment increments.
-        Entries are grouped by metadata.session — one ProgramSession per session group.
-        Returns the newly created Program with all sessions embedded.
-      operationId: generateProgram
-      tags: [ProgramTemplate]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GenerateProgramRequest'
-      responses:
-        '201':
-          description: Program generated from template
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Program'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /program-templates/{id}/edit:
-    parameters:
-      - $ref: '#/components/parameters/ProgramTemplateId'
-    post:
-      summary: Edit program template
-      description: |
-        Edits a program template in-place. Templates linked to one or more Programs cannot be edited
-        and return 409 Conflict. Only unlinked templates can be modified.
-      operationId: editProgramTemplate
-      tags: [ProgramTemplate]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProgramTemplateCreate'
-      responses:
-        '200':
-          description: Template updated in-place
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProgramTemplate'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-
   /programs:
     get:
       summary: List programs
@@ -228,12 +18,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/After'
-        - name: program_template_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter programs by source program template ID
         - name: status
           in: query
           schema:
@@ -296,7 +80,6 @@ paths:
       description: |
         Replaces the program's name, notes, metadata, and session/entry structure.
         All sessions must be provided — this is a full replacement, not a partial update.
-        The program_template_id cannot be changed after creation.
       operationId: updateProgram
       tags: [Program]
       requestBody:
@@ -606,15 +389,6 @@ components:
         type: string
       description: Cursor for pagination (from previous response)
 
-    ProgramTemplateId:
-      name: id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-      description: Program Template ID
-
     ProgramId:
       name: id
       in: path
@@ -678,240 +452,12 @@ components:
             $ref: '#/components/schemas/Error'
           example:
             code: CONFLICT
-            message: Cannot delete program template - referenced by programs
-            details:
-              blocking_references:
-                - type: program
-                  count: 3
+            message: Resource conflict
 
   # ========================================
   # Schemas
   # ========================================
   schemas:
-    # ========================================
-    # ProgramTemplate
-    # ========================================
-    ProgramTemplate:
-      type: object
-      required:
-        - id
-        - name
-        - created_at
-        - updated_at
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-          minLength: 1
-          maxLength: 200
-        description:
-          type: string
-          maxLength: 2000
-        notes:
-          type: string
-          maxLength: 5000
-        metadata:
-          type: object
-          additionalProperties: true
-          description: Free-form JSON metadata
-        entries:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProgramTemplateEntry'
-          description: Exercise prescription entries (RPE-based, no absolute weights)
-        weeks:
-          type: string
-          nullable: true
-          maxLength: 50
-          description: Duration in weeks (e.g., "3", "6~8")
-        days_per_week:
-          type: string
-          nullable: true
-          maxLength: 50
-          description: Training days per week (e.g., "2", "2~3")
-        created_by:
-          type: string
-          nullable: true
-          description: User ID of the creator
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-        archived_at:
-          type: string
-          format: date-time
-          nullable: true
-          description: When set, the program template is archived and hidden from default list results
-
-    ProgramTemplateCreate:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 200
-        description:
-          type: string
-          maxLength: 2000
-        notes:
-          type: string
-          maxLength: 5000
-        metadata:
-          type: object
-          additionalProperties: true
-        weeks:
-          type: string
-          maxLength: 50
-          description: Duration in weeks (e.g., "3", "6~8")
-        days_per_week:
-          type: string
-          maxLength: 50
-          description: Training days per week (e.g., "2", "2~3")
-        entries:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProgramTemplateEntryCreate'
-          maxItems: 1000
-
-    ProgramTemplateEntry:
-      type: object
-      required:
-        - id
-        - program_template_id
-        - order
-        - exercise_name
-      properties:
-        id:
-          type: string
-          format: uuid
-        program_template_id:
-          type: string
-          format: uuid
-        order:
-          type: integer
-          minimum: 0
-          description: Position within the session
-        exercise_name:
-          type: string
-          minLength: 1
-          maxLength: 200
-          description: Exercise name (plain string)
-        sets:
-          type: integer
-          minimum: 1
-        reps:
-          type: integer
-          minimum: 1
-        rpe:
-          type: integer
-          minimum: 1
-          maximum: 10
-          description: Target Rate of Perceived Exertion
-        percent_1rm:
-          type: number
-          format: double
-          minimum: 0
-          maximum: 1
-          description: Percentage of 1RM (0.0 to 1.0) for weight calculation
-        notes:
-          type: string
-          maxLength: 2000
-        metadata:
-          type: object
-          additionalProperties: true
-
-    ProgramTemplateEntryCreate:
-      type: object
-      required:
-        - exercise_name
-        - order
-      properties:
-        exercise_name:
-          type: string
-          minLength: 1
-          maxLength: 200
-        order:
-          type: integer
-          minimum: 0
-        sets:
-          type: integer
-          minimum: 1
-        reps:
-          type: integer
-          minimum: 1
-        rpe:
-          type: integer
-          minimum: 1
-          maximum: 10
-        percent_1rm:
-          type: number
-          format: double
-          minimum: 0
-          maximum: 1
-        notes:
-          type: string
-          maxLength: 2000
-        metadata:
-          type: object
-          additionalProperties: true
-
-    ProgramTemplateListResponse:
-      type: object
-      required:
-        - data
-        - has_more
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProgramTemplate'
-        next_cursor:
-          type: string
-          nullable: true
-        has_more:
-          type: boolean
-
-    DuplicateProgramTemplateRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          maxLength: 200
-          description: Custom name for the duplicate. If omitted, defaults to "{original name} (copy)".
-
-    GenerateProgramRequest:
-      type: object
-      required:
-        - target_weights
-      properties:
-        name:
-          type: string
-          maxLength: 200
-          description: Name for the generated program (defaults to template name)
-        target_weights:
-          type: object
-          additionalProperties:
-            type: number
-            format: double
-          description: |
-            Map of exercise_name to target weight in kg.
-            For entries with percent_1rm: load_kg = percent_1rm * target_weight.
-            For entries without percent_1rm: load_kg = target_weight (direct copy).
-        load_increments:
-          type: object
-          additionalProperties:
-            type: number
-            format: double
-          description: |
-            Map of exercise_name to weight increment in kg for rounding.
-            If not specified, weights are rounded to 0.1 kg precision.
-
     # ========================================
     # Program
     # ========================================
@@ -928,11 +474,6 @@ components:
         id:
           type: string
           format: uuid
-        program_template_id:
-          type: string
-          format: uuid
-          nullable: true
-          description: Reference to the source program template (null for manually created programs)
         name:
           type: string
           minLength: 1
@@ -966,10 +507,6 @@ components:
         - name
         - sessions
       properties:
-        program_template_id:
-          type: string
-          format: uuid
-          description: Optional reference to source program template
         name:
           type: string
           minLength: 1
@@ -1100,11 +637,6 @@ components:
           format: double
           minimum: 0
           description: Weight in kilograms (0.1 precision)
-        rpe:
-          type: integer
-          minimum: 1
-          maximum: 10
-          description: Rate of Perceived Exertion
         notes:
           type: string
           maxLength: 2000
@@ -1136,10 +668,6 @@ components:
           type: number
           format: double
           minimum: 0
-        rpe:
-          type: integer
-          minimum: 1
-          maximum: 10
         notes:
           type: string
           maxLength: 2000
@@ -1327,11 +855,6 @@ components:
           format: double
           minimum: 0
           description: Weight in kilograms (0.1 precision)
-        rpe:
-          type: integer
-          minimum: 1
-          maximum: 10
-          description: Rate of Perceived Exertion
         notes:
           type: string
           maxLength: 2000
@@ -1371,10 +894,6 @@ components:
           type: number
           format: double
           minimum: 0
-        rpe:
-          type: integer
-          minimum: 1
-          maximum: 10
         notes:
           type: string
           maxLength: 2000

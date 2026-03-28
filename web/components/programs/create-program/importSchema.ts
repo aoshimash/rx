@@ -6,7 +6,6 @@ const programSessionEntryImportSchema = z.object({
   sets: z.number().int().min(1).optional(),
   reps: z.number().int().min(1).optional(),
   load_kg: z.number().positive().optional(),
-  rpe: z.number().int().min(1).max(10).optional(),
   notes: z.string().optional(),
 });
 
