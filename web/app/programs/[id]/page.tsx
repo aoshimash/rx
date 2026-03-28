@@ -171,12 +171,12 @@ function PlanOnlyContent({ entries }: { entries: ProgramSessionEntry[] }) {
                 {group.entries.some((e) => e.metadata?.label) && (
                   <th className="text-left font-normal pb-1 w-16" />
                 )}
-                <th className="text-right font-normal pb-1 pr-4">RPE</th>
+                <th className="text-right font-normal pb-1 pr-4 w-16">RPE</th>
                 {group.entries.some((e) => e.load_kg != null) && (
-                  <th className="text-right font-normal pb-1 pr-4">Load</th>
+                  <th className="text-right font-normal pb-1 pr-4 w-20">Load</th>
                 )}
-                <th className="text-right font-normal pb-1 pr-4">Reps</th>
-                <th className="text-right font-normal pb-1 pr-4">Sets</th>
+                <th className="text-right font-normal pb-1 pr-4 w-16">Reps</th>
+                <th className="text-right font-normal pb-1 pr-4 w-16">Sets</th>
               </tr>
             </thead>
             <tbody>
@@ -200,6 +200,17 @@ function PlanOnlyContent({ entries }: { entries: ProgramSessionEntry[] }) {
               })}
             </tbody>
           </table>
+          {group.entries.some((e) => e.notes) && (
+            <div className="mt-1 space-y-0.5">
+              {group.entries
+                .filter((e) => e.notes)
+                .map((e) => (
+                  <p key={e.id} className="text-xs text-muted-foreground">
+                    {e.notes}
+                  </p>
+                ))}
+            </div>
+          )}
         </div>
       ))}
     </div>
