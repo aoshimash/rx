@@ -9,7 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePrograms } from '@/lib/hooks/usePrograms';
-import { Plus } from 'lucide-react';
+import { Archive, Plus } from 'lucide-react';
 import { useState } from 'react';
 
 const SHOW_FINISHED_KEY = 'programs:showFinished';
@@ -65,6 +65,16 @@ export default function ProgramsPage() {
             Concrete training programs with scheduled sessions.
           </p>
         </div>
+        {finishedPrograms.length > 0 && (
+          <Button
+            variant={showFinished ? 'secondary' : 'outline'}
+            size="sm"
+            onClick={toggleShowFinished}
+          >
+            <Archive className="h-4 w-4 mr-2" />
+            {showFinished ? 'Hide Finished' : 'Show Finished'}
+          </Button>
+        )}
       </div>
 
       {allPrograms.length === 0 ? (
@@ -105,20 +115,13 @@ export default function ProgramsPage() {
             </div>
           )}
 
-          {finishedPrograms.length > 0 && (
+          {showFinished && finishedPrograms.length > 0 && (
             <div className="mb-8">
-              <Button variant="ghost" size="sm" onClick={toggleShowFinished}>
-                {showFinished
-                  ? `Hide finished (${finishedPrograms.length})`
-                  : `Show finished (${finishedPrograms.length})`}
-              </Button>
-              {showFinished && (
-                <div className="grid grid-cols-2 gap-4 mt-3">
-                  {finishedPrograms.map((program) => (
-                    <FinishedProgramCard key={program.id} program={program} />
-                  ))}
-                </div>
-              )}
+              <div className="grid grid-cols-2 gap-4">
+                {finishedPrograms.map((program) => (
+                  <FinishedProgramCard key={program.id} program={program} />
+                ))}
+              </div>
             </div>
           )}
 
