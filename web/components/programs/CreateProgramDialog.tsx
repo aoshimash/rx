@@ -10,10 +10,10 @@ import {
 import { useGenerateProgram } from '@/lib/hooks/useProgramTemplates';
 import { useCreateProgram } from '@/lib/hooks/usePrograms';
 import type { GenerateProgramRequest, ProgramTemplate } from '@/types/api';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { ChoiceStep, type CreationMethod } from './create-program/ChoiceStep';
 import { ImportStep } from './create-program/ImportStep';
-import { ScratchStep } from './create-program/ScratchStep';
 import { TemplateConfigStep } from './create-program/TemplateConfigStep';
 import { TemplateSelectStep } from './create-program/TemplateSelectStep';
 import type { ProgramImport } from './create-program/importSchema';
@@ -22,8 +22,7 @@ type Step =
   | { type: 'choice' }
   | { type: 'template-select' }
   | { type: 'template-config'; template: ProgramTemplate }
-  | { type: 'import' }
-  | { type: 'scratch' };
+  | { type: 'import' };
 
 interface CreateProgramDialogProps {
   open: boolean;
@@ -35,7 +34,6 @@ const STEP_TITLES: Record<Step['type'], string> = {
   'template-select': 'Create from Template',
   'template-config': 'Create from Template',
   import: 'Import Program',
-  scratch: 'Create from Scratch',
 };
 
 const STEP_DESCRIPTIONS: Record<Step['type'], string> = {
@@ -43,7 +41,6 @@ const STEP_DESCRIPTIONS: Record<Step['type'], string> = {
   'template-select': 'Select a template to generate from.',
   'template-config': 'Enter your weights to calculate working loads.',
   import: 'Paste or drop a JSON file exported from this app.',
-  scratch: 'Define the program name and session names.',
 };
 
 function conflictError(err: unknown): string | undefined {
@@ -66,6 +63,7 @@ export function CreateProgramDialog({ open, onOpenChange }: CreateProgramDialogP
   const [nameError, setNameError] = useState<string | undefined>();
   const createProgram = useCreateProgram();
   const generateProgram = useGenerateProgram();
+  const router = useRouter();
 
   const handleOpenChange = (value: boolean) => {
     onOpenChange(value);
@@ -78,21 +76,11 @@ export function CreateProgramDialog({ open, onOpenChange }: CreateProgramDialogP
   const handleMethodSelect = (method: CreationMethod) => {
     if (method === 'template') setStep({ type: 'template-select' });
     else if (method === 'import') setStep({ type: 'import' });
-    else setStep({ type: 'scratch' });
-    setNameError(undefined);
-  };
-
-  const handleScratchSubmit = async (data: {
-    name: string;
-    notes?: string;
-    sessions: Parameters<typeof createProgram.mutateAsync>[0]['sessions'];
-  }) => {
-    try {
-      await createProgram.mutateAsync(data);
+    else {
       handleOpenChange(false);
-    } catch (err) {
-      setNameError(conflictError(err) ?? 'Failed to create program');
+      router.push('/programs/new');
     }
+    setNameError(undefined);
   };
 
   const handleGenerateSubmit = async (templateId: string, data: GenerateProgramRequest) => {
@@ -147,14 +135,6 @@ export function CreateProgramDialog({ open, onOpenChange }: CreateProgramDialogP
           <ImportStep
             onBack={() => setStep({ type: 'choice' })}
             onSubmit={handleImportSubmit}
-            isPending={isPending}
-            nameError={nameError}
-          />
-        )}
-        {step.type === 'scratch' && (
-          <ScratchStep
-            onBack={() => setStep({ type: 'choice' })}
-            onSubmit={handleScratchSubmit}
             isPending={isPending}
             nameError={nameError}
           />
