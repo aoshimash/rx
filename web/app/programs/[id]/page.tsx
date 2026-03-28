@@ -319,6 +319,15 @@ export default function ProgramDetailPage() {
               </Button>
             </>
           )}
+          {program.status === 'cancelled' && (
+            <Button
+              variant="outline"
+              onClick={() => updateStatus.mutate({ id: programId, status: 'ongoing' })}
+              disabled={updateStatus.isPending}
+            >
+              {updateStatus.isPending ? 'Resuming...' : 'Resume Program'}
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
