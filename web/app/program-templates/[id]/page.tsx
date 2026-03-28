@@ -23,6 +23,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -36,10 +42,45 @@ import {
   useUnarchiveProgramTemplate,
 } from '@/lib/hooks/useProgramTemplates';
 import { useProgramsByTemplateId } from '@/lib/hooks/usePrograms';
-import type { ProgramTemplateEntry, ProgramTemplateEntryCreate } from '@/types/api';
-import { Archive, ArchiveRestore, ArrowLeft, Copy, Info, Pencil, Trash2, User } from 'lucide-react';
+import type {
+  ProgramTemplate,
+  ProgramTemplateEntry,
+  ProgramTemplateEntryCreate,
+} from '@/types/api';
+import {
+  Archive,
+  ArchiveRestore,
+  ArrowLeft,
+  Copy,
+  Download,
+  Info,
+  Pencil,
+  Share2,
+  Trash2,
+  User,
+} from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
+
+function templateToExportJson(template: ProgramTemplate): string {
+  const payload = {
+    rx_version: '1',
+    name: template.name,
+    ...(template.description ? { description: template.description } : {}),
+    ...(template.notes ? { notes: template.notes } : {}),
+    entries: (template.entries ?? []).map((e) => ({
+      exercise_name: e.exercise_name,
+      order: e.order,
+      ...(e.sets != null ? { sets: e.sets } : {}),
+      ...(e.reps != null ? { reps: e.reps } : {}),
+      ...(e.rpe != null ? { rpe: e.rpe } : {}),
+      ...(e.percent_1rm != null ? { percent_1rm: e.percent_1rm } : {}),
+      ...(e.notes ? { notes: e.notes } : {}),
+      ...(e.metadata && Object.keys(e.metadata).length > 0 ? { metadata: e.metadata } : {}),
+    })),
+  };
+  return JSON.stringify(payload, null, 2);
+}
 
 type ExerciseGroup = { name: string; entries: ProgramTemplateEntry[] };
 type SessionGroup = { sessionName: string; exerciseGroups: ExerciseGroup[] };
@@ -171,6 +212,7 @@ export default function ProgramTemplateDetailPage() {
   const deleteTemplate = useDeleteProgramTemplate();
   const editTemplate = useEditProgramTemplate();
   const { data: programsData, isLoading: programsLoading } = useProgramsByTemplateId(templateId);
+  const [copied, setCopied] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
   const [duplicateName, setDuplicateName] = useState('');
@@ -252,6 +294,23 @@ export default function ProgramTemplateDetailPage() {
     router.push('/program-templates');
   };
 
+  const handleCopyToClipboard = () => {
+    navigator.clipboard.writeText(templateToExportJson(template));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownload = () => {
+    const json = templateToExportJson(template);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `template-${template.name}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <main className="container mx-auto p-6">
       <div className="mb-6">
@@ -288,6 +347,24 @@ export default function ProgramTemplateDetailPage() {
             </div>
           </div>
           <div className="flex gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleCopyToClipboard}>
+                  <Copy className="h-4 w-4 mr-2" />
+                  {copied ? 'Copied!' : 'Copy to clipboard'}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDownload}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download .json
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <div className="flex items-center gap-1">
               <Button
                 variant="outline"
