@@ -181,6 +181,25 @@ jobs:
       - name: Add aqua bin to PATH
         run: echo "$HOME/.local/share/aquaproj-aqua/bin" >> $GITHUB_PATH
 
+      - name: Start PostgreSQL container
+        run: |
+          docker run -d --name postgres \
+            -p 5432:5432 \
+            -e POSTGRES_USER=postgres \
+            -e POSTGRES_PASSWORD=postgres \
+            -e POSTGRES_DB=rx_test \
+            postgres:18.3
+
+          echo "Waiting for PostgreSQL to be ready..."
+          for i in {1..30}; do
+            if docker exec postgres pg_isready -U postgres 2>/dev/null; then
+              echo "PostgreSQL is ready!"
+              break
+            fi
+            echo "Waiting for PostgreSQL... ($i/30)"
+            sleep 2
+          done
+
       - name: Start MinIO container
         run: |
           docker run -d --name minio \
@@ -188,7 +207,7 @@ jobs:
             -e MINIO_ROOT_USER=minioadmin \
             -e MINIO_ROOT_PASSWORD=minioadmin \
             minio/minio:latest server /data
-          
+
           echo "Waiting for MinIO to be ready..."
           for i in {1..30}; do
             if curl -f http://localhost:9000/minio/health/ready 2>/dev/null; then
@@ -206,9 +225,20 @@ jobs:
         working-directory: api
         run: task deps
 
+      - name: Run database migrations
+        working-directory: api
+        env:
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_NAME: rx_test
+        run: task migrate
+
       - name: Run integration tests
         working-directory: api
         env:
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_NAME: rx_test
           MINIO_ENDPOINT: http://localhost:9000
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
