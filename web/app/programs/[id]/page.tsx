@@ -117,11 +117,10 @@ function buildDiffRows(planEntries: ProgramSessionEntry[], logEntries: LogEntry[
     rows.push({ exerciseName: plan.exercise_name, plan, actual });
   }
 
-  // Unplanned entries: in log but exercise_name not in plan at all
-  const plannedNames = new Set(planEntries.map((e) => e.exercise_name));
-  for (const entry of logEntries) {
-    if (!plannedNames.has(entry.exercise_name)) {
-      rows.push({ exerciseName: entry.exercise_name, actual: entry });
+  // Remaining unmatched log entries: either fully unplanned, or excess entries for planned exercises
+  for (const [name, remaining] of logByName) {
+    for (const entry of remaining) {
+      rows.push({ exerciseName: name, actual: entry });
     }
   }
 
