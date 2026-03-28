@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:18
+    image: postgres:18.3
     container_name: rx-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-rx}
@@ -30,7 +30,7 @@ services:
     restart: unless-stopped
 
   minio:
-    image: minio/minio:latest
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
     container_name: rx-minio
     command: server /data --console-address ":9001"
     environment:
