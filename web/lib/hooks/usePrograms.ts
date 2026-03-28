@@ -1,6 +1,8 @@
 import { programsApi } from '@/lib/api/programs';
 import type { ProgramCreate } from '@/types/api';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { HTTPError } from 'ky';
+import { toast } from 'sonner';
 
 export function usePrograms(status?: string) {
   return useQuery({
@@ -54,14 +56,33 @@ export function useDeleteProgram() {
   });
 }
 
+const statusLabels: Record<string, string> = {
+  ongoing: 'started',
+  completed: 'completed',
+  cancelled: 'cancelled',
+};
+
 export function useUpdateProgramStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) =>
       programsApi.updateStatus(id, status),
-    onSuccess: () => {
+    onSuccess: (_data, { status }) => {
       queryClient.invalidateQueries({ queryKey: ['programs'] });
+      toast.success(`Program ${statusLabels[status] ?? status}`);
+    },
+    onError: async (error) => {
+      let message = 'Failed to update program status';
+      if (error instanceof HTTPError) {
+        try {
+          const body = await error.response.json();
+          if (body.message) message = body.message;
+        } catch {
+          // use default message
+        }
+      }
+      toast.error(message);
     },
   });
 }
