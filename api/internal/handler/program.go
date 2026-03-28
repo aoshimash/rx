@@ -63,6 +63,18 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	exists, err := h.repo.ExistsByName(ctx, req.Name)
+	if err != nil {
+		middleware.WriteInternalError(w, "Failed to check program name")
+		return
+	}
+	if exists {
+		middleware.WriteConflictError(w, "A program with this name already exists", map[string]interface{}{
+			"field": "name",
+		})
+		return
+	}
+
 	program := &domain.Program{
 		Name:     req.Name,
 		Status:   domain.ProgramStatusCreated,

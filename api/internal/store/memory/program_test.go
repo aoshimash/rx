@@ -11,22 +11,22 @@ import (
 
 func TestProgramMemoryStore_ExistsByName(t *testing.T) {
 	tests := []struct {
-		name           string
+		name            string
 		programToCreate *domain.Program
-		queryName      string
-		wantExists     bool
+		queryName       string
+		wantExists      bool
 	}{
 		{
-			name:           "returns false when empty",
+			name:            "returns false when empty",
 			programToCreate: nil,
-			queryName:      "Test",
-			wantExists:     false,
+			queryName:       "Test",
+			wantExists:      false,
 		},
 		{
-			name:           "returns true after create",
+			name:            "returns true after create",
 			programToCreate: &domain.Program{Name: "Test", Status: domain.ProgramStatusCreated},
-			queryName:      "Test",
-			wantExists:     true,
+			queryName:       "Test",
+			wantExists:      true,
 		},
 	}
 
