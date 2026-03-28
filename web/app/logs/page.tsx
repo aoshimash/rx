@@ -1,22 +1,17 @@
 'use client';
 
 import { ExportButton } from '@/components/export/ExportButton';
-import type { LogSaveContext } from '@/components/log-input/LogModal';
-import { LogModal } from '@/components/log-input/LogModal';
 import { LogTable } from '@/components/logs/LogTable';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useCreateLog, useLogs } from '@/lib/hooks/useLogs';
+import { useLogs } from '@/lib/hooks/useLogs';
 import { usePrograms } from '@/lib/hooks/usePrograms';
-import type { LogEntryCreate } from '@/types/api';
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
+import Link from 'next/link';
 
 export default function LogsPage() {
   const { data: logsData, isLoading: logsLoading, error: logsError } = useLogs();
   const { data: programsData } = usePrograms();
-  const createLog = useCreateLog();
-  const [modalOpen, setModalOpen] = useState(false);
 
   const logs = logsData?.data || [];
   const sortedLogs = [...logs].sort(
@@ -24,22 +19,6 @@ export default function LogsPage() {
   );
 
   const programMap = new Map<string, string>((programsData?.data ?? []).map((p) => [p.id, p.name]));
-
-  const handleSaveLog = async (
-    entries: LogEntryCreate[],
-    notes: string,
-    context?: LogSaveContext
-  ) => {
-    await createLog.mutateAsync({
-      program_id: context?.programId,
-      session_name: context?.sessionName,
-      performed_at: new Date().toISOString(),
-      started_at: context?.startedAt,
-      finished_at: context?.finishedAt,
-      notes: notes || undefined,
-      entries,
-    });
-  };
 
   if (logsLoading) {
     return (
@@ -70,7 +49,15 @@ export default function LogsPage() {
           <h1 className="text-3xl font-bold">Logs</h1>
           <p className="text-muted-foreground mt-1">View and record your sessions</p>
         </div>
-        <ExportButton logs={logs} plan={null} />
+        <div className="flex items-center gap-2">
+          <ExportButton logs={logs} plan={null} />
+          <Button asChild>
+            <Link href="/logs/new">
+              <Plus className="h-4 w-4 mr-2" />
+              Record Log
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {sortedLogs.length === 0 ? (
@@ -78,16 +65,16 @@ export default function LogsPage() {
           <p className="text-muted-foreground mb-4">
             No logs yet. Record your first training session.
           </p>
-          <Button onClick={() => setModalOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Record Log
+          <Button asChild>
+            <Link href="/logs/new">
+              <Plus className="h-4 w-4 mr-2" />
+              Record Log
+            </Link>
           </Button>
         </div>
       ) : (
         <LogTable logs={sortedLogs} programMap={programMap} />
       )}
-
-      <LogModal open={modalOpen} onOpenChange={setModalOpen} onSave={handleSaveLog} />
     </main>
   );
 }
