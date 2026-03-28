@@ -82,33 +82,77 @@ func createTestProgram(t *testing.T, router chi.Router) map[string]interface{} {
 }
 
 func TestProgramHandler_CreateProgram(t *testing.T) {
-	router, _ := setupProgramTestRouter()
+	const successBody = `{"name":"Strength Program","sessions":[{"session_name":"Day 1","order":0,"entries":[{"exercise_name":"Squat","order":0,"sets":3,"reps":5,"load_kg":100,"rpe":8},{"exercise_name":"Bench Press","order":1,"sets":3,"reps":5,"load_kg":80,"rpe":7}]}]}`
+	const conflictBody = `{"name":"Duplicate Program","sessions":[{"session_name":"Day 1","order":0,"entries":[{"exercise_name":"Squat","order":0,"sets":3,"reps":5,"load_kg":100.0,"rpe":8}]}]}`
 
-	t.Run("creates program successfully", func(t *testing.T) {
-		result := createTestProgram(t, router)
+	tests := []struct {
+		name       string
+		setup      func(t *testing.T, router chi.Router)
+		body       string
+		authHeader string
+		wantStatus int
+		checkBody  func(t *testing.T, resp map[string]interface{})
+	}{
+		{
+			name:       "creates program successfully",
+			body:       successBody,
+			authHeader: "Bearer test-token",
+			wantStatus: http.StatusCreated,
+			checkBody: func(t *testing.T, resp map[string]interface{}) {
+				assert.NotEmpty(t, resp["id"])
+				assert.Equal(t, "created", resp["status"])
+				sessions := resp["sessions"].([]interface{})
+				assert.Len(t, sessions, 1)
+				firstSession := sessions[0].(map[string]interface{})
+				assert.Equal(t, "Day 1", firstSession["session_name"])
+				entries := firstSession["entries"].([]interface{})
+				assert.Len(t, entries, 2)
+			},
+		},
+		{
+			name:       "rejects empty name",
+			body:       `{"name": ""}`,
+			authHeader: "Bearer test-token",
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name: "returns 409 on duplicate name",
+			setup: func(t *testing.T, router chi.Router) {
+				req := httptest.NewRequest(http.MethodPost, "/programs", bytes.NewBufferString(conflictBody))
+				req.Header.Set("Content-Type", "application/json")
+				req.Header.Set("Authorization", "Bearer user1")
+				w := httptest.NewRecorder()
+				router.ServeHTTP(w, req)
+				require.Equal(t, http.StatusCreated, w.Code)
+			},
+			body:       conflictBody,
+			authHeader: "Bearer user1",
+			wantStatus: http.StatusConflict,
+			checkBody: func(t *testing.T, resp map[string]interface{}) {
+				assert.Equal(t, "CONFLICT", resp["code"])
+			},
+		},
+	}
 
-		assert.NotEmpty(t, result["id"])
-		assert.Contains(t, result["name"], "Strength Program")
-		assert.Equal(t, "created", result["status"])
-		sessions := result["sessions"].([]interface{})
-		assert.Len(t, sessions, 1)
-
-		firstSession := sessions[0].(map[string]interface{})
-		assert.Equal(t, "Day 1", firstSession["session_name"])
-		entries := firstSession["entries"].([]interface{})
-		assert.Len(t, entries, 2)
-	})
-
-	t.Run("rejects empty name", func(t *testing.T) {
-		body := `{"name": ""}`
-		req := httptest.NewRequest(http.MethodPost, "/programs", bytes.NewBufferString(body))
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("Authorization", "Bearer test-token")
-		w := httptest.NewRecorder()
-		router.ServeHTTP(w, req)
-
-		assert.Equal(t, http.StatusBadRequest, w.Code)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			router, _ := setupProgramTestRouter()
+			if tt.setup != nil {
+				tt.setup(t, router)
+			}
+			req := httptest.NewRequest(http.MethodPost, "/programs", bytes.NewBufferString(tt.body))
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", tt.authHeader)
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+			assert.Equal(t, tt.wantStatus, w.Code)
+			if tt.checkBody != nil {
+				var resp map[string]interface{}
+				require.NoError(t, json.NewDecoder(w.Body).Decode(&resp))
+				tt.checkBody(t, resp)
+			}
+		})
+	}
 }
 
 func TestProgramHandler_GetProgram(t *testing.T) {
@@ -209,32 +253,6 @@ func TestProgramHandler_UpdateProgramStatus(t *testing.T) {
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
 	})
-}
-
-func TestCreateProgram_ConflictOnDuplicateName(t *testing.T) {
-	router, _ := setupProgramTestRouter()
-
-	body := `{"name":"Duplicate Program","sessions":[{"session_name":"Day 1","order":0,"entries":[{"exercise_name":"Squat","order":0,"sets":3,"reps":5,"load_kg":100.0,"rpe":8}]}]}`
-
-	// First creation — should succeed
-	req1 := httptest.NewRequest(http.MethodPost, "/programs", bytes.NewBufferString(body))
-	req1.Header.Set("Content-Type", "application/json")
-	req1.Header.Set("Authorization", "Bearer user1")
-	w1 := httptest.NewRecorder()
-	router.ServeHTTP(w1, req1)
-	require.Equal(t, http.StatusCreated, w1.Code)
-
-	// Second creation — same name, should conflict
-	req2 := httptest.NewRequest(http.MethodPost, "/programs", bytes.NewBufferString(body))
-	req2.Header.Set("Content-Type", "application/json")
-	req2.Header.Set("Authorization", "Bearer user1")
-	w2 := httptest.NewRecorder()
-	router.ServeHTTP(w2, req2)
-
-	assert.Equal(t, http.StatusConflict, w2.Code)
-	var resp map[string]interface{}
-	require.NoError(t, json.NewDecoder(w2.Body).Decode(&resp))
-	assert.Equal(t, "CONFLICT", resp["code"])
 }
 
 func TestProgramHandler_ListPrograms(t *testing.T) {

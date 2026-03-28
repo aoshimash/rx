@@ -36,27 +36,37 @@ func TestProgramRepository_ExistsByName(t *testing.T) {
 	repo := NewProgramRepository(db.Pool())
 	ctx := context.Background()
 
-	t.Run("returns false when not found", func(t *testing.T) {
-		exists, err := repo.ExistsByName(ctx, "NonExistentProgram_"+t.Name())
-		require.NoError(t, err)
-		assert.False(t, exists)
-	})
+	existing := &domain.Program{
+		Name:   "ExistingProgram_ExistsByName",
+		Status: domain.ProgramStatusCreated,
+	}
+	require.NoError(t, repo.Create(ctx, existing))
+	t.Cleanup(func() { _ = repo.Delete(ctx, existing.ID) })
 
-	t.Run("returns true after create", func(t *testing.T) {
-		name := "TestProgram_ExistsByName_" + t.Name()
-		p := &domain.Program{
-			Name:   name,
-			Status: domain.ProgramStatusCreated,
-		}
-		require.NoError(t, repo.Create(ctx, p))
-		t.Cleanup(func() {
-			_ = repo.Delete(ctx, p.ID)
+	tests := []struct {
+		name       string
+		searchName string
+		wantExists bool
+	}{
+		{
+			name:       "returns false when program does not exist",
+			searchName: "NonExistentProgram_ExistsByName",
+			wantExists: false,
+		},
+		{
+			name:       "returns true when program exists",
+			searchName: existing.Name,
+			wantExists: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			exists, err := repo.ExistsByName(ctx, tt.searchName)
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantExists, exists)
 		})
-
-		exists, err := repo.ExistsByName(ctx, name)
-		require.NoError(t, err)
-		assert.True(t, exists)
-	})
+	}
 }
 
 func init() {

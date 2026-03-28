@@ -194,11 +194,14 @@ jobs:
           for i in {1..30}; do
             if docker exec postgres pg_isready -U postgres 2>/dev/null; then
               echo "PostgreSQL is ready!"
-              break
+              exit 0
             fi
             echo "Waiting for PostgreSQL... ($i/30)"
             sleep 2
           done
+          echo "PostgreSQL failed to become ready"
+          docker logs postgres
+          exit 1
 
       - name: Start MinIO container
         run: |
