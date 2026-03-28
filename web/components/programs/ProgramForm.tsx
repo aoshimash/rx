@@ -102,7 +102,7 @@ function exerciseToEntry(
   const metadata: Record<string, unknown> = { session: sessionName };
   if (sessionDate) metadata.date = sessionDate;
   if (ex.label) metadata.label = ex.label;
-  if (ex.intensity_type === 'weight_kg' && ex.weight_kg != null) {
+  if (ex.weight_kg != null) {
     metadata.weight_kg = ex.weight_kg;
   }
   return {
@@ -110,11 +110,8 @@ function exerciseToEntry(
     order,
     sets: ex.sets,
     reps: ex.reps,
-    rpe: ex.intensity_type === 'rpe' ? ex.rpe : undefined,
-    percent_1rm:
-      ex.intensity_type === 'percent_1rm' && ex.percent_1rm_display !== undefined
-        ? ex.percent_1rm_display / 100
-        : undefined,
+    rpe: ex.rpe,
+    percent_1rm: ex.percent_1rm_display !== undefined ? ex.percent_1rm_display / 100 : undefined,
     metadata,
   };
 }

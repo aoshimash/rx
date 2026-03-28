@@ -29,6 +29,7 @@ function programToEntries(program: Program): ProgramTemplateEntryCreate[] {
         sets: entry.sets,
         reps: entry.reps,
         rpe: entry.rpe,
+        notes: entry.notes,
         metadata,
       });
       order++;
