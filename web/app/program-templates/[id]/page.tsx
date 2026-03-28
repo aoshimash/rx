@@ -107,10 +107,10 @@ function SessionCard({ session }: { session: SessionGroup }) {
                   <thead>
                     <tr className="text-xs text-muted-foreground">
                       {hasLabel && <th className="text-left font-normal pb-1 w-16" />}
-                      <th className="text-right font-normal pb-1 pr-4">RPE</th>
-                      <th className="text-right font-normal pb-1 pr-4">Reps</th>
-                      <th className="text-right font-normal pb-1 pr-4">Sets</th>
-                      {hasPercent1rm && <th className="text-right font-normal pb-1">%1RM</th>}
+                      <th className="text-right font-normal pb-1 pr-4 w-16">RPE</th>
+                      <th className="text-right font-normal pb-1 pr-4 w-16">Reps</th>
+                      <th className="text-right font-normal pb-1 pr-4 w-16">Sets</th>
+                      {hasPercent1rm && <th className="text-right font-normal pb-1 w-16">%1RM</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -140,6 +140,17 @@ function SessionCard({ session }: { session: SessionGroup }) {
                     })}
                   </tbody>
                 </table>
+                {group.entries.some((e) => e.notes) && (
+                  <div className="mt-1 space-y-0.5">
+                    {group.entries
+                      .filter((e) => e.notes)
+                      .map((e) => (
+                        <p key={e.id} className="text-xs text-muted-foreground">
+                          {e.notes}
+                        </p>
+                      ))}
+                  </div>
+                )}
               </div>
             );
           })}
