@@ -8,10 +8,14 @@ import (
 )
 
 // ProgramRepository defines the interface for Program storage operations.
-// Programs are immutable after creation (no update endpoint).
 type ProgramRepository interface {
 	// Create stores a new Program (with all sessions and entries) and returns it with generated IDs and timestamps
 	Create(ctx context.Context, program *domain.Program) error
+
+	// Update replaces the content of an existing Program (name, notes, metadata, sessions, entries).
+	// The program must already exist; returns domain.ErrNotFound if not found.
+	// Sessions and entries are fully replaced (delete-and-reinsert).
+	Update(ctx context.Context, program *domain.Program) error
 
 	// GetByID retrieves a Program by its ID including all sessions and entries, returns domain.ErrNotFound if not found
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Program, error)

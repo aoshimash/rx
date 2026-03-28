@@ -79,6 +79,32 @@ func (s *programStore) copyProgram(p *domain.Program) *domain.Program {
 	return &cp
 }
 
+func (s *programStore) Update(ctx context.Context, program *domain.Program) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	existing, exists := s.programs[program.ID]
+	if !exists {
+		return domain.ErrNotFound
+	}
+
+	program.CreatedAt = existing.CreatedAt
+	program.UpdatedAt = time.Now()
+	program.ProgramTemplateID = existing.ProgramTemplateID
+
+	for i := range program.Sessions {
+		program.Sessions[i].ID = uuid.New()
+		program.Sessions[i].ProgramID = program.ID
+		for j := range program.Sessions[i].Entries {
+			program.Sessions[i].Entries[j].ID = uuid.New()
+			program.Sessions[i].Entries[j].SessionID = program.Sessions[i].ID
+		}
+	}
+
+	s.programs[program.ID] = program
+	return nil
+}
+
 func (s *programStore) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ProgramStatus) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()

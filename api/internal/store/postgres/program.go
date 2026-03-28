@@ -242,6 +242,93 @@ func (r *programRepository) getEntriesForSession(ctx context.Context, sessionID 
 	return entries, rows.Err()
 }
 
+func (r *programRepository) Update(ctx context.Context, program *domain.Program) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	// Update the program row
+	result, err := tx.Exec(ctx, `
+		UPDATE programs SET name = $2, notes = $3, metadata = $4, updated_at = NOW()
+		WHERE id = $1
+	`, program.ID, program.Name, program.Notes, program.Metadata)
+	if err != nil {
+		slog.Error("Failed to update program", "id", program.ID, "error", err)
+		return err
+	}
+	if result.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+
+	// Delete existing sessions (entries cascade-deleted by DB)
+	_, err = tx.Exec(ctx, `DELETE FROM program_sessions WHERE program_id = $1`, program.ID)
+	if err != nil {
+		slog.Error("Failed to delete program sessions", "id", program.ID, "error", err)
+		return err
+	}
+
+	// Re-insert sessions and entries
+	for i := range program.Sessions {
+		sessionID := uuid.New()
+		var dateVal interface{}
+		if program.Sessions[i].Date != nil {
+			dateVal = program.Sessions[i].Date
+		}
+		_, err = tx.Exec(ctx, `
+			INSERT INTO program_sessions (id, program_id, session_name, "order", date)
+			VALUES ($1, $2, $3, $4, $5)
+		`, sessionID, program.ID, program.Sessions[i].SessionName, program.Sessions[i].Order, dateVal)
+		if err != nil {
+			slog.Error("Failed to insert program session", "error", err)
+			return err
+		}
+		program.Sessions[i].ID = sessionID
+		program.Sessions[i].ProgramID = program.ID
+
+		for j := range program.Sessions[i].Entries {
+			entryID := uuid.New()
+			_, err = tx.Exec(ctx, `
+				INSERT INTO program_session_entries (
+					id, session_id, "order", exercise_name,
+					sets, reps, load_kg, rpe, notes, metadata
+				)
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+			`,
+				entryID,
+				sessionID,
+				program.Sessions[i].Entries[j].Order,
+				program.Sessions[i].Entries[j].ExerciseName,
+				program.Sessions[i].Entries[j].Sets,
+				program.Sessions[i].Entries[j].Reps,
+				program.Sessions[i].Entries[j].LoadKg,
+				program.Sessions[i].Entries[j].RPE,
+				program.Sessions[i].Entries[j].Notes,
+				program.Sessions[i].Entries[j].Metadata,
+			)
+			if err != nil {
+				slog.Error("Failed to insert program session entry", "error", err)
+				return err
+			}
+			program.Sessions[i].Entries[j].ID = entryID
+			program.Sessions[i].Entries[j].SessionID = sessionID
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return err
+	}
+
+	// Re-read to get the updated_at timestamp
+	updated, err := r.GetByID(ctx, program.ID)
+	if err != nil {
+		return err
+	}
+	*program = *updated
+	return nil
+}
+
 func (r *programRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ProgramStatus) error {
 	result, err := r.pool.Exec(ctx,
 		`UPDATE programs SET status = $2, updated_at = NOW() WHERE id = $1`,

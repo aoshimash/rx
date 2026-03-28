@@ -156,6 +156,13 @@ export interface ProgramCreate {
   sessions?: ProgramSessionCreate[];
 }
 
+export interface ProgramUpdate {
+  name: string;
+  notes?: string;
+  metadata?: Record<string, unknown>;
+  sessions: ProgramSessionCreate[];
+}
+
 // ============================================================================
 // ProgramSession
 // ============================================================================

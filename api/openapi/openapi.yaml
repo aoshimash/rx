@@ -291,6 +291,35 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+    put:
+      summary: Update program content
+      description: |
+        Replaces the program's name, notes, metadata, and session/entry structure.
+        All sessions must be provided — this is a full replacement, not a partial update.
+        The program_template_id cannot be changed after creation.
+      operationId: updateProgram
+      tags: [Program]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramUpdate'
+      responses:
+        '200':
+          description: Program updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Program'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
     delete:
       summary: Delete program
       operationId: deleteProgram
@@ -941,6 +970,29 @@ components:
           type: string
           format: uuid
           description: Optional reference to source program template
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        notes:
+          type: string
+          maxLength: 5000
+        metadata:
+          type: object
+          additionalProperties: true
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProgramSessionCreate'
+          minItems: 1
+          maxItems: 100
+
+    ProgramUpdate:
+      type: object
+      required:
+        - name
+        - sessions
+      properties:
         name:
           type: string
           minLength: 1
