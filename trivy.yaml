@@ -1,0 +1,30 @@
+# Trivy security scanner configuration
+# Shared by CI workflows and local development (via lefthook)
+# Generated from: trivy --generate-default-config
+# https://aquasecurity.github.io/trivy/latest/docs/references/configuration/config-file/
+
+severity:
+  - HIGH
+  - CRITICAL
+
+# License classification policy
+# Forbidden — scan fails immediately
+forbidden:
+  - AGPL-1.0
+  - AGPL-3.0
+
+# Restricted — scan fails (require legal review before use)
+restricted:
+  - GPL-1.0
+  - GPL-2.0
+  - GPL-2.0-with-autoconf-exception
+  - GPL-2.0-with-bison-exception
+  - GPL-2.0-with-classpath-exception
+  - GPL-2.0-with-font-exception
+  - GPL-2.0-with-GCC-exception
+  - GPL-3.0
+  - GPL-3.0-with-autoconf-exception
+  - GPL-3.0-with-GCC-exception
+  - LGPL-2.0
+  - LGPL-2.1
+  - LGPL-3.0

@@ -2,8 +2,12 @@
 # Multi-stage build: Ubuntu-based builder + distroless runtime
 # Distroless provides minimal attack surface (no shell, no package manager)
 
-# Build stage (Ubuntu-based for compatibility)
-FROM golang:1.26.1 AS builder
+# Build stage: --platform=$BUILDPLATFORM ensures the builder always runs on the
+# host architecture (amd64 in CI), avoiding QEMU emulation. Go cross-compiles
+# for the target via TARGETARCH, which Docker buildx sets automatically.
+FROM --platform=$BUILDPLATFORM golang:1.26.1 AS builder
+
+ARG TARGETARCH
 
 WORKDIR /build
 
@@ -15,7 +19,8 @@ RUN go mod download
 COPY . .
 
 # Build static binary (CGO_ENABLED=0 for distroless compatibility)
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo \
+# TARGETARCH enables multi-arch builds via Go cross-compilation (no QEMU needed)
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -a -installsuffix cgo \
     -ldflags="-w -s" \
     -o bin/server cmd/server/main.go
 

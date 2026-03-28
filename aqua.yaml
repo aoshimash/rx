@@ -35,3 +35,6 @@ packages:
 
   # Git hook manager
   - name: evilmartians/lefthook@v2.1.4
+
+  # Security scanner
+  - name: aquasecurity/trivy@v0.69.3
