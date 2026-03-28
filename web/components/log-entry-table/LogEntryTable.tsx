@@ -17,6 +17,7 @@ import {
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import {
   SortableContext,
+  arrayMove,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
@@ -37,6 +38,9 @@ interface LogEntryTableProps {
   }) => Promise<void>;
   onCancel: () => void;
   saveLabel?: string;
+  initialNotes?: string;
+  initialStartedAt?: string;
+  initialFinishedAt?: string;
 }
 
 export function LogEntryTable({
@@ -45,15 +49,18 @@ export function LogEntryTable({
   onSave,
   onCancel,
   saveLabel = 'Save Log',
+  initialNotes = '',
+  initialStartedAt = '',
+  initialFinishedAt = '',
 }: LogEntryTableProps) {
   const [entries, setEntries] = useState<TableEntry[]>(() => {
     if (existingEntries) return existingEntries;
     if (initialEntries) return initialEntries.map((e, i) => createTableEntryFromPlan(e, i));
     return [createEmptyTableEntry()];
   });
-  const [sessionNotes, setSessionNotes] = useState('');
-  const [startedAt, setStartedAt] = useState('');
-  const [finishedAt, setFinishedAt] = useState('');
+  const [sessionNotes, setSessionNotes] = useState(initialNotes);
+  const [startedAt, setStartedAt] = useState(initialStartedAt);
+  const [finishedAt, setFinishedAt] = useState(initialFinishedAt);
   const [isSaving, setIsSaving] = useState(false);
 
   const sensors = useSensors(
@@ -68,10 +75,7 @@ export function LogEntryTable({
     setEntries((prev) => {
       const oldIndex = prev.findIndex((e) => e.id === active.id);
       const newIndex = prev.findIndex((e) => e.id === over.id);
-      const updated = [...prev];
-      const removed = updated.splice(oldIndex, 1);
-      updated.splice(newIndex, 0, ...removed);
-      return updated;
+      return arrayMove(prev, oldIndex, newIndex);
     });
   };
 

@@ -9,6 +9,13 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
+/** Convert ISO string to datetime-local input value (YYYY-MM-DDTHH:MM) */
+function toDatetimeLocalValue(iso: string): string {
+  const date = new Date(iso);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 function logToTableEntries(log: {
   entries: Array<{
     id: string;
@@ -94,6 +101,9 @@ export default function EditLogPage() {
         onSave={handleSave}
         onCancel={() => router.push(`/logs/${logId}`)}
         saveLabel="Update Log"
+        initialNotes={log.notes ?? ''}
+        initialStartedAt={log.started_at ? toDatetimeLocalValue(log.started_at) : ''}
+        initialFinishedAt={log.finished_at ? toDatetimeLocalValue(log.finished_at) : ''}
       />
     </main>
   );

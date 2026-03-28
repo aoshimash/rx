@@ -67,7 +67,7 @@ export function EditableCell({
         onChange(raw === '' ? undefined : Number(raw));
       }}
       onBlur={() => {
-        if (defaultReadOnly && !isEdited && value === undefined) {
+        if (defaultReadOnly && !isEdited) {
           setIsEditing(false);
         }
       }}
