@@ -354,7 +354,7 @@ func (r *logRepository) listWithFilter(ctx context.Context, programID *uuid.UUID
 
 func (r *logRepository) ListLoggedSessionsByProgramID(ctx context.Context, programID uuid.UUID) ([]domain.LoggedSession, error) {
 	query := `
-		SELECT session_name, id
+		SELECT session_name, id, performed_at, started_at, finished_at
 		FROM logs
 		WHERE program_id = $1 AND session_name IS NOT NULL
 		ORDER BY session_name
@@ -370,7 +370,7 @@ func (r *logRepository) ListLoggedSessionsByProgramID(ctx context.Context, progr
 	var sessions []domain.LoggedSession
 	for rows.Next() {
 		var s domain.LoggedSession
-		if err := rows.Scan(&s.SessionName, &s.LogID); err != nil {
+		if err := rows.Scan(&s.SessionName, &s.LogID, &s.PerformedAt, &s.StartedAt, &s.FinishedAt); err != nil {
 			return nil, err
 		}
 		sessions = append(sessions, s)

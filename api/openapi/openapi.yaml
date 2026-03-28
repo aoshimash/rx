@@ -1116,12 +1116,27 @@ components:
       required:
         - session_name
         - log_id
+        - performed_at
       properties:
         session_name:
           type: string
         log_id:
           type: string
           format: uuid
+        performed_at:
+          type: string
+          format: date-time
+          description: Date and time the session was performed
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Start time of the session, used to calculate duration
+        finished_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: End time of the session, used to calculate duration
 
     LoggedSessionsResponse:
       type: object
