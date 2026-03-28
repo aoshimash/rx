@@ -1,10 +1,11 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLog } from '@/lib/hooks/useLogs';
 import type { LogEntry } from '@/types/api';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Pencil } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
@@ -100,6 +101,14 @@ export default function LogDetailPage() {
           </p>
         )}
         {log.notes && <p className="text-muted-foreground mt-2">{log.notes}</p>}
+        <div className="flex items-center gap-2 mt-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/logs/${logId}/edit`}>
+              <Pencil className="h-4 w-4 mr-1" />
+              Edit
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-4">
