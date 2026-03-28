@@ -172,12 +172,12 @@ func (s *logStore) listWithFilter(ctx context.Context, programID *uuid.UUID, per
 	return copies, nextCursor, hasMore, nil
 }
 
-func (s *logStore) ListDistinctLoggedSessionsByProgramID(ctx context.Context, programID uuid.UUID) ([]string, error) {
+func (s *logStore) ListLoggedSessionsByProgramID(ctx context.Context, programID uuid.UUID) ([]domain.LoggedSession, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	seen := make(map[string]struct{})
-	var result []string
+	var result []domain.LoggedSession
 
 	for _, l := range s.logs {
 		if l.ProgramID == nil || *l.ProgramID != programID || l.SessionName == nil {
@@ -185,12 +185,27 @@ func (s *logStore) ListDistinctLoggedSessionsByProgramID(ctx context.Context, pr
 		}
 		if _, exists := seen[*l.SessionName]; !exists {
 			seen[*l.SessionName] = struct{}{}
-			result = append(result, *l.SessionName)
+			result = append(result, domain.LoggedSession{
+				SessionName: *l.SessionName,
+				LogID:       l.ID,
+			})
 		}
 	}
 
 	if result == nil {
-		result = []string{}
+		result = []domain.LoggedSession{}
 	}
 	return result, nil
+}
+
+func (s *logStore) ExistsByProgramIDAndSessionName(ctx context.Context, programID uuid.UUID, sessionName string) (bool, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	for _, l := range s.logs {
+		if l.ProgramID != nil && *l.ProgramID == programID && l.SessionName != nil && *l.SessionName == sessionName {
+			return true, nil
+		}
+	}
+	return false, nil
 }

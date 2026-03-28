@@ -352,32 +352,42 @@ func (r *logRepository) listWithFilter(ctx context.Context, programID *uuid.UUID
 	return logs, nextCursor, hasMore, nil
 }
 
-func (r *logRepository) ListDistinctLoggedSessionsByProgramID(ctx context.Context, programID uuid.UUID) ([]string, error) {
+func (r *logRepository) ListLoggedSessionsByProgramID(ctx context.Context, programID uuid.UUID) ([]domain.LoggedSession, error) {
 	query := `
-		SELECT DISTINCT session_name
+		SELECT session_name, id
 		FROM logs
 		WHERE program_id = $1 AND session_name IS NOT NULL
+		ORDER BY session_name
 	`
 
 	rows, err := r.pool.Query(ctx, query, programID)
 	if err != nil {
-		slog.Error("Failed to list distinct logged sessions", "programID", programID, "error", err)
+		slog.Error("Failed to list logged sessions", "programID", programID, "error", err)
 		return nil, err
 	}
 	defer rows.Close()
 
-	var sessions []string
+	var sessions []domain.LoggedSession
 	for rows.Next() {
-		var name string
-		if err := rows.Scan(&name); err != nil {
+		var s domain.LoggedSession
+		if err := rows.Scan(&s.SessionName, &s.LogID); err != nil {
 			return nil, err
 		}
-		sessions = append(sessions, name)
+		sessions = append(sessions, s)
 	}
 
 	if sessions == nil {
-		sessions = []string{}
+		sessions = []domain.LoggedSession{}
 	}
 
 	return sessions, rows.Err()
+}
+
+func (r *logRepository) ExistsByProgramIDAndSessionName(ctx context.Context, programID uuid.UUID, sessionName string) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM logs WHERE program_id = $1 AND session_name = $2)`
+	var exists bool
+	if err := r.pool.QueryRow(ctx, query, programID, sessionName).Scan(&exists); err != nil {
+		return false, err
+	}
+	return exists, nil
 }

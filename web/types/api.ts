@@ -208,8 +208,13 @@ export interface ProgramSessionEntryCreate {
 // LoggedSessions
 // ============================================================================
 
+export interface LoggedSession {
+  session_name: string;
+  log_id: string;
+}
+
 export interface LoggedSessionsResponse {
-  sessions: string[];
+  sessions: LoggedSession[];
 }
 
 // ============================================================================

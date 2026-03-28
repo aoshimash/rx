@@ -1107,6 +1107,18 @@ components:
         has_more:
           type: boolean
 
+    LoggedSession:
+      type: object
+      required:
+        - session_name
+        - log_id
+      properties:
+        session_name:
+          type: string
+        log_id:
+          type: string
+          format: uuid
+
     LoggedSessionsResponse:
       type: object
       required:
@@ -1115,8 +1127,8 @@ components:
         sessions:
           type: array
           items:
-            type: string
-          description: Distinct session names that have at least one log for this program
+            $ref: '#/components/schemas/LoggedSession'
+          description: Sessions that have a log for this program, each including the log ID for navigation
 
     # ========================================
     # Log
