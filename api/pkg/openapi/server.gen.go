@@ -177,8 +177,16 @@ type LogListResponse struct {
 
 // LoggedSession defines model for LoggedSession.
 type LoggedSession struct {
-	LogId       openapi_types.UUID `json:"log_id"`
-	SessionName string             `json:"session_name"`
+	// FinishedAt End time of the session, used to calculate duration
+	FinishedAt *time.Time         `json:"finished_at"`
+	LogId      openapi_types.UUID `json:"log_id"`
+
+	// PerformedAt Date and time the session was performed
+	PerformedAt time.Time `json:"performed_at"`
+	SessionName string    `json:"session_name"`
+
+	// StartedAt Start time of the session, used to calculate duration
+	StartedAt *time.Time `json:"started_at"`
 }
 
 // LoggedSessionsResponse defines model for LoggedSessionsResponse.

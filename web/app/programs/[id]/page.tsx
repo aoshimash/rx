@@ -17,7 +17,16 @@ import {
   useUpdateProgramStatus,
 } from '@/lib/hooks/usePrograms';
 import type { LoggedSession, Program, ProgramSession, ProgramSessionEntry } from '@/types/api';
-import { ClipboardList, ClipboardPen, Copy, Download, Share2, Trash2 } from 'lucide-react';
+import {
+  CalendarDays,
+  ClipboardList,
+  ClipboardPen,
+  Clock,
+  Copy,
+  Download,
+  Share2,
+  Trash2,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -45,8 +54,20 @@ function programToExportJson(program: Program): string {
   return JSON.stringify(payload, null, 2);
 }
 
-function buildCompletedSessionMap(sessions: LoggedSession[]): Map<string, string> {
-  return new Map(sessions.map((s) => [s.session_name, s.log_id]));
+function buildCompletedSessionMap(sessions: LoggedSession[]): Map<string, LoggedSession> {
+  return new Map(sessions.map((s) => [s.session_name, s]));
+}
+
+function durationMinutes(startedAt: string, finishedAt: string): number {
+  return Math.round((new Date(finishedAt).getTime() - new Date(startedAt).getTime()) / 60000);
+}
+
+function formatDate(isoString: string): string {
+  return new Date(isoString).toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
 type ExerciseGroup = { name: string; entries: ProgramSessionEntry[] };
@@ -76,25 +97,50 @@ function SessionCard({
   programId,
   isCompleted,
   isNext,
-  logId,
+  loggedSession,
 }: {
   session: ProgramSession;
   programId: string;
   isCompleted: boolean;
   isNext: boolean;
-  logId?: string;
+  loggedSession?: LoggedSession;
 }) {
+  const duration =
+    loggedSession?.started_at && loggedSession?.finished_at
+      ? durationMinutes(loggedSession.started_at, loggedSession.finished_at)
+      : null;
+
   return (
     <Card className={sessionCardClassName(isCompleted, isNext)}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <CardTitle className="text-base">{session.session_name}</CardTitle>
-            {session.date && <span className="text-sm text-muted-foreground">{session.date}</span>}
+            {isCompleted && loggedSession ? (
+              <>
+                <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <CalendarDays className="h-3.5 w-3.5" />
+                  {formatDate(loggedSession.performed_at)}
+                </span>
+                {duration !== null && (
+                  <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Clock className="h-3.5 w-3.5" />
+                    {duration}min
+                  </span>
+                )}
+              </>
+            ) : (
+              session.date && (
+                <span className="flex items-center gap-1 text-sm font-medium text-foreground">
+                  <CalendarDays className="h-3.5 w-3.5" />
+                  {session.date}
+                </span>
+              )
+            )}
           </div>
-          {isCompleted && logId ? (
+          {isCompleted && loggedSession ? (
             <Button variant="outline" size="sm" asChild>
-              <Link href={`/logs/${logId}`}>
+              <Link href={`/logs/${loggedSession.log_id}`}>
                 <ClipboardList className="h-4 w-4 mr-1" />
                 View Log
               </Link>
@@ -228,11 +274,11 @@ export default function ProgramDetailPage() {
 
   let foundNextSession = false;
   const sessionsWithStatus = sortedSessions.map((session) => {
-    const logId = completedSessionMap.get(session.session_name);
-    const isCompleted = logId !== undefined;
+    const loggedSession = completedSessionMap.get(session.session_name);
+    const isCompleted = loggedSession !== undefined;
     const isNext = !isCompleted && !foundNextSession;
     if (isNext) foundNextSession = true;
-    return { session, isCompleted, isNext, logId };
+    return { session, isCompleted, isNext, loggedSession };
   });
 
   return (
@@ -302,14 +348,14 @@ export default function ProgramDetailPage() {
         <p className="text-muted-foreground">No sessions in this program.</p>
       ) : (
         <div className="space-y-3">
-          {sessionsWithStatus.map(({ session, isCompleted, isNext, logId }) => (
+          {sessionsWithStatus.map(({ session, isCompleted, isNext, loggedSession }) => (
             <SessionCard
               key={session.id}
               session={session}
               programId={programId}
               isCompleted={isCompleted}
               isNext={isNext}
-              logId={logId}
+              loggedSession={loggedSession}
             />
           ))}
         </div>

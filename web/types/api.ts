@@ -211,6 +211,9 @@ export interface ProgramSessionEntryCreate {
 export interface LoggedSession {
   session_name: string;
   log_id: string;
+  performed_at: string;
+  started_at?: string;
+  finished_at?: string;
 }
 
 export interface LoggedSessionsResponse {

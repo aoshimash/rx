@@ -26,8 +26,11 @@ type LogEntry struct {
 
 // LoggedSession represents a session that has a recorded log, used for navigation.
 type LoggedSession struct {
-	SessionName string    `json:"session_name"`
-	LogID       uuid.UUID `json:"log_id"`
+	SessionName string     `json:"session_name"`
+	LogID       uuid.UUID  `json:"log_id"`
+	PerformedAt time.Time  `json:"performed_at"`
+	StartedAt   *time.Time `json:"started_at,omitempty"`
+	FinishedAt  *time.Time `json:"finished_at,omitempty"`
 }
 
 // Log represents a record of actual training performed.
