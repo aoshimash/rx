@@ -19,7 +19,7 @@ const (
 )
 
 // ValidateProgramStatusTransition checks if a status transition is allowed.
-// Allowed: created→ongoing, ongoing→completed, ongoing→cancelled.
+// Allowed: created→ongoing, ongoing→completed, ongoing→cancelled, cancelled→ongoing.
 func ValidateProgramStatusTransition(from, to ProgramStatus) error {
 	switch {
 	case from == ProgramStatusCreated && to == ProgramStatusOngoing:
@@ -27,6 +27,8 @@ func ValidateProgramStatusTransition(from, to ProgramStatus) error {
 	case from == ProgramStatusOngoing && to == ProgramStatusCompleted:
 		return nil
 	case from == ProgramStatusOngoing && to == ProgramStatusCancelled:
+		return nil
+	case from == ProgramStatusCancelled && to == ProgramStatusOngoing:
 		return nil
 	default:
 		return &ValidationError{
@@ -62,7 +64,7 @@ type ProgramSession struct {
 
 // Program represents a concrete, immutable training program with embedded sessions.
 // Generated from a ProgramTemplate or created manually.
-// Status transitions: created → ongoing → completed/cancelled. All transitions are explicit user actions.
+// Status transitions: created → ongoing → completed/cancelled, cancelled → ongoing. All transitions are explicit user actions.
 type Program struct {
 	ID                uuid.UUID        `json:"id"`
 	ProgramTemplateID *uuid.UUID       `json:"program_template_id,omitempty"`

@@ -562,9 +562,9 @@ func TestValidateProgramStatusTransition(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("cancelled to ongoing is invalid", func(t *testing.T) {
+	t.Run("cancelled to ongoing is valid", func(t *testing.T) {
 		err := ValidateProgramStatusTransition(ProgramStatusCancelled, ProgramStatusOngoing)
-		assert.Error(t, err)
+		assert.NoError(t, err)
 	})
 
 	t.Run("cancelled to created is invalid", func(t *testing.T) {
