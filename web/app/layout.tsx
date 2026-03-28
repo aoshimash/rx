@@ -3,6 +3,7 @@ import { TokenInputModal } from '@/components/auth/TokenInputModal';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { QueryProvider } from '@/components/providers/QueryProvider';
 import type { Metadata } from 'next';
+import { Toaster } from 'sonner';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -25,6 +26,7 @@ export default function RootLayout({
               <main className="flex-1 overflow-auto">{children}</main>
             </div>
             <TokenInputModal />
+            <Toaster />
           </QueryProvider>
         </ErrorBoundary>
       </body>
