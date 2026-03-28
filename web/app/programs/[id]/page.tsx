@@ -143,11 +143,12 @@ function buildSessionData(program: Program, loggedSessions: LoggedSession[], log
     program.sessions.length > 0 &&
     program.sessions.every((s) => completedSessionMap.has(s.session_name));
 
+  const isOngoing = program.status === 'ongoing';
   let foundNextSession = false;
   const sessionsWithStatus = sortedSessions.map((session) => {
     const loggedSession = completedSessionMap.get(session.session_name);
     const isCompleted = loggedSession !== undefined;
-    const isNext = !isCompleted && !foundNextSession;
+    const isNext = isOngoing && !isCompleted && !foundNextSession;
     if (isNext) foundNextSession = true;
     return { session, isCompleted, isNext, loggedSession };
   });
