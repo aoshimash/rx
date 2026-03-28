@@ -416,8 +416,11 @@ export function ProgramForm({
                 className={`border rounded-lg px-4 ${isLocked ? 'opacity-60' : ''}`}
               >
                 <AccordionItem value={`session-${sessionIdx}`} className="border-0">
-                  <AccordionTrigger className="hover:no-underline">
-                    <div className="flex items-center justify-between w-full pr-4">
+                  <div className="flex items-center gap-2 py-4">
+                    <AccordionTrigger className="hover:no-underline p-0 shrink-0 [&>svg]:ml-0">
+                      <span className="sr-only">Toggle {session.name || 'session'}</span>
+                    </AccordionTrigger>
+                    <div className="flex items-center justify-between flex-1 min-w-0">
                       {isLocked ? (
                         <div className="flex items-center gap-2">
                           <Lock className="h-4 w-4 text-muted-foreground" />
@@ -446,7 +449,7 @@ export function ProgramForm({
                         </Button>
                       )}
                     </div>
-                  </AccordionTrigger>
+                  </div>
                   <AccordionContent>
                     <div className="space-y-4 pt-4">
                       <div className="space-y-3">
