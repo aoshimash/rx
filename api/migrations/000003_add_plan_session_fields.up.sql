@@ -1,2 +1,0 @@
-ALTER TABLE plans ADD COLUMN date DATE;
-ALTER TABLE plans ADD COLUMN session_name VARCHAR(200);
