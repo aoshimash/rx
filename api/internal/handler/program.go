@@ -142,6 +142,119 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, program)
 }
 
+// UpdateProgram handles PUT /programs/{id}
+func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	id, err := parseUUIDParam(r, "id", "program")
+	if err != nil {
+		middleware.WriteValidationError(w, err.Error(), nil)
+		return
+	}
+
+	existing, err := h.repo.GetByID(ctx, id)
+	if err != nil {
+		if err == domain.ErrNotFound {
+			middleware.WriteNotFoundError(w, "Program not found")
+			return
+		}
+		middleware.WriteInternalError(w, "Failed to retrieve program")
+		return
+	}
+
+	var req struct {
+		Name     string                  `json:"name"`
+		Notes    *string                 `json:"notes,omitempty"`
+		Metadata json.RawMessage         `json:"metadata,omitempty"`
+		Sessions []programSessionRequest `json:"sessions,omitempty"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		middleware.WriteValidationError(w, "Invalid request body", map[string]interface{}{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Check name uniqueness if name changed
+	if req.Name != existing.Name {
+		nameExists, err := h.repo.ExistsByName(ctx, req.Name)
+		if err != nil {
+			middleware.WriteInternalError(w, "Failed to check program name")
+			return
+		}
+		if nameExists {
+			middleware.WriteConflictError(w, "A program with this name already exists", map[string]interface{}{
+				"field": "name",
+			})
+			return
+		}
+	}
+
+	program := &domain.Program{
+		ID:                existing.ID,
+		ProgramTemplateID: existing.ProgramTemplateID,
+		Name:              req.Name,
+		Status:            existing.Status,
+		Notes:             req.Notes,
+		Metadata:          req.Metadata,
+		Sessions:          make([]domain.ProgramSession, len(req.Sessions)),
+	}
+
+	for i, sessReq := range req.Sessions {
+		sess := domain.ProgramSession{
+			SessionName: sessReq.SessionName,
+			Order:       sessReq.Order,
+			Entries:     make([]domain.ProgramSessionEntry, len(sessReq.Entries)),
+		}
+
+		if sessReq.Date != nil {
+			var d domain.DateOnly
+			if err := json.Unmarshal([]byte(`"`+*sessReq.Date+`"`), &d); err != nil {
+				middleware.WriteValidationError(w, "Invalid date format in session (expected YYYY-MM-DD)", nil)
+				return
+			}
+			sess.Date = &d
+		}
+
+		for j, e := range sessReq.Entries {
+			sess.Entries[j] = domain.ProgramSessionEntry{
+				ExerciseName: e.ExerciseName,
+				Order:        e.Order,
+				Sets:         e.Sets,
+				Reps:         e.Reps,
+				LoadKg:       e.LoadKg,
+				RPE:          e.RPE,
+				Notes:        e.Notes,
+				Metadata:     e.Metadata,
+			}
+		}
+
+		program.Sessions[i] = sess
+	}
+
+	if err := domain.ValidateProgram(program); err != nil {
+		if handleValidationError(w, err) {
+			return
+		}
+		middleware.WriteValidationError(w, "Validation failed", map[string]interface{}{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	if err := h.repo.Update(ctx, program); err != nil {
+		if err == domain.ErrNotFound {
+			middleware.WriteNotFoundError(w, "Program not found")
+			return
+		}
+		middleware.WriteInternalError(w, "Failed to update program")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, program)
+}
+
 // GetProgram handles GET /programs/{id}
 func (h *ProgramHandler) GetProgram(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()

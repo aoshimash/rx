@@ -3,6 +3,7 @@ import type {
   Program,
   ProgramCreate,
   ProgramListResponse,
+  ProgramUpdate,
 } from '@/types/api';
 import { api } from './client';
 
@@ -31,6 +32,10 @@ export const programsApi = {
 
   async create(data: ProgramCreate): Promise<Program> {
     return api.post('programs', { json: data }).json<Program>();
+  },
+
+  async update(id: string, data: ProgramUpdate): Promise<Program> {
+    return api.put(`programs/${id}`, { json: data }).json<Program>();
   },
 
   async delete(id: string): Promise<void> {

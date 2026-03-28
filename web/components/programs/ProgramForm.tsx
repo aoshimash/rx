@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { ProgramTemplateEntryCreate } from '@/types/api';
-import { Plus, Trash2, X } from 'lucide-react';
+import { Lock, Plus, Trash2, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 // ============================================================================
@@ -41,6 +41,7 @@ interface SessionExercise {
 
 interface SessionGroup {
   name: string;
+  date?: string;
   exercises: SessionExercise[];
 }
 
@@ -48,8 +49,30 @@ interface SessionGroup {
 // Conversion helpers
 // ============================================================================
 
+function resolveIntensityType(entry: ProgramTemplateEntryCreate): IntensityType | undefined {
+  if (entry.rpe != null) return 'rpe';
+  if (entry.percent_1rm != null) return 'percent_1rm';
+  if ((entry.metadata?.weight_kg as number | undefined) != null) return 'weight_kg';
+  return undefined;
+}
+
+function entryToExercise(entry: ProgramTemplateEntryCreate): SessionExercise {
+  return {
+    exercise_name: entry.exercise_name,
+    sets: entry.sets,
+    reps: entry.reps,
+    rpe: entry.rpe,
+    percent_1rm_display:
+      entry.percent_1rm !== undefined ? Math.round(entry.percent_1rm * 100) : undefined,
+    weight_kg: entry.metadata?.weight_kg as number | undefined,
+    intensity_type: resolveIntensityType(entry),
+    label: (entry.metadata?.label as string) || undefined,
+  };
+}
+
 function entriesToSessionGroups(entries: ProgramTemplateEntryCreate[]): SessionGroup[] {
   const sessionMap = new Map<string, SessionExercise[]>();
+  const sessionDates = new Map<string, string>();
   const sessionOrder: string[] = [];
 
   for (const entry of entries) {
@@ -57,28 +80,15 @@ function entriesToSessionGroups(entries: ProgramTemplateEntryCreate[]): SessionG
     if (!sessionMap.has(sessionName)) {
       sessionMap.set(sessionName, []);
       sessionOrder.push(sessionName);
+      const date = entry.metadata?.date as string | undefined;
+      if (date) sessionDates.set(sessionName, date);
     }
-    const weightKg = entry.metadata?.weight_kg as number | undefined;
-    let intensityType: IntensityType | undefined;
-    if (entry.rpe != null) intensityType = 'rpe';
-    else if (entry.percent_1rm != null) intensityType = 'percent_1rm';
-    else if (weightKg != null) intensityType = 'weight_kg';
-
-    sessionMap.get(sessionName)?.push({
-      exercise_name: entry.exercise_name,
-      sets: entry.sets,
-      reps: entry.reps,
-      rpe: entry.rpe,
-      percent_1rm_display:
-        entry.percent_1rm !== undefined ? Math.round(entry.percent_1rm * 100) : undefined,
-      weight_kg: weightKg,
-      intensity_type: intensityType,
-      label: (entry.metadata?.label as string) || undefined,
-    });
+    sessionMap.get(sessionName)?.push(entryToExercise(entry));
   }
 
   return sessionOrder.map((name) => ({
     name,
+    date: sessionDates.get(name),
     exercises: sessionMap.get(name) || [],
   }));
 }
@@ -86,11 +96,13 @@ function entriesToSessionGroups(entries: ProgramTemplateEntryCreate[]): SessionG
 function exerciseToEntry(
   ex: SessionExercise,
   sessionName: string,
+  sessionDate: string | undefined,
   order: number
 ): ProgramTemplateEntryCreate {
   const metadata: Record<string, unknown> = { session: sessionName };
+  if (sessionDate) metadata.date = sessionDate;
   if (ex.label) metadata.label = ex.label;
-  if (ex.intensity_type === 'weight_kg' && ex.weight_kg != null) {
+  if (ex.weight_kg != null) {
     metadata.weight_kg = ex.weight_kg;
   }
   return {
@@ -98,11 +110,8 @@ function exerciseToEntry(
     order,
     sets: ex.sets,
     reps: ex.reps,
-    rpe: ex.intensity_type === 'rpe' ? ex.rpe : undefined,
-    percent_1rm:
-      ex.intensity_type === 'percent_1rm' && ex.percent_1rm_display !== undefined
-        ? ex.percent_1rm_display / 100
-        : undefined,
+    rpe: ex.rpe,
+    percent_1rm: ex.percent_1rm_display !== undefined ? ex.percent_1rm_display / 100 : undefined,
     metadata,
   };
 }
@@ -113,7 +122,7 @@ function sessionGroupsToEntries(sessions: SessionGroup[]): ProgramTemplateEntryC
 
   for (const session of sessions) {
     for (const ex of session.exercises) {
-      entries.push(exerciseToEntry(ex, session.name, order));
+      entries.push(exerciseToEntry(ex, session.name, session.date, order));
       order++;
     }
   }
@@ -189,6 +198,7 @@ interface ProgramExerciseRowProps {
   onChange: (updated: SessionExercise) => void;
   onRemove: () => void;
   labelSuggestions: string[];
+  disabled?: boolean;
 }
 
 function ProgramExerciseRow({
@@ -196,20 +206,24 @@ function ProgramExerciseRow({
   onChange,
   onRemove,
   labelSuggestions,
+  disabled,
 }: ProgramExerciseRowProps) {
   return (
     <div className="grid gap-4 border rounded-lg p-4">
       <div className="flex items-center justify-between">
         <Label>Exercise</Label>
-        <Button variant="ghost" size="sm" onClick={onRemove}>
-          <X className="h-4 w-4" />
-        </Button>
+        {!disabled && (
+          <Button variant="ghost" size="sm" onClick={onRemove}>
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       <Input
         value={exercise.exercise_name}
         onChange={(e) => onChange({ ...exercise, exercise_name: e.target.value })}
         placeholder="e.g., Squat, Bench Press"
+        disabled={disabled}
       />
 
       <div className="grid grid-cols-4 gap-3">
@@ -237,6 +251,7 @@ function ProgramExerciseRow({
                   weight_kg: type === 'weight_kg' ? exercise.weight_kg : undefined,
                 });
               }}
+              disabled={disabled}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="-" />
@@ -260,6 +275,7 @@ function ProgramExerciseRow({
                 min={1}
                 max={10}
                 placeholder="7"
+                disabled={disabled}
               />
             )}
             {exercise.intensity_type === 'percent_1rm' && (
@@ -275,6 +291,7 @@ function ProgramExerciseRow({
                 min={0}
                 max={100}
                 placeholder="75"
+                disabled={disabled}
               />
             )}
             {exercise.intensity_type === 'weight_kg' && (
@@ -290,6 +307,7 @@ function ProgramExerciseRow({
                 min={0}
                 step="0.5"
                 placeholder="100"
+                disabled={disabled}
               />
             )}
           </div>
@@ -307,6 +325,7 @@ function ProgramExerciseRow({
             }
             min={1}
             placeholder="10"
+            disabled={disabled}
           />
         </div>
         <div className="space-y-2">
@@ -322,6 +341,7 @@ function ProgramExerciseRow({
             }
             min={1}
             placeholder="3"
+            disabled={disabled}
           />
         </div>
       </div>
@@ -345,6 +365,7 @@ interface ProgramFormProps {
   onDelete?: () => void;
   isSaving?: boolean;
   isEditing?: boolean;
+  lockedSessionNames?: Set<string>;
 }
 
 export function ProgramForm({
@@ -359,6 +380,7 @@ export function ProgramForm({
   onDelete,
   isSaving,
   isEditing,
+  lockedSessionNames,
 }: ProgramFormProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sessions, setSessions] = useState<SessionGroup[]>(() =>
@@ -463,57 +485,76 @@ export function ProgramForm({
       <div className="space-y-4">
         <p className="text-sm font-semibold">Sessions</p>
         <Accordion type="multiple" className="w-full space-y-3">
-          {sessions.map((session, sessionIdx) => (
-            <div key={sessionIdx} className="border rounded-lg px-4">
-              <AccordionItem value={`session-${sessionIdx}`} className="border-0">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center justify-between w-full pr-4">
-                    <Input
-                      value={session.name}
-                      onChange={(e) => handleSessionNameChange(sessionIdx, e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                      placeholder="e.g., Block1 Week2 Day3, Week1 Day2"
-                      className="font-semibold border-none shadow-none p-0 h-auto focus-visible:ring-0 bg-transparent"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveSession(sessionIdx);
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-4 pt-4">
-                    <div className="space-y-3">
-                      {session.exercises.map((exercise, exIdx) => (
-                        <ProgramExerciseRow
-                          key={exIdx}
-                          exercise={exercise}
-                          onChange={(updated) => handleExerciseChange(sessionIdx, exIdx, updated)}
-                          onRemove={() => handleRemoveExercise(sessionIdx, exIdx)}
-                          labelSuggestions={labelSuggestions}
+          {sessions.map((session, sessionIdx) => {
+            const isLocked = lockedSessionNames?.has(session.name) ?? false;
+            return (
+              <div
+                key={sessionIdx}
+                className={`border rounded-lg px-4 ${isLocked ? 'opacity-60' : ''}`}
+              >
+                <AccordionItem value={`session-${sessionIdx}`} className="border-0">
+                  <AccordionTrigger className="hover:no-underline">
+                    <div className="flex items-center justify-between w-full pr-4">
+                      {isLocked ? (
+                        <div className="flex items-center gap-2">
+                          <Lock className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-semibold">{session.name}</span>
+                          <span className="text-xs text-muted-foreground">(completed)</span>
+                        </div>
+                      ) : (
+                        <Input
+                          value={session.name}
+                          onChange={(e) => handleSessionNameChange(sessionIdx, e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          placeholder="e.g., Block1 Week2 Day3, Week1 Day2"
+                          className="font-semibold border-none shadow-none p-0 h-auto focus-visible:ring-0 bg-transparent"
                         />
-                      ))}
+                      )}
+                      {!isLocked && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveSession(sessionIdx);
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-4 pt-4">
+                      <div className="space-y-3">
+                        {session.exercises.map((exercise, exIdx) => (
+                          <ProgramExerciseRow
+                            key={exIdx}
+                            exercise={exercise}
+                            onChange={(updated) => handleExerciseChange(sessionIdx, exIdx, updated)}
+                            onRemove={() => handleRemoveExercise(sessionIdx, exIdx)}
+                            labelSuggestions={labelSuggestions}
+                            disabled={isLocked}
+                          />
+                        ))}
+                      </div>
 
-                    <Button
-                      variant="outline"
-                      onClick={() => handleAddExercise(sessionIdx)}
-                      className="w-full"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Exercise
-                    </Button>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </div>
-          ))}
+                      {!isLocked && (
+                        <Button
+                          variant="outline"
+                          onClick={() => handleAddExercise(sessionIdx)}
+                          className="w-full"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Exercise
+                        </Button>
+                      )}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </div>
+            );
+          })}
         </Accordion>
 
         <Button variant="outline" onClick={handleAddSession} className="w-full">

@@ -378,6 +378,14 @@ type ProgramTemplateListResponse struct {
 	NextCursor *string           `json:"next_cursor"`
 }
 
+// ProgramUpdate defines model for ProgramUpdate.
+type ProgramUpdate struct {
+	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	Name     string                  `json:"name"`
+	Notes    *string                 `json:"notes,omitempty"`
+	Sessions []ProgramSessionCreate  `json:"sessions"`
+}
+
 // VideoDownloadURLRequest defines model for VideoDownloadURLRequest.
 type VideoDownloadURLRequest struct {
 	// ObjectKey Object key from LogEntry.video_object_key
@@ -521,6 +529,9 @@ type GenerateProgramJSONRequestBody = GenerateProgramRequest
 // CreateProgramJSONRequestBody defines body for CreateProgram for application/json ContentType.
 type CreateProgramJSONRequestBody = ProgramCreate
 
+// UpdateProgramJSONRequestBody defines body for UpdateProgram for application/json ContentType.
+type UpdateProgramJSONRequestBody = ProgramUpdate
+
 // UpdateProgramStatusJSONRequestBody defines body for UpdateProgramStatus for application/json ContentType.
 type UpdateProgramStatusJSONRequestBody UpdateProgramStatusJSONBody
 
@@ -586,6 +597,9 @@ type ServerInterface interface {
 	// Get program by ID
 	// (GET /programs/{id})
 	GetProgram(w http.ResponseWriter, r *http.Request, id ProgramId)
+	// Update program content
+	// (PUT /programs/{id})
+	UpdateProgram(w http.ResponseWriter, r *http.Request, id ProgramId)
 	// List distinct logged session names for a program
 	// (GET /programs/{id}/logged-sessions)
 	ListLoggedSessions(w http.ResponseWriter, r *http.Request, id ProgramId)
@@ -709,6 +723,12 @@ func (_ Unimplemented) DeleteProgram(w http.ResponseWriter, r *http.Request, id 
 // Get program by ID
 // (GET /programs/{id})
 func (_ Unimplemented) GetProgram(w http.ResponseWriter, r *http.Request, id ProgramId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update program content
+// (PUT /programs/{id})
+func (_ Unimplemented) UpdateProgram(w http.ResponseWriter, r *http.Request, id ProgramId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1348,6 +1368,37 @@ func (siw *ServerInterfaceWrapper) GetProgram(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
+// UpdateProgram operation middleware
+func (siw *ServerInterfaceWrapper) UpdateProgram(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id ProgramId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateProgram(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListLoggedSessions operation middleware
 func (siw *ServerInterfaceWrapper) ListLoggedSessions(w http.ResponseWriter, r *http.Request) {
 
@@ -1616,6 +1667,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/programs/{id}", wrapper.GetProgram)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/programs/{id}", wrapper.UpdateProgram)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/programs/{id}/logged-sessions", wrapper.ListLoggedSessions)

@@ -33,6 +33,7 @@ import {
   Clock,
   Copy,
   Download,
+  Pencil,
   Share2,
   Trash2,
 } from 'lucide-react';
@@ -465,6 +466,14 @@ export default function ProgramDetailPage() {
               disabled={updateStatus.isPending}
             >
               {updateStatus.isPending ? 'Resuming...' : 'Resume Program'}
+            </Button>
+          )}
+          {program.status !== 'completed' && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/programs/${programId}/edit`}>
+                <Pencil className="h-4 w-4 mr-2" />
+                Edit
+              </Link>
             </Button>
           )}
           <DropdownMenu>

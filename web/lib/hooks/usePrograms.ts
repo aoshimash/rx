@@ -1,5 +1,5 @@
 import { programsApi } from '@/lib/api/programs';
-import type { ProgramCreate } from '@/types/api';
+import type { ProgramCreate, ProgramUpdate } from '@/types/api';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { HTTPError } from 'ky';
 import { toast } from 'sonner';
@@ -31,6 +31,17 @@ export function useCreateProgram() {
 
   return useMutation({
     mutationFn: (data: ProgramCreate) => programsApi.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['programs'] });
+    },
+  });
+}
+
+export function useUpdateProgram() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: ProgramUpdate }) => programsApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['programs'] });
     },
