@@ -10,13 +10,22 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useLogs } from '@/lib/hooks/useLogs';
 import {
   useDeleteProgram,
   useLoggedSessions,
   useProgram,
   useUpdateProgramStatus,
 } from '@/lib/hooks/usePrograms';
-import type { LoggedSession, Program, ProgramSession, ProgramSessionEntry } from '@/types/api';
+import { calculateDiff, getStatusIcon, getStatusVariant } from '@/lib/utils/diff';
+import type {
+  Log,
+  LogEntry,
+  LoggedSession,
+  Program,
+  ProgramSession,
+  ProgramSessionEntry,
+} from '@/types/api';
 import { ClipboardList, ClipboardPen, Copy, Download, Share2, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -65,10 +74,180 @@ function groupByExercise(entries: ProgramSessionEntry[]): ExerciseGroup[] {
   return groups;
 }
 
-function sessionCardClassName(isCompleted: boolean, isNext: boolean): string | undefined {
-  if (isCompleted) return 'opacity-50';
+interface DiffRow {
+  exerciseName: string;
+  plan?: ProgramSessionEntry;
+  actual?: LogEntry;
+}
+
+function buildDiffRows(planEntries: ProgramSessionEntry[], logEntries: LogEntry[]): DiffRow[] {
+  const rows: DiffRow[] = [];
+  const logByName = new Map<string, LogEntry[]>();
+  for (const entry of logEntries) {
+    const list = logByName.get(entry.exercise_name) ?? [];
+    list.push(entry);
+    logByName.set(entry.exercise_name, list);
+  }
+
+  // Match plan entries with log entries by exercise_name
+  for (const plan of [...planEntries].sort((a, b) => a.order - b.order)) {
+    const actuals = logByName.get(plan.exercise_name);
+    const actual = actuals?.shift();
+    rows.push({ exerciseName: plan.exercise_name, plan, actual });
+  }
+
+  // Unplanned entries: in log but exercise_name not in plan at all
+  const plannedNames = new Set(planEntries.map((e) => e.exercise_name));
+  for (const entry of logEntries) {
+    if (!plannedNames.has(entry.exercise_name)) {
+      rows.push({ exerciseName: entry.exercise_name, actual: entry });
+    }
+  }
+
+  return rows;
+}
+
+function buildSessionData(program: Program, loggedSessions: LoggedSession[], logs: Log[]) {
+  const sortedSessions = program.sessions.slice().sort((a, b) => a.order - b.order);
+  const completedSessionMap = buildCompletedSessionMap(loggedSessions);
+
+  const logEntriesBySession = new Map<string, LogEntry[]>();
+  for (const log of logs) {
+    if (log.session_name) {
+      logEntriesBySession.set(log.session_name, log.entries);
+    }
+  }
+
+  const allSessionsLogged =
+    program.sessions.length > 0 &&
+    program.sessions.every((s) => completedSessionMap.has(s.session_name));
+
+  let foundNextSession = false;
+  const sessionsWithStatus = sortedSessions.map((session) => {
+    const logId = completedSessionMap.get(session.session_name);
+    const isCompleted = logId !== undefined;
+    const isNext = !isCompleted && !foundNextSession;
+    if (isNext) foundNextSession = true;
+    return { session, isCompleted, isNext, logId };
+  });
+
+  return { sessionsWithStatus, logEntriesBySession, allSessionsLogged };
+}
+
+function sessionCardClassName(isNext: boolean): string | undefined {
   if (isNext) return 'border-2 border-primary';
   return undefined;
+}
+
+function PlanOnlyContent({ entries }: { entries: ProgramSessionEntry[] }) {
+  return (
+    <div className="divide-y">
+      {groupByExercise(entries).map((group) => (
+        <div key={group.name} className="py-2 first:pt-0 last:pb-0">
+          <p className="font-medium text-sm mb-1">{group.name}</p>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-xs text-muted-foreground">
+                {group.entries.some((e) => e.metadata?.label) && (
+                  <th className="text-left font-normal pb-1 w-16" />
+                )}
+                <th className="text-right font-normal pb-1 pr-4">RPE</th>
+                {group.entries.some((e) => e.load_kg != null) && (
+                  <th className="text-right font-normal pb-1 pr-4">Load</th>
+                )}
+                <th className="text-right font-normal pb-1 pr-4">Reps</th>
+                <th className="text-right font-normal pb-1 pr-4">Sets</th>
+              </tr>
+            </thead>
+            <tbody>
+              {group.entries.map((entry) => {
+                const label = entry.metadata?.label as string | undefined;
+                const hasLabel = group.entries.some((e) => e.metadata?.label);
+                const hasLoad = group.entries.some((e) => e.load_kg != null);
+                return (
+                  <tr key={entry.id} className="text-muted-foreground">
+                    {hasLabel && <td className="text-xs pr-3 py-0.5">{label ?? ''}</td>}
+                    <td className="text-right tabular-nums pr-4 py-0.5">{entry.rpe ?? '—'}</td>
+                    {hasLoad && (
+                      <td className="text-right tabular-nums pr-4 py-0.5">
+                        {entry.load_kg != null ? `${entry.load_kg}kg` : '—'}
+                      </td>
+                    )}
+                    <td className="text-right tabular-nums pr-4 py-0.5">{entry.reps ?? '—'}</td>
+                    <td className="text-right tabular-nums pr-4 py-0.5">{entry.sets ?? '—'}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DiffContent({
+  planEntries,
+  logEntries,
+}: {
+  planEntries: ProgramSessionEntry[];
+  logEntries: LogEntry[];
+}) {
+  const diffRows = buildDiffRows(planEntries, logEntries);
+
+  return (
+    <div className="space-y-1">
+      {diffRows.map((row, i) => {
+        const diff = calculateDiff(row.plan, row.actual);
+        const key = `${row.exerciseName}-${i}`;
+
+        if (diff.status === 'match') {
+          return (
+            <div key={key} className="flex items-center gap-2 py-0.5 text-sm text-muted-foreground">
+              <span className="w-4 text-center text-green-600">{getStatusIcon(diff.status)}</span>
+              <span>{row.exerciseName}</span>
+            </div>
+          );
+        }
+
+        if (diff.status === 'pending') {
+          return (
+            <div key={key} className="flex items-center gap-2 py-0.5 text-sm">
+              <span className="w-4 text-center text-muted-foreground">
+                {getStatusIcon(diff.status)}
+              </span>
+              <span className="line-through text-muted-foreground">{row.exerciseName}</span>
+            </div>
+          );
+        }
+
+        if (diff.status === 'unplanned') {
+          return (
+            <div key={key} className="flex items-center gap-2 py-0.5 text-sm">
+              <span className="w-4 text-center">{getStatusIcon(diff.status)}</span>
+              <span>{row.exerciseName}</span>
+              <Badge variant={getStatusVariant(diff.status)} className="text-xs">
+                Unplanned
+              </Badge>
+            </div>
+          );
+        }
+
+        // diff status
+        return (
+          <div key={key} className="flex items-center gap-2 py-0.5 text-sm">
+            <span className="w-4 text-center text-orange-600">{getStatusIcon(diff.status)}</span>
+            <span>{row.exerciseName}</span>
+            {diff.differences.map((d) => (
+              <Badge key={d} variant={getStatusVariant(diff.status)} className="text-xs">
+                {d}
+              </Badge>
+            ))}
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 function SessionCard({
@@ -77,15 +256,19 @@ function SessionCard({
   isCompleted,
   isNext,
   logId,
+  logEntries,
 }: {
   session: ProgramSession;
   programId: string;
   isCompleted: boolean;
   isNext: boolean;
   logId?: string;
+  logEntries?: LogEntry[];
 }) {
+  const showDiff = isCompleted && logEntries && logEntries.length > 0;
+
   return (
-    <Card className={sessionCardClassName(isCompleted, isNext)}>
+    <Card className={sessionCardClassName(isNext)}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -114,57 +297,12 @@ function SessionCard({
         </div>
       </CardHeader>
       <CardContent>
-        {session.entries.length === 0 ? (
+        {session.entries.length === 0 && !showDiff ? (
           <p className="text-sm text-muted-foreground">No exercises</p>
+        ) : showDiff ? (
+          <DiffContent planEntries={session.entries} logEntries={logEntries} />
         ) : (
-          <div className="divide-y">
-            {groupByExercise(session.entries).map((group) => (
-              <div key={group.name} className="py-2 first:pt-0 last:pb-0">
-                <p className="font-medium text-sm mb-1">{group.name}</p>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-xs text-muted-foreground">
-                      {group.entries.some((e) => e.metadata?.label) && (
-                        <th className="text-left font-normal pb-1 w-16" />
-                      )}
-                      <th className="text-right font-normal pb-1 pr-4">RPE</th>
-                      {group.entries.some((e) => e.load_kg != null) && (
-                        <th className="text-right font-normal pb-1 pr-4">Load</th>
-                      )}
-                      <th className="text-right font-normal pb-1 pr-4">Reps</th>
-                      <th className="text-right font-normal pb-1 pr-4">Sets</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {group.entries.map((entry) => {
-                      const label = entry.metadata?.label as string | undefined;
-                      const hasLabel = group.entries.some((e) => e.metadata?.label);
-                      const hasLoad = group.entries.some((e) => e.load_kg != null);
-                      return (
-                        <tr key={entry.id} className="text-muted-foreground">
-                          {hasLabel && <td className="text-xs pr-3 py-0.5">{label ?? ''}</td>}
-                          <td className="text-right tabular-nums pr-4 py-0.5">
-                            {entry.rpe ?? '—'}
-                          </td>
-                          {hasLoad && (
-                            <td className="text-right tabular-nums pr-4 py-0.5">
-                              {entry.load_kg != null ? `${entry.load_kg}kg` : '—'}
-                            </td>
-                          )}
-                          <td className="text-right tabular-nums pr-4 py-0.5">
-                            {entry.reps ?? '—'}
-                          </td>
-                          <td className="text-right tabular-nums pr-4 py-0.5">
-                            {entry.sets ?? '—'}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            ))}
-          </div>
+          <PlanOnlyContent entries={session.entries} />
         )}
       </CardContent>
     </Card>
@@ -177,6 +315,7 @@ export default function ProgramDetailPage() {
   const programId = params.id as string;
   const { data: program, isLoading } = useProgram(programId);
   const { data: loggedSessions } = useLoggedSessions(programId);
+  const { data: logsData } = useLogs({ program_id: programId });
   const deleteProgram = useDeleteProgram();
   const updateStatus = useUpdateProgramStatus();
   const [copied, setCopied] = useState(false);
@@ -220,20 +359,11 @@ export default function ProgramDetailPage() {
     URL.revokeObjectURL(url);
   };
 
-  const sortedSessions = program.sessions.slice().sort((a, b) => a.order - b.order);
-  const completedSessionMap = buildCompletedSessionMap(loggedSessions?.sessions ?? []);
-  const allSessionsLogged =
-    program.sessions.length > 0 &&
-    program.sessions.every((s) => completedSessionMap.has(s.session_name));
-
-  let foundNextSession = false;
-  const sessionsWithStatus = sortedSessions.map((session) => {
-    const logId = completedSessionMap.get(session.session_name);
-    const isCompleted = logId !== undefined;
-    const isNext = !isCompleted && !foundNextSession;
-    if (isNext) foundNextSession = true;
-    return { session, isCompleted, isNext, logId };
-  });
+  const { sessionsWithStatus, logEntriesBySession, allSessionsLogged } = buildSessionData(
+    program,
+    loggedSessions?.sessions ?? [],
+    logsData?.data ?? []
+  );
 
   return (
     <main className="container mx-auto p-6">
@@ -310,6 +440,7 @@ export default function ProgramDetailPage() {
               isCompleted={isCompleted}
               isNext={isNext}
               logId={logId}
+              logEntries={logEntriesBySession.get(session.session_name)}
             />
           ))}
         </div>
