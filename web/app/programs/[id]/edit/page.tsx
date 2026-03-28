@@ -20,13 +20,13 @@ function programToEntries(program: Program): ProgramFormEntry[] {
       const metadata: Record<string, unknown> = { session: session.session_name };
       if (session.date) metadata.date = session.date;
       if (entry.metadata?.label) metadata.label = entry.metadata.label;
-      if (entry.load_kg != null) metadata.weight_kg = entry.load_kg;
 
       entries.push({
         exercise_name: entry.exercise_name,
         order,
         sets: entry.sets,
         reps: entry.reps,
+        load_kg: entry.load_kg ?? undefined,
         notes: entry.notes,
         metadata,
       });
@@ -46,22 +46,14 @@ function convertEntryToProgramEntry(
     order,
     sets: entry.sets,
     reps: entry.reps,
+    load_kg: entry.load_kg,
   };
 
-  const weightKg = entry.metadata?.weight_kg as number | undefined;
-  if (weightKg != null) {
-    programEntry.load_kg = weightKg;
-  }
-
   if (entry.metadata) {
-    const { session: _s, date: _d, weight_kg: _w, label, ...rest } = entry.metadata;
+    const { session: _s, date: _d, label, ...rest } = entry.metadata;
     if (label || Object.keys(rest).length > 0) {
       programEntry.metadata = { ...(label ? { label } : {}), ...rest };
     }
-  }
-
-  if (entry.percent_1rm != null) {
-    programEntry.metadata = { ...(programEntry.metadata ?? {}), percent_1rm: entry.percent_1rm };
   }
 
   return programEntry;
