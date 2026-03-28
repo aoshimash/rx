@@ -11,7 +11,6 @@ interface ProgramListParams {
   limit?: number;
   after?: string;
   status?: string;
-  program_template_id?: string;
 }
 
 export const programsApi = {
@@ -20,8 +19,6 @@ export const programsApi = {
     if (params?.limit) searchParams.set('limit', params.limit.toString());
     if (params?.after) searchParams.set('after', params.after);
     if (params?.status) searchParams.set('status', params.status);
-    if (params?.program_template_id)
-      searchParams.set('program_template_id', params.program_template_id);
 
     return api.get(`programs?${searchParams}`).json<ProgramListResponse>();
   },

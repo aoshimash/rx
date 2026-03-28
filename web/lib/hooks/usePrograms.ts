@@ -11,13 +11,6 @@ export function usePrograms(status?: string) {
   });
 }
 
-export function useProgramsByTemplateId(programTemplateId: string) {
-  return useQuery({
-    queryKey: ['programs', { program_template_id: programTemplateId }],
-    queryFn: () => programsApi.list({ limit: 100, program_template_id: programTemplateId }),
-  });
-}
-
 export function useProgram(id: string | null) {
   return useQuery({
     queryKey: ['programs', id],

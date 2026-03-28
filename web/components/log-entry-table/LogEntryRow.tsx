@@ -94,17 +94,6 @@ export function LogEntryRow({ entry, onUpdate, onRemove }: LogEntryRowProps) {
         />
       </TableCell>
 
-      <TableCell className="w-20">
-        <EditableCell
-          value={entry.rpe}
-          onChange={(v) => onUpdate(entry.id, 'rpe', v)}
-          placeholder={entry.plan?.rpe?.toString()}
-          min={1}
-          max={10}
-          step={0.5}
-        />
-      </TableCell>
-
       <TableCell className="min-w-[120px]">
         <Input
           value={entry.notes}

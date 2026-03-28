@@ -1,19 +1,18 @@
 'use client';
 
-import { ProgramForm } from '@/components/programs/ProgramForm';
+import { ProgramForm, type ProgramFormEntry } from '@/components/programs/ProgramForm';
 import { useLoggedSessions, useProgram, useUpdateProgram } from '@/lib/hooks/usePrograms';
 import type {
   Program,
   ProgramSessionCreate,
   ProgramSessionEntryCreate,
-  ProgramTemplateEntryCreate,
   ProgramUpdate,
 } from '@/types/api';
 import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
-function programToEntries(program: Program): ProgramTemplateEntryCreate[] {
-  const entries: ProgramTemplateEntryCreate[] = [];
+function programToEntries(program: Program): ProgramFormEntry[] {
+  const entries: ProgramFormEntry[] = [];
   let order = 0;
 
   for (const session of program.sessions) {
@@ -28,7 +27,6 @@ function programToEntries(program: Program): ProgramTemplateEntryCreate[] {
         order,
         sets: entry.sets,
         reps: entry.reps,
-        rpe: entry.rpe,
         notes: entry.notes,
         metadata,
       });
@@ -40,7 +38,7 @@ function programToEntries(program: Program): ProgramTemplateEntryCreate[] {
 }
 
 function convertEntryToProgramEntry(
-  entry: ProgramTemplateEntryCreate,
+  entry: ProgramFormEntry,
   order: number
 ): ProgramSessionEntryCreate {
   const programEntry: ProgramSessionEntryCreate = {
@@ -48,7 +46,6 @@ function convertEntryToProgramEntry(
     order,
     sets: entry.sets,
     reps: entry.reps,
-    rpe: entry.rpe,
   };
 
   const weightKg = entry.metadata?.weight_kg as number | undefined;
@@ -73,7 +70,7 @@ function convertEntryToProgramEntry(
 function entriesToProgramUpdate(
   name: string,
   notes: string,
-  entries: ProgramTemplateEntryCreate[]
+  entries: ProgramFormEntry[]
 ): ProgramUpdate {
   const sessionMap = new Map<string, { date?: string; entries: ProgramSessionEntryCreate[] }>();
   const sessionOrder: string[] = [];
@@ -150,7 +147,7 @@ export default function EditProgramPage() {
     );
   }
 
-  const handleSave = (entries: ProgramTemplateEntryCreate[]) => {
+  const handleSave = (entries: ProgramFormEntry[]) => {
     const programName = name ?? program.name;
     const programNotes = notes ?? program.notes ?? '';
     const data = entriesToProgramUpdate(programName, programNotes, entries);

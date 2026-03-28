@@ -43,17 +43,7 @@ export function exportLogsToCSV(
   logs: Log[],
   _options: { scope: 'all' | 'current-week' } = { scope: 'all' }
 ): void {
-  const headers = [
-    'Date',
-    'Time',
-    'Session',
-    'Exercise',
-    'Sets',
-    'Reps',
-    'Load (kg)',
-    'RPE',
-    'Notes',
-  ];
+  const headers = ['Date', 'Time', 'Session', 'Exercise', 'Sets', 'Reps', 'Load (kg)', 'Notes'];
 
   const rows: string[][] = [headers];
 
@@ -72,7 +62,6 @@ export function exportLogsToCSV(
         String(entry.sets ?? ''),
         String(entry.reps ?? ''),
         String(entry.load_kg ?? ''),
-        String(entry.rpe ?? ''),
         entry.notes || '',
       ]);
     }

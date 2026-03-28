@@ -7,7 +7,6 @@ import (
 	"github.com/aoshimash/rx/api/internal/domain"
 	"github.com/aoshimash/rx/api/internal/middleware"
 	"github.com/aoshimash/rx/api/internal/repository"
-	"github.com/google/uuid"
 )
 
 // programSessionEntryRequest represents a program session entry in the request body
@@ -17,7 +16,6 @@ type programSessionEntryRequest struct {
 	Sets         *int            `json:"sets,omitempty"`
 	Reps         *int            `json:"reps,omitempty"`
 	LoadKg       *float64        `json:"load_kg,omitempty"`
-	RPE          *int            `json:"rpe,omitempty"`
 	Notes        *string         `json:"notes,omitempty"`
 	Metadata     json.RawMessage `json:"metadata,omitempty"`
 }
@@ -49,11 +47,10 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req struct {
-		ProgramTemplateID *string                 `json:"program_template_id,omitempty"`
-		Name              string                  `json:"name"`
-		Notes             *string                 `json:"notes,omitempty"`
-		Metadata          json.RawMessage         `json:"metadata,omitempty"`
-		Sessions          []programSessionRequest `json:"sessions,omitempty"`
+		Name     string                  `json:"name"`
+		Notes    *string                 `json:"notes,omitempty"`
+		Metadata json.RawMessage         `json:"metadata,omitempty"`
+		Sessions []programSessionRequest `json:"sessions,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -83,15 +80,6 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 		Sessions: make([]domain.ProgramSession, len(req.Sessions)),
 	}
 
-	if req.ProgramTemplateID != nil {
-		tid, err := uuid.Parse(*req.ProgramTemplateID)
-		if err != nil {
-			middleware.WriteValidationError(w, "Invalid program_template_id format", nil)
-			return
-		}
-		program.ProgramTemplateID = &tid
-	}
-
 	for i, sessReq := range req.Sessions {
 		sess := domain.ProgramSession{
 			SessionName: sessReq.SessionName,
@@ -115,9 +103,9 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 				Sets:         e.Sets,
 				Reps:         e.Reps,
 				LoadKg:       e.LoadKg,
-				RPE:          e.RPE,
-				Notes:        e.Notes,
-				Metadata:     e.Metadata,
+
+				Notes:    e.Notes,
+				Metadata: e.Metadata,
 			}
 		}
 
@@ -192,13 +180,12 @@ func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	program := &domain.Program{
-		ID:                existing.ID,
-		ProgramTemplateID: existing.ProgramTemplateID,
-		Name:              req.Name,
-		Status:            existing.Status,
-		Notes:             req.Notes,
-		Metadata:          req.Metadata,
-		Sessions:          make([]domain.ProgramSession, len(req.Sessions)),
+		ID:       existing.ID,
+		Name:     req.Name,
+		Status:   existing.Status,
+		Notes:    req.Notes,
+		Metadata: req.Metadata,
+		Sessions: make([]domain.ProgramSession, len(req.Sessions)),
 	}
 
 	for i, sessReq := range req.Sessions {
@@ -224,9 +211,9 @@ func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
 				Sets:         e.Sets,
 				Reps:         e.Reps,
 				LoadKg:       e.LoadKg,
-				RPE:          e.RPE,
-				Notes:        e.Notes,
-				Metadata:     e.Metadata,
+
+				Notes:    e.Notes,
+				Metadata: e.Metadata,
 			}
 		}
 
@@ -321,19 +308,9 @@ func (h *ProgramHandler) ListPrograms(w http.ResponseWriter, r *http.Request) {
 	}
 	after := r.URL.Query().Get("after")
 
-	var programTemplateID *uuid.UUID
-	if tmplIDStr := r.URL.Query().Get("program_template_id"); tmplIDStr != "" {
-		tid, err := uuid.Parse(tmplIDStr)
-		if err != nil {
-			middleware.WriteValidationError(w, "Invalid program_template_id format", nil)
-			return
-		}
-		programTemplateID = &tid
-	}
-
 	status := r.URL.Query().Get("status")
 
-	programs, nextCursor, hasMore, err := h.repo.List(ctx, limit, after, programTemplateID, status)
+	programs, nextCursor, hasMore, err := h.repo.List(ctx, limit, after, status)
 	if err != nil {
 		middleware.WriteInternalError(w, "Failed to list programs")
 		return

@@ -102,7 +102,6 @@ export function LogEntryTable({
         sets: entry.sets,
         reps: entry.reps,
         load_kg: entry.load_kg,
-        rpe: entry.rpe,
         notes: entry.notes || undefined,
       }));
 
@@ -154,7 +153,6 @@ export function LogEntryTable({
               <TableHead className="w-20 text-right">Sets</TableHead>
               <TableHead className="w-20 text-right">Reps</TableHead>
               <TableHead className="w-24 text-right">Load (kg)</TableHead>
-              <TableHead className="w-20 text-right">RPE</TableHead>
               <TableHead>Notes</TableHead>
               <TableHead className="w-10" />
             </TableRow>

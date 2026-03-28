@@ -1,18 +1,14 @@
 'use client';
 
-import { ProgramForm } from '@/components/programs/ProgramForm';
+import { ProgramForm, type ProgramFormEntry } from '@/components/programs/ProgramForm';
 import { useCreateProgram } from '@/lib/hooks/usePrograms';
-import type {
-  ProgramSessionCreate,
-  ProgramSessionEntryCreate,
-  ProgramTemplateEntryCreate,
-} from '@/types/api';
+import type { ProgramSessionCreate, ProgramSessionEntryCreate } from '@/types/api';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 function convertEntryToProgramEntry(
-  entry: ProgramTemplateEntryCreate,
+  entry: ProgramFormEntry,
   order: number
 ): ProgramSessionEntryCreate {
   const programEntry: ProgramSessionEntryCreate = {
@@ -20,7 +16,6 @@ function convertEntryToProgramEntry(
     order,
     sets: entry.sets,
     reps: entry.reps,
-    rpe: entry.rpe,
   };
 
   const weightKg = entry.metadata?.weight_kg as number | undefined;
@@ -42,7 +37,7 @@ function convertEntryToProgramEntry(
   return programEntry;
 }
 
-function entriesToSessions(entries: ProgramTemplateEntryCreate[]): ProgramSessionCreate[] {
+function entriesToSessions(entries: ProgramFormEntry[]): ProgramSessionCreate[] {
   const sessionMap = new Map<string, { date?: string; entries: ProgramSessionEntryCreate[] }>();
   const sessionOrder: string[] = [];
 
@@ -80,7 +75,7 @@ export default function NewProgramPage() {
   const [name, setName] = useState('');
   const [notes, setNotes] = useState('');
 
-  const handleSave = (entries: ProgramTemplateEntryCreate[]) => {
+  const handleSave = (entries: ProgramFormEntry[]) => {
     const sessions = entriesToSessions(entries);
     createProgram.mutate(
       { name, notes: notes || undefined, sessions },

@@ -36,14 +36,13 @@ func (r *programRepository) Create(ctx context.Context, program *domain.Program)
 	}
 
 	query := `
-		INSERT INTO programs (id, program_template_id, name, status, notes, metadata, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+		INSERT INTO programs (id, name, status, notes, metadata, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
 		RETURNING created_at, updated_at
 	`
 
 	err = tx.QueryRow(ctx, query,
 		id,
-		program.ProgramTemplateID,
 		program.Name,
 		program.Status,
 		program.Notes,
@@ -85,9 +84,9 @@ func (r *programRepository) Create(ctx context.Context, program *domain.Program)
 			entryQuery := `
 				INSERT INTO program_session_entries (
 					id, session_id, "order", exercise_name,
-					sets, reps, load_kg, rpe, notes, metadata
+					sets, reps, load_kg, notes, metadata
 				)
-				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 			`
 			_, err = tx.Exec(ctx, entryQuery,
 				entryID,
@@ -97,7 +96,6 @@ func (r *programRepository) Create(ctx context.Context, program *domain.Program)
 				program.Sessions[i].Entries[j].Sets,
 				program.Sessions[i].Entries[j].Reps,
 				program.Sessions[i].Entries[j].LoadKg,
-				program.Sessions[i].Entries[j].RPE,
 				program.Sessions[i].Entries[j].Notes,
 				program.Sessions[i].Entries[j].Metadata,
 			)
@@ -115,7 +113,7 @@ func (r *programRepository) Create(ctx context.Context, program *domain.Program)
 
 func (r *programRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Program, error) {
 	query := `
-		SELECT id, program_template_id, name, status, notes, metadata, created_at, updated_at
+		SELECT id, name, status, notes, metadata, created_at, updated_at
 		FROM programs
 		WHERE id = $1
 	`
@@ -124,7 +122,6 @@ func (r *programRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.
 	var metadataRaw []byte
 	err := r.pool.QueryRow(ctx, query, id).Scan(
 		&program.ID,
-		&program.ProgramTemplateID,
 		&program.Name,
 		&program.Status,
 		&program.Notes,
@@ -201,7 +198,7 @@ func (r *programRepository) getSessionsForProgram(ctx context.Context, programID
 func (r *programRepository) getEntriesForSession(ctx context.Context, sessionID uuid.UUID) ([]domain.ProgramSessionEntry, error) {
 	query := `
 		SELECT id, session_id, "order", exercise_name,
-		       sets, reps, load_kg, rpe, notes, metadata
+		       sets, reps, load_kg, notes, metadata
 		FROM program_session_entries
 		WHERE session_id = $1
 		ORDER BY "order" ASC
@@ -226,7 +223,6 @@ func (r *programRepository) getEntriesForSession(ctx context.Context, sessionID 
 			&entry.Sets,
 			&entry.Reps,
 			&entry.LoadKg,
-			&entry.RPE,
 			&entry.Notes,
 			&metadataRaw,
 		)
@@ -292,9 +288,9 @@ func (r *programRepository) Update(ctx context.Context, program *domain.Program)
 			_, err = tx.Exec(ctx, `
 				INSERT INTO program_session_entries (
 					id, session_id, "order", exercise_name,
-					sets, reps, load_kg, rpe, notes, metadata
+					sets, reps, load_kg, notes, metadata
 				)
-				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 			`,
 				entryID,
 				sessionID,
@@ -303,7 +299,6 @@ func (r *programRepository) Update(ctx context.Context, program *domain.Program)
 				program.Sessions[i].Entries[j].Sets,
 				program.Sessions[i].Entries[j].Reps,
 				program.Sessions[i].Entries[j].LoadKg,
-				program.Sessions[i].Entries[j].RPE,
 				program.Sessions[i].Entries[j].Notes,
 				program.Sessions[i].Entries[j].Metadata,
 			)
@@ -356,7 +351,7 @@ func (r *programRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (r *programRepository) List(ctx context.Context, limit int, after string, programTemplateID *uuid.UUID, status string) ([]*domain.Program, string, bool, error) {
+func (r *programRepository) List(ctx context.Context, limit int, after string, status string) ([]*domain.Program, string, bool, error) {
 	var startID uuid.UUID
 	if after != "" {
 		var err error
@@ -367,16 +362,15 @@ func (r *programRepository) List(ctx context.Context, limit int, after string, p
 	}
 
 	query := `
-		SELECT id, program_template_id, name, status, notes, metadata, created_at, updated_at
+		SELECT id, name, status, notes, metadata, created_at, updated_at
 		FROM programs
 		WHERE ($1::uuid IS NULL OR id > $1)
-		  AND ($2::uuid IS NULL OR program_template_id = $2)
-		  AND ($3::text = '' OR status = $3)
+		  AND ($2::text = '' OR status = $2)
 		ORDER BY id ASC
-		LIMIT $4
+		LIMIT $3
 	`
 
-	rows, err := r.pool.Query(ctx, query, startID, programTemplateID, status, limit+1)
+	rows, err := r.pool.Query(ctx, query, startID, status, limit+1)
 	if err != nil {
 		slog.Error("Failed to list programs", "error", err)
 		return nil, "", false, err
@@ -389,7 +383,6 @@ func (r *programRepository) List(ctx context.Context, limit int, after string, p
 		var metadataRaw []byte
 		err := rows.Scan(
 			&program.ID,
-			&program.ProgramTemplateID,
 			&program.Name,
 			&program.Status,
 			&program.Notes,
@@ -429,19 +422,6 @@ func (r *programRepository) List(ctx context.Context, limit int, after string, p
 	}
 
 	return programs, nextCursor, hasMore, nil
-}
-
-func (r *programRepository) ExistsByProgramTemplateID(ctx context.Context, programTemplateID uuid.UUID) (bool, error) {
-	var exists bool
-	err := r.pool.QueryRow(ctx,
-		`SELECT EXISTS(SELECT 1 FROM programs WHERE program_template_id = $1)`,
-		programTemplateID,
-	).Scan(&exists)
-	if err != nil {
-		slog.Error("Failed to check program existence by template ID", "programTemplateID", programTemplateID, "error", err)
-		return false, err
-	}
-	return exists, nil
 }
 
 func (r *programRepository) ExistsByName(ctx context.Context, name string) (bool, error) {

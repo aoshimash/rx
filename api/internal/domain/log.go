@@ -16,7 +16,6 @@ type LogEntry struct {
 	Sets           *int            `json:"sets,omitempty"`
 	Reps           *int            `json:"reps,omitempty"`
 	LoadKg         *float64        `json:"load_kg,omitempty"`
-	RPE            *int            `json:"rpe,omitempty"`
 	Notes          *string         `json:"notes,omitempty"`
 	VideoObjectKey *string         `json:"video_object_key,omitempty"`
 	StartedAt      *time.Time      `json:"started_at,omitempty"`

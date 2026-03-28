@@ -18,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { ProgramTemplateEntryCreate } from '@/types/api';
 import { Lock, Plus, Trash2, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -26,13 +25,26 @@ import { useMemo, useState } from 'react';
 // Types
 // ============================================================================
 
-type IntensityType = 'rpe' | 'percent_1rm' | 'weight_kg';
+/**
+ * Intermediate entry format used by the program form for session-based editing.
+ * Converted to/from ProgramSession structures when saving/loading.
+ */
+export interface ProgramFormEntry {
+  exercise_name: string;
+  order: number;
+  sets?: number;
+  reps?: number;
+  percent_1rm?: number;
+  notes?: string;
+  metadata?: Record<string, unknown>;
+}
+
+type IntensityType = 'percent_1rm' | 'weight_kg';
 
 interface SessionExercise {
   exercise_name: string;
   sets?: number;
   reps?: number;
-  rpe?: number;
   percent_1rm_display?: number; // displayed as 0-100%, stored as 0-1 in API
   weight_kg?: number;
   intensity_type?: IntensityType;
@@ -49,19 +61,17 @@ interface SessionGroup {
 // Conversion helpers
 // ============================================================================
 
-function resolveIntensityType(entry: ProgramTemplateEntryCreate): IntensityType | undefined {
-  if (entry.rpe != null) return 'rpe';
+function resolveIntensityType(entry: ProgramFormEntry): IntensityType | undefined {
   if (entry.percent_1rm != null) return 'percent_1rm';
   if ((entry.metadata?.weight_kg as number | undefined) != null) return 'weight_kg';
   return undefined;
 }
 
-function entryToExercise(entry: ProgramTemplateEntryCreate): SessionExercise {
+function entryToExercise(entry: ProgramFormEntry): SessionExercise {
   return {
     exercise_name: entry.exercise_name,
     sets: entry.sets,
     reps: entry.reps,
-    rpe: entry.rpe,
     percent_1rm_display:
       entry.percent_1rm !== undefined ? Math.round(entry.percent_1rm * 100) : undefined,
     weight_kg: entry.metadata?.weight_kg as number | undefined,
@@ -70,7 +80,7 @@ function entryToExercise(entry: ProgramTemplateEntryCreate): SessionExercise {
   };
 }
 
-function entriesToSessionGroups(entries: ProgramTemplateEntryCreate[]): SessionGroup[] {
+function entriesToSessionGroups(entries: ProgramFormEntry[]): SessionGroup[] {
   const sessionMap = new Map<string, SessionExercise[]>();
   const sessionDates = new Map<string, string>();
   const sessionOrder: string[] = [];
@@ -98,7 +108,7 @@ function exerciseToEntry(
   sessionName: string,
   sessionDate: string | undefined,
   order: number
-): ProgramTemplateEntryCreate {
+): ProgramFormEntry {
   const metadata: Record<string, unknown> = { session: sessionName };
   if (sessionDate) metadata.date = sessionDate;
   if (ex.label) metadata.label = ex.label;
@@ -110,14 +120,13 @@ function exerciseToEntry(
     order,
     sets: ex.sets,
     reps: ex.reps,
-    rpe: ex.rpe,
     percent_1rm: ex.percent_1rm_display !== undefined ? ex.percent_1rm_display / 100 : undefined,
     metadata,
   };
 }
 
-function sessionGroupsToEntries(sessions: SessionGroup[]): ProgramTemplateEntryCreate[] {
-  const entries: ProgramTemplateEntryCreate[] = [];
+function sessionGroupsToEntries(sessions: SessionGroup[]): ProgramFormEntry[] {
+  const entries: ProgramFormEntry[] = [];
   let order = 0;
 
   for (const session of sessions) {
@@ -245,7 +254,6 @@ function ProgramExerciseRow({
                 onChange({
                   ...exercise,
                   intensity_type: type || undefined,
-                  rpe: type === 'rpe' ? exercise.rpe : undefined,
                   percent_1rm_display:
                     type === 'percent_1rm' ? exercise.percent_1rm_display : undefined,
                   weight_kg: type === 'weight_kg' ? exercise.weight_kg : undefined,
@@ -257,27 +265,10 @@ function ProgramExerciseRow({
                 <SelectValue placeholder="-" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="rpe">RPE</SelectItem>
                 <SelectItem value="percent_1rm">%1RM</SelectItem>
                 <SelectItem value="weight_kg">Weight(kg)</SelectItem>
               </SelectContent>
             </Select>
-            {exercise.intensity_type === 'rpe' && (
-              <Input
-                type="number"
-                value={exercise.rpe ?? ''}
-                onChange={(e) =>
-                  onChange({
-                    ...exercise,
-                    rpe: e.target.value ? Number(e.target.value) : undefined,
-                  })
-                }
-                min={1}
-                max={10}
-                placeholder="7"
-                disabled={disabled}
-              />
-            )}
             {exercise.intensity_type === 'percent_1rm' && (
               <Input
                 type="number"
@@ -357,11 +348,11 @@ interface ProgramFormProps {
   programName: string;
   programDescription: string;
   programNotes: string;
-  initialEntries?: ProgramTemplateEntryCreate[];
+  initialEntries?: ProgramFormEntry[];
   onNameChange: (name: string) => void;
   onDescriptionChange: (description: string) => void;
   onNotesChange: (notes: string) => void;
-  onSave: (entries: ProgramTemplateEntryCreate[]) => void;
+  onSave: (entries: ProgramFormEntry[]) => void;
   onDelete?: () => void;
   isSaving?: boolean;
   isEditing?: boolean;
@@ -421,10 +412,7 @@ export function ProgramForm({
     if (!session) return;
     updated[sessionIdx] = {
       ...session,
-      exercises: [
-        ...session.exercises,
-        { exercise_name: '', sets: 3, reps: 10, rpe: 7, intensity_type: 'rpe' },
-      ],
+      exercises: [...session.exercises, { exercise_name: '', sets: 3, reps: 10 }],
     };
     setSessions(updated);
   };

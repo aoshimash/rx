@@ -29,7 +29,6 @@ type logEntryRequest struct {
 	Sets           *int            `json:"sets,omitempty"`
 	Reps           *int            `json:"reps,omitempty"`
 	LoadKg         *float64        `json:"load_kg,omitempty"`
-	RPE            *int            `json:"rpe,omitempty"`
 	Notes          *string         `json:"notes,omitempty"`
 	VideoObjectKey *string         `json:"video_object_key,omitempty"`
 	StartedAt      *string         `json:"started_at,omitempty"`
@@ -109,7 +108,6 @@ func (h *LogHandler) parseLogRequest(req *logRequest) (*domain.Log, error) {
 			Sets:           entryReq.Sets,
 			Reps:           entryReq.Reps,
 			LoadKg:         entryReq.LoadKg,
-			RPE:            entryReq.RPE,
 			Notes:          entryReq.Notes,
 			VideoObjectKey: entryReq.VideoObjectKey,
 			Metadata:       entryReq.Metadata,

@@ -46,7 +46,6 @@ export interface LogEntry {
   sets?: number;
   reps?: number;
   load_kg?: number;
-  rpe?: number;
   notes?: string;
   video_object_key?: string;
   started_at?: string;
@@ -59,75 +58,11 @@ export interface LogEntryCreate {
   sets?: number;
   reps?: number;
   load_kg?: number;
-  rpe?: number;
   notes?: string;
   video_object_key?: string;
   started_at?: string;
   finished_at?: string;
   metadata?: Record<string, unknown>;
-}
-
-// ============================================================================
-// ProgramTemplate
-// ============================================================================
-
-export interface ProgramTemplate {
-  id: string;
-  name: string;
-  description?: string;
-  notes?: string;
-  metadata?: Record<string, unknown>;
-  entries?: ProgramTemplateEntry[];
-  weeks?: string;
-  days_per_week?: string;
-  created_by?: string;
-  archived_at?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ProgramTemplateCreate {
-  name: string;
-  description?: string;
-  notes?: string;
-  metadata?: Record<string, unknown>;
-  weeks?: string;
-  days_per_week?: string;
-  entries?: ProgramTemplateEntryCreate[];
-}
-
-// ============================================================================
-// ProgramTemplateEntry
-// ============================================================================
-
-export interface ProgramTemplateEntry {
-  id: string;
-  program_template_id: string;
-  order: number;
-  exercise_name: string;
-  sets?: number;
-  reps?: number;
-  rpe?: number;
-  percent_1rm?: number;
-  notes?: string;
-  metadata?: Record<string, unknown>;
-}
-
-export interface ProgramTemplateEntryCreate {
-  exercise_name: string;
-  order: number;
-  sets?: number;
-  reps?: number;
-  rpe?: number;
-  percent_1rm?: number;
-  notes?: string;
-  metadata?: Record<string, unknown>;
-}
-
-export interface GenerateProgramRequest {
-  name?: string;
-  target_weights: Record<string, number>;
-  load_increments?: Record<string, number>;
 }
 
 // ============================================================================
@@ -138,7 +73,6 @@ export type ProgramStatus = 'created' | 'ongoing' | 'completed' | 'cancelled';
 
 export interface Program {
   id: string;
-  program_template_id?: string;
   name: string;
   status: ProgramStatus;
   notes?: string;
@@ -149,7 +83,6 @@ export interface Program {
 }
 
 export interface ProgramCreate {
-  program_template_id?: string;
   name: string;
   notes?: string;
   metadata?: Record<string, unknown>;
@@ -195,7 +128,6 @@ export interface ProgramSessionEntry {
   sets?: number;
   reps?: number;
   load_kg?: number;
-  rpe?: number;
   notes?: string;
   metadata?: Record<string, unknown>;
 }
@@ -206,7 +138,6 @@ export interface ProgramSessionEntryCreate {
   sets?: number;
   reps?: number;
   load_kg?: number;
-  rpe?: number;
   notes?: string;
   metadata?: Record<string, unknown>;
 }
@@ -238,7 +169,6 @@ export interface PaginatedResponse<T> {
 }
 
 export type LogListResponse = PaginatedResponse<Log>;
-export type ProgramTemplateListResponse = PaginatedResponse<ProgramTemplate>;
 export type ProgramListResponse = PaginatedResponse<Program>;
 
 // ============================================================================

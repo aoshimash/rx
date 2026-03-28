@@ -24,7 +24,6 @@ function logToTableEntries(log: {
     sets?: number;
     reps?: number;
     load_kg?: number;
-    rpe?: number;
     notes?: string;
   }>;
 }): TableEntry[] {
@@ -37,7 +36,6 @@ function logToTableEntries(log: {
       sets: entry.sets,
       reps: entry.reps,
       load_kg: entry.load_kg,
-      rpe: entry.rpe,
       notes: entry.notes ?? '',
       setsEdited: true,
       repsEdited: true,

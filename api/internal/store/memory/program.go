@@ -90,7 +90,6 @@ func (s *programStore) Update(ctx context.Context, program *domain.Program) erro
 
 	program.CreatedAt = existing.CreatedAt
 	program.UpdatedAt = time.Now()
-	program.ProgramTemplateID = existing.ProgramTemplateID
 
 	for i := range program.Sessions {
 		program.Sessions[i].ID = uuid.New()
@@ -131,15 +130,12 @@ func (s *programStore) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (s *programStore) List(ctx context.Context, limit int, after string, programTemplateID *uuid.UUID, status string) ([]*domain.Program, string, bool, error) {
+func (s *programStore) List(ctx context.Context, limit int, after string, status string) ([]*domain.Program, string, bool, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	programs := make([]*domain.Program, 0, len(s.programs))
 	for _, p := range s.programs {
-		if programTemplateID != nil && (p.ProgramTemplateID == nil || *p.ProgramTemplateID != *programTemplateID) {
-			continue
-		}
 		if status != "" && string(p.Status) != status {
 			continue
 		}
@@ -183,18 +179,6 @@ func (s *programStore) List(ctx context.Context, limit int, after string, progra
 	}
 
 	return copies, nextCursor, hasMore, nil
-}
-
-func (s *programStore) ExistsByProgramTemplateID(ctx context.Context, programTemplateID uuid.UUID) (bool, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	for _, p := range s.programs {
-		if p.ProgramTemplateID != nil && *p.ProgramTemplateID == programTemplateID {
-			return true, nil
-		}
-	}
-	return false, nil
 }
 
 func (s *programStore) ExistsByName(ctx context.Context, name string) (bool, error) {

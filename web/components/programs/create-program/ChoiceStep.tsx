@@ -1,8 +1,8 @@
 'use client';
 
-import { Download, FileJson, Pencil } from 'lucide-react';
+import { FileJson, Pencil } from 'lucide-react';
 
-export type CreationMethod = 'template' | 'import' | 'scratch';
+export type CreationMethod = 'import' | 'scratch';
 
 const options: {
   method: CreationMethod;
@@ -10,12 +10,6 @@ const options: {
   title: string;
   description: string;
 }[] = [
-  {
-    method: 'template',
-    icon: <Download className="h-6 w-6" />,
-    title: 'From Template',
-    description: 'Generate from a template with calculated loads',
-  },
   {
     method: 'import',
     icon: <FileJson className="h-6 w-6" />,
