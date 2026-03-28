@@ -1,0 +1,216 @@
+name: Security CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  # Job 1: Dependency vulnerability scanning (Go + Node.js)
+  dependency-scan:
+    name: Dependency Scan
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Cache Trivy DB
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
+        with:
+          path: ~/.cache/trivy
+          key: ${{ runner.os }}-trivy-db-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-trivy-db-
+
+      - name: Scan Go dependencies
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          scan-type: fs
+          scan-ref: api
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          format: sarif
+          output: go-vuln-results.sarif
+          exit-code: '1'
+
+      - name: Upload Go scan results to GitHub Security
+        uses: github/codeql-action/upload-sarif@3b1a19a80ab047f35cbb237b5bd9bdc1e14f166c # v3
+        if: '!cancelled()'
+        continue-on-error: true  # May fail if GitHub Advanced Security is not enabled
+        with:
+          sarif_file: go-vuln-results.sarif
+          category: go-dependency-scan
+
+      - name: Scan Node.js dependencies
+        if: '!cancelled()'
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          scan-type: fs
+          scan-ref: web
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          format: sarif
+          output: node-vuln-results.sarif
+          exit-code: '1'
+
+      - name: Upload Node.js scan results to GitHub Security
+        uses: github/codeql-action/upload-sarif@3b1a19a80ab047f35cbb237b5bd9bdc1e14f166c # v3
+        if: '!cancelled()'
+        continue-on-error: true
+        with:
+          sarif_file: node-vuln-results.sarif
+          category: node-dependency-scan
+
+  # Job 2: Misconfiguration and secret scanning
+  misconfig-secret-scan:
+    name: Misconfig and Secret Scan
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0  # Full history for secret scanning
+
+      - name: Cache Trivy DB
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
+        with:
+          path: ~/.cache/trivy
+          key: ${{ runner.os }}-trivy-db-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-trivy-db-
+
+      - name: Scan for misconfigurations
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          format: sarif
+          output: misconfig-results.sarif
+          exit-code: '1'
+
+      - name: Upload misconfig results to GitHub Security
+        uses: github/codeql-action/upload-sarif@3b1a19a80ab047f35cbb237b5bd9bdc1e14f166c # v3
+        if: '!cancelled()'
+        continue-on-error: true
+        with:
+          sarif_file: misconfig-results.sarif
+          category: misconfig-scan
+
+      - name: Scan for secrets
+        if: '!cancelled()'
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: secret
+          severity: HIGH,CRITICAL
+          format: sarif
+          output: secret-results.sarif
+          exit-code: '1'
+
+      - name: Upload secret results to GitHub Security
+        uses: github/codeql-action/upload-sarif@3b1a19a80ab047f35cbb237b5bd9bdc1e14f166c # v3
+        if: '!cancelled()'
+        continue-on-error: true
+        with:
+          sarif_file: secret-results.sarif
+          category: secret-scan
+
+  # Job 3: License compliance scanning
+  license-scan:
+    name: License Scan
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Cache Trivy DB
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
+        with:
+          path: ~/.cache/trivy
+          key: ${{ runner.os }}-trivy-db-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-trivy-db-
+
+      - name: Scan Go licenses
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          scan-type: fs
+          scan-ref: api
+          scanners: license
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          trivy-config: trivy.yaml
+
+      - name: Scan Node.js licenses
+        if: '!cancelled()'
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          scan-type: fs
+          scan-ref: web
+          scanners: license
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          trivy-config: trivy.yaml
+
+  # Job 4: Container image build and scan (multi-arch)
+  # Uses Go cross-compilation (no QEMU) — the builder runs on the host arch
+  # and TARGETARCH is set by Docker buildx for cross-compilation.
+  container-scan:
+    name: Container Image Scan (${{ matrix.arch }})
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+
+      - name: Build container image
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7
+        with:
+          context: ./api
+          file: ./api/Dockerfile
+          platforms: linux/${{ matrix.arch }}
+          # Output as Docker tarball for Trivy compatibility (--load only works for native arch)
+          outputs: type=docker,dest=/tmp/image-${{ matrix.arch }}.tar
+          cache-from: type=gha,scope=api-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=api-${{ matrix.arch }}
+
+      - name: Cache Trivy DB
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
+        with:
+          path: ~/.cache/trivy
+          key: ${{ runner.os }}-trivy-db-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-trivy-db-
+
+      - name: Scan container image
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          input: /tmp/image-${{ matrix.arch }}.tar
+          severity: HIGH,CRITICAL
+          format: sarif
+          output: container-results.sarif
+          exit-code: '1'
+
+      - name: Upload container scan results to GitHub Security
+        uses: github/codeql-action/upload-sarif@3b1a19a80ab047f35cbb237b5bd9bdc1e14f166c # v3
+        if: '!cancelled()'
+        continue-on-error: true
+        with:
+          sarif_file: container-results.sarif
+          category: container-scan-${{ matrix.arch }}

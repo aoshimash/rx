@@ -27,6 +27,13 @@ pre-commit:
       root: "web/"
       run: pnpm check
 
+    trivy-secret:
+      run: trivy fs --scanners secret --severity HIGH,CRITICAL --exit-code 1 {staged_files}
+
+    trivy-misconfig:
+      glob: "**/Dockerfile*"
+      run: trivy config --severity HIGH,CRITICAL --exit-code 1 {staged_files}
+
 pre-push:
   commands:
     api-generate-check:

@@ -36,5 +36,6 @@ Thumbs.db
 coverage/
 *.coverprofile
 
-# Generated code (will be generated in container)
-pkg/openapi/*.gen.go
+# Generated code is committed and validated by CI pre-push hooks.
+# Do NOT exclude — the Dockerfile does not regenerate it.
+# pkg/openapi/*.gen.go
