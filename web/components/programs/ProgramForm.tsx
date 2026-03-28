@@ -11,13 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Lock, Plus, Trash2, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -34,20 +27,16 @@ export interface ProgramFormEntry {
   order: number;
   sets?: number;
   reps?: number;
-  percent_1rm?: number;
+  load_kg?: number;
   notes?: string;
   metadata?: Record<string, unknown>;
 }
-
-type IntensityType = 'percent_1rm' | 'weight_kg';
 
 interface SessionExercise {
   exercise_name: string;
   sets?: number;
   reps?: number;
-  percent_1rm_display?: number; // displayed as 0-100%, stored as 0-1 in API
-  weight_kg?: number;
-  intensity_type?: IntensityType;
+  load_kg?: number;
   label?: string;
 }
 
@@ -61,21 +50,12 @@ interface SessionGroup {
 // Conversion helpers
 // ============================================================================
 
-function resolveIntensityType(entry: ProgramFormEntry): IntensityType | undefined {
-  if (entry.percent_1rm != null) return 'percent_1rm';
-  if ((entry.metadata?.weight_kg as number | undefined) != null) return 'weight_kg';
-  return undefined;
-}
-
 function entryToExercise(entry: ProgramFormEntry): SessionExercise {
   return {
     exercise_name: entry.exercise_name,
     sets: entry.sets,
     reps: entry.reps,
-    percent_1rm_display:
-      entry.percent_1rm !== undefined ? Math.round(entry.percent_1rm * 100) : undefined,
-    weight_kg: entry.metadata?.weight_kg as number | undefined,
-    intensity_type: resolveIntensityType(entry),
+    load_kg: entry.load_kg,
     label: (entry.metadata?.label as string) || undefined,
   };
 }
@@ -112,15 +92,12 @@ function exerciseToEntry(
   const metadata: Record<string, unknown> = { session: sessionName };
   if (sessionDate) metadata.date = sessionDate;
   if (ex.label) metadata.label = ex.label;
-  if (ex.weight_kg != null) {
-    metadata.weight_kg = ex.weight_kg;
-  }
   return {
     exercise_name: ex.exercise_name,
     order,
     sets: ex.sets,
     reps: ex.reps,
-    percent_1rm: ex.percent_1rm_display !== undefined ? ex.percent_1rm_display / 100 : undefined,
+    load_kg: ex.load_kg,
     metadata,
   };
 }
@@ -245,63 +222,21 @@ function ProgramExerciseRow({
           />
         </div>
         <div className="space-y-2">
-          <Label>Intensity</Label>
-          <div className="flex gap-2">
-            <Select
-              value={exercise.intensity_type ?? ''}
-              onValueChange={(v) => {
-                const type = v as IntensityType | '';
-                onChange({
-                  ...exercise,
-                  intensity_type: type || undefined,
-                  percent_1rm_display:
-                    type === 'percent_1rm' ? exercise.percent_1rm_display : undefined,
-                  weight_kg: type === 'weight_kg' ? exercise.weight_kg : undefined,
-                });
-              }}
-              disabled={disabled}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="-" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="percent_1rm">%1RM</SelectItem>
-                <SelectItem value="weight_kg">Weight(kg)</SelectItem>
-              </SelectContent>
-            </Select>
-            {exercise.intensity_type === 'percent_1rm' && (
-              <Input
-                type="number"
-                value={exercise.percent_1rm_display ?? ''}
-                onChange={(e) =>
-                  onChange({
-                    ...exercise,
-                    percent_1rm_display: e.target.value ? Number(e.target.value) : undefined,
-                  })
-                }
-                min={0}
-                max={100}
-                placeholder="75"
-                disabled={disabled}
-              />
-            )}
-            {exercise.intensity_type === 'weight_kg' && (
-              <Input
-                type="number"
-                value={exercise.weight_kg ?? ''}
-                onChange={(e) =>
-                  onChange({
-                    ...exercise,
-                    weight_kg: e.target.value ? Number(e.target.value) : undefined,
-                  })
-                }
-                min={0}
-                step="0.5"
-                placeholder="100"
-                disabled={disabled}
-              />
-            )}
-          </div>
+          <Label>Load (kg)</Label>
+          <Input
+            type="number"
+            value={exercise.load_kg ?? ''}
+            onChange={(e) =>
+              onChange({
+                ...exercise,
+                load_kg: e.target.value ? Number(e.target.value) : undefined,
+              })
+            }
+            min={0}
+            step="0.5"
+            placeholder="100"
+            disabled={disabled}
+          />
         </div>
         <div className="space-y-2">
           <Label>Reps</Label>

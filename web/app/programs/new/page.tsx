@@ -16,22 +16,14 @@ function convertEntryToProgramEntry(
     order,
     sets: entry.sets,
     reps: entry.reps,
+    load_kg: entry.load_kg,
   };
 
-  const weightKg = entry.metadata?.weight_kg as number | undefined;
-  if (weightKg != null) {
-    programEntry.load_kg = weightKg;
-  }
-
   if (entry.metadata) {
-    const { session: _s, date: _d, weight_kg: _w, label, ...rest } = entry.metadata;
+    const { session: _s, date: _d, label, ...rest } = entry.metadata;
     if (label || Object.keys(rest).length > 0) {
       programEntry.metadata = { ...(label ? { label } : {}), ...rest };
     }
-  }
-
-  if (entry.percent_1rm != null) {
-    programEntry.metadata = { ...(programEntry.metadata ?? {}), percent_1rm: entry.percent_1rm };
   }
 
   return programEntry;
