@@ -17,6 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { usePrograms } from '@/lib/hooks/usePrograms';
+import type { Program } from '@/types/api';
 import {
   DndContext,
   type DragEndEvent,
@@ -35,7 +37,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Lock, Plus, Trash2, X } from 'lucide-react';
+import { Copy, GripVertical, Lock, Plus, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 
 // ============================================================================
@@ -270,6 +272,12 @@ function SortableFieldRow({
   );
 }
 
+function extractCustomFields(program: Program): CustomFieldDef[] {
+  const raw = program.metadata?.custom_fields;
+  if (!Array.isArray(raw)) return [];
+  return raw as CustomFieldDef[];
+}
+
 function CustomFieldsEditor({
   fields,
   onChange,
@@ -279,6 +287,16 @@ function CustomFieldsEditor({
 }) {
   const [newFieldName, setNewFieldName] = useState('');
   const [newFieldType, setNewFieldType] = useState<CustomFieldType>('text');
+  const { data: programsData } = usePrograms();
+
+  const programsWithFields = programsData?.data?.filter((p) => extractCustomFields(p).length > 0);
+
+  const handleCopyFrom = (programId: string) => {
+    const program = programsData?.data?.find((p) => p.id === programId);
+    if (!program) return;
+    const copiedFields = extractCustomFields(program);
+    onChange(ensureBuiltinFields(copiedFields));
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -306,7 +324,24 @@ function CustomFieldsEditor({
 
   return (
     <div className="space-y-3">
-      <Label>Custom Fields</Label>
+      <div className="flex items-center justify-between">
+        <Label>Custom Fields</Label>
+        {programsWithFields && programsWithFields.length > 0 && (
+          <Select onValueChange={handleCopyFrom}>
+            <SelectTrigger className="h-8 w-auto gap-2 text-xs">
+              <Copy className="h-3.5 w-3.5" />
+              <SelectValue placeholder="Copy from..." />
+            </SelectTrigger>
+            <SelectContent>
+              {programsWithFields.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
       {fields.length > 0 && (
         <DndContext
           sensors={sensors}
