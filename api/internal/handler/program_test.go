@@ -146,6 +146,124 @@ func TestProgramHandler_CreateProgram(t *testing.T) {
 	}
 }
 
+func TestProgramHandler_GroupTempID(t *testing.T) {
+	tests := []struct {
+		name       string
+		body       string
+		wantStatus int
+		checkBody  func(t *testing.T, resp map[string]interface{})
+	}{
+		{
+			name: "links sessions to groups via temp_id",
+			body: `{
+				"name": "Grouped Program",
+				"groups": [
+					{"temp_id": "block-a", "name": "Block A", "order": 0}
+				],
+				"sessions": [
+					{"group_id": "block-a", "session_name": "Day 1", "order": 0,
+					 "entries": [{"exercise_name": "Squat", "order": 0}]}
+				]
+			}`,
+			wantStatus: http.StatusCreated,
+			checkBody: func(t *testing.T, resp map[string]interface{}) {
+				groups := resp["groups"].([]interface{})
+				require.Len(t, groups, 1)
+				groupID := groups[0].(map[string]interface{})["id"].(string)
+
+				sessions := resp["sessions"].([]interface{})
+				require.Len(t, sessions, 1)
+				assert.Equal(t, groupID, sessions[0].(map[string]interface{})["group_id"])
+			},
+		},
+		{
+			name: "links hierarchical groups via temp_id",
+			body: `{
+				"name": "Hierarchical Program",
+				"groups": [
+					{"temp_id": "block-a", "name": "Block A", "order": 0},
+					{"temp_id": "week-1", "name": "Week 1", "order": 0, "parent_group_id": "block-a"}
+				],
+				"sessions": [
+					{"group_id": "week-1", "session_name": "Day 1", "order": 0,
+					 "entries": [{"exercise_name": "Squat", "order": 0}]}
+				]
+			}`,
+			wantStatus: http.StatusCreated,
+			checkBody: func(t *testing.T, resp map[string]interface{}) {
+				groups := resp["groups"].([]interface{})
+				require.Len(t, groups, 2)
+
+				groupByName := make(map[string]map[string]interface{})
+				for _, g := range groups {
+					gm := g.(map[string]interface{})
+					groupByName[gm["name"].(string)] = gm
+				}
+				blockAID := groupByName["Block A"]["id"].(string)
+				assert.Equal(t, blockAID, groupByName["Week 1"]["parent_group_id"])
+			},
+		},
+		{
+			name: "returns 400 when session group_id references unknown temp_id",
+			body: `{
+				"name": "Bad Ref Program",
+				"groups": [{"temp_id": "block-a", "name": "Block A", "order": 0}],
+				"sessions": [
+					{"group_id": "nonexistent", "session_name": "Day 1", "order": 0,
+					 "entries": [{"exercise_name": "Squat", "order": 0}]}
+				]
+			}`,
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name: "returns 400 when parent_group_id references unknown temp_id",
+			body: `{
+				"name": "Bad Parent Program",
+				"groups": [
+					{"temp_id": "week-1", "name": "Week 1", "order": 0, "parent_group_id": "nonexistent"}
+				],
+				"sessions": [
+					{"group_id": "week-1", "session_name": "Day 1", "order": 0,
+					 "entries": [{"exercise_name": "Squat", "order": 0}]}
+				]
+			}`,
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name: "returns 400 when temp_id is duplicated",
+			body: `{
+				"name": "Dup TempID Program",
+				"groups": [
+					{"temp_id": "dup", "name": "Block A", "order": 0},
+					{"temp_id": "dup", "name": "Block B", "order": 1}
+				],
+				"sessions": [
+					{"session_name": "Day 1", "order": 0,
+					 "entries": [{"exercise_name": "Squat", "order": 0}]}
+				]
+			}`,
+			wantStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			router, _ := setupProgramTestRouter()
+			req := httptest.NewRequest(http.MethodPost, "/programs", bytes.NewBufferString(tt.body))
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer test-token")
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+			assert.Equal(t, tt.wantStatus, w.Code)
+			if tt.checkBody != nil {
+				var resp map[string]interface{}
+				require.NoError(t, json.NewDecoder(w.Body).Decode(&resp))
+				tt.checkBody(t, resp)
+			}
+		})
+	}
+}
+
 func TestProgramHandler_GetProgram(t *testing.T) {
 	router, _ := setupProgramTestRouter()
 
