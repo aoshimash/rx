@@ -180,19 +180,15 @@ type Plan struct {
 	Id        openapi_types.UUID `json:"id"`
 	Name      *string            `json:"name,omitempty"`
 	Notes     *string            `json:"notes,omitempty"`
-
-	// ProgramId Optional reference to the source program
-	ProgramId *openapi_types.UUID `json:"program_id,omitempty"`
-	Sessions  []PlanSession       `json:"sessions"`
-	UpdatedAt time.Time           `json:"updated_at"`
+	Sessions  []PlanSession      `json:"sessions"`
+	UpdatedAt time.Time          `json:"updated_at"`
 }
 
 // PlanCreate defines model for PlanCreate.
 type PlanCreate struct {
-	Name      *string              `json:"name,omitempty"`
-	Notes     *string              `json:"notes,omitempty"`
-	ProgramId *openapi_types.UUID  `json:"program_id,omitempty"`
-	Sessions  *[]PlanSessionCreate `json:"sessions,omitempty"`
+	Name     *string              `json:"name,omitempty"`
+	Notes    *string              `json:"notes,omitempty"`
+	Sessions *[]PlanSessionCreate `json:"sessions,omitempty"`
 }
 
 // PlanSession defines model for PlanSession.

@@ -26,7 +26,7 @@ func NewPlanRepository(pool *pgxpool.Pool) repository.PlanRepository {
 
 func (r *planRepository) GetByUserID(ctx context.Context, userID string) (*domain.Plan, error) {
 	query := `
-		SELECT id, name, notes, program_id, created_at, updated_at
+		SELECT id, name, notes, created_at, updated_at
 		FROM plans
 		WHERE user_id = $1
 	`
@@ -36,7 +36,6 @@ func (r *planRepository) GetByUserID(ctx context.Context, userID string) (*domai
 		&plan.ID,
 		&plan.Name,
 		&plan.Notes,
-		&plan.ProgramID,
 		&plan.CreatedAt,
 		&plan.UpdatedAt,
 	)
@@ -158,8 +157,8 @@ func (r *planRepository) Create(ctx context.Context, userID string, plan *domain
 	}
 
 	query := `
-		INSERT INTO plans (id, user_id, name, notes, program_id, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+		INSERT INTO plans (id, user_id, name, notes, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, NOW(), NOW())
 		RETURNING created_at, updated_at
 	`
 
@@ -168,7 +167,6 @@ func (r *planRepository) Create(ctx context.Context, userID string, plan *domain
 		userID,
 		plan.Name,
 		plan.Notes,
-		plan.ProgramID,
 	).Scan(&plan.CreatedAt, &plan.UpdatedAt)
 	if err != nil {
 		// Check for unique constraint violation (user already has a plan)
@@ -269,10 +267,10 @@ func (r *planRepository) Update(ctx context.Context, userID string, plan *domain
 	// Update the plan row and get its ID
 	var planID uuid.UUID
 	err = tx.QueryRow(ctx, `
-		UPDATE plans SET name = $2, notes = $3, program_id = $4, updated_at = NOW()
+		UPDATE plans SET name = $2, notes = $3, updated_at = NOW()
 		WHERE user_id = $1
 		RETURNING id
-	`, userID, plan.Name, plan.Notes, plan.ProgramID).Scan(&planID)
+	`, userID, plan.Name, plan.Notes).Scan(&planID)
 	if err == pgx.ErrNoRows {
 		return domain.ErrNotFound
 	}

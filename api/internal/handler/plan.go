@@ -133,10 +133,9 @@ func (h *PlanHandler) CreatePlan(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(ctx)
 
 	var req struct {
-		Name      *string              `json:"name,omitempty"`
-		Notes     *string              `json:"notes,omitempty"`
-		ProgramID *string              `json:"program_id,omitempty"`
-		Sessions  []planSessionRequest `json:"sessions,omitempty"`
+		Name     *string              `json:"name,omitempty"`
+		Notes    *string              `json:"notes,omitempty"`
+		Sessions []planSessionRequest `json:"sessions,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -149,15 +148,6 @@ func (h *PlanHandler) CreatePlan(w http.ResponseWriter, r *http.Request) {
 	plan := &domain.Plan{
 		Name:  req.Name,
 		Notes: req.Notes,
-	}
-
-	if req.ProgramID != nil {
-		pid, err := uuid.Parse(*req.ProgramID)
-		if err != nil {
-			middleware.WriteValidationError(w, "Invalid program_id format", nil)
-			return
-		}
-		plan.ProgramID = &pid
 	}
 
 	if len(req.Sessions) > 0 {
@@ -219,7 +209,6 @@ func (h *PlanHandler) UpdatePlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get existing to preserve program_id
 	existing, err := h.planRepo.GetByUserID(ctx, userID)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
@@ -231,9 +220,8 @@ func (h *PlanHandler) UpdatePlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	plan := &domain.Plan{
-		Name:      req.Name,
-		Notes:     req.Notes,
-		ProgramID: existing.ProgramID,
+		Name:  req.Name,
+		Notes: req.Notes,
 	}
 
 	if req.Sessions != nil {
@@ -478,8 +466,7 @@ func (h *PlanHandler) ExpandProgram(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, domain.ErrNotFound) {
 		// Create a new plan with the program's sessions
 		plan := &domain.Plan{
-			ProgramID: &programID,
-			Sessions:  planSessions,
+			Sessions: planSessions,
 		}
 		if err := h.planRepo.Create(ctx, userID, plan); err != nil {
 			middleware.WriteInternalError(w, "Failed to create plan")
