@@ -93,45 +93,43 @@ func (r *planRepository) getSessionsForPlan(ctx context.Context, planID uuid.UUI
 		return nil, err
 	}
 
-	for i := range sessions {
-		entries, err := r.getEntriesForPlanSession(ctx, sessions[i].ID)
+	if len(sessions) > 0 {
+		sessionIDs := make([]uuid.UUID, len(sessions))
+		for i, s := range sessions {
+			sessionIDs[i] = s.ID
+		}
+		entriesBySession, err := r.getEntriesForPlanSessionsBatch(ctx, sessionIDs)
 		if err != nil {
 			return nil, err
 		}
-		sessions[i].Entries = entries
+		for i := range sessions {
+			sessions[i].Entries = entriesBySession[sessions[i].ID]
+		}
 	}
 
 	return sessions, nil
 }
 
-func (r *planRepository) getEntriesForPlanSession(ctx context.Context, sessionID uuid.UUID) ([]domain.PlanSessionEntry, error) {
+func (r *planRepository) getEntriesForPlanSessionsBatch(ctx context.Context, sessionIDs []uuid.UUID) (map[uuid.UUID][]domain.PlanSessionEntry, error) {
 	query := `
 		SELECT id, session_id, "order", exercise_name, fields, notes
 		FROM plan_session_entries
-		WHERE session_id = $1
-		ORDER BY "order" ASC
+		WHERE session_id = ANY($1::uuid[])
+		ORDER BY session_id, "order" ASC
 	`
 
-	rows, err := r.pool.Query(ctx, query, sessionID)
+	rows, err := r.pool.Query(ctx, query, uuidStrings(sessionIDs))
 	if err != nil {
-		slog.Error("Failed to get plan session entries", "sessionID", sessionID, "error", err)
+		slog.Error("Failed to batch get plan session entries", "error", err)
 		return nil, err
 	}
 	defer rows.Close()
 
-	var entries []domain.PlanSessionEntry
+	result := make(map[uuid.UUID][]domain.PlanSessionEntry)
 	for rows.Next() {
 		var entry domain.PlanSessionEntry
 		var fieldsRaw []byte
-		err := rows.Scan(
-			&entry.ID,
-			&entry.SessionID,
-			&entry.Order,
-			&entry.ExerciseName,
-			&fieldsRaw,
-			&entry.Notes,
-		)
-		if err != nil {
+		if err := rows.Scan(&entry.ID, &entry.SessionID, &entry.Order, &entry.ExerciseName, &fieldsRaw, &entry.Notes); err != nil {
 			return nil, err
 		}
 		if len(fieldsRaw) > 0 {
@@ -139,10 +137,9 @@ func (r *planRepository) getEntriesForPlanSession(ctx context.Context, sessionID
 				return nil, fmt.Errorf("unmarshal fields for entry %s: %w", entry.ID, err)
 			}
 		}
-		entries = append(entries, entry)
+		result[entry.SessionID] = append(result[entry.SessionID], entry)
 	}
-
-	return entries, rows.Err()
+	return result, rows.Err()
 }
 
 func (r *planRepository) Create(ctx context.Context, userID string, plan *domain.Plan) error {
