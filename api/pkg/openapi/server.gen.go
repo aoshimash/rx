@@ -39,6 +39,9 @@ type Error struct {
 
 // FieldDef defines model for FieldDef.
 type FieldDef struct {
+	// Description Human-readable description of the field (e.g., unit, scale, format)
+	Description *string `json:"description,omitempty"`
+
 	// Name Field key used in the fields object (e.g., "load_kg", "rpe")
 	Name string `json:"name"`
 

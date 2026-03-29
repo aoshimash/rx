@@ -247,6 +247,16 @@ func ValidateProgramSession(s *ProgramSession) error {
 	return nil
 }
 
+// ValidateFieldDef validates a FieldDef entry.
+func ValidateFieldDef(prefix string, f *FieldDef) error {
+	if f.Description != "" {
+		if err := ValidateStringLength(prefix+".description", f.Description, 0, 500); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // ValidateProgram validates a Program entity.
 func ValidateProgram(p *Program) error {
 	if p == nil {
@@ -265,6 +275,17 @@ func ValidateProgram(p *Program) error {
 
 	if p.Notes != nil {
 		if err := ValidateStringLength("notes", *p.Notes, 0, 5000); err != nil {
+			return err
+		}
+	}
+
+	for i, f := range p.ProgramFields {
+		if err := ValidateFieldDef(fmt.Sprintf("program_fields[%d]", i), &f); err != nil {
+			return err
+		}
+	}
+	for i, f := range p.LogFields {
+		if err := ValidateFieldDef(fmt.Sprintf("log_fields[%d]", i), &f); err != nil {
 			return err
 		}
 	}
