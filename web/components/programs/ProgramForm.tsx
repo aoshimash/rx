@@ -25,18 +25,14 @@ import { useMemo, useState } from 'react';
 export interface ProgramFormEntry {
   exercise_name: string;
   order: number;
-  sets?: number;
-  reps?: number;
-  load_kg?: number;
+  fields?: Record<string, unknown>;
   notes?: string;
   metadata?: Record<string, unknown>;
 }
 
 interface SessionExercise {
   exercise_name: string;
-  sets?: number;
-  reps?: number;
-  load_kg?: number;
+  fields?: Record<string, unknown>;
   label?: string;
 }
 
@@ -53,9 +49,7 @@ interface SessionGroup {
 function entryToExercise(entry: ProgramFormEntry): SessionExercise {
   return {
     exercise_name: entry.exercise_name,
-    sets: entry.sets,
-    reps: entry.reps,
-    load_kg: entry.load_kg,
+    fields: entry.fields,
     label: (entry.metadata?.label as string) || undefined,
   };
 }
@@ -95,9 +89,7 @@ function exerciseToEntry(
   return {
     exercise_name: ex.exercise_name,
     order,
-    sets: ex.sets,
-    reps: ex.reps,
-    load_kg: ex.load_kg,
+    fields: ex.fields,
     metadata,
   };
 }
@@ -225,11 +217,14 @@ function ProgramExerciseRow({
           <Label>Load (kg)</Label>
           <Input
             type="number"
-            value={exercise.load_kg ?? ''}
+            value={(exercise.fields?.load_kg as number | undefined) ?? ''}
             onChange={(e) =>
               onChange({
                 ...exercise,
-                load_kg: e.target.value ? Number(e.target.value) : undefined,
+                fields: {
+                  ...exercise.fields,
+                  load_kg: e.target.value ? Number(e.target.value) : undefined,
+                },
               })
             }
             min={0}
@@ -242,11 +237,14 @@ function ProgramExerciseRow({
           <Label>Reps</Label>
           <Input
             type="number"
-            value={exercise.reps ?? ''}
+            value={(exercise.fields?.reps as number | undefined) ?? ''}
             onChange={(e) =>
               onChange({
                 ...exercise,
-                reps: e.target.value ? Number(e.target.value) : undefined,
+                fields: {
+                  ...exercise.fields,
+                  reps: e.target.value ? Number(e.target.value) : undefined,
+                },
               })
             }
             min={1}
@@ -258,11 +256,14 @@ function ProgramExerciseRow({
           <Label>Sets</Label>
           <Input
             type="number"
-            value={exercise.sets ?? ''}
+            value={(exercise.fields?.sets as number | undefined) ?? ''}
             onChange={(e) =>
               onChange({
                 ...exercise,
-                sets: e.target.value ? Number(e.target.value) : undefined,
+                fields: {
+                  ...exercise.fields,
+                  sets: e.target.value ? Number(e.target.value) : undefined,
+                },
               })
             }
             min={1}
@@ -347,7 +348,7 @@ export function ProgramForm({
     if (!session) return;
     updated[sessionIdx] = {
       ...session,
-      exercises: [...session.exercises, { exercise_name: '', sets: 3, reps: 10 }],
+      exercises: [...session.exercises, { exercise_name: '', fields: { sets: 3, reps: 10 } }],
     };
     setSessions(updated);
   };

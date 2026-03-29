@@ -49,18 +49,12 @@ func createTestProgram(t *testing.T, router chi.Router) map[string]interface{} {
 					{
 						"exercise_name": "Squat",
 						"order": 0,
-						"sets": 3,
-						"reps": 5,
-						"load_kg": 100.0,
-						"rpe": 8
+						"fields": {"sets": 3, "reps": 5, "load_kg": 100.0}
 					},
 					{
 						"exercise_name": "Bench Press",
 						"order": 1,
-						"sets": 3,
-						"reps": 5,
-						"load_kg": 80.0,
-						"rpe": 7
+						"fields": {"sets": 3, "reps": 5, "load_kg": 80.0}
 					}
 				]
 			}
@@ -82,8 +76,8 @@ func createTestProgram(t *testing.T, router chi.Router) map[string]interface{} {
 }
 
 func TestProgramHandler_CreateProgram(t *testing.T) {
-	const successBody = `{"name":"Strength Program","sessions":[{"session_name":"Day 1","order":0,"entries":[{"exercise_name":"Squat","order":0,"sets":3,"reps":5,"load_kg":100,"rpe":8},{"exercise_name":"Bench Press","order":1,"sets":3,"reps":5,"load_kg":80,"rpe":7}]}]}`
-	const conflictBody = `{"name":"Duplicate Program","sessions":[{"session_name":"Day 1","order":0,"entries":[{"exercise_name":"Squat","order":0,"sets":3,"reps":5,"load_kg":100.0,"rpe":8}]}]}`
+	const successBody = `{"name":"Strength Program","sessions":[{"session_name":"Day 1","order":0,"entries":[{"exercise_name":"Squat","order":0,"fields":{"sets":3,"reps":5,"load_kg":100}},{"exercise_name":"Bench Press","order":1,"fields":{"sets":3,"reps":5,"load_kg":80}}]}]}`
+	const conflictBody = `{"name":"Duplicate Program","sessions":[{"session_name":"Day 1","order":0,"entries":[{"exercise_name":"Squat","order":0,"fields":{"sets":3,"reps":5,"load_kg":100.0}}]}]}`
 
 	tests := []struct {
 		name       string

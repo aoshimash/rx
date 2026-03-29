@@ -6,6 +6,16 @@
  */
 
 // ============================================================================
+// FieldDef
+// ============================================================================
+
+export interface FieldDef {
+  name: string;
+  type: 'text' | 'number' | 'select';
+  options?: string[];
+}
+
+// ============================================================================
 // Log
 // ============================================================================
 
@@ -43,26 +53,20 @@ export interface LogEntry {
   log_id: string;
   exercise_name: string;
   order: number;
-  sets?: number;
-  reps?: number;
-  load_kg?: number;
+  fields?: Record<string, unknown>;
   notes?: string;
   video_object_key?: string;
   started_at?: string;
   finished_at?: string;
-  metadata?: Record<string, unknown>;
 }
 
 export interface LogEntryCreate {
   exercise_name: string;
-  sets?: number;
-  reps?: number;
-  load_kg?: number;
+  fields?: Record<string, unknown>;
   notes?: string;
   video_object_key?: string;
   started_at?: string;
   finished_at?: string;
-  metadata?: Record<string, unknown>;
 }
 
 // ============================================================================
@@ -77,6 +81,8 @@ export interface Program {
   status: ProgramStatus;
   notes?: string;
   metadata?: Record<string, unknown>;
+  program_fields?: FieldDef[];
+  log_fields?: FieldDef[];
   sessions: ProgramSession[];
   created_at: string;
   updated_at: string;
@@ -86,6 +92,8 @@ export interface ProgramCreate {
   name: string;
   notes?: string;
   metadata?: Record<string, unknown>;
+  program_fields?: FieldDef[];
+  log_fields?: FieldDef[];
   sessions?: ProgramSessionCreate[];
 }
 
@@ -93,6 +101,8 @@ export interface ProgramUpdate {
   name: string;
   notes?: string;
   metadata?: Record<string, unknown>;
+  program_fields?: FieldDef[];
+  log_fields?: FieldDef[];
   sessions: ProgramSessionCreate[];
 }
 
@@ -125,21 +135,15 @@ export interface ProgramSessionEntry {
   session_id: string;
   order: number;
   exercise_name: string;
-  sets?: number;
-  reps?: number;
-  load_kg?: number;
+  fields?: Record<string, unknown>;
   notes?: string;
-  metadata?: Record<string, unknown>;
 }
 
 export interface ProgramSessionEntryCreate {
   exercise_name: string;
   order: number;
-  sets?: number;
-  reps?: number;
-  load_kg?: number;
+  fields?: Record<string, unknown>;
   notes?: string;
-  metadata?: Record<string, unknown>;
 }
 
 // ============================================================================

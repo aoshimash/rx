@@ -34,22 +34,24 @@ export function calculateDiff(
 
   const diffs: string[] = [];
 
-  if (plan.sets !== undefined && actual.sets !== undefined && plan.sets !== actual.sets) {
-    const delta = actual.sets - plan.sets;
+  const planSets = plan.fields?.sets as number | undefined;
+  const actualSets = actual.fields?.sets as number | undefined;
+  if (planSets !== undefined && actualSets !== undefined && planSets !== actualSets) {
+    const delta = actualSets - planSets;
     diffs.push(`Sets ${delta > 0 ? '+' : ''}${delta}`);
   }
 
-  if (plan.reps !== undefined && actual.reps !== undefined && plan.reps !== actual.reps) {
-    const delta = actual.reps - plan.reps;
+  const planReps = plan.fields?.reps as number | undefined;
+  const actualReps = actual.fields?.reps as number | undefined;
+  if (planReps !== undefined && actualReps !== undefined && planReps !== actualReps) {
+    const delta = actualReps - planReps;
     diffs.push(`Reps ${delta > 0 ? '+' : ''}${delta}`);
   }
 
-  if (
-    plan.load_kg !== undefined &&
-    actual.load_kg !== undefined &&
-    plan.load_kg !== actual.load_kg
-  ) {
-    const delta = actual.load_kg - plan.load_kg;
+  const planLoadKg = plan.fields?.load_kg as number | undefined;
+  const actualLoadKg = actual.fields?.load_kg as number | undefined;
+  if (planLoadKg !== undefined && actualLoadKg !== undefined && planLoadKg !== actualLoadKg) {
+    const delta = actualLoadKg - planLoadKg;
     diffs.push(`Load ${delta > 0 ? '+' : ''}${delta}kg`);
   }
 

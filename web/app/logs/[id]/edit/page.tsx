@@ -21,9 +21,7 @@ function logToTableEntries(log: {
     id: string;
     exercise_name: string;
     order: number;
-    sets?: number;
-    reps?: number;
-    load_kg?: number;
+    fields?: Record<string, unknown>;
     notes?: string;
   }>;
 }): TableEntry[] {
@@ -33,10 +31,11 @@ function logToTableEntries(log: {
     .map((entry) => ({
       id: entry.id,
       exercise_name: entry.exercise_name,
-      sets: entry.sets,
-      reps: entry.reps,
-      load_kg: entry.load_kg,
+      sets: entry.fields?.sets as number | undefined,
+      reps: entry.fields?.reps as number | undefined,
+      load_kg: entry.fields?.load_kg as number | undefined,
       notes: entry.notes ?? '',
+      fields: entry.fields ?? {},
       setsEdited: true,
       repsEdited: true,
     }));

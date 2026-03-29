@@ -59,9 +59,12 @@ func (s *logStore) copyLog(l *domain.Log) *domain.Log {
 	cp.Entries = make([]domain.LogEntry, len(l.Entries))
 	for i, e := range l.Entries {
 		cp.Entries[i] = e
-		if e.Metadata != nil {
-			cp.Entries[i].Metadata = make([]byte, len(e.Metadata))
-			copy(cp.Entries[i].Metadata, e.Metadata)
+		if e.Fields != nil {
+			fields := make(map[string]interface{}, len(e.Fields))
+			for k, v := range e.Fields {
+				fields[k] = v
+			}
+			cp.Entries[i].Fields = fields
 		}
 	}
 	if l.Metadata != nil {

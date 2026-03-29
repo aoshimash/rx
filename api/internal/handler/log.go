@@ -25,15 +25,12 @@ type logRequest struct {
 
 // logEntryRequest represents a log entry in the request body
 type logEntryRequest struct {
-	ExerciseName   string          `json:"exercise_name"`
-	Sets           *int            `json:"sets,omitempty"`
-	Reps           *int            `json:"reps,omitempty"`
-	LoadKg         *float64        `json:"load_kg,omitempty"`
-	Notes          *string         `json:"notes,omitempty"`
-	VideoObjectKey *string         `json:"video_object_key,omitempty"`
-	StartedAt      *string         `json:"started_at,omitempty"`
-	FinishedAt     *string         `json:"finished_at,omitempty"`
-	Metadata       json.RawMessage `json:"metadata,omitempty"`
+	ExerciseName   string                 `json:"exercise_name"`
+	Fields         map[string]interface{} `json:"fields,omitempty"`
+	Notes          *string                `json:"notes,omitempty"`
+	VideoObjectKey *string                `json:"video_object_key,omitempty"`
+	StartedAt      *string                `json:"started_at,omitempty"`
+	FinishedAt     *string                `json:"finished_at,omitempty"`
 }
 
 // LogHandler handles Log-related HTTP requests
@@ -105,12 +102,9 @@ func (h *LogHandler) parseLogRequest(req *logRequest) (*domain.Log, error) {
 		entry := domain.LogEntry{
 			ExerciseName:   entryReq.ExerciseName,
 			Order:          i,
-			Sets:           entryReq.Sets,
-			Reps:           entryReq.Reps,
-			LoadKg:         entryReq.LoadKg,
+			Fields:         entryReq.Fields,
 			Notes:          entryReq.Notes,
 			VideoObjectKey: entryReq.VideoObjectKey,
-			Metadata:       entryReq.Metadata,
 		}
 
 		if entryReq.StartedAt != nil {

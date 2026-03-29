@@ -76,28 +76,30 @@ func (r *logRepository) insertEntries(ctx context.Context, tx pgx.Tx, logID uuid
 			entryID = entries[i].ID
 		}
 
+		fieldsJSON, err := marshalJSONBField(entries[i].Fields)
+		if err != nil {
+			return err
+		}
+
 		query := `
 			INSERT INTO log_entries (
 				id, log_id, "order", exercise_name,
-				sets, reps, load_kg,
-				notes, video_object_key, started_at, finished_at, metadata
+				fields,
+				notes, video_object_key, started_at, finished_at
 			)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		`
 
-		_, err := tx.Exec(ctx, query,
+		_, err = tx.Exec(ctx, query,
 			entryID,
 			logID,
 			entries[i].Order,
 			entries[i].ExerciseName,
-			entries[i].Sets,
-			entries[i].Reps,
-			entries[i].LoadKg,
+			fieldsJSON,
 			entries[i].Notes,
 			entries[i].VideoObjectKey,
 			entries[i].StartedAt,
 			entries[i].FinishedAt,
-			entries[i].Metadata,
 		)
 		if err != nil {
 			slog.Error("Failed to insert log entry", "error", err)
@@ -157,8 +159,8 @@ func (r *logRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Log,
 func (r *logRepository) getEntriesForLog(ctx context.Context, logID uuid.UUID) ([]domain.LogEntry, error) {
 	query := `
 		SELECT id, log_id, "order", exercise_name,
-		       sets, reps, load_kg,
-		       notes, video_object_key, started_at, finished_at, metadata
+		       fields,
+		       notes, video_object_key, started_at, finished_at
 		FROM log_entries
 		WHERE log_id = $1
 		ORDER BY "order" ASC
@@ -173,26 +175,25 @@ func (r *logRepository) getEntriesForLog(ctx context.Context, logID uuid.UUID) (
 	entries := make([]domain.LogEntry, 0)
 	for rows.Next() {
 		var entry domain.LogEntry
-		var metadataRaw []byte
+		var fieldsRaw []byte
 		err := rows.Scan(
 			&entry.ID,
 			&entry.LogID,
 			&entry.Order,
 			&entry.ExerciseName,
-			&entry.Sets,
-			&entry.Reps,
-			&entry.LoadKg,
+			&fieldsRaw,
 			&entry.Notes,
 			&entry.VideoObjectKey,
 			&entry.StartedAt,
 			&entry.FinishedAt,
-			&metadataRaw,
 		)
 		if err != nil {
 			return nil, err
 		}
-		if len(metadataRaw) > 0 {
-			entry.Metadata = json.RawMessage(metadataRaw)
+		if len(fieldsRaw) > 0 {
+			if err := json.Unmarshal(fieldsRaw, &entry.Fields); err != nil {
+				slog.Error("Failed to unmarshal entry fields", "error", err)
+			}
 		}
 		entries = append(entries, entry)
 	}

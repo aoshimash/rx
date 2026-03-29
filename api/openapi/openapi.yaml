@@ -458,6 +458,27 @@ components:
   # Schemas
   # ========================================
   schemas:
+    FieldDef:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Field key used in the fields object (e.g., "load_kg", "rpe")
+        type:
+          type: string
+          enum: [text, number, select]
+          description: Input type for this field
+        options:
+          type: array
+          items:
+            type: string
+          description: Available options (only for type=select)
+
     # ========================================
     # Program
     # ========================================
@@ -489,6 +510,16 @@ components:
           type: object
           additionalProperties: true
           description: Free-form JSON metadata (e.g., generation parameters)
+        program_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldDef'
+          description: Field definitions for program session entries
+        log_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldDef'
+          description: Field definitions for log entries
         sessions:
           type: array
           items:
@@ -517,6 +548,14 @@ components:
         metadata:
           type: object
           additionalProperties: true
+        program_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldDef'
+        log_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldDef'
         sessions:
           type: array
           items:
@@ -540,6 +579,14 @@ components:
         metadata:
           type: object
           additionalProperties: true
+        program_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldDef'
+        log_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldDef'
         sessions:
           type: array
           items:
@@ -626,24 +673,13 @@ components:
           minLength: 1
           maxLength: 200
           description: Exercise name (plain string)
-        sets:
-          type: integer
-          minimum: 1
-        reps:
-          type: integer
-          minimum: 1
-        load_kg:
-          type: number
-          format: double
-          minimum: 0
-          description: Weight in kilograms (0.1 precision)
+        fields:
+          type: object
+          additionalProperties: true
+          description: Unified exercise data fields
         notes:
           type: string
           maxLength: 2000
-        metadata:
-          type: object
-          additionalProperties: true
-          description: Free-form JSON metadata
 
     ProgramSessionEntryCreate:
       type: object
@@ -658,22 +694,13 @@ components:
         order:
           type: integer
           minimum: 0
-        sets:
-          type: integer
-          minimum: 1
-        reps:
-          type: integer
-          minimum: 1
-        load_kg:
-          type: number
-          format: double
-          minimum: 0
+        fields:
+          type: object
+          additionalProperties: true
+          description: Unified exercise data fields
         notes:
           type: string
           maxLength: 2000
-        metadata:
-          type: object
-          additionalProperties: true
 
     ProgramListResponse:
       type: object
@@ -844,17 +871,10 @@ components:
           minLength: 1
           maxLength: 200
           description: Exercise name (plain string)
-        sets:
-          type: integer
-          minimum: 1
-        reps:
-          type: integer
-          minimum: 1
-        load_kg:
-          type: number
-          format: double
-          minimum: 0
-          description: Weight in kilograms (0.1 precision)
+        fields:
+          type: object
+          additionalProperties: true
+          description: Unified exercise data fields
         notes:
           type: string
           maxLength: 2000
@@ -870,10 +890,6 @@ components:
           type: string
           format: date-time
           description: When the exercise ended (optional)
-        metadata:
-          type: object
-          additionalProperties: true
-          description: Free-form JSON metadata
 
     LogEntryCreate:
       type: object
@@ -884,16 +900,10 @@ components:
           type: string
           minLength: 1
           maxLength: 200
-        sets:
-          type: integer
-          minimum: 1
-        reps:
-          type: integer
-          minimum: 1
-        load_kg:
-          type: number
-          format: double
-          minimum: 0
+        fields:
+          type: object
+          additionalProperties: true
+          description: Unified exercise data fields
         notes:
           type: string
           maxLength: 2000
@@ -906,9 +916,6 @@ components:
         finished_at:
           type: string
           format: date-time
-        metadata:
-          type: object
-          additionalProperties: true
 
     # ========================================
     # Pagination Response Types

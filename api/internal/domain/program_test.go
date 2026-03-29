@@ -24,8 +24,6 @@ func mustFormatDate(d DateOnly) string {
 
 func TestValidateProgram(t *testing.T) {
 	validProgram := func() *Program {
-		sets := 3
-		reps := 10
 		return &Program{
 			ID:     uuid.New(),
 			Name:   "Test Program",
@@ -41,8 +39,7 @@ func TestValidateProgram(t *testing.T) {
 							ID:           uuid.New(),
 							Order:        0,
 							ExerciseName: "Squat",
-							Sets:         &sets,
-							Reps:         &reps,
+							Fields:       map[string]interface{}{"sets": float64(3), "reps": float64(10)},
 						},
 					},
 				},

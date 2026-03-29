@@ -59,9 +59,9 @@ export function exportLogsToCSV(
         timeStr,
         sessionName,
         entry.exercise_name,
-        String(entry.sets ?? ''),
-        String(entry.reps ?? ''),
-        String(entry.load_kg ?? ''),
+        String((entry.fields?.sets as number | undefined) ?? ''),
+        String((entry.fields?.reps as number | undefined) ?? ''),
+        String((entry.fields?.load_kg as number | undefined) ?? ''),
         entry.notes || '',
       ]);
     }

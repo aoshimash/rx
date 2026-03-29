@@ -86,20 +86,40 @@ func ValidateProgramSessionEntry(e *ProgramSessionEntry) error {
 		}
 	}
 
-	if e.Sets != nil && *e.Sets <= 0 {
-		return &ValidationError{Field: "sets", Message: "sets must be greater than 0"}
-	}
-	if e.Reps != nil && *e.Reps <= 0 {
-		return &ValidationError{Field: "reps", Message: "reps must be greater than 0"}
-	}
-	if e.LoadKg != nil {
-		if *e.LoadKg < 0 {
-			return &ValidationError{
-				Field:   "load_kg",
-				Message: "load_kg must be greater than or equal to 0",
+	if v, ok := e.Fields["sets"]; ok {
+		switch val := v.(type) {
+		case float64:
+			if val <= 0 {
+				return &ValidationError{Field: "fields.sets", Message: "sets must be greater than 0"}
+			}
+		case int:
+			if val <= 0 {
+				return &ValidationError{Field: "fields.sets", Message: "sets must be greater than 0"}
 			}
 		}
-		*e.LoadKg = RoundLoad(*e.LoadKg)
+	}
+	if v, ok := e.Fields["reps"]; ok {
+		switch val := v.(type) {
+		case float64:
+			if val <= 0 {
+				return &ValidationError{Field: "fields.reps", Message: "reps must be greater than 0"}
+			}
+		case int:
+			if val <= 0 {
+				return &ValidationError{Field: "fields.reps", Message: "reps must be greater than 0"}
+			}
+		}
+	}
+	if v, ok := e.Fields["load_kg"]; ok {
+		if val, ok := v.(float64); ok {
+			if val < 0 {
+				return &ValidationError{
+					Field:   "fields.load_kg",
+					Message: "load_kg must be greater than or equal to 0",
+				}
+			}
+			e.Fields["load_kg"] = RoundLoad(val)
+		}
 	}
 	if e.Notes != nil {
 		if err := ValidateStringLength("notes", *e.Notes, 0, 2000); err != nil {
@@ -237,20 +257,40 @@ func ValidateLogEntry(e *LogEntry) error {
 		}
 	}
 
-	if e.Sets != nil && *e.Sets <= 0 {
-		return &ValidationError{Field: "sets", Message: "sets must be greater than 0"}
-	}
-	if e.Reps != nil && *e.Reps <= 0 {
-		return &ValidationError{Field: "reps", Message: "reps must be greater than 0"}
-	}
-	if e.LoadKg != nil {
-		if *e.LoadKg < 0 {
-			return &ValidationError{
-				Field:   "load_kg",
-				Message: "load_kg must be greater than or equal to 0",
+	if v, ok := e.Fields["sets"]; ok {
+		switch val := v.(type) {
+		case float64:
+			if val <= 0 {
+				return &ValidationError{Field: "fields.sets", Message: "sets must be greater than 0"}
+			}
+		case int:
+			if val <= 0 {
+				return &ValidationError{Field: "fields.sets", Message: "sets must be greater than 0"}
 			}
 		}
-		*e.LoadKg = RoundLoad(*e.LoadKg)
+	}
+	if v, ok := e.Fields["reps"]; ok {
+		switch val := v.(type) {
+		case float64:
+			if val <= 0 {
+				return &ValidationError{Field: "fields.reps", Message: "reps must be greater than 0"}
+			}
+		case int:
+			if val <= 0 {
+				return &ValidationError{Field: "fields.reps", Message: "reps must be greater than 0"}
+			}
+		}
+	}
+	if v, ok := e.Fields["load_kg"]; ok {
+		if val, ok := v.(float64); ok {
+			if val < 0 {
+				return &ValidationError{
+					Field:   "fields.load_kg",
+					Message: "load_kg must be greater than or equal to 0",
+				}
+			}
+			e.Fields["load_kg"] = RoundLoad(val)
+		}
 	}
 	if e.Notes != nil {
 		if err := ValidateStringLength("notes", *e.Notes, 0, 2000); err != nil {

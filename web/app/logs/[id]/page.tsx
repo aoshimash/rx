@@ -121,10 +121,10 @@ export default function LogDetailPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-xs text-muted-foreground">
-                    {group.entries.some((e) => e.metadata?.label) && (
+                    {group.entries.some((e) => e.fields?.label) && (
                       <th className="text-left font-normal pb-1 w-16" />
                     )}
-                    {group.entries.some((e) => e.load_kg != null) && (
+                    {group.entries.some((e) => e.fields?.load_kg != null) && (
                       <th className="text-right font-normal pb-1 pr-4">Load</th>
                     )}
                     <th className="text-right font-normal pb-1 pr-4">Reps</th>
@@ -133,19 +133,22 @@ export default function LogDetailPage() {
                 </thead>
                 <tbody>
                   {group.entries.map((entry) => {
-                    const label = entry.metadata?.label as string | undefined;
-                    const hasLabel = group.entries.some((e) => e.metadata?.label);
-                    const hasLoad = group.entries.some((e) => e.load_kg != null);
+                    const label = entry.fields?.label as string | undefined;
+                    const hasLabel = group.entries.some((e) => e.fields?.label);
+                    const hasLoad = group.entries.some((e) => e.fields?.load_kg != null);
+                    const loadKg = entry.fields?.load_kg as number | null | undefined;
+                    const reps = entry.fields?.reps as number | null | undefined;
+                    const sets = entry.fields?.sets as number | null | undefined;
                     return (
                       <tr key={entry.id} className="text-muted-foreground">
                         {hasLabel && <td className="text-xs pr-3 py-0.5">{label ?? ''}</td>}
                         {hasLoad && (
                           <td className="text-right tabular-nums pr-4 py-0.5">
-                            {entry.load_kg != null ? `${entry.load_kg}kg` : '—'}
+                            {loadKg != null ? `${loadKg}kg` : '—'}
                           </td>
                         )}
-                        <td className="text-right tabular-nums pr-4 py-0.5">{entry.reps ?? '—'}</td>
-                        <td className="text-right tabular-nums pr-4 py-0.5">{entry.sets ?? '—'}</td>
+                        <td className="text-right tabular-nums pr-4 py-0.5">{reps ?? '—'}</td>
+                        <td className="text-right tabular-nums pr-4 py-0.5">{sets ?? '—'}</td>
                       </tr>
                     );
                   })}
