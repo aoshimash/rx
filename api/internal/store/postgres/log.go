@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -230,7 +231,7 @@ func (r *logRepository) getEntriesForLog(ctx context.Context, logID uuid.UUID) (
 		}
 		if len(fieldsRaw) > 0 {
 			if err := json.Unmarshal(fieldsRaw, &entry.Fields); err != nil {
-				slog.Error("Failed to unmarshal entry fields", "error", err)
+				return nil, fmt.Errorf("unmarshal fields for entry %s: %w", entry.ID, err)
 			}
 		}
 		entries = append(entries, entry)
@@ -283,7 +284,7 @@ func (r *logRepository) getSetsForEntry(ctx context.Context, entryID uuid.UUID) 
 		}
 		if len(fieldsRaw) > 0 {
 			if err := json.Unmarshal(fieldsRaw, &s.Fields); err != nil {
-				slog.Error("Failed to unmarshal log set fields", "error", err)
+				return nil, fmt.Errorf("unmarshal fields for set %s: %w", s.ID, err)
 			}
 		}
 		sets = append(sets, s)

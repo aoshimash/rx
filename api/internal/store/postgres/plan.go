@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"strings"
 
@@ -135,7 +136,7 @@ func (r *planRepository) getEntriesForPlanSession(ctx context.Context, sessionID
 		}
 		if len(fieldsRaw) > 0 {
 			if err := json.Unmarshal(fieldsRaw, &entry.Fields); err != nil {
-				slog.Error("Failed to unmarshal plan entry fields", "error", err)
+				return nil, fmt.Errorf("unmarshal fields for entry %s: %w", entry.ID, err)
 			}
 		}
 		entries = append(entries, entry)
