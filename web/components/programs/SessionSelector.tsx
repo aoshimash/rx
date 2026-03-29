@@ -95,7 +95,7 @@ export function SessionSelector({
               <Checkbox
                 id={`session-${session.id}`}
                 checked={selected.has(session.id)}
-                onCheckedChange={() => toggleSession(session.id)}
+                onCheckedChange={() => {}}
               />
               <span className="font-medium text-sm flex-1">{session.session_name}</span>
               <span className="text-xs text-muted-foreground">

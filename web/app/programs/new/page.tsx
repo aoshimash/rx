@@ -70,7 +70,7 @@ export default function NewProgramPage() {
       { name, notes: notes || undefined, metadata, sessions },
       {
         onSuccess: () => {
-          router.push('/programs');
+          router.push('/');
         },
         onError: (err) => {
           const isConflict =
