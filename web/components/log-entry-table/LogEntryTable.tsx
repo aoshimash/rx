@@ -98,7 +98,7 @@ export function LogEntryTable({
     setIsSaving(true);
     try {
       const logEntries: LogEntryCreate[] = validEntries.map((entry) => {
-        const fields: Record<string, unknown> = {};
+        const fields: Record<string, unknown> = { ...entry.fields };
         if (entry.sets !== undefined) fields.sets = entry.sets;
         if (entry.reps !== undefined) fields.reps = entry.reps;
         if (entry.load_kg !== undefined) fields.load_kg = entry.load_kg;

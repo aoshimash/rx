@@ -11,13 +11,14 @@ function convertEntryToProgramEntry(
   entry: ProgramFormEntry,
   order: number
 ): ProgramSessionEntryCreate {
-  const programEntry: ProgramSessionEntryCreate = {
+  const fields = entry.metadata?.label
+    ? { ...entry.fields, label: entry.metadata.label }
+    : entry.fields;
+  return {
     exercise_name: entry.exercise_name,
     order,
-    fields: entry.fields,
+    fields,
   };
-
-  return programEntry;
 }
 
 function entriesToSessions(entries: ProgramFormEntry[]): ProgramSessionCreate[] {

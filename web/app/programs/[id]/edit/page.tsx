@@ -19,6 +19,7 @@ function programToEntries(program: Program): ProgramFormEntry[] {
     for (const entry of session.entries) {
       const metadata: Record<string, unknown> = { session: session.session_name };
       if (session.date) metadata.date = session.date;
+      if (entry.fields?.label) metadata.label = entry.fields.label;
 
       entries.push({
         exercise_name: entry.exercise_name,
@@ -38,13 +39,14 @@ function convertEntryToProgramEntry(
   entry: ProgramFormEntry,
   order: number
 ): ProgramSessionEntryCreate {
-  const programEntry: ProgramSessionEntryCreate = {
+  const fields = entry.metadata?.label
+    ? { ...entry.fields, label: entry.metadata.label }
+    : entry.fields;
+  return {
     exercise_name: entry.exercise_name,
     order,
-    fields: entry.fields,
+    fields,
   };
-
-  return programEntry;
 }
 
 function entriesToProgramUpdate(
