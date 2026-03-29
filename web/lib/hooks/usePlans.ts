@@ -30,7 +30,17 @@ export function useAddPlanSessions() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (sessions: PlanSessionCreate[]) => plansApi.addSessions(sessions),
+    mutationFn: async (sessions: PlanSessionCreate[]) => {
+      try {
+        return await plansApi.addSessions(sessions);
+      } catch (error) {
+        if (error instanceof HTTPError && error.response.status === 404) {
+          // Plan doesn't exist yet — create it with the sessions
+          return await plansApi.create({ sessions });
+        }
+        throw error;
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['plan'] });
     },
