@@ -25,9 +25,8 @@ func mustFormatDate(d DateOnly) string {
 func TestValidateProgram(t *testing.T) {
 	validProgram := func() *Program {
 		return &Program{
-			ID:     uuid.New(),
-			Name:   "Test Program",
-			Status: ProgramStatusCreated,
+			ID:   uuid.New(),
+			Name: "Test Program",
 			Sessions: []ProgramSession{
 				{
 					ID:          uuid.New(),
@@ -67,9 +66,8 @@ func TestValidateProgram(t *testing.T) {
 
 	t.Run("program with no sessions is invalid", func(t *testing.T) {
 		p := &Program{
-			ID:     uuid.New(),
-			Name:   "Empty Program",
-			Status: ProgramStatusCreated,
+			ID:   uuid.New(),
+			Name: "Empty Program",
 		}
 		err := ValidateProgram(p)
 		assert.Error(t, err)
@@ -94,75 +92,55 @@ func TestValidateProgram(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("valid with ongoing status", func(t *testing.T) {
+	t.Run("valid program with groups", func(t *testing.T) {
 		p := validProgram()
-		p.Status = ProgramStatusOngoing
+		blockID := uuid.New()
+		weekID := uuid.New()
+		p.Groups = []ProgramGroup{
+			{
+				ID:        blockID,
+				ProgramID: p.ID,
+				Name:      "Block 1",
+				Order:     0,
+			},
+			{
+				ID:            weekID,
+				ProgramID:     p.ID,
+				ParentGroupID: &blockID,
+				Name:          "Week 1",
+				Order:         0,
+			},
+		}
+		p.Sessions[0].GroupID = &weekID
 		err := ValidateProgram(p)
 		assert.NoError(t, err)
 	})
 
-	t.Run("valid with completed status", func(t *testing.T) {
+	t.Run("invalid group in program", func(t *testing.T) {
 		p := validProgram()
-		p.Status = ProgramStatusCompleted
-		err := ValidateProgram(p)
-		assert.NoError(t, err)
-	})
-
-	t.Run("valid with cancelled status", func(t *testing.T) {
-		p := validProgram()
-		p.Status = ProgramStatusCancelled
-		err := ValidateProgram(p)
-		assert.NoError(t, err)
-	})
-
-	t.Run("invalid status", func(t *testing.T) {
-		p := validProgram()
-		p.Status = "invalid"
+		p.Groups = []ProgramGroup{
+			{
+				ID:        uuid.New(),
+				ProgramID: p.ID,
+				Name:      "", // invalid: empty name
+				Order:     0,
+			},
+		}
 		err := ValidateProgram(p)
 		assert.Error(t, err)
 	})
 
-	t.Run("old active status is invalid", func(t *testing.T) {
+	t.Run("group depth exceeded in program", func(t *testing.T) {
 		p := validProgram()
-		p.Status = "active"
+		id1 := uuid.New()
+		id2 := uuid.New()
+		id3 := uuid.New()
+		p.Groups = []ProgramGroup{
+			{ID: id1, ProgramID: p.ID, Name: "Level 0", Order: 0},
+			{ID: id2, ProgramID: p.ID, ParentGroupID: &id1, Name: "Level 1", Order: 0},
+			{ID: id3, ProgramID: p.ID, ParentGroupID: &id2, Name: "Level 2", Order: 0},
+		}
 		err := ValidateProgram(p)
-		assert.Error(t, err)
-	})
-}
-
-func TestValidateProgramStatusTransition(t *testing.T) {
-	t.Run("created to ongoing is valid", func(t *testing.T) {
-		err := ValidateProgramStatusTransition(ProgramStatusCreated, ProgramStatusOngoing)
-		assert.NoError(t, err)
-	})
-
-	t.Run("ongoing to completed is valid", func(t *testing.T) {
-		err := ValidateProgramStatusTransition(ProgramStatusOngoing, ProgramStatusCompleted)
-		assert.NoError(t, err)
-	})
-
-	t.Run("ongoing to cancelled is valid", func(t *testing.T) {
-		err := ValidateProgramStatusTransition(ProgramStatusOngoing, ProgramStatusCancelled)
-		assert.NoError(t, err)
-	})
-
-	t.Run("created to completed is invalid", func(t *testing.T) {
-		err := ValidateProgramStatusTransition(ProgramStatusCreated, ProgramStatusCompleted)
-		assert.Error(t, err)
-	})
-
-	t.Run("completed to ongoing is invalid", func(t *testing.T) {
-		err := ValidateProgramStatusTransition(ProgramStatusCompleted, ProgramStatusOngoing)
-		assert.Error(t, err)
-	})
-
-	t.Run("cancelled to ongoing is valid", func(t *testing.T) {
-		err := ValidateProgramStatusTransition(ProgramStatusCancelled, ProgramStatusOngoing)
-		assert.NoError(t, err)
-	})
-
-	t.Run("cancelled to created is invalid", func(t *testing.T) {
-		err := ValidateProgramStatusTransition(ProgramStatusCancelled, ProgramStatusCreated)
 		assert.Error(t, err)
 	})
 }
@@ -188,3 +166,4 @@ func TestDateOnly(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+

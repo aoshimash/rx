@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // RoundLoad rounds a weight value to 0.1kg precision.
@@ -60,6 +62,80 @@ func ValidateStringLength(field, value string, min, max int) error {
 			Message: fmt.Sprintf("string length must be between %d and %d characters", min, max),
 		}
 	}
+	return nil
+}
+
+// ValidateProgramGroup validates a ProgramGroup entity.
+func ValidateProgramGroup(g *ProgramGroup) error {
+	if g == nil {
+		return &ValidationError{
+			Field:   "program_group",
+			Message: "program_group cannot be nil",
+		}
+	}
+
+	if err := ValidateRequiredString("name", g.Name); err != nil {
+		return err
+	}
+	if err := ValidateStringLength("name", g.Name, 1, 200); err != nil {
+		return err
+	}
+
+	if g.Order < 0 {
+		return &ValidationError{
+			Field:   "order",
+			Message: "order must be greater than or equal to 0",
+		}
+	}
+
+	if g.Notes != nil {
+		if err := ValidateStringLength("notes", *g.Notes, 0, 5000); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ValidateGroupDepths walks the parent chains of all groups and rejects any
+// group whose nesting depth reaches MaxGroupDepth or beyond.
+// Depth 0 = top-level (no parent), depth 1 = child of a top-level group, etc.
+func ValidateGroupDepths(groups []ProgramGroup) error {
+	byID := make(map[uuid.UUID]*ProgramGroup, len(groups))
+	for i := range groups {
+		byID[groups[i].ID] = &groups[i]
+	}
+
+	for i := range groups {
+		depth := 0
+		current := &groups[i]
+		visited := make(map[uuid.UUID]bool)
+		for current.ParentGroupID != nil {
+			if visited[current.ID] {
+				return &ValidationError{
+					Field:   fmt.Sprintf("groups[%d]", i),
+					Message: "circular parent reference detected",
+				}
+			}
+			visited[current.ID] = true
+			parent, ok := byID[*current.ParentGroupID]
+			if !ok {
+				return &ValidationError{
+					Field:   fmt.Sprintf("groups[%d]", i),
+					Message: fmt.Sprintf("parent_group_id %s not found", current.ParentGroupID),
+				}
+			}
+			depth++
+			current = parent
+		}
+		if depth >= MaxGroupDepth {
+			return &ValidationError{
+				Field:   fmt.Sprintf("groups[%d]", i),
+				Message: fmt.Sprintf("group nesting depth %d exceeds maximum allowed depth of %d", depth, MaxGroupDepth-1),
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -187,17 +263,22 @@ func ValidateProgram(p *Program) error {
 		return err
 	}
 
-	if p.Status != ProgramStatusCreated && p.Status != ProgramStatusOngoing && p.Status != ProgramStatusCompleted && p.Status != ProgramStatusCancelled {
-		return &ValidationError{
-			Field:   "status",
-			Message: "status must be 'created', 'ongoing', 'completed', or 'cancelled'",
-		}
-	}
-
 	if p.Notes != nil {
 		if err := ValidateStringLength("notes", *p.Notes, 0, 5000); err != nil {
 			return err
 		}
+	}
+
+	for i := range p.Groups {
+		if err := ValidateProgramGroup(&p.Groups[i]); err != nil {
+			return &ValidationError{
+				Field:   fmt.Sprintf("groups[%d]", i),
+				Message: err.Error(),
+			}
+		}
+	}
+	if err := ValidateGroupDepths(p.Groups); err != nil {
+		return err
 	}
 
 	if len(p.Sessions) == 0 {
