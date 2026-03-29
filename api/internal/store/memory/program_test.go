@@ -24,7 +24,7 @@ func TestProgramMemoryStore_ExistsByName(t *testing.T) {
 		},
 		{
 			name:            "returns true after create",
-			programToCreate: &domain.Program{Name: "Test", Status: domain.ProgramStatusCreated},
+			programToCreate: &domain.Program{Name: "Test"},
 			queryName:       "Test",
 			wantExists:      true,
 		},
@@ -44,4 +44,28 @@ func TestProgramMemoryStore_ExistsByName(t *testing.T) {
 			assert.Equal(t, tt.wantExists, exists)
 		})
 	}
+}
+
+func TestProgramMemoryStore_List(t *testing.T) {
+	store := NewProgramRepository()
+	ctx := context.Background()
+
+	// Create some programs
+	for _, name := range []string{"A", "B", "C"} {
+		require.NoError(t, store.Create(ctx, &domain.Program{Name: name}))
+	}
+
+	t.Run("list all", func(t *testing.T) {
+		programs, _, _, err := store.List(ctx, 100, "")
+		require.NoError(t, err)
+		assert.Len(t, programs, 3)
+	})
+
+	t.Run("list with limit", func(t *testing.T) {
+		programs, cursor, hasMore, err := store.List(ctx, 2, "")
+		require.NoError(t, err)
+		assert.Len(t, programs, 2)
+		assert.True(t, hasMore)
+		assert.NotEmpty(t, cursor)
+	})
 }

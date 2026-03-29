@@ -10,7 +10,6 @@ import (
 	"github.com/aoshimash/rx/api/internal/handler"
 	"github.com/aoshimash/rx/api/internal/middleware"
 	"github.com/aoshimash/rx/api/internal/repository"
-	"github.com/aoshimash/rx/api/internal/seed"
 	"github.com/aoshimash/rx/api/internal/storage"
 	s3storage "github.com/aoshimash/rx/api/internal/storage/s3"
 	"github.com/aoshimash/rx/api/internal/store/memory"
@@ -30,6 +29,7 @@ func main() {
 	// Initialize repositories based on storage type
 	var programRepo repository.ProgramRepository
 	var logRepo repository.LogRepository
+	var planRepo repository.PlanRepository
 
 	ctx := context.Background()
 
@@ -45,16 +45,15 @@ func main() {
 		slog.Info("Using PostgreSQL storage backend")
 		programRepo = postgresstore.NewProgramRepository(db.Pool())
 		logRepo = postgresstore.NewLogRepository(db.Pool())
+		planRepo = memory.NewPlanRepository() // TODO: implement postgres plan repo
 	} else {
 		slog.Info("Using in-memory storage backend")
 		programRepo = memory.NewProgramRepository()
 		logRepo = memory.NewLogRepository()
+		planRepo = memory.NewPlanRepository()
 
-		if err := seed.Run(ctx, programRepo, logRepo); err != nil {
-			slog.Error("Failed to seed development data", "error", err)
-			os.Exit(1)
-		}
-		slog.Info("Development seed data loaded")
+		// Seed data is disabled until seed.go is updated for new domain model (Task 14)
+		slog.Info("Development seed data skipped (pending Task 14 update)")
 	}
 
 	// Initialize storage provider (optional)
@@ -82,8 +81,9 @@ func main() {
 	}
 
 	// Initialize handlers
-	programHandler := handler.NewProgramHandler(programRepo, logRepo)
+	programHandler := handler.NewProgramHandler(programRepo)
 	logHandler := handler.NewLogHandler(logRepo, programRepo)
+	planHandler := handler.NewPlanHandler(planRepo, programRepo)
 	videoHandler := handler.NewVideoHandler(storageProvider, logger)
 	healthHandler := handler.NewHealthHandler(logRepo)
 
@@ -129,8 +129,16 @@ func main() {
 		r.Get("/programs/{id}", programHandler.GetProgram)
 		r.Put("/programs/{id}", programHandler.UpdateProgram)
 		r.Delete("/programs/{id}", programHandler.DeleteProgram)
-		r.Patch("/programs/{id}/status", programHandler.UpdateProgramStatus)
-		r.Get("/programs/{id}/logged-sessions", programHandler.ListLoggedSessions)
+
+		// Plan routes
+		r.Get("/plan", planHandler.GetPlan)
+		r.Post("/plan", planHandler.CreatePlan)
+		r.Put("/plan", planHandler.UpdatePlan)
+		r.Delete("/plan", planHandler.DeletePlan)
+		r.Post("/plan/sessions", planHandler.AddPlanSessions)
+		r.Put("/plan/sessions/{session_id}", planHandler.UpdatePlanSession)
+		r.Delete("/plan/sessions/{session_id}", planHandler.DeletePlanSession)
+		r.Post("/plan/expand-program/{program_id}", planHandler.ExpandProgram)
 
 		// Log routes
 		r.Post("/logs", logHandler.CreateLog)

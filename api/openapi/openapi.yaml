@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Rx API
-  version: 0.3.0
+  version: 0.4.0
 servers:
   - url: http://localhost:8080/api/v1
 
@@ -18,12 +18,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/After'
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [created, ongoing, completed, cancelled]
-          description: Filter programs by status
       responses:
         '200':
           description: Paginated list of programs
@@ -78,7 +72,7 @@ paths:
     put:
       summary: Update program content
       description: |
-        Replaces the program's name, notes, metadata, and session/entry structure.
+        Replaces the program's name, notes, and session/entry structure.
         All sessions must be provided — this is a full replacement, not a partial update.
       operationId: updateProgram
       tags: [Program]
@@ -115,31 +109,105 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /programs/{id}/status:
-    parameters:
-      - $ref: '#/components/parameters/ProgramId'
-    patch:
-      summary: Update program status
-      operationId: updateProgramStatus
-      tags: [Program]
+  /plan:
+    get:
+      summary: Get user's plan
+      operationId: getPlan
+      tags: [Plan]
+      responses:
+        '200':
+          description: Plan found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      summary: Create plan
+      operationId: createPlan
+      tags: [Plan]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanCreate'
+      responses:
+        '201':
+          description: Plan created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    put:
+      summary: Update plan
+      operationId: updatePlan
+      tags: [Plan]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanUpdate'
+      responses:
+        '200':
+          description: Plan updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete plan
+      operationId: deletePlan
+      tags: [Plan]
+      responses:
+        '204':
+          description: Plan deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /plan/sessions:
+    post:
+      summary: Add sessions to plan
+      operationId: addPlanSessions
+      tags: [Plan]
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [status]
+              required: [sessions]
               properties:
-                status:
-                  type: string
-                  enum: [created, ongoing, completed, cancelled]
+                sessions:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/PlanSessionCreate'
+                  minItems: 1
       responses:
         '200':
-          description: Status updated
+          description: Sessions added, returns updated plan
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Program'
+                $ref: '#/components/schemas/Plan'
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -147,24 +215,73 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /programs/{id}/logged-sessions:
+  /plan/sessions/{session_id}:
     parameters:
-      - $ref: '#/components/parameters/ProgramId'
-    get:
-      summary: List distinct logged session names for a program
-      description: |
-        Returns an array of distinct session names that have at least one log entry
-        for the given program. Used by the frontend to determine session completion status
-        without pagination limits.
-      operationId: listLoggedSessions
-      tags: [Program]
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Plan session ID
+    put:
+      summary: Update a plan session
+      operationId: updatePlanSession
+      tags: [Plan]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanSessionCreate'
       responses:
         '200':
-          description: Distinct logged session names
+          description: Session updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LoggedSessionsResponse'
+                $ref: '#/components/schemas/PlanSession'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Remove plan session
+      operationId: deletePlanSession
+      tags: [Plan]
+      responses:
+        '204':
+          description: Session removed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /plan/expand-program/{program_id}:
+    parameters:
+      - name: program_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Program ID to expand into plan
+    post:
+      summary: Expand program into plan
+      description: |
+        Loads the specified program and converts its sessions into plan sessions,
+        appending them to the user's existing plan (or creating one if none exists).
+      operationId: expandProgram
+      tags: [Plan]
+      responses:
+        '200':
+          description: Program expanded into plan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -487,7 +604,6 @@ components:
       required:
         - id
         - name
-        - status
         - sessions
         - created_at
         - updated_at
@@ -499,17 +615,9 @@ components:
           type: string
           minLength: 1
           maxLength: 200
-        status:
-          type: string
-          enum: [created, ongoing, completed, cancelled]
-          description: created = registered not yet started, ongoing = in progress, completed = all sessions logged and confirmed, cancelled = stopped mid-way
         notes:
           type: string
           maxLength: 5000
-        metadata:
-          type: object
-          additionalProperties: true
-          description: Free-form JSON metadata (e.g., generation parameters)
         program_fields:
           type: array
           items:
@@ -520,6 +628,11 @@ components:
           items:
             $ref: '#/components/schemas/FieldDef'
           description: Field definitions for log entries
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProgramGroup'
+          description: Hierarchical grouping of sessions
         sessions:
           type: array
           items:
@@ -545,9 +658,6 @@ components:
         notes:
           type: string
           maxLength: 5000
-        metadata:
-          type: object
-          additionalProperties: true
         program_fields:
           type: array
           items:
@@ -556,6 +666,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FieldDef'
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProgramGroupCreate'
+          description: Hierarchical grouping of sessions
         sessions:
           type: array
           items:
@@ -576,9 +691,6 @@ components:
         notes:
           type: string
           maxLength: 5000
-        metadata:
-          type: object
-          additionalProperties: true
         program_fields:
           type: array
           items:
@@ -587,12 +699,65 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FieldDef'
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProgramGroupCreate'
+          description: Hierarchical grouping of sessions
         sessions:
           type: array
           items:
             $ref: '#/components/schemas/ProgramSessionCreate'
           minItems: 1
           maxItems: 100
+
+    ProgramGroup:
+      type: object
+      required:
+        - id
+        - program_id
+        - name
+        - order
+      properties:
+        id:
+          type: string
+          format: uuid
+        program_id:
+          type: string
+          format: uuid
+        parent_group_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        order:
+          type: integer
+          minimum: 0
+        notes:
+          type: string
+          maxLength: 5000
+
+    ProgramGroupCreate:
+      type: object
+      required:
+        - name
+        - order
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        order:
+          type: integer
+          minimum: 0
+        parent_group_id:
+          type: string
+          format: uuid
+        notes:
+          type: string
+          maxLength: 5000
 
     ProgramSession:
       type: object
@@ -609,6 +774,10 @@ components:
         program_id:
           type: string
           format: uuid
+        group_id:
+          type: string
+          format: uuid
+          description: Optional reference to a ProgramGroup
         session_name:
           type: string
           minLength: 1
@@ -641,6 +810,10 @@ components:
         order:
           type: integer
           minimum: 0
+        group_id:
+          type: string
+          format: uuid
+          description: Optional reference to a ProgramGroup
         date:
           type: string
           format: date
@@ -718,43 +891,185 @@ components:
         has_more:
           type: boolean
 
-    LoggedSession:
+    # ========================================
+    # Plan
+    # ========================================
+    Plan:
       type: object
       required:
-        - session_name
-        - log_id
-        - performed_at
+        - id
+        - sessions
+        - created_at
+        - updated_at
       properties:
-        session_name:
-          type: string
-        log_id:
+        id:
           type: string
           format: uuid
-        performed_at:
+        name:
           type: string
-          format: date-time
-          description: Date and time the session was performed
-        started_at:
+          maxLength: 200
+        notes:
           type: string
-          format: date-time
-          nullable: true
-          description: Start time of the session, used to calculate duration
-        finished_at:
+          maxLength: 5000
+        program_id:
           type: string
-          format: date-time
-          nullable: true
-          description: End time of the session, used to calculate duration
-
-    LoggedSessionsResponse:
-      type: object
-      required:
-        - sessions
-      properties:
+          format: uuid
+          description: Optional reference to the source program
         sessions:
           type: array
           items:
-            $ref: '#/components/schemas/LoggedSession'
-          description: Sessions that have a log for this program, each including the log ID for navigation
+            $ref: '#/components/schemas/PlanSession'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PlanCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        notes:
+          type: string
+          maxLength: 5000
+        program_id:
+          type: string
+          format: uuid
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanSessionCreate'
+
+    PlanUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        notes:
+          type: string
+          maxLength: 5000
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanSessionCreate'
+
+    PlanSession:
+      type: object
+      required:
+        - id
+        - plan_id
+        - session_name
+        - order
+        - entries
+      properties:
+        id:
+          type: string
+          format: uuid
+        plan_id:
+          type: string
+          format: uuid
+        session_name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        order:
+          type: integer
+          minimum: 0
+        date:
+          type: string
+          format: date
+          description: Scheduled date (YYYY-MM-DD, optional)
+        source_program_id:
+          type: string
+          format: uuid
+          description: Program this session was derived from
+        source_session_id:
+          type: string
+          format: uuid
+          description: Original program session ID
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanSessionEntry'
+
+    PlanSessionCreate:
+      type: object
+      required:
+        - session_name
+        - order
+      properties:
+        session_name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        order:
+          type: integer
+          minimum: 0
+        date:
+          type: string
+          format: date
+        source_program_id:
+          type: string
+          format: uuid
+        source_session_id:
+          type: string
+          format: uuid
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanSessionEntryCreate'
+
+    PlanSessionEntry:
+      type: object
+      required:
+        - id
+        - session_id
+        - order
+        - exercise_name
+      properties:
+        id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        order:
+          type: integer
+          minimum: 0
+        exercise_name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        fields:
+          type: object
+          additionalProperties: true
+        notes:
+          type: string
+          maxLength: 2000
+
+    PlanSessionEntryCreate:
+      type: object
+      required:
+        - exercise_name
+        - order
+      properties:
+        exercise_name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        order:
+          type: integer
+          minimum: 0
+        fields:
+          type: object
+          additionalProperties: true
+        notes:
+          type: string
+          maxLength: 2000
 
     # ========================================
     # Log
@@ -792,6 +1107,10 @@ components:
           type: object
           additionalProperties: true
           description: Free-form JSON metadata (e.g., body_weight_kg, fatigue_level)
+        plan_snapshot:
+          type: object
+          additionalProperties: true
+          description: Snapshot of the plan session at the time of logging
         started_at:
           type: string
           format: date-time
@@ -842,6 +1161,10 @@ components:
         metadata:
           type: object
           additionalProperties: true
+        plan_snapshot:
+          type: object
+          additionalProperties: true
+          description: Snapshot of the plan session at the time of logging
         entries:
           type: array
           items:
@@ -875,6 +1198,11 @@ components:
           type: object
           additionalProperties: true
           description: Unified exercise data fields
+        sets:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogSet'
+          description: Individual sets performed for this exercise
         notes:
           type: string
           maxLength: 2000
@@ -904,6 +1232,11 @@ components:
           type: object
           additionalProperties: true
           description: Unified exercise data fields
+        sets:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogSetCreate'
+          description: Individual sets for this exercise
         notes:
           type: string
           maxLength: 2000
@@ -916,6 +1249,53 @@ components:
         finished_at:
           type: string
           format: date-time
+
+    LogSet:
+      type: object
+      required:
+        - id
+        - entry_id
+        - set_number
+        - fields
+      properties:
+        id:
+          type: string
+          format: uuid
+        entry_id:
+          type: string
+          format: uuid
+        set_number:
+          type: integer
+          minimum: 1
+        fields:
+          type: object
+          additionalProperties: true
+          description: Set-level data (e.g., reps, load_kg, rpe)
+        video_url:
+          type: string
+          maxLength: 2000
+        notes:
+          type: string
+          maxLength: 2000
+
+    LogSetCreate:
+      type: object
+      required:
+        - set_number
+        - fields
+      properties:
+        set_number:
+          type: integer
+          minimum: 1
+        fields:
+          type: object
+          additionalProperties: true
+        video_url:
+          type: string
+          maxLength: 2000
+        notes:
+          type: string
+          maxLength: 2000
 
     # ========================================
     # Pagination Response Types

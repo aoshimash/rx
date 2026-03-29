@@ -11,26 +11,36 @@ import (
 	"github.com/google/uuid"
 )
 
-// logRequest represents the request body for creating/updating a log
-type logRequest struct {
-	ProgramID   *string           `json:"program_id,omitempty"`
-	SessionName *string           `json:"session_name,omitempty"`
-	PerformedAt string            `json:"performed_at"`
-	StartedAt   *string           `json:"started_at,omitempty"`
-	FinishedAt  *string           `json:"finished_at,omitempty"`
-	Notes       *string           `json:"notes,omitempty"`
-	Metadata    json.RawMessage   `json:"metadata,omitempty"`
-	Entries     []logEntryRequest `json:"entries"`
+// logSetRequest represents a log set in the request body
+type logSetRequest struct {
+	SetNumber int                    `json:"set_number"`
+	Fields    map[string]interface{} `json:"fields"`
+	VideoURL  *string                `json:"video_url,omitempty"`
+	Notes     *string                `json:"notes,omitempty"`
 }
 
 // logEntryRequest represents a log entry in the request body
 type logEntryRequest struct {
 	ExerciseName   string                 `json:"exercise_name"`
 	Fields         map[string]interface{} `json:"fields,omitempty"`
+	Sets           []logSetRequest        `json:"sets,omitempty"`
 	Notes          *string                `json:"notes,omitempty"`
 	VideoObjectKey *string                `json:"video_object_key,omitempty"`
 	StartedAt      *string                `json:"started_at,omitempty"`
 	FinishedAt     *string                `json:"finished_at,omitempty"`
+}
+
+// logRequest represents the request body for creating/updating a log
+type logRequest struct {
+	ProgramID    *string           `json:"program_id,omitempty"`
+	SessionName  *string           `json:"session_name,omitempty"`
+	PerformedAt  string            `json:"performed_at"`
+	StartedAt    *string           `json:"started_at,omitempty"`
+	FinishedAt   *string           `json:"finished_at,omitempty"`
+	Notes        *string           `json:"notes,omitempty"`
+	Metadata     json.RawMessage   `json:"metadata,omitempty"`
+	PlanSnapshot json.RawMessage   `json:"plan_snapshot,omitempty"`
+	Entries      []logEntryRequest `json:"entries"`
 }
 
 // LogHandler handles Log-related HTTP requests
@@ -58,10 +68,11 @@ func (h *LogHandler) parseLogRequest(req *logRequest) (*domain.Log, error) {
 	}
 
 	log := &domain.Log{
-		SessionName: req.SessionName,
-		PerformedAt: performedAt,
-		Notes:       req.Notes,
-		Metadata:    req.Metadata,
+		SessionName:  req.SessionName,
+		PerformedAt:  performedAt,
+		Notes:        req.Notes,
+		Metadata:     req.Metadata,
+		PlanSnapshot: req.PlanSnapshot,
 	}
 
 	if req.StartedAt != nil {
@@ -105,6 +116,20 @@ func (h *LogHandler) parseLogRequest(req *logRequest) (*domain.Log, error) {
 			Fields:         entryReq.Fields,
 			Notes:          entryReq.Notes,
 			VideoObjectKey: entryReq.VideoObjectKey,
+		}
+
+		// Parse sets
+		if len(entryReq.Sets) > 0 {
+			sets := make([]domain.LogSet, len(entryReq.Sets))
+			for j, setReq := range entryReq.Sets {
+				sets[j] = domain.LogSet{
+					SetNumber: setReq.SetNumber,
+					Fields:    setReq.Fields,
+					VideoURL:  setReq.VideoURL,
+					Notes:     setReq.Notes,
+				}
+			}
+			entry.Sets = sets
 		}
 
 		if entryReq.StartedAt != nil {
@@ -181,33 +206,9 @@ func (h *LogHandler) CreateLog(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Enforce one log per (program_id, session_name) pair
-	if log.ProgramID != nil && log.SessionName != nil {
-		exists, err := h.repo.ExistsByProgramIDAndSessionName(ctx, *log.ProgramID, *log.SessionName)
-		if err != nil {
-			middleware.WriteInternalError(w, "Failed to check for duplicate log")
-			return
-		}
-		if exists {
-			middleware.WriteConflictError(w, "A log already exists for this session", map[string]interface{}{
-				"program_id":   log.ProgramID.String(),
-				"session_name": *log.SessionName,
-			})
-			return
-		}
-	}
-
 	if err := h.repo.Create(ctx, log); err != nil {
 		middleware.WriteInternalError(w, "Failed to create log")
 		return
-	}
-
-	// Auto-transition program from "created" to "ongoing" after successful log creation
-	if log.ProgramID != nil {
-		program, err := h.programRepo.GetByID(ctx, *log.ProgramID)
-		if err == nil && program.Status == domain.ProgramStatusCreated {
-			_ = h.programRepo.UpdateStatus(ctx, *log.ProgramID, domain.ProgramStatusOngoing)
-		}
 	}
 
 	writeJSON(w, http.StatusCreated, log)
@@ -284,22 +285,6 @@ func (h *LogHandler) UpdateLog(w http.ResponseWriter, r *http.Request) {
 			"error": err.Error(),
 		})
 		return
-	}
-
-	// Enforce one log per (program_id, session_name) pair, excluding the log being updated
-	if updated.ProgramID != nil && updated.SessionName != nil {
-		exists, err := h.repo.ExistsByProgramIDAndSessionNameExcluding(ctx, *updated.ProgramID, *updated.SessionName, updated.ID)
-		if err != nil {
-			middleware.WriteInternalError(w, "Failed to check for duplicate log")
-			return
-		}
-		if exists {
-			middleware.WriteConflictError(w, "A log already exists for this session", map[string]interface{}{
-				"program_id":   updated.ProgramID.String(),
-				"session_name": *updated.SessionName,
-			})
-			return
-		}
 	}
 
 	if err := h.repo.Update(ctx, updated); err != nil {
