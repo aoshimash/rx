@@ -1,6 +1,10 @@
 'use client';
 
-import { ProgramForm, type ProgramFormEntry } from '@/components/programs/ProgramForm';
+import {
+  type CustomFieldDef,
+  ProgramForm,
+  type ProgramFormEntry,
+} from '@/components/programs/ProgramForm';
 import { useLoggedSessions, useProgram, useUpdateProgram } from '@/lib/hooks/usePrograms';
 import type {
   Program,
@@ -52,7 +56,8 @@ function convertEntryToProgramEntry(
 function entriesToProgramUpdate(
   name: string,
   notes: string,
-  entries: ProgramFormEntry[]
+  entries: ProgramFormEntry[],
+  customFields: CustomFieldDef[]
 ): ProgramUpdate {
   const sessionMap = new Map<string, { date?: string; entries: ProgramSessionEntryCreate[] }>();
   const sessionOrder: string[] = [];
@@ -87,6 +92,7 @@ function entriesToProgramUpdate(
   return {
     name,
     notes: notes || undefined,
+    metadata: customFields.length > 0 ? { custom_fields: customFields } : undefined,
     sessions,
   };
 }
@@ -129,10 +135,10 @@ export default function EditProgramPage() {
     );
   }
 
-  const handleSave = (entries: ProgramFormEntry[]) => {
+  const handleSave = (entries: ProgramFormEntry[], customFields: CustomFieldDef[]) => {
     const programName = name ?? program.name;
     const programNotes = notes ?? program.notes ?? '';
-    const data = entriesToProgramUpdate(programName, programNotes, entries);
+    const data = entriesToProgramUpdate(programName, programNotes, entries, customFields);
 
     updateProgram.mutate(
       { id: programId, data },
@@ -157,6 +163,7 @@ export default function EditProgramPage() {
         programDescription=""
         programNotes={notes ?? program.notes ?? ''}
         initialEntries={initialEntries}
+        initialCustomFields={program.metadata?.custom_fields as CustomFieldDef[] | undefined}
         onNameChange={setName}
         onDescriptionChange={() => {}}
         onNotesChange={setNotes}

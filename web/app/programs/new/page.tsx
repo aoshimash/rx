@@ -1,6 +1,10 @@
 'use client';
 
-import { ProgramForm, type ProgramFormEntry } from '@/components/programs/ProgramForm';
+import {
+  type CustomFieldDef,
+  ProgramForm,
+  type ProgramFormEntry,
+} from '@/components/programs/ProgramForm';
 import { useCreateProgram } from '@/lib/hooks/usePrograms';
 import type { ProgramSessionCreate, ProgramSessionEntryCreate } from '@/types/api';
 import { useRouter } from 'next/navigation';
@@ -59,10 +63,11 @@ export default function NewProgramPage() {
   const [name, setName] = useState('');
   const [notes, setNotes] = useState('');
 
-  const handleSave = (entries: ProgramFormEntry[]) => {
+  const handleSave = (entries: ProgramFormEntry[], customFields: CustomFieldDef[]) => {
     const sessions = entriesToSessions(entries);
+    const metadata = customFields.length > 0 ? { custom_fields: customFields } : undefined;
     createProgram.mutate(
-      { name, notes: notes || undefined, sessions },
+      { name, notes: notes || undefined, metadata, sessions },
       {
         onSuccess: () => {
           router.push('/programs');

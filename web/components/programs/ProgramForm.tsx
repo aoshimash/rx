@@ -10,13 +10,64 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
-import { Lock, Plus, Trash2, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { GripVertical, Lock, Plus, Trash2, X } from 'lucide-react';
+import { useState } from 'react';
 
 // ============================================================================
 // Types
 // ============================================================================
+
+export type CustomFieldType = 'text' | 'number' | 'select';
+
+export type BuiltinFieldKey = 'load_kg' | 'reps' | 'sets';
+
+export interface CustomFieldDef {
+  name: string;
+  type: CustomFieldType;
+  options?: string[];
+  builtin?: BuiltinFieldKey;
+}
+
+const DEFAULT_BUILTIN_FIELDS: CustomFieldDef[] = [
+  { name: 'Load (kg)', type: 'number', builtin: 'load_kg' },
+  { name: 'Reps', type: 'number', builtin: 'reps' },
+  { name: 'Sets', type: 'number', builtin: 'sets' },
+];
+
+function ensureBuiltinFields(fields: CustomFieldDef[]): CustomFieldDef[] {
+  const result = [...fields];
+  for (const builtin of DEFAULT_BUILTIN_FIELDS) {
+    if (!result.some((f) => f.builtin === builtin.builtin)) {
+      result.push(builtin);
+    }
+  }
+  return result;
+}
 
 /**
  * Intermediate entry format used by the program form for session-based editing.
@@ -33,7 +84,6 @@ export interface ProgramFormEntry {
 interface SessionExercise {
   exercise_name: string;
   fields?: Record<string, unknown>;
-  label?: string;
 }
 
 interface SessionGroup {
@@ -47,10 +97,17 @@ interface SessionGroup {
 // ============================================================================
 
 function entryToExercise(entry: ProgramFormEntry): SessionExercise {
+  const metadata: Record<string, string> = {};
+  if (entry.metadata) {
+    for (const [k, v] of Object.entries(entry.metadata)) {
+      if (k !== 'session' && k !== 'date' && typeof v === 'string') {
+        metadata[k] = v;
+      }
+    }
+  }
   return {
     exercise_name: entry.exercise_name,
     fields: entry.fields,
-    label: (entry.metadata?.label as string) || undefined,
   };
 }
 
@@ -85,7 +142,6 @@ function exerciseToEntry(
 ): ProgramFormEntry {
   const metadata: Record<string, unknown> = { session: sessionName };
   if (sessionDate) metadata.date = sessionDate;
-  if (ex.label) metadata.label = ex.label;
   return {
     exercise_name: ex.exercise_name,
     order,
@@ -109,61 +165,201 @@ function sessionGroupsToEntries(sessions: SessionGroup[]): ProgramFormEntry[] {
 }
 
 // ============================================================================
-// LabelCombobox
+// CustomFieldsEditor
 // ============================================================================
 
-function LabelCombobox({
-  value,
+function SelectOptionsEditor({
+  options,
   onChange,
-  suggestions,
 }: {
-  value: string;
-  onChange: (value: string | undefined) => void;
-  suggestions: string[];
+  options: string[];
+  onChange: (options: string[]) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [newOption, setNewOption] = useState('');
 
-  const filtered = suggestions.filter(
-    (s) => s.toLowerCase().includes(value.toLowerCase()) && s !== value
-  );
-  const showDropdown = open && filtered.length > 0;
+  const addOption = () => {
+    const trimmed = newOption.trim();
+    if (trimmed && !options.includes(trimmed)) {
+      onChange([...options, trimmed]);
+      setNewOption('');
+    }
+  };
 
   return (
-    <Popover open={showDropdown} onOpenChange={setOpen}>
-      <PopoverAnchor asChild>
-        <Input
-          value={value}
-          onChange={(e) => {
-            onChange(e.target.value || undefined);
-            setOpen(true);
-          }}
-          onFocus={() => setOpen(true)}
-          onBlur={() => setTimeout(() => setOpen(false), 150)}
-          placeholder="e.g., Top, Main"
-        />
-      </PopoverAnchor>
-      <PopoverContent
-        className="p-1"
-        style={{ width: 'var(--radix-popper-anchor-width)' }}
-        align="start"
-        onOpenAutoFocus={(e) => e.preventDefault()}
-      >
-        {filtered.map((label) => (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {options.map((opt) => (
+        <span
+          key={opt}
+          className="inline-flex items-center gap-0.5 rounded bg-muted px-1.5 py-0.5 text-xs"
+        >
+          {opt}
           <button
-            key={label}
             type="button"
-            className="w-full text-left px-2 py-1.5 text-sm rounded-sm hover:bg-accent cursor-pointer"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              onChange(label);
-              setOpen(false);
-            }}
+            onClick={() => onChange(options.filter((o) => o !== opt))}
+            className="text-muted-foreground hover:text-foreground cursor-pointer"
           >
-            {label}
+            <X className="h-2.5 w-2.5" />
           </button>
-        ))}
-      </PopoverContent>
-    </Popover>
+        </span>
+      ))}
+      <Input
+        value={newOption}
+        onChange={(e) => setNewOption(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            addOption();
+          }
+        }}
+        placeholder="Add option..."
+        className="h-6 w-24 text-xs"
+      />
+    </div>
+  );
+}
+
+function SortableFieldRow({
+  field,
+  onUpdate,
+  onRemove,
+}: {
+  field: CustomFieldDef;
+  onUpdate: (updated: CustomFieldDef) => void;
+  onRemove: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: field.name,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-start gap-2 rounded-md border p-2">
+      <button
+        type="button"
+        className="text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing mt-0.5 shrink-0"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-3.5 w-3.5" />
+      </button>
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        <span className="text-sm font-medium whitespace-nowrap">{field.name}</span>
+        <span className="text-xs text-muted-foreground">({field.type})</span>
+        {field.type === 'select' && (
+          <SelectOptionsEditor
+            options={field.options ?? []}
+            onChange={(options) => onUpdate({ ...field, options })}
+          />
+        )}
+      </div>
+      {!field.builtin && (
+        <button
+          type="button"
+          onClick={onRemove}
+          className="text-muted-foreground hover:text-foreground cursor-pointer mt-0.5 shrink-0"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function CustomFieldsEditor({
+  fields,
+  onChange,
+}: {
+  fields: CustomFieldDef[];
+  onChange: (fields: CustomFieldDef[]) => void;
+}) {
+  const [newFieldName, setNewFieldName] = useState('');
+  const [newFieldType, setNewFieldType] = useState<CustomFieldType>('text');
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const addField = () => {
+    const trimmed = newFieldName.trim();
+    if (trimmed && !fields.some((f) => f.name === trimmed)) {
+      const field: CustomFieldDef = { name: trimmed, type: newFieldType };
+      if (newFieldType === 'select') field.options = [];
+      onChange([...fields, field]);
+      setNewFieldName('');
+      setNewFieldType('text');
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = fields.findIndex((f) => f.name === active.id);
+    const newIndex = fields.findIndex((f) => f.name === over.id);
+    onChange(arrayMove(fields, oldIndex, newIndex));
+  };
+
+  return (
+    <div className="space-y-3">
+      <Label>Custom Fields</Label>
+      {fields.length > 0 && (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          modifiers={[restrictToVerticalAxis]}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={fields.map((f) => f.name)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-2">
+              {fields.map((field, idx) => (
+                <SortableFieldRow
+                  key={field.name}
+                  field={field}
+                  onUpdate={(updated) => {
+                    const next = [...fields];
+                    next[idx] = updated;
+                    onChange(next);
+                  }}
+                  onRemove={() => onChange(fields.filter((_, i) => i !== idx))}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+      )}
+      <div className="flex items-center gap-2">
+        <Input
+          value={newFieldName}
+          onChange={(e) => setNewFieldName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              addField();
+            }
+          }}
+          placeholder="Field name"
+          className="h-8 w-40"
+        />
+        <Select value={newFieldType} onValueChange={(v) => setNewFieldType(v as CustomFieldType)}>
+          <SelectTrigger className="h-8 w-28">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="text">Text</SelectItem>
+            <SelectItem value="number">Number</SelectItem>
+            <SelectItem value="select">Select</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button variant="ghost" size="sm" onClick={addField} disabled={!newFieldName.trim()}>
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -171,11 +367,20 @@ function LabelCombobox({
 // ProgramExerciseRow
 // ============================================================================
 
+const BUILTIN_CONFIG: Record<
+  BuiltinFieldKey,
+  { min?: number; step?: string; placeholder: string }
+> = {
+  load_kg: { min: 0, step: '0.5', placeholder: '100' },
+  reps: { min: 1, placeholder: '10' },
+  sets: { min: 1, placeholder: '3' },
+};
+
 interface ProgramExerciseRowProps {
   exercise: SessionExercise;
   onChange: (updated: SessionExercise) => void;
   onRemove: () => void;
-  labelSuggestions: string[];
+  fields: CustomFieldDef[];
   disabled?: boolean;
 }
 
@@ -183,9 +388,19 @@ function ProgramExerciseRow({
   exercise,
   onChange,
   onRemove,
-  labelSuggestions,
+  fields,
   disabled,
 }: ProgramExerciseRowProps) {
+  const updateField = (key: string, raw: string, isNumber: boolean) => {
+    const fields = { ...exercise.fields };
+    if (raw) {
+      fields[key] = isNumber ? Number(raw) : raw;
+    } else {
+      delete fields[key];
+    }
+    onChange({ ...exercise, fields });
+  };
+
   return (
     <div className="grid gap-4 border rounded-lg p-4">
       <div className="flex items-center justify-between">
@@ -204,73 +419,76 @@ function ProgramExerciseRow({
         disabled={disabled}
       />
 
-      <div className="grid grid-cols-4 gap-3">
-        <div className="space-y-2">
-          <Label>Label</Label>
-          <LabelCombobox
-            value={exercise.label ?? ''}
-            onChange={(v) => onChange({ ...exercise, label: v })}
-            suggestions={labelSuggestions}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>Load (kg)</Label>
-          <Input
-            type="number"
-            value={(exercise.fields?.load_kg as number | undefined) ?? ''}
-            onChange={(e) =>
-              onChange({
-                ...exercise,
-                fields: {
-                  ...exercise.fields,
-                  load_kg: e.target.value ? Number(e.target.value) : undefined,
-                },
-              })
-            }
-            min={0}
-            step="0.5"
-            placeholder="100"
-            disabled={disabled}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>Reps</Label>
-          <Input
-            type="number"
-            value={(exercise.fields?.reps as number | undefined) ?? ''}
-            onChange={(e) =>
-              onChange({
-                ...exercise,
-                fields: {
-                  ...exercise.fields,
-                  reps: e.target.value ? Number(e.target.value) : undefined,
-                },
-              })
-            }
-            min={1}
-            placeholder="10"
-            disabled={disabled}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>Sets</Label>
-          <Input
-            type="number"
-            value={(exercise.fields?.sets as number | undefined) ?? ''}
-            onChange={(e) =>
-              onChange({
-                ...exercise,
-                fields: {
-                  ...exercise.fields,
-                  sets: e.target.value ? Number(e.target.value) : undefined,
-                },
-              })
-            }
-            min={1}
-            placeholder="3"
-            disabled={disabled}
-          />
-        </div>
+      <div
+        className="grid gap-3"
+        style={{ gridTemplateColumns: `repeat(${fields.length}, minmax(0, 1fr))` }}
+      >
+        {fields.map((field) => {
+          if (field.builtin) {
+            const config = BUILTIN_CONFIG[field.builtin];
+            return (
+              <div key={field.builtin} className="space-y-2">
+                <Label>{field.name}</Label>
+                <Input
+                  type="number"
+                  value={(exercise.fields?.[field.builtin] as number | undefined) ?? ''}
+                  onChange={(e) => updateField(field.builtin as string, e.target.value, true)}
+                  min={config.min}
+                  step={config.step}
+                  placeholder={config.placeholder}
+                  disabled={disabled}
+                />
+              </div>
+            );
+          }
+
+          if (field.type === 'select') {
+            return (
+              <div key={field.name} className="space-y-2">
+                <Label>{field.name}</Label>
+                <div className="flex items-center gap-1">
+                  <Select
+                    value={(exercise.fields?.[field.name] as string | undefined) ?? ''}
+                    onValueChange={(v) => updateField(field.name, v, false)}
+                    disabled={disabled}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(field.options ?? []).map((opt) => (
+                        <SelectItem key={opt} value={opt}>
+                          {opt}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {exercise.fields?.[field.name] && !disabled && (
+                    <button
+                      type="button"
+                      onClick={() => updateField(field.name, '', false)}
+                      className="text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <div key={field.name} className="space-y-2">
+              <Label>{field.name}</Label>
+              <Input
+                type={field.type === 'number' ? 'number' : 'text'}
+                value={(exercise.fields?.[field.name] as string | undefined) ?? ''}
+                onChange={(e) => updateField(field.name, e.target.value, field.type === 'number')}
+                disabled={disabled}
+              />
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -285,10 +503,11 @@ interface ProgramFormProps {
   programDescription: string;
   programNotes: string;
   initialEntries?: ProgramFormEntry[];
+  initialCustomFields?: CustomFieldDef[];
   onNameChange: (name: string) => void;
   onDescriptionChange: (description: string) => void;
   onNotesChange: (notes: string) => void;
-  onSave: (entries: ProgramFormEntry[]) => void;
+  onSave: (entries: ProgramFormEntry[], customFields: CustomFieldDef[]) => void;
   onDelete?: () => void;
   isSaving?: boolean;
   isEditing?: boolean;
@@ -300,6 +519,7 @@ export function ProgramForm({
   programDescription,
   programNotes,
   initialEntries,
+  initialCustomFields,
   onNameChange,
   onDescriptionChange,
   onNotesChange,
@@ -316,15 +536,9 @@ export function ProgramForm({
       : [{ name: '', exercises: [] }]
   );
 
-  const labelSuggestions = useMemo(() => {
-    const labels = new Set<string>();
-    for (const session of sessions) {
-      for (const ex of session.exercises) {
-        if (ex.label) labels.add(ex.label);
-      }
-    }
-    return [...labels].sort();
-  }, [sessions]);
+  const [customFields, setCustomFields] = useState<CustomFieldDef[]>(() =>
+    ensureBuiltinFields(initialCustomFields ?? [])
+  );
 
   const handleAddSession = () => {
     setSessions([...sessions, { name: '', exercises: [] }]);
@@ -404,6 +618,7 @@ export function ProgramForm({
             placeholder="Additional notes"
           />
         </div>
+        <CustomFieldsEditor fields={customFields} onChange={setCustomFields} />
       </div>
 
       <div className="space-y-4">
@@ -460,7 +675,7 @@ export function ProgramForm({
                             exercise={exercise}
                             onChange={(updated) => handleExerciseChange(sessionIdx, exIdx, updated)}
                             onRemove={() => handleRemoveExercise(sessionIdx, exIdx)}
-                            labelSuggestions={labelSuggestions}
+                            fields={customFields}
                             disabled={isLocked}
                           />
                         ))}
@@ -498,7 +713,7 @@ export function ProgramForm({
           </Button>
         )}
         <Button
-          onClick={() => onSave(sessionGroupsToEntries(sessions))}
+          onClick={() => onSave(sessionGroupsToEntries(sessions), customFields)}
           disabled={isSaving || !programName}
           className={!isEditing ? 'ml-auto' : ''}
         >
