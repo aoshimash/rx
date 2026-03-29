@@ -4,7 +4,6 @@ package seed
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"time"
@@ -14,16 +13,14 @@ import (
 	"github.com/google/uuid"
 )
 
-func intPtr(v int) *int             { return &v }
-func float64Ptr(v float64) *float64 { return &v }
-func stringPtr(v string) *string    { return &v }
+func stringPtr(v string) *string { return &v }
 
-func mustJSON(v any) json.RawMessage {
-	b, err := json.Marshal(v)
-	if err != nil {
-		panic(err)
-	}
-	return b
+func fields(sets, reps int, loadKg float64) map[string]interface{} {
+	return map[string]interface{}{"sets": sets, "reps": reps, "load_kg": loadKg}
+}
+
+func fieldsWithRPE(sets, reps int, loadKg, rpe float64) map[string]interface{} {
+	return map[string]interface{}{"sets": sets, "reps": reps, "load_kg": loadKg, "rpe": rpe}
 }
 
 // Run inserts sample powerlifting data into the provided repositories.
@@ -120,33 +117,33 @@ func sbdPeaking() *domain.Program {
 			{
 				ID: s1ID, ProgramID: progID, SessionName: "Heavy Squat", Order: 1,
 				Entries: []domain.ProgramSessionEntry{
-					{ID: uuid.New(), SessionID: s1ID, Order: 1, ExerciseName: "Low Bar Squat", Sets: intPtr(5), Reps: intPtr(3), LoadKg: float64Ptr(140), Metadata: mustJSON(map[string]any{"rpe": 8})},
-					{ID: uuid.New(), SessionID: s1ID, Order: 2, ExerciseName: "Pause Squat", Sets: intPtr(3), Reps: intPtr(3), LoadKg: float64Ptr(120), Metadata: mustJSON(map[string]any{"rpe": 7})},
-					{ID: uuid.New(), SessionID: s1ID, Order: 3, ExerciseName: "Leg Press", Sets: intPtr(3), Reps: intPtr(10), LoadKg: float64Ptr(200)},
+					{ID: uuid.New(), SessionID: s1ID, Order: 1, ExerciseName: "Low Bar Squat", Fields: fieldsWithRPE(5, 3, 140, 8)},
+					{ID: uuid.New(), SessionID: s1ID, Order: 2, ExerciseName: "Pause Squat", Fields: fieldsWithRPE(3, 3, 120, 7)},
+					{ID: uuid.New(), SessionID: s1ID, Order: 3, ExerciseName: "Leg Press", Fields: fields(3, 10, 200)},
 				},
 			},
 			{
 				ID: s2ID, ProgramID: progID, SessionName: "Heavy Bench", Order: 2,
 				Entries: []domain.ProgramSessionEntry{
-					{ID: uuid.New(), SessionID: s2ID, Order: 1, ExerciseName: "Bench Press", Sets: intPtr(5), Reps: intPtr(3), LoadKg: float64Ptr(100), Metadata: mustJSON(map[string]any{"rpe": 8})},
-					{ID: uuid.New(), SessionID: s2ID, Order: 2, ExerciseName: "Close Grip Bench Press", Sets: intPtr(3), Reps: intPtr(5), LoadKg: float64Ptr(85), Metadata: mustJSON(map[string]any{"rpe": 7})},
-					{ID: uuid.New(), SessionID: s2ID, Order: 3, ExerciseName: "Dumbbell Fly", Sets: intPtr(3), Reps: intPtr(12), LoadKg: float64Ptr(16)},
+					{ID: uuid.New(), SessionID: s2ID, Order: 1, ExerciseName: "Bench Press", Fields: fieldsWithRPE(5, 3, 100, 8)},
+					{ID: uuid.New(), SessionID: s2ID, Order: 2, ExerciseName: "Close Grip Bench Press", Fields: fieldsWithRPE(3, 5, 85, 7)},
+					{ID: uuid.New(), SessionID: s2ID, Order: 3, ExerciseName: "Dumbbell Fly", Fields: fields(3, 12, 16)},
 				},
 			},
 			{
 				ID: s3ID, ProgramID: progID, SessionName: "Heavy Deadlift", Order: 3,
 				Entries: []domain.ProgramSessionEntry{
-					{ID: uuid.New(), SessionID: s3ID, Order: 1, ExerciseName: "Conventional Deadlift", Sets: intPtr(5), Reps: intPtr(2), LoadKg: float64Ptr(180), Metadata: mustJSON(map[string]any{"rpe": 8.5})},
-					{ID: uuid.New(), SessionID: s3ID, Order: 2, ExerciseName: "Deficit Deadlift", Sets: intPtr(3), Reps: intPtr(4), LoadKg: float64Ptr(150), Metadata: mustJSON(map[string]any{"rpe": 7})},
-					{ID: uuid.New(), SessionID: s3ID, Order: 3, ExerciseName: "Barbell Row", Sets: intPtr(4), Reps: intPtr(8), LoadKg: float64Ptr(80)},
+					{ID: uuid.New(), SessionID: s3ID, Order: 1, ExerciseName: "Conventional Deadlift", Fields: fieldsWithRPE(5, 2, 180, 8.5)},
+					{ID: uuid.New(), SessionID: s3ID, Order: 2, ExerciseName: "Deficit Deadlift", Fields: fieldsWithRPE(3, 4, 150, 7)},
+					{ID: uuid.New(), SessionID: s3ID, Order: 3, ExerciseName: "Barbell Row", Fields: fields(4, 8, 80)},
 				},
 			},
 			{
 				ID: s4ID, ProgramID: progID, SessionName: "Light SBD", Order: 4,
 				Entries: []domain.ProgramSessionEntry{
-					{ID: uuid.New(), SessionID: s4ID, Order: 1, ExerciseName: "Low Bar Squat", Sets: intPtr(3), Reps: intPtr(5), LoadKg: float64Ptr(110), Metadata: mustJSON(map[string]any{"rpe": 6})},
-					{ID: uuid.New(), SessionID: s4ID, Order: 2, ExerciseName: "Bench Press", Sets: intPtr(3), Reps: intPtr(5), LoadKg: float64Ptr(80), Metadata: mustJSON(map[string]any{"rpe": 6})},
-					{ID: uuid.New(), SessionID: s4ID, Order: 3, ExerciseName: "Conventional Deadlift", Sets: intPtr(3), Reps: intPtr(5), LoadKg: float64Ptr(140), Metadata: mustJSON(map[string]any{"rpe": 6})},
+					{ID: uuid.New(), SessionID: s4ID, Order: 1, ExerciseName: "Low Bar Squat", Fields: fieldsWithRPE(3, 5, 110, 6)},
+					{ID: uuid.New(), SessionID: s4ID, Order: 2, ExerciseName: "Bench Press", Fields: fieldsWithRPE(3, 5, 80, 6)},
+					{ID: uuid.New(), SessionID: s4ID, Order: 3, ExerciseName: "Conventional Deadlift", Fields: fieldsWithRPE(3, 5, 140, 6)},
 				},
 			},
 		},
@@ -166,37 +163,37 @@ func upperLowerSplit() *domain.Program {
 			{
 				ID: s1ID, ProgramID: progID, SessionName: "Upper A", Order: 1,
 				Entries: []domain.ProgramSessionEntry{
-					{ID: uuid.New(), SessionID: s1ID, Order: 1, ExerciseName: "Bench Press", Sets: intPtr(4), Reps: intPtr(6), LoadKg: float64Ptr(90), Metadata: mustJSON(map[string]any{"rpe": 7.5})},
-					{ID: uuid.New(), SessionID: s1ID, Order: 2, ExerciseName: "Barbell Row", Sets: intPtr(4), Reps: intPtr(8), LoadKg: float64Ptr(75)},
-					{ID: uuid.New(), SessionID: s1ID, Order: 3, ExerciseName: "Overhead Press", Sets: intPtr(3), Reps: intPtr(8), LoadKg: float64Ptr(50)},
-					{ID: uuid.New(), SessionID: s1ID, Order: 4, ExerciseName: "Barbell Curl", Sets: intPtr(3), Reps: intPtr(12), LoadKg: float64Ptr(30)},
+					{ID: uuid.New(), SessionID: s1ID, Order: 1, ExerciseName: "Bench Press", Fields: fieldsWithRPE(4, 6, 90, 7.5)},
+					{ID: uuid.New(), SessionID: s1ID, Order: 2, ExerciseName: "Barbell Row", Fields: fields(4, 8, 75)},
+					{ID: uuid.New(), SessionID: s1ID, Order: 3, ExerciseName: "Overhead Press", Fields: fields(3, 8, 50)},
+					{ID: uuid.New(), SessionID: s1ID, Order: 4, ExerciseName: "Barbell Curl", Fields: fields(3, 12, 30)},
 				},
 			},
 			{
 				ID: s2ID, ProgramID: progID, SessionName: "Lower A", Order: 2,
 				Entries: []domain.ProgramSessionEntry{
-					{ID: uuid.New(), SessionID: s2ID, Order: 1, ExerciseName: "Low Bar Squat", Sets: intPtr(4), Reps: intPtr(5), LoadKg: float64Ptr(130), Metadata: mustJSON(map[string]any{"rpe": 7.5})},
-					{ID: uuid.New(), SessionID: s2ID, Order: 2, ExerciseName: "Romanian Deadlift", Sets: intPtr(3), Reps: intPtr(8), LoadKg: float64Ptr(100)},
-					{ID: uuid.New(), SessionID: s2ID, Order: 3, ExerciseName: "Leg Curl", Sets: intPtr(3), Reps: intPtr(12), LoadKg: float64Ptr(40)},
-					{ID: uuid.New(), SessionID: s2ID, Order: 4, ExerciseName: "Calf Raise", Sets: intPtr(4), Reps: intPtr(15), LoadKg: float64Ptr(60)},
+					{ID: uuid.New(), SessionID: s2ID, Order: 1, ExerciseName: "Low Bar Squat", Fields: fieldsWithRPE(4, 5, 130, 7.5)},
+					{ID: uuid.New(), SessionID: s2ID, Order: 2, ExerciseName: "Romanian Deadlift", Fields: fields(3, 8, 100)},
+					{ID: uuid.New(), SessionID: s2ID, Order: 3, ExerciseName: "Leg Curl", Fields: fields(3, 12, 40)},
+					{ID: uuid.New(), SessionID: s2ID, Order: 4, ExerciseName: "Calf Raise", Fields: fields(4, 15, 60)},
 				},
 			},
 			{
 				ID: s3ID, ProgramID: progID, SessionName: "Upper B", Order: 3,
 				Entries: []domain.ProgramSessionEntry{
-					{ID: uuid.New(), SessionID: s3ID, Order: 1, ExerciseName: "Overhead Press", Sets: intPtr(4), Reps: intPtr(5), LoadKg: float64Ptr(55), Metadata: mustJSON(map[string]any{"rpe": 8})},
-					{ID: uuid.New(), SessionID: s3ID, Order: 2, ExerciseName: "Weighted Pull-up", Sets: intPtr(4), Reps: intPtr(6), LoadKg: float64Ptr(20)},
-					{ID: uuid.New(), SessionID: s3ID, Order: 3, ExerciseName: "Incline Dumbbell Press", Sets: intPtr(3), Reps: intPtr(10), LoadKg: float64Ptr(30)},
-					{ID: uuid.New(), SessionID: s3ID, Order: 4, ExerciseName: "Face Pull", Sets: intPtr(3), Reps: intPtr(15), LoadKg: float64Ptr(20)},
+					{ID: uuid.New(), SessionID: s3ID, Order: 1, ExerciseName: "Overhead Press", Fields: fieldsWithRPE(4, 5, 55, 8)},
+					{ID: uuid.New(), SessionID: s3ID, Order: 2, ExerciseName: "Weighted Pull-up", Fields: fields(4, 6, 20)},
+					{ID: uuid.New(), SessionID: s3ID, Order: 3, ExerciseName: "Incline Dumbbell Press", Fields: fields(3, 10, 30)},
+					{ID: uuid.New(), SessionID: s3ID, Order: 4, ExerciseName: "Face Pull", Fields: fields(3, 15, 20)},
 				},
 			},
 			{
 				ID: s4ID, ProgramID: progID, SessionName: "Lower B", Order: 4,
 				Entries: []domain.ProgramSessionEntry{
-					{ID: uuid.New(), SessionID: s4ID, Order: 1, ExerciseName: "Conventional Deadlift", Sets: intPtr(4), Reps: intPtr(4), LoadKg: float64Ptr(170), Metadata: mustJSON(map[string]any{"rpe": 8})},
-					{ID: uuid.New(), SessionID: s4ID, Order: 2, ExerciseName: "Front Squat", Sets: intPtr(3), Reps: intPtr(6), LoadKg: float64Ptr(90)},
-					{ID: uuid.New(), SessionID: s4ID, Order: 3, ExerciseName: "Leg Extension", Sets: intPtr(3), Reps: intPtr(12), LoadKg: float64Ptr(50)},
-					{ID: uuid.New(), SessionID: s4ID, Order: 4, ExerciseName: "Hip Thrust", Sets: intPtr(3), Reps: intPtr(10), LoadKg: float64Ptr(100)},
+					{ID: uuid.New(), SessionID: s4ID, Order: 1, ExerciseName: "Conventional Deadlift", Fields: fieldsWithRPE(4, 4, 170, 8)},
+					{ID: uuid.New(), SessionID: s4ID, Order: 2, ExerciseName: "Front Squat", Fields: fields(3, 6, 90)},
+					{ID: uuid.New(), SessionID: s4ID, Order: 3, ExerciseName: "Leg Extension", Fields: fields(3, 12, 50)},
+					{ID: uuid.New(), SessionID: s4ID, Order: 4, ExerciseName: "Hip Thrust", Fields: fields(3, 10, 100)},
 				},
 			},
 		},
@@ -215,57 +212,53 @@ func blockPeriodization() *domain.Program {
 		Name:   "Block Periodization — Mar 2026",
 		Status: domain.ProgramStatusCreated,
 		Notes:  stringPtr("Accumulation → Transmutation → Realization"),
-		Metadata: mustJSON(map[string]any{
-			"block": "accumulation",
-			"weeks": 6,
-		}),
 		Sessions: []domain.ProgramSession{
 			{
 				ID: sIDs[0], ProgramID: progID, SessionName: "Week 1 — SBD", Order: 1,
 				Entries: []domain.ProgramSessionEntry{
-					{ID: uuid.New(), SessionID: sIDs[0], Order: 1, ExerciseName: "Low Bar Squat", Sets: intPtr(4), Reps: intPtr(8), LoadKg: float64Ptr(110), Metadata: mustJSON(map[string]any{"rpe": 7})},
-					{ID: uuid.New(), SessionID: sIDs[0], Order: 2, ExerciseName: "Bench Press", Sets: intPtr(4), Reps: intPtr(8), LoadKg: float64Ptr(80), Metadata: mustJSON(map[string]any{"rpe": 7})},
-					{ID: uuid.New(), SessionID: sIDs[0], Order: 3, ExerciseName: "Conventional Deadlift", Sets: intPtr(3), Reps: intPtr(8), LoadKg: float64Ptr(140), Metadata: mustJSON(map[string]any{"rpe": 7})},
+					{ID: uuid.New(), SessionID: sIDs[0], Order: 1, ExerciseName: "Low Bar Squat", Fields: fieldsWithRPE(4, 8, 110, 7)},
+					{ID: uuid.New(), SessionID: sIDs[0], Order: 2, ExerciseName: "Bench Press", Fields: fieldsWithRPE(4, 8, 80, 7)},
+					{ID: uuid.New(), SessionID: sIDs[0], Order: 3, ExerciseName: "Conventional Deadlift", Fields: fieldsWithRPE(3, 8, 140, 7)},
 				},
 			},
 			{
 				ID: sIDs[1], ProgramID: progID, SessionName: "Week 1 — Accessories", Order: 2,
 				Entries: []domain.ProgramSessionEntry{
-					{ID: uuid.New(), SessionID: sIDs[1], Order: 1, ExerciseName: "Barbell Row", Sets: intPtr(4), Reps: intPtr(10), LoadKg: float64Ptr(70)},
-					{ID: uuid.New(), SessionID: sIDs[1], Order: 2, ExerciseName: "Overhead Press", Sets: intPtr(3), Reps: intPtr(10), LoadKg: float64Ptr(45)},
-					{ID: uuid.New(), SessionID: sIDs[1], Order: 3, ExerciseName: "Leg Press", Sets: intPtr(3), Reps: intPtr(12), LoadKg: float64Ptr(180)},
+					{ID: uuid.New(), SessionID: sIDs[1], Order: 1, ExerciseName: "Barbell Row", Fields: fields(4, 10, 70)},
+					{ID: uuid.New(), SessionID: sIDs[1], Order: 2, ExerciseName: "Overhead Press", Fields: fields(3, 10, 45)},
+					{ID: uuid.New(), SessionID: sIDs[1], Order: 3, ExerciseName: "Leg Press", Fields: fields(3, 12, 180)},
 				},
 			},
 			{
 				ID: sIDs[2], ProgramID: progID, SessionName: "Week 2 — SBD", Order: 3,
 				Entries: []domain.ProgramSessionEntry{
-					{ID: uuid.New(), SessionID: sIDs[2], Order: 1, ExerciseName: "Low Bar Squat", Sets: intPtr(4), Reps: intPtr(6), LoadKg: float64Ptr(120), Metadata: mustJSON(map[string]any{"rpe": 7.5})},
-					{ID: uuid.New(), SessionID: sIDs[2], Order: 2, ExerciseName: "Bench Press", Sets: intPtr(4), Reps: intPtr(6), LoadKg: float64Ptr(85), Metadata: mustJSON(map[string]any{"rpe": 7.5})},
-					{ID: uuid.New(), SessionID: sIDs[2], Order: 3, ExerciseName: "Conventional Deadlift", Sets: intPtr(3), Reps: intPtr(6), LoadKg: float64Ptr(150), Metadata: mustJSON(map[string]any{"rpe": 7.5})},
+					{ID: uuid.New(), SessionID: sIDs[2], Order: 1, ExerciseName: "Low Bar Squat", Fields: fieldsWithRPE(4, 6, 120, 7.5)},
+					{ID: uuid.New(), SessionID: sIDs[2], Order: 2, ExerciseName: "Bench Press", Fields: fieldsWithRPE(4, 6, 85, 7.5)},
+					{ID: uuid.New(), SessionID: sIDs[2], Order: 3, ExerciseName: "Conventional Deadlift", Fields: fieldsWithRPE(3, 6, 150, 7.5)},
 				},
 			},
 			{
 				ID: sIDs[3], ProgramID: progID, SessionName: "Week 2 — Accessories", Order: 4,
 				Entries: []domain.ProgramSessionEntry{
-					{ID: uuid.New(), SessionID: sIDs[3], Order: 1, ExerciseName: "Dumbbell Row", Sets: intPtr(4), Reps: intPtr(10), LoadKg: float64Ptr(35)},
-					{ID: uuid.New(), SessionID: sIDs[3], Order: 2, ExerciseName: "Dips", Sets: intPtr(3), Reps: intPtr(10), LoadKg: float64Ptr(20), Notes: stringPtr("weighted")},
-					{ID: uuid.New(), SessionID: sIDs[3], Order: 3, ExerciseName: "Bulgarian Split Squat", Sets: intPtr(3), Reps: intPtr(10), LoadKg: float64Ptr(40)},
+					{ID: uuid.New(), SessionID: sIDs[3], Order: 1, ExerciseName: "Dumbbell Row", Fields: fields(4, 10, 35)},
+					{ID: uuid.New(), SessionID: sIDs[3], Order: 2, ExerciseName: "Dips", Fields: fields(3, 10, 20), Notes: stringPtr("weighted")},
+					{ID: uuid.New(), SessionID: sIDs[3], Order: 3, ExerciseName: "Bulgarian Split Squat", Fields: fields(3, 10, 40)},
 				},
 			},
 			{
 				ID: sIDs[4], ProgramID: progID, SessionName: "Week 3 — SBD", Order: 5,
 				Entries: []domain.ProgramSessionEntry{
-					{ID: uuid.New(), SessionID: sIDs[4], Order: 1, ExerciseName: "Low Bar Squat", Sets: intPtr(5), Reps: intPtr(5), LoadKg: float64Ptr(125), Metadata: mustJSON(map[string]any{"rpe": 8})},
-					{ID: uuid.New(), SessionID: sIDs[4], Order: 2, ExerciseName: "Bench Press", Sets: intPtr(5), Reps: intPtr(5), LoadKg: float64Ptr(90), Metadata: mustJSON(map[string]any{"rpe": 8})},
-					{ID: uuid.New(), SessionID: sIDs[4], Order: 3, ExerciseName: "Conventional Deadlift", Sets: intPtr(4), Reps: intPtr(5), LoadKg: float64Ptr(155), Metadata: mustJSON(map[string]any{"rpe": 8})},
+					{ID: uuid.New(), SessionID: sIDs[4], Order: 1, ExerciseName: "Low Bar Squat", Fields: fieldsWithRPE(5, 5, 125, 8)},
+					{ID: uuid.New(), SessionID: sIDs[4], Order: 2, ExerciseName: "Bench Press", Fields: fieldsWithRPE(5, 5, 90, 8)},
+					{ID: uuid.New(), SessionID: sIDs[4], Order: 3, ExerciseName: "Conventional Deadlift", Fields: fieldsWithRPE(4, 5, 155, 8)},
 				},
 			},
 			{
 				ID: sIDs[5], ProgramID: progID, SessionName: "Week 3 — Accessories", Order: 6,
 				Entries: []domain.ProgramSessionEntry{
-					{ID: uuid.New(), SessionID: sIDs[5], Order: 1, ExerciseName: "Pendlay Row", Sets: intPtr(4), Reps: intPtr(8), LoadKg: float64Ptr(75)},
-					{ID: uuid.New(), SessionID: sIDs[5], Order: 2, ExerciseName: "Incline Bench Press", Sets: intPtr(3), Reps: intPtr(8), LoadKg: float64Ptr(70)},
-					{ID: uuid.New(), SessionID: sIDs[5], Order: 3, ExerciseName: "Leg Curl", Sets: intPtr(3), Reps: intPtr(12), LoadKg: float64Ptr(45)},
+					{ID: uuid.New(), SessionID: sIDs[5], Order: 1, ExerciseName: "Pendlay Row", Fields: fields(4, 8, 75)},
+					{ID: uuid.New(), SessionID: sIDs[5], Order: 2, ExerciseName: "Incline Bench Press", Fields: fields(3, 8, 70)},
+					{ID: uuid.New(), SessionID: sIDs[5], Order: 3, ExerciseName: "Leg Curl", Fields: fields(3, 12, 45)},
 				},
 			},
 		},
@@ -285,25 +278,25 @@ func competitionPrep() *domain.Program {
 			{
 				ID: s1ID, ProgramID: progID, SessionName: "Opener Rehearsal", Order: 1,
 				Entries: []domain.ProgramSessionEntry{
-					{ID: uuid.New(), SessionID: s1ID, Order: 1, ExerciseName: "Low Bar Squat", Sets: intPtr(3), Reps: intPtr(1), LoadKg: float64Ptr(150), Notes: stringPtr("opener attempt"), Metadata: mustJSON(map[string]any{"rpe": 8})},
-					{ID: uuid.New(), SessionID: s1ID, Order: 2, ExerciseName: "Bench Press", Sets: intPtr(3), Reps: intPtr(1), LoadKg: float64Ptr(107.5), Notes: stringPtr("opener attempt"), Metadata: mustJSON(map[string]any{"rpe": 8})},
-					{ID: uuid.New(), SessionID: s1ID, Order: 3, ExerciseName: "Conventional Deadlift", Sets: intPtr(3), Reps: intPtr(1), LoadKg: float64Ptr(195), Notes: stringPtr("opener attempt"), Metadata: mustJSON(map[string]any{"rpe": 8})},
+					{ID: uuid.New(), SessionID: s1ID, Order: 1, ExerciseName: "Low Bar Squat", Notes: stringPtr("opener attempt"), Fields: fieldsWithRPE(3, 1, 150, 8)},
+					{ID: uuid.New(), SessionID: s1ID, Order: 2, ExerciseName: "Bench Press", Notes: stringPtr("opener attempt"), Fields: fieldsWithRPE(3, 1, 107.5, 8)},
+					{ID: uuid.New(), SessionID: s1ID, Order: 3, ExerciseName: "Conventional Deadlift", Notes: stringPtr("opener attempt"), Fields: fieldsWithRPE(3, 1, 195, 8)},
 				},
 			},
 			{
 				ID: s2ID, ProgramID: progID, SessionName: "Speed Work", Order: 2,
 				Entries: []domain.ProgramSessionEntry{
-					{ID: uuid.New(), SessionID: s2ID, Order: 1, ExerciseName: "Low Bar Squat", Sets: intPtr(6), Reps: intPtr(2), LoadKg: float64Ptr(110), Notes: stringPtr("60% 1RM, focus on speed"), Metadata: mustJSON(map[string]any{"rpe": 6})},
-					{ID: uuid.New(), SessionID: s2ID, Order: 2, ExerciseName: "Bench Press", Sets: intPtr(6), Reps: intPtr(2), LoadKg: float64Ptr(75), Notes: stringPtr("60% 1RM, focus on speed"), Metadata: mustJSON(map[string]any{"rpe": 6})},
-					{ID: uuid.New(), SessionID: s2ID, Order: 3, ExerciseName: "Conventional Deadlift", Sets: intPtr(5), Reps: intPtr(2), LoadKg: float64Ptr(135), Notes: stringPtr("60% 1RM, focus on speed"), Metadata: mustJSON(map[string]any{"rpe": 6})},
+					{ID: uuid.New(), SessionID: s2ID, Order: 1, ExerciseName: "Low Bar Squat", Notes: stringPtr("60% 1RM, focus on speed"), Fields: fieldsWithRPE(6, 2, 110, 6)},
+					{ID: uuid.New(), SessionID: s2ID, Order: 2, ExerciseName: "Bench Press", Notes: stringPtr("60% 1RM, focus on speed"), Fields: fieldsWithRPE(6, 2, 75, 6)},
+					{ID: uuid.New(), SessionID: s2ID, Order: 3, ExerciseName: "Conventional Deadlift", Notes: stringPtr("60% 1RM, focus on speed"), Fields: fieldsWithRPE(5, 2, 135, 6)},
 				},
 			},
 			{
 				ID: s3ID, ProgramID: progID, SessionName: "Light Recovery", Order: 3,
 				Entries: []domain.ProgramSessionEntry{
-					{ID: uuid.New(), SessionID: s3ID, Order: 1, ExerciseName: "Low Bar Squat", Sets: intPtr(3), Reps: intPtr(3), LoadKg: float64Ptr(90), Metadata: mustJSON(map[string]any{"rpe": 5})},
-					{ID: uuid.New(), SessionID: s3ID, Order: 2, ExerciseName: "Bench Press", Sets: intPtr(3), Reps: intPtr(3), LoadKg: float64Ptr(65), Metadata: mustJSON(map[string]any{"rpe": 5})},
-					{ID: uuid.New(), SessionID: s3ID, Order: 3, ExerciseName: "Conventional Deadlift", Sets: intPtr(2), Reps: intPtr(3), LoadKg: float64Ptr(110), Metadata: mustJSON(map[string]any{"rpe": 5})},
+					{ID: uuid.New(), SessionID: s3ID, Order: 1, ExerciseName: "Low Bar Squat", Fields: fieldsWithRPE(3, 3, 90, 5)},
+					{ID: uuid.New(), SessionID: s3ID, Order: 2, ExerciseName: "Bench Press", Fields: fieldsWithRPE(3, 3, 65, 5)},
+					{ID: uuid.New(), SessionID: s3ID, Order: 3, ExerciseName: "Conventional Deadlift", Fields: fieldsWithRPE(2, 3, 110, 5)},
 				},
 			},
 		},
@@ -320,11 +313,8 @@ func logForSession(programID uuid.UUID, session domain.ProgramSession, performed
 			LogID:        logID,
 			Order:        e.Order,
 			ExerciseName: e.ExerciseName,
-			Sets:         e.Sets,
-			Reps:         e.Reps,
-			LoadKg:       e.LoadKg,
+			Fields:       e.Fields,
 			Notes:        e.Notes,
-			Metadata:     e.Metadata,
 		}
 	}
 

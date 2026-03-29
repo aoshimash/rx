@@ -18,6 +18,13 @@ const (
 	BearerAuthScopes = "bearerAuth.Scopes"
 )
 
+// Defines values for FieldDefType.
+const (
+	Number FieldDefType = "number"
+	Select FieldDefType = "select"
+	Text   FieldDefType = "text"
+)
+
 // Defines values for ProgramStatus.
 const (
 	ProgramStatusCancelled ProgramStatus = "cancelled"
@@ -53,6 +60,21 @@ type Error struct {
 	// Message Human-readable error message
 	Message string `json:"message"`
 }
+
+// FieldDef defines model for FieldDef.
+type FieldDef struct {
+	// Name Field key used in the fields object (e.g., "load_kg", "rpe")
+	Name string `json:"name"`
+
+	// Options Available options (only for type=select)
+	Options *[]string `json:"options,omitempty"`
+
+	// Type Input type for this field
+	Type FieldDefType `json:"type"`
+}
+
+// FieldDefType Input type for this field
+type FieldDefType string
 
 // Log defines model for Log.
 type Log struct {
@@ -106,22 +128,17 @@ type LogEntry struct {
 	// ExerciseName Exercise name (plain string)
 	ExerciseName string `json:"exercise_name"`
 
+	// Fields Unified exercise data fields
+	Fields *map[string]interface{} `json:"fields,omitempty"`
+
 	// FinishedAt When the exercise ended (optional)
 	FinishedAt *time.Time         `json:"finished_at,omitempty"`
 	Id         openapi_types.UUID `json:"id"`
-
-	// LoadKg Weight in kilograms (0.1 precision)
-	LoadKg *float64           `json:"load_kg,omitempty"`
-	LogId  openapi_types.UUID `json:"log_id"`
-
-	// Metadata Free-form JSON metadata
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
-	Notes    *string                 `json:"notes,omitempty"`
+	LogId      openapi_types.UUID `json:"log_id"`
+	Notes      *string            `json:"notes,omitempty"`
 
 	// Order Position in log
-	Order int  `json:"order"`
-	Reps  *int `json:"reps,omitempty"`
-	Sets  *int `json:"sets,omitempty"`
+	Order int `json:"order"`
 
 	// StartedAt When the exercise started (optional)
 	StartedAt *time.Time `json:"started_at,omitempty"`
@@ -132,13 +149,12 @@ type LogEntry struct {
 
 // LogEntryCreate defines model for LogEntryCreate.
 type LogEntryCreate struct {
-	ExerciseName   string                  `json:"exercise_name"`
+	ExerciseName string `json:"exercise_name"`
+
+	// Fields Unified exercise data fields
+	Fields         *map[string]interface{} `json:"fields,omitempty"`
 	FinishedAt     *time.Time              `json:"finished_at,omitempty"`
-	LoadKg         *float64                `json:"load_kg,omitempty"`
-	Metadata       *map[string]interface{} `json:"metadata,omitempty"`
 	Notes          *string                 `json:"notes,omitempty"`
-	Reps           *int                    `json:"reps,omitempty"`
-	Sets           *int                    `json:"sets,omitempty"`
 	StartedAt      *time.Time              `json:"started_at,omitempty"`
 	VideoObjectKey *string                 `json:"video_object_key,omitempty"`
 }
@@ -175,10 +191,16 @@ type Program struct {
 	CreatedAt time.Time          `json:"created_at"`
 	Id        openapi_types.UUID `json:"id"`
 
+	// LogFields Field definitions for log entries
+	LogFields *[]FieldDef `json:"log_fields,omitempty"`
+
 	// Metadata Free-form JSON metadata (e.g., generation parameters)
 	Metadata *map[string]interface{} `json:"metadata,omitempty"`
 	Name     string                  `json:"name"`
 	Notes    *string                 `json:"notes,omitempty"`
+
+	// ProgramFields Field definitions for program session entries
+	ProgramFields *[]FieldDef `json:"program_fields,omitempty"`
 
 	// Sessions Ordered training sessions (each contains entries with absolute weights)
 	Sessions []ProgramSession `json:"sessions"`
@@ -193,10 +215,12 @@ type ProgramStatus string
 
 // ProgramCreate defines model for ProgramCreate.
 type ProgramCreate struct {
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
-	Name     string                  `json:"name"`
-	Notes    *string                 `json:"notes,omitempty"`
-	Sessions []ProgramSessionCreate  `json:"sessions"`
+	LogFields     *[]FieldDef             `json:"log_fields,omitempty"`
+	Metadata      *map[string]interface{} `json:"metadata,omitempty"`
+	Name          string                  `json:"name"`
+	Notes         *string                 `json:"notes,omitempty"`
+	ProgramFields *[]FieldDef             `json:"program_fields,omitempty"`
+	Sessions      []ProgramSessionCreate  `json:"sessions"`
 }
 
 // ProgramListResponse defines model for ProgramListResponse.
@@ -234,40 +258,36 @@ type ProgramSessionCreate struct {
 // ProgramSessionEntry defines model for ProgramSessionEntry.
 type ProgramSessionEntry struct {
 	// ExerciseName Exercise name (plain string)
-	ExerciseName string             `json:"exercise_name"`
-	Id           openapi_types.UUID `json:"id"`
+	ExerciseName string `json:"exercise_name"`
 
-	// LoadKg Weight in kilograms (0.1 precision)
-	LoadKg *float64 `json:"load_kg,omitempty"`
-
-	// Metadata Free-form JSON metadata
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
-	Notes    *string                 `json:"notes,omitempty"`
+	// Fields Unified exercise data fields
+	Fields *map[string]interface{} `json:"fields,omitempty"`
+	Id     openapi_types.UUID      `json:"id"`
+	Notes  *string                 `json:"notes,omitempty"`
 
 	// Order Position in session
 	Order     int                `json:"order"`
-	Reps      *int               `json:"reps,omitempty"`
 	SessionId openapi_types.UUID `json:"session_id"`
-	Sets      *int               `json:"sets,omitempty"`
 }
 
 // ProgramSessionEntryCreate defines model for ProgramSessionEntryCreate.
 type ProgramSessionEntryCreate struct {
-	ExerciseName string                  `json:"exercise_name"`
-	LoadKg       *float64                `json:"load_kg,omitempty"`
-	Metadata     *map[string]interface{} `json:"metadata,omitempty"`
-	Notes        *string                 `json:"notes,omitempty"`
-	Order        int                     `json:"order"`
-	Reps         *int                    `json:"reps,omitempty"`
-	Sets         *int                    `json:"sets,omitempty"`
+	ExerciseName string `json:"exercise_name"`
+
+	// Fields Unified exercise data fields
+	Fields *map[string]interface{} `json:"fields,omitempty"`
+	Notes  *string                 `json:"notes,omitempty"`
+	Order  int                     `json:"order"`
 }
 
 // ProgramUpdate defines model for ProgramUpdate.
 type ProgramUpdate struct {
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
-	Name     string                  `json:"name"`
-	Notes    *string                 `json:"notes,omitempty"`
-	Sessions []ProgramSessionCreate  `json:"sessions"`
+	LogFields     *[]FieldDef             `json:"log_fields,omitempty"`
+	Metadata      *map[string]interface{} `json:"metadata,omitempty"`
+	Name          string                  `json:"name"`
+	Notes         *string                 `json:"notes,omitempty"`
+	ProgramFields *[]FieldDef             `json:"program_fields,omitempty"`
+	Sessions      []ProgramSessionCreate  `json:"sessions"`
 }
 
 // VideoDownloadURLRequest defines model for VideoDownloadURLRequest.

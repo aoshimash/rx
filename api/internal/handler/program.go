@@ -11,13 +11,10 @@ import (
 
 // programSessionEntryRequest represents a program session entry in the request body
 type programSessionEntryRequest struct {
-	ExerciseName string          `json:"exercise_name"`
-	Order        int             `json:"order"`
-	Sets         *int            `json:"sets,omitempty"`
-	Reps         *int            `json:"reps,omitempty"`
-	LoadKg       *float64        `json:"load_kg,omitempty"`
-	Notes        *string         `json:"notes,omitempty"`
-	Metadata     json.RawMessage `json:"metadata,omitempty"`
+	ExerciseName string                 `json:"exercise_name"`
+	Order        int                    `json:"order"`
+	Fields       map[string]interface{} `json:"fields,omitempty"`
+	Notes        *string                `json:"notes,omitempty"`
 }
 
 // programSessionRequest represents a program session in the request body
@@ -47,10 +44,12 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req struct {
-		Name     string                  `json:"name"`
-		Notes    *string                 `json:"notes,omitempty"`
-		Metadata json.RawMessage         `json:"metadata,omitempty"`
-		Sessions []programSessionRequest `json:"sessions,omitempty"`
+		Name          string                  `json:"name"`
+		Notes         *string                 `json:"notes,omitempty"`
+		Metadata      json.RawMessage         `json:"metadata,omitempty"`
+		ProgramFields []domain.FieldDef       `json:"program_fields,omitempty"`
+		LogFields     []domain.FieldDef       `json:"log_fields,omitempty"`
+		Sessions      []programSessionRequest `json:"sessions,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -73,11 +72,13 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	program := &domain.Program{
-		Name:     req.Name,
-		Status:   domain.ProgramStatusCreated,
-		Notes:    req.Notes,
-		Metadata: req.Metadata,
-		Sessions: make([]domain.ProgramSession, len(req.Sessions)),
+		Name:          req.Name,
+		Status:        domain.ProgramStatusCreated,
+		Notes:         req.Notes,
+		Metadata:      req.Metadata,
+		ProgramFields: req.ProgramFields,
+		LogFields:     req.LogFields,
+		Sessions:      make([]domain.ProgramSession, len(req.Sessions)),
 	}
 
 	for i, sessReq := range req.Sessions {
@@ -100,12 +101,8 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 			sess.Entries[j] = domain.ProgramSessionEntry{
 				ExerciseName: e.ExerciseName,
 				Order:        e.Order,
-				Sets:         e.Sets,
-				Reps:         e.Reps,
-				LoadKg:       e.LoadKg,
-
-				Notes:    e.Notes,
-				Metadata: e.Metadata,
+				Fields:       e.Fields,
+				Notes:        e.Notes,
 			}
 		}
 
@@ -151,10 +148,12 @@ func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		Name     string                  `json:"name"`
-		Notes    *string                 `json:"notes,omitempty"`
-		Metadata json.RawMessage         `json:"metadata,omitempty"`
-		Sessions []programSessionRequest `json:"sessions,omitempty"`
+		Name          string                  `json:"name"`
+		Notes         *string                 `json:"notes,omitempty"`
+		Metadata      json.RawMessage         `json:"metadata,omitempty"`
+		ProgramFields []domain.FieldDef       `json:"program_fields,omitempty"`
+		LogFields     []domain.FieldDef       `json:"log_fields,omitempty"`
+		Sessions      []programSessionRequest `json:"sessions,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -180,12 +179,14 @@ func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	program := &domain.Program{
-		ID:       existing.ID,
-		Name:     req.Name,
-		Status:   existing.Status,
-		Notes:    req.Notes,
-		Metadata: req.Metadata,
-		Sessions: make([]domain.ProgramSession, len(req.Sessions)),
+		ID:            existing.ID,
+		Name:          req.Name,
+		Status:        existing.Status,
+		Notes:         req.Notes,
+		Metadata:      req.Metadata,
+		ProgramFields: req.ProgramFields,
+		LogFields:     req.LogFields,
+		Sessions:      make([]domain.ProgramSession, len(req.Sessions)),
 	}
 
 	for i, sessReq := range req.Sessions {
@@ -208,12 +209,8 @@ func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
 			sess.Entries[j] = domain.ProgramSessionEntry{
 				ExerciseName: e.ExerciseName,
 				Order:        e.Order,
-				Sets:         e.Sets,
-				Reps:         e.Reps,
-				LoadKg:       e.LoadKg,
-
-				Notes:    e.Notes,
-				Metadata: e.Metadata,
+				Fields:       e.Fields,
+				Notes:        e.Notes,
 			}
 		}
 

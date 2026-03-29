@@ -66,15 +66,26 @@ func (s *programStore) copyProgram(p *domain.Program) *domain.Program {
 		cp.Sessions[i].Entries = make([]domain.ProgramSessionEntry, len(sess.Entries))
 		for j, e := range sess.Entries {
 			cp.Sessions[i].Entries[j] = e
-			if e.Metadata != nil {
-				cp.Sessions[i].Entries[j].Metadata = make([]byte, len(e.Metadata))
-				copy(cp.Sessions[i].Entries[j].Metadata, e.Metadata)
+			if e.Fields != nil {
+				fields := make(map[string]interface{}, len(e.Fields))
+				for k, v := range e.Fields {
+					fields[k] = v
+				}
+				cp.Sessions[i].Entries[j].Fields = fields
 			}
 		}
 	}
 	if p.Metadata != nil {
 		cp.Metadata = make([]byte, len(p.Metadata))
 		copy(cp.Metadata, p.Metadata)
+	}
+	if p.ProgramFields != nil {
+		cp.ProgramFields = make([]domain.FieldDef, len(p.ProgramFields))
+		copy(cp.ProgramFields, p.ProgramFields)
+	}
+	if p.LogFields != nil {
+		cp.LogFields = make([]domain.FieldDef, len(p.LogFields))
+		copy(cp.LogFields, p.LogFields)
 	}
 	return &cp
 }

@@ -97,13 +97,17 @@ export function LogEntryTable({
 
     setIsSaving(true);
     try {
-      const logEntries: LogEntryCreate[] = validEntries.map((entry) => ({
-        exercise_name: entry.exercise_name,
-        sets: entry.sets,
-        reps: entry.reps,
-        load_kg: entry.load_kg,
-        notes: entry.notes || undefined,
-      }));
+      const logEntries: LogEntryCreate[] = validEntries.map((entry) => {
+        const fields: Record<string, unknown> = {};
+        if (entry.sets !== undefined) fields.sets = entry.sets;
+        if (entry.reps !== undefined) fields.reps = entry.reps;
+        if (entry.load_kg !== undefined) fields.load_kg = entry.load_kg;
+        return {
+          exercise_name: entry.exercise_name,
+          fields: Object.keys(fields).length > 0 ? fields : undefined,
+          notes: entry.notes || undefined,
+        };
+      });
 
       await onSave({
         entries: logEntries,

@@ -7,10 +7,9 @@ export interface TableEntry {
   reps: number | undefined;
   load_kg: number | undefined;
   notes: string;
+  fields: Record<string, unknown>;
   plan?: {
-    sets?: number;
-    reps?: number;
-    load_kg?: number;
+    fields?: Record<string, unknown>;
   };
   /** true when sets or reps were manually edited away from plan values */
   setsEdited: boolean;
@@ -18,17 +17,19 @@ export interface TableEntry {
 }
 
 export function createTableEntryFromPlan(entry: ProgramSessionEntry, index: number): TableEntry {
+  const sets = entry.fields?.sets as number | undefined;
+  const reps = entry.fields?.reps as number | undefined;
+  const load_kg = entry.fields?.load_kg as number | undefined;
   return {
     id: `plan-${index}-${entry.id}`,
     exercise_name: entry.exercise_name,
-    sets: entry.sets,
-    reps: entry.reps,
-    load_kg: entry.load_kg,
+    sets,
+    reps,
+    load_kg,
     notes: '',
+    fields: entry.fields ?? {},
     plan: {
-      sets: entry.sets,
-      reps: entry.reps,
-      load_kg: entry.load_kg,
+      fields: entry.fields,
     },
     setsEdited: false,
     repsEdited: false,
@@ -43,6 +44,7 @@ export function createEmptyTableEntry(): TableEntry {
     reps: undefined,
     load_kg: undefined,
     notes: '',
+    fields: {},
     setsEdited: false,
     repsEdited: false,
   };

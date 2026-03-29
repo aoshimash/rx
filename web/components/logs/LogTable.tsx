@@ -16,8 +16,10 @@ interface LogTableProps {
 
 function totalVolumeKg(entries: LogEntry[]): number | null {
   const volumes = entries
-    .filter((e) => e.load_kg != null && e.sets != null && e.reps != null)
-    .map((e) => (e.sets as number) * (e.reps as number) * (e.load_kg as number));
+    .filter((e) => e.fields?.load_kg != null && e.fields?.sets != null && e.fields?.reps != null)
+    .map(
+      (e) => (e.fields?.sets as number) * (e.fields?.reps as number) * (e.fields?.load_kg as number)
+    );
   if (volumes.length === 0) return null;
   return volumes.reduce((a, b) => a + b, 0);
 }

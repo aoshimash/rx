@@ -62,7 +62,7 @@ export function LogEntryRow({ entry, onUpdate, onRemove }: LogEntryRowProps) {
             onUpdate(entry.id, 'setsEdited', true);
           }}
           defaultReadOnly={hasPlan && !entry.setsEdited}
-          displayText={entry.plan?.sets?.toString()}
+          displayText={(entry.plan?.fields?.sets as number | undefined)?.toString()}
           isEdited={entry.setsEdited}
           min={1}
           step={1}
@@ -77,7 +77,7 @@ export function LogEntryRow({ entry, onUpdate, onRemove }: LogEntryRowProps) {
             onUpdate(entry.id, 'repsEdited', true);
           }}
           defaultReadOnly={hasPlan && !entry.repsEdited}
-          displayText={entry.plan?.reps?.toString()}
+          displayText={(entry.plan?.fields?.reps as number | undefined)?.toString()}
           isEdited={entry.repsEdited}
           min={1}
           step={1}
@@ -88,7 +88,7 @@ export function LogEntryRow({ entry, onUpdate, onRemove }: LogEntryRowProps) {
         <EditableCell
           value={entry.load_kg}
           onChange={(v) => onUpdate(entry.id, 'load_kg', v)}
-          placeholder={entry.plan?.load_kg?.toString()}
+          placeholder={(entry.plan?.fields?.load_kg as number | undefined)?.toString()}
           min={0}
           step={0.5}
         />

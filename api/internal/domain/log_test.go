@@ -12,18 +12,16 @@ import (
 
 func TestValidateLogEntry(t *testing.T) {
 	validEntry := func() *LogEntry {
-		sets := 3
-		reps := 10
-		loadKg := 60.0
-
 		return &LogEntry{
 			ID:           uuid.New(),
 			LogID:        uuid.New(),
 			Order:        0,
 			ExerciseName: "Bench Press",
-			Sets:         &sets,
-			Reps:         &reps,
-			LoadKg:       &loadKg,
+			Fields: map[string]interface{}{
+				"sets":    float64(3),
+				"reps":    float64(10),
+				"load_kg": float64(60),
+			},
 		}
 	}
 
@@ -54,35 +52,31 @@ func TestValidateLogEntry(t *testing.T) {
 
 	t.Run("zero sets", func(t *testing.T) {
 		e := validEntry()
-		sets := 0
-		e.Sets = &sets
+		e.Fields["sets"] = float64(0)
 		err := ValidateLogEntry(e)
 		assert.Error(t, err)
 	})
 
 	t.Run("zero reps", func(t *testing.T) {
 		e := validEntry()
-		reps := 0
-		e.Reps = &reps
+		e.Fields["reps"] = float64(0)
 		err := ValidateLogEntry(e)
 		assert.Error(t, err)
 	})
 
 	t.Run("negative load_kg", func(t *testing.T) {
 		e := validEntry()
-		loadKg := -1.0
-		e.LoadKg = &loadKg
+		e.Fields["load_kg"] = float64(-1)
 		err := ValidateLogEntry(e)
 		assert.Error(t, err)
 	})
 
 	t.Run("load_kg rounded to 0.1", func(t *testing.T) {
 		e := validEntry()
-		loadKg := 60.15
-		e.LoadKg = &loadKg
+		e.Fields["load_kg"] = float64(60.15)
 		err := ValidateLogEntry(e)
 		require.NoError(t, err)
-		assert.Equal(t, 60.2, *e.LoadKg)
+		assert.Equal(t, float64(60.2), e.Fields["load_kg"])
 	})
 
 	t.Run("nil optional fields are valid", func(t *testing.T) {
@@ -112,9 +106,9 @@ func TestValidateLogEntry(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("metadata is accepted", func(t *testing.T) {
+	t.Run("fields with extra data is accepted", func(t *testing.T) {
 		e := validEntry()
-		e.Metadata = json.RawMessage(`{"tempo": "3-1-1-0"}`)
+		e.Fields["tempo"] = "3-1-1-0"
 		err := ValidateLogEntry(e)
 		assert.NoError(t, err)
 	})
@@ -158,10 +152,6 @@ func TestValidateLogEntry(t *testing.T) {
 
 func TestValidateLog(t *testing.T) {
 	validLog := func() *Log {
-		sets := 3
-		reps := 10
-		loadKg := 60.0
-
 		return &Log{
 			ID:          uuid.New(),
 			PerformedAt: time.Now().Add(-1 * time.Hour),
@@ -171,9 +161,11 @@ func TestValidateLog(t *testing.T) {
 					LogID:        uuid.New(),
 					Order:        0,
 					ExerciseName: "Bench Press",
-					Sets:         &sets,
-					Reps:         &reps,
-					LoadKg:       &loadKg,
+					Fields: map[string]interface{}{
+						"sets":    float64(3),
+						"reps":    float64(10),
+						"load_kg": float64(60),
+					},
 				},
 			},
 		}
@@ -232,6 +224,7 @@ func TestValidateLog(t *testing.T) {
 	t.Run("log with metadata", func(t *testing.T) {
 		l := validLog()
 		l.Metadata = json.RawMessage(`{"body_weight_kg": 75.5, "fatigue_level": 3}`)
+		_ = l // metadata field still exists on Log, so this is valid
 		err := ValidateLog(l)
 		assert.NoError(t, err)
 	})
