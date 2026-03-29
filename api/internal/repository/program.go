@@ -12,7 +12,7 @@ type ProgramRepository interface {
 	// Create stores a new Program (with all sessions and entries) and returns it with generated IDs and timestamps
 	Create(ctx context.Context, program *domain.Program) error
 
-	// Update replaces the content of an existing Program (name, notes, metadata, sessions, entries).
+	// Update replaces the content of an existing Program (name, notes, sessions, entries, groups).
 	// The program must already exist; returns domain.ErrNotFound if not found.
 	// Sessions and entries are fully replaced (delete-and-reinsert).
 	Update(ctx context.Context, program *domain.Program) error
@@ -20,18 +20,14 @@ type ProgramRepository interface {
 	// GetByID retrieves a Program by its ID including all sessions and entries, returns domain.ErrNotFound if not found
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Program, error)
 
-	// UpdateStatus updates the status of a Program (e.g., active → completed)
-	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ProgramStatus) error
-
 	// Delete removes a Program by ID (cascades to sessions and entries), returns domain.ErrNotFound if not found
 	Delete(ctx context.Context, id uuid.UUID) error
 
 	// List retrieves Programs with pagination.
 	// limit: maximum number of records (1-100)
 	// after: cursor for pagination (UUID string, base64-encoded)
-	// status: optional filter by status ("active", "completed", or "" for all)
 	// Returns: programs, next cursor (empty string if no more), has_more flag
-	List(ctx context.Context, limit int, after string, status string) ([]*domain.Program, string, bool, error)
+	List(ctx context.Context, limit int, after string) ([]*domain.Program, string, bool, error)
 
 	// ExistsByName checks if a Program with the given name already exists.
 	ExistsByName(ctx context.Context, name string) (bool, error)

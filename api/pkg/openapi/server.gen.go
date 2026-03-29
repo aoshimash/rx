@@ -25,30 +25,6 @@ const (
 	Text   FieldDefType = "text"
 )
 
-// Defines values for ProgramStatus.
-const (
-	ProgramStatusCancelled ProgramStatus = "cancelled"
-	ProgramStatusCompleted ProgramStatus = "completed"
-	ProgramStatusCreated   ProgramStatus = "created"
-	ProgramStatusOngoing   ProgramStatus = "ongoing"
-)
-
-// Defines values for ListProgramsParamsStatus.
-const (
-	ListProgramsParamsStatusCancelled ListProgramsParamsStatus = "cancelled"
-	ListProgramsParamsStatusCompleted ListProgramsParamsStatus = "completed"
-	ListProgramsParamsStatusCreated   ListProgramsParamsStatus = "created"
-	ListProgramsParamsStatusOngoing   ListProgramsParamsStatus = "ongoing"
-)
-
-// Defines values for UpdateProgramStatusJSONBodyStatus.
-const (
-	Cancelled UpdateProgramStatusJSONBodyStatus = "cancelled"
-	Completed UpdateProgramStatusJSONBodyStatus = "completed"
-	Created   UpdateProgramStatusJSONBodyStatus = "created"
-	Ongoing   UpdateProgramStatusJSONBodyStatus = "ongoing"
-)
-
 // Error defines model for Error.
 type Error struct {
 	// Code Error code
@@ -96,6 +72,9 @@ type Log struct {
 	// PerformedAt When the training was performed
 	PerformedAt time.Time `json:"performed_at"`
 
+	// PlanSnapshot Snapshot of the plan session at the time of logging
+	PlanSnapshot *map[string]interface{} `json:"plan_snapshot,omitempty"`
+
 	// ProgramId Optional reference to the training program
 	ProgramId *openapi_types.UUID `json:"program_id"`
 
@@ -114,6 +93,9 @@ type LogCreate struct {
 	Metadata    *map[string]interface{} `json:"metadata,omitempty"`
 	Notes       *string                 `json:"notes,omitempty"`
 	PerformedAt time.Time               `json:"performed_at"`
+
+	// PlanSnapshot Snapshot of the plan session at the time of logging
+	PlanSnapshot *map[string]interface{} `json:"plan_snapshot,omitempty"`
 
 	// ProgramId Optional reference to a training program
 	ProgramId *openapi_types.UUID `json:"program_id,omitempty"`
@@ -140,6 +122,9 @@ type LogEntry struct {
 	// Order Position in log
 	Order int `json:"order"`
 
+	// Sets Individual sets performed for this exercise
+	Sets *[]LogSet `json:"sets,omitempty"`
+
 	// StartedAt When the exercise started (optional)
 	StartedAt *time.Time `json:"started_at,omitempty"`
 
@@ -152,11 +137,14 @@ type LogEntryCreate struct {
 	ExerciseName string `json:"exercise_name"`
 
 	// Fields Unified exercise data fields
-	Fields         *map[string]interface{} `json:"fields,omitempty"`
-	FinishedAt     *time.Time              `json:"finished_at,omitempty"`
-	Notes          *string                 `json:"notes,omitempty"`
-	StartedAt      *time.Time              `json:"started_at,omitempty"`
-	VideoObjectKey *string                 `json:"video_object_key,omitempty"`
+	Fields     *map[string]interface{} `json:"fields,omitempty"`
+	FinishedAt *time.Time              `json:"finished_at,omitempty"`
+	Notes      *string                 `json:"notes,omitempty"`
+
+	// Sets Individual sets for this exercise
+	Sets           *[]LogSetCreate `json:"sets,omitempty"`
+	StartedAt      *time.Time      `json:"started_at,omitempty"`
+	VideoObjectKey *string         `json:"video_object_key,omitempty"`
 }
 
 // LogListResponse defines model for LogListResponse.
@@ -166,61 +154,147 @@ type LogListResponse struct {
 	NextCursor *string `json:"next_cursor"`
 }
 
-// LoggedSession defines model for LoggedSession.
-type LoggedSession struct {
-	// FinishedAt End time of the session, used to calculate duration
-	FinishedAt *time.Time         `json:"finished_at"`
-	LogId      openapi_types.UUID `json:"log_id"`
+// LogSet defines model for LogSet.
+type LogSet struct {
+	EntryId openapi_types.UUID `json:"entry_id"`
 
-	// PerformedAt Date and time the session was performed
-	PerformedAt time.Time `json:"performed_at"`
-	SessionName string    `json:"session_name"`
-
-	// StartedAt Start time of the session, used to calculate duration
-	StartedAt *time.Time `json:"started_at"`
+	// Fields Set-level data (e.g., reps, load_kg, rpe)
+	Fields    map[string]interface{} `json:"fields"`
+	Id        openapi_types.UUID     `json:"id"`
+	Notes     *string                `json:"notes,omitempty"`
+	SetNumber int                    `json:"set_number"`
+	VideoUrl  *string                `json:"video_url,omitempty"`
 }
 
-// LoggedSessionsResponse defines model for LoggedSessionsResponse.
-type LoggedSessionsResponse struct {
-	// Sessions Sessions that have a log for this program, each including the log ID for navigation
-	Sessions []LoggedSession `json:"sessions"`
+// LogSetCreate defines model for LogSetCreate.
+type LogSetCreate struct {
+	Fields    map[string]interface{} `json:"fields"`
+	Notes     *string                `json:"notes,omitempty"`
+	SetNumber int                    `json:"set_number"`
+	VideoUrl  *string                `json:"video_url,omitempty"`
+}
+
+// Plan defines model for Plan.
+type Plan struct {
+	CreatedAt time.Time          `json:"created_at"`
+	Id        openapi_types.UUID `json:"id"`
+	Name      *string            `json:"name,omitempty"`
+	Notes     *string            `json:"notes,omitempty"`
+
+	// ProgramId Optional reference to the source program
+	ProgramId *openapi_types.UUID `json:"program_id,omitempty"`
+	Sessions  []PlanSession       `json:"sessions"`
+	UpdatedAt time.Time           `json:"updated_at"`
+}
+
+// PlanCreate defines model for PlanCreate.
+type PlanCreate struct {
+	Name      *string              `json:"name,omitempty"`
+	Notes     *string              `json:"notes,omitempty"`
+	ProgramId *openapi_types.UUID  `json:"program_id,omitempty"`
+	Sessions  *[]PlanSessionCreate `json:"sessions,omitempty"`
+}
+
+// PlanSession defines model for PlanSession.
+type PlanSession struct {
+	// Date Scheduled date (YYYY-MM-DD, optional)
+	Date        *openapi_types.Date `json:"date,omitempty"`
+	Entries     []PlanSessionEntry  `json:"entries"`
+	Id          openapi_types.UUID  `json:"id"`
+	Order       int                 `json:"order"`
+	PlanId      openapi_types.UUID  `json:"plan_id"`
+	SessionName string              `json:"session_name"`
+
+	// SourceProgramId Program this session was derived from
+	SourceProgramId *openapi_types.UUID `json:"source_program_id,omitempty"`
+
+	// SourceSessionId Original program session ID
+	SourceSessionId *openapi_types.UUID `json:"source_session_id,omitempty"`
+}
+
+// PlanSessionCreate defines model for PlanSessionCreate.
+type PlanSessionCreate struct {
+	Date            *openapi_types.Date       `json:"date,omitempty"`
+	Entries         *[]PlanSessionEntryCreate `json:"entries,omitempty"`
+	Order           int                       `json:"order"`
+	SessionName     string                    `json:"session_name"`
+	SourceProgramId *openapi_types.UUID       `json:"source_program_id,omitempty"`
+	SourceSessionId *openapi_types.UUID       `json:"source_session_id,omitempty"`
+}
+
+// PlanSessionEntry defines model for PlanSessionEntry.
+type PlanSessionEntry struct {
+	ExerciseName string                  `json:"exercise_name"`
+	Fields       *map[string]interface{} `json:"fields,omitempty"`
+	Id           openapi_types.UUID      `json:"id"`
+	Notes        *string                 `json:"notes,omitempty"`
+	Order        int                     `json:"order"`
+	SessionId    openapi_types.UUID      `json:"session_id"`
+}
+
+// PlanSessionEntryCreate defines model for PlanSessionEntryCreate.
+type PlanSessionEntryCreate struct {
+	ExerciseName string                  `json:"exercise_name"`
+	Fields       *map[string]interface{} `json:"fields,omitempty"`
+	Notes        *string                 `json:"notes,omitempty"`
+	Order        int                     `json:"order"`
+}
+
+// PlanUpdate defines model for PlanUpdate.
+type PlanUpdate struct {
+	Name     *string              `json:"name,omitempty"`
+	Notes    *string              `json:"notes,omitempty"`
+	Sessions *[]PlanSessionCreate `json:"sessions,omitempty"`
 }
 
 // Program defines model for Program.
 type Program struct {
-	CreatedAt time.Time          `json:"created_at"`
-	Id        openapi_types.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+
+	// Groups Hierarchical grouping of sessions
+	Groups *[]ProgramGroup    `json:"groups,omitempty"`
+	Id     openapi_types.UUID `json:"id"`
 
 	// LogFields Field definitions for log entries
 	LogFields *[]FieldDef `json:"log_fields,omitempty"`
-
-	// Metadata Free-form JSON metadata (e.g., generation parameters)
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
-	Name     string                  `json:"name"`
-	Notes    *string                 `json:"notes,omitempty"`
+	Name      string      `json:"name"`
+	Notes     *string     `json:"notes,omitempty"`
 
 	// ProgramFields Field definitions for program session entries
 	ProgramFields *[]FieldDef `json:"program_fields,omitempty"`
 
 	// Sessions Ordered training sessions (each contains entries with absolute weights)
-	Sessions []ProgramSession `json:"sessions"`
-
-	// Status created = registered not yet started, ongoing = in progress, completed = all sessions logged and confirmed, cancelled = stopped mid-way
-	Status    ProgramStatus `json:"status"`
-	UpdatedAt time.Time     `json:"updated_at"`
+	Sessions  []ProgramSession `json:"sessions"`
+	UpdatedAt time.Time        `json:"updated_at"`
 }
-
-// ProgramStatus created = registered not yet started, ongoing = in progress, completed = all sessions logged and confirmed, cancelled = stopped mid-way
-type ProgramStatus string
 
 // ProgramCreate defines model for ProgramCreate.
 type ProgramCreate struct {
-	LogFields     *[]FieldDef             `json:"log_fields,omitempty"`
-	Metadata      *map[string]interface{} `json:"metadata,omitempty"`
-	Name          string                  `json:"name"`
-	Notes         *string                 `json:"notes,omitempty"`
-	ProgramFields *[]FieldDef             `json:"program_fields,omitempty"`
-	Sessions      []ProgramSessionCreate  `json:"sessions"`
+	// Groups Hierarchical grouping of sessions
+	Groups        *[]ProgramGroupCreate  `json:"groups,omitempty"`
+	LogFields     *[]FieldDef            `json:"log_fields,omitempty"`
+	Name          string                 `json:"name"`
+	Notes         *string                `json:"notes,omitempty"`
+	ProgramFields *[]FieldDef            `json:"program_fields,omitempty"`
+	Sessions      []ProgramSessionCreate `json:"sessions"`
+}
+
+// ProgramGroup defines model for ProgramGroup.
+type ProgramGroup struct {
+	Id            openapi_types.UUID  `json:"id"`
+	Name          string              `json:"name"`
+	Notes         *string             `json:"notes,omitempty"`
+	Order         int                 `json:"order"`
+	ParentGroupId *openapi_types.UUID `json:"parent_group_id,omitempty"`
+	ProgramId     openapi_types.UUID  `json:"program_id"`
+}
+
+// ProgramGroupCreate defines model for ProgramGroupCreate.
+type ProgramGroupCreate struct {
+	Name          string              `json:"name"`
+	Notes         *string             `json:"notes,omitempty"`
+	Order         int                 `json:"order"`
+	ParentGroupId *openapi_types.UUID `json:"parent_group_id,omitempty"`
 }
 
 // ProgramListResponse defines model for ProgramListResponse.
@@ -237,7 +311,10 @@ type ProgramSession struct {
 
 	// Entries Exercise prescriptions with absolute weights
 	Entries []ProgramSessionEntry `json:"entries"`
-	Id      openapi_types.UUID    `json:"id"`
+
+	// GroupId Optional reference to a ProgramGroup
+	GroupId *openapi_types.UUID `json:"group_id,omitempty"`
+	Id      openapi_types.UUID  `json:"id"`
 
 	// Order Global position in program (0-based)
 	Order     int                `json:"order"`
@@ -249,10 +326,13 @@ type ProgramSession struct {
 
 // ProgramSessionCreate defines model for ProgramSessionCreate.
 type ProgramSessionCreate struct {
-	Date        *openapi_types.Date          `json:"date,omitempty"`
-	Entries     *[]ProgramSessionEntryCreate `json:"entries,omitempty"`
-	Order       int                          `json:"order"`
-	SessionName string                       `json:"session_name"`
+	Date    *openapi_types.Date          `json:"date,omitempty"`
+	Entries *[]ProgramSessionEntryCreate `json:"entries,omitempty"`
+
+	// GroupId Optional reference to a ProgramGroup
+	GroupId     *openapi_types.UUID `json:"group_id,omitempty"`
+	Order       int                 `json:"order"`
+	SessionName string              `json:"session_name"`
 }
 
 // ProgramSessionEntry defines model for ProgramSessionEntry.
@@ -282,12 +362,13 @@ type ProgramSessionEntryCreate struct {
 
 // ProgramUpdate defines model for ProgramUpdate.
 type ProgramUpdate struct {
-	LogFields     *[]FieldDef             `json:"log_fields,omitempty"`
-	Metadata      *map[string]interface{} `json:"metadata,omitempty"`
-	Name          string                  `json:"name"`
-	Notes         *string                 `json:"notes,omitempty"`
-	ProgramFields *[]FieldDef             `json:"program_fields,omitempty"`
-	Sessions      []ProgramSessionCreate  `json:"sessions"`
+	// Groups Hierarchical grouping of sessions
+	Groups        *[]ProgramGroupCreate  `json:"groups,omitempty"`
+	LogFields     *[]FieldDef            `json:"log_fields,omitempty"`
+	Name          string                 `json:"name"`
+	Notes         *string                `json:"notes,omitempty"`
+	ProgramFields *[]FieldDef            `json:"program_fields,omitempty"`
+	Sessions      []ProgramSessionCreate `json:"sessions"`
 }
 
 // VideoDownloadURLRequest defines model for VideoDownloadURLRequest.
@@ -371,6 +452,11 @@ type ListLogsParams struct {
 	PerformedAtTo *time.Time `form:"performed_at_to,omitempty" json:"performed_at_to,omitempty"`
 }
 
+// AddPlanSessionsJSONBody defines parameters for AddPlanSessions.
+type AddPlanSessionsJSONBody struct {
+	Sessions []PlanSessionCreate `json:"sessions"`
+}
+
 // ListProgramsParams defines parameters for ListPrograms.
 type ListProgramsParams struct {
 	// Limit Maximum number of items to return
@@ -378,21 +464,7 @@ type ListProgramsParams struct {
 
 	// After Cursor for pagination (from previous response)
 	After *After `form:"after,omitempty" json:"after,omitempty"`
-
-	// Status Filter programs by status
-	Status *ListProgramsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
 }
-
-// ListProgramsParamsStatus defines parameters for ListPrograms.
-type ListProgramsParamsStatus string
-
-// UpdateProgramStatusJSONBody defines parameters for UpdateProgramStatus.
-type UpdateProgramStatusJSONBody struct {
-	Status UpdateProgramStatusJSONBodyStatus `json:"status"`
-}
-
-// UpdateProgramStatusJSONBodyStatus defines parameters for UpdateProgramStatus.
-type UpdateProgramStatusJSONBodyStatus string
 
 // CreateLogJSONRequestBody defines body for CreateLog for application/json ContentType.
 type CreateLogJSONRequestBody = LogCreate
@@ -400,14 +472,23 @@ type CreateLogJSONRequestBody = LogCreate
 // UpdateLogJSONRequestBody defines body for UpdateLog for application/json ContentType.
 type UpdateLogJSONRequestBody = LogCreate
 
+// CreatePlanJSONRequestBody defines body for CreatePlan for application/json ContentType.
+type CreatePlanJSONRequestBody = PlanCreate
+
+// UpdatePlanJSONRequestBody defines body for UpdatePlan for application/json ContentType.
+type UpdatePlanJSONRequestBody = PlanUpdate
+
+// AddPlanSessionsJSONRequestBody defines body for AddPlanSessions for application/json ContentType.
+type AddPlanSessionsJSONRequestBody AddPlanSessionsJSONBody
+
+// UpdatePlanSessionJSONRequestBody defines body for UpdatePlanSession for application/json ContentType.
+type UpdatePlanSessionJSONRequestBody = PlanSessionCreate
+
 // CreateProgramJSONRequestBody defines body for CreateProgram for application/json ContentType.
 type CreateProgramJSONRequestBody = ProgramCreate
 
 // UpdateProgramJSONRequestBody defines body for UpdateProgram for application/json ContentType.
 type UpdateProgramJSONRequestBody = ProgramUpdate
-
-// UpdateProgramStatusJSONRequestBody defines body for UpdateProgramStatus for application/json ContentType.
-type UpdateProgramStatusJSONRequestBody UpdateProgramStatusJSONBody
 
 // GenerateVideoDownloadURLJSONRequestBody defines body for GenerateVideoDownloadURL for application/json ContentType.
 type GenerateVideoDownloadURLJSONRequestBody = VideoDownloadURLRequest
@@ -432,6 +513,30 @@ type ServerInterface interface {
 	// Update log
 	// (PUT /logs/{id})
 	UpdateLog(w http.ResponseWriter, r *http.Request, id LogId)
+	// Delete plan
+	// (DELETE /plan)
+	DeletePlan(w http.ResponseWriter, r *http.Request)
+	// Get user's plan
+	// (GET /plan)
+	GetPlan(w http.ResponseWriter, r *http.Request)
+	// Create plan
+	// (POST /plan)
+	CreatePlan(w http.ResponseWriter, r *http.Request)
+	// Update plan
+	// (PUT /plan)
+	UpdatePlan(w http.ResponseWriter, r *http.Request)
+	// Expand program into plan
+	// (POST /plan/expand-program/{program_id})
+	ExpandProgram(w http.ResponseWriter, r *http.Request, programId openapi_types.UUID)
+	// Add sessions to plan
+	// (POST /plan/sessions)
+	AddPlanSessions(w http.ResponseWriter, r *http.Request)
+	// Remove plan session
+	// (DELETE /plan/sessions/{session_id})
+	DeletePlanSession(w http.ResponseWriter, r *http.Request, sessionId openapi_types.UUID)
+	// Update a plan session
+	// (PUT /plan/sessions/{session_id})
+	UpdatePlanSession(w http.ResponseWriter, r *http.Request, sessionId openapi_types.UUID)
 	// List programs
 	// (GET /programs)
 	ListPrograms(w http.ResponseWriter, r *http.Request, params ListProgramsParams)
@@ -447,12 +552,6 @@ type ServerInterface interface {
 	// Update program content
 	// (PUT /programs/{id})
 	UpdateProgram(w http.ResponseWriter, r *http.Request, id ProgramId)
-	// List distinct logged session names for a program
-	// (GET /programs/{id}/logged-sessions)
-	ListLoggedSessions(w http.ResponseWriter, r *http.Request, id ProgramId)
-	// Update program status
-	// (PATCH /programs/{id}/status)
-	UpdateProgramStatus(w http.ResponseWriter, r *http.Request, id ProgramId)
 	// Generate pre-signed URL for video download
 	// (POST /videos/download-url)
 	GenerateVideoDownloadURL(w http.ResponseWriter, r *http.Request)
@@ -495,6 +594,54 @@ func (_ Unimplemented) UpdateLog(w http.ResponseWriter, r *http.Request, id LogI
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// Delete plan
+// (DELETE /plan)
+func (_ Unimplemented) DeletePlan(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get user's plan
+// (GET /plan)
+func (_ Unimplemented) GetPlan(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create plan
+// (POST /plan)
+func (_ Unimplemented) CreatePlan(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update plan
+// (PUT /plan)
+func (_ Unimplemented) UpdatePlan(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Expand program into plan
+// (POST /plan/expand-program/{program_id})
+func (_ Unimplemented) ExpandProgram(w http.ResponseWriter, r *http.Request, programId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Add sessions to plan
+// (POST /plan/sessions)
+func (_ Unimplemented) AddPlanSessions(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Remove plan session
+// (DELETE /plan/sessions/{session_id})
+func (_ Unimplemented) DeletePlanSession(w http.ResponseWriter, r *http.Request, sessionId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update a plan session
+// (PUT /plan/sessions/{session_id})
+func (_ Unimplemented) UpdatePlanSession(w http.ResponseWriter, r *http.Request, sessionId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // List programs
 // (GET /programs)
 func (_ Unimplemented) ListPrograms(w http.ResponseWriter, r *http.Request, params ListProgramsParams) {
@@ -522,18 +669,6 @@ func (_ Unimplemented) GetProgram(w http.ResponseWriter, r *http.Request, id Pro
 // Update program content
 // (PUT /programs/{id})
 func (_ Unimplemented) UpdateProgram(w http.ResponseWriter, r *http.Request, id ProgramId) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// List distinct logged session names for a program
-// (GET /programs/{id}/logged-sessions)
-func (_ Unimplemented) ListLoggedSessions(w http.ResponseWriter, r *http.Request, id ProgramId) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Update program status
-// (PATCH /programs/{id}/status)
-func (_ Unimplemented) UpdateProgramStatus(w http.ResponseWriter, r *http.Request, id ProgramId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -736,6 +871,199 @@ func (siw *ServerInterfaceWrapper) UpdateLog(w http.ResponseWriter, r *http.Requ
 	handler.ServeHTTP(w, r)
 }
 
+// DeletePlan operation middleware
+func (siw *ServerInterfaceWrapper) DeletePlan(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeletePlan(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPlan operation middleware
+func (siw *ServerInterfaceWrapper) GetPlan(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPlan(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreatePlan operation middleware
+func (siw *ServerInterfaceWrapper) CreatePlan(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreatePlan(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdatePlan operation middleware
+func (siw *ServerInterfaceWrapper) UpdatePlan(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdatePlan(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ExpandProgram operation middleware
+func (siw *ServerInterfaceWrapper) ExpandProgram(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "program_id" -------------
+	var programId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "program_id", chi.URLParam(r, "program_id"), &programId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "program_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ExpandProgram(w, r, programId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddPlanSessions operation middleware
+func (siw *ServerInterfaceWrapper) AddPlanSessions(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddPlanSessions(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeletePlanSession operation middleware
+func (siw *ServerInterfaceWrapper) DeletePlanSession(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "session_id" -------------
+	var sessionId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "session_id", chi.URLParam(r, "session_id"), &sessionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "session_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeletePlanSession(w, r, sessionId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdatePlanSession operation middleware
+func (siw *ServerInterfaceWrapper) UpdatePlanSession(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "session_id" -------------
+	var sessionId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "session_id", chi.URLParam(r, "session_id"), &sessionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "session_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdatePlanSession(w, r, sessionId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListPrograms operation middleware
 func (siw *ServerInterfaceWrapper) ListPrograms(w http.ResponseWriter, r *http.Request) {
 
@@ -763,14 +1091,6 @@ func (siw *ServerInterfaceWrapper) ListPrograms(w http.ResponseWriter, r *http.R
 	err = runtime.BindQueryParameter("form", true, false, "after", r.URL.Query(), &params.After)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "after", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "status" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "status", r.URL.Query(), &params.Status)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
 		return
 	}
 
@@ -889,68 +1209,6 @@ func (siw *ServerInterfaceWrapper) UpdateProgram(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateProgram(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// ListLoggedSessions operation middleware
-func (siw *ServerInterfaceWrapper) ListLoggedSessions(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id ProgramId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListLoggedSessions(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// UpdateProgramStatus operation middleware
-func (siw *ServerInterfaceWrapper) UpdateProgramStatus(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id ProgramId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateProgramStatus(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1129,6 +1387,30 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Put(options.BaseURL+"/logs/{id}", wrapper.UpdateLog)
 	})
 	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/plan", wrapper.DeletePlan)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/plan", wrapper.GetPlan)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/plan", wrapper.CreatePlan)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/plan", wrapper.UpdatePlan)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/plan/expand-program/{program_id}", wrapper.ExpandProgram)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/plan/sessions", wrapper.AddPlanSessions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/plan/sessions/{session_id}", wrapper.DeletePlanSession)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/plan/sessions/{session_id}", wrapper.UpdatePlanSession)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/programs", wrapper.ListPrograms)
 	})
 	r.Group(func(r chi.Router) {
@@ -1142,12 +1424,6 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/programs/{id}", wrapper.UpdateProgram)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/programs/{id}/logged-sessions", wrapper.ListLoggedSessions)
-	})
-	r.Group(func(r chi.Router) {
-		r.Patch(options.BaseURL+"/programs/{id}/status", wrapper.UpdateProgramStatus)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/videos/download-url", wrapper.GenerateVideoDownloadURL)

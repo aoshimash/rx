@@ -2,6 +2,7 @@ package memory
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -106,4 +107,60 @@ func TestLogStore_ListByPerformedAtRange_ProgramIDFilter(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, logs, 2)
 	})
+}
+
+func TestLogStore_CreateAndGetWithSetsAndPlanSnapshot(t *testing.T) {
+	store := NewLogRepository().(*logStore)
+	ctx := context.Background()
+
+	snapshot := json.RawMessage(`{"sessions":[{"name":"Day 1"}]}`)
+
+	log := &domain.Log{
+		PerformedAt:  time.Now(),
+		PlanSnapshot: snapshot,
+		Entries: []domain.LogEntry{
+			{
+				ExerciseName: "Squat",
+				Order:        0,
+				Sets: []domain.LogSet{
+					{
+						SetNumber: 1,
+						Fields:    map[string]interface{}{"weight_kg": float64(100), "reps": float64(5)},
+					},
+					{
+						SetNumber: 2,
+						Fields:    map[string]interface{}{"weight_kg": float64(105), "reps": float64(3)},
+					},
+				},
+			},
+		},
+	}
+
+	err := store.Create(ctx, log)
+	require.NoError(t, err)
+	assert.NotEqual(t, uuid.Nil, log.ID)
+
+	got, err := store.GetByID(ctx, log.ID)
+	require.NoError(t, err)
+
+	// Verify PlanSnapshot
+	assert.JSONEq(t, string(snapshot), string(got.PlanSnapshot))
+
+	// Verify Sets
+	require.Len(t, got.Entries, 1)
+	require.Len(t, got.Entries[0].Sets, 2)
+	assert.Equal(t, 1, got.Entries[0].Sets[0].SetNumber)
+	assert.Equal(t, float64(100), got.Entries[0].Sets[0].Fields["weight_kg"])
+	assert.Equal(t, 2, got.Entries[0].Sets[1].SetNumber)
+	assert.NotEqual(t, uuid.Nil, got.Entries[0].Sets[0].ID)
+	assert.Equal(t, got.Entries[0].ID, got.Entries[0].Sets[0].EntryID)
+
+	// Verify deep copy isolation
+	got.PlanSnapshot = json.RawMessage(`{"modified":true}`)
+	got.Entries[0].Sets[0].Fields["weight_kg"] = float64(999)
+
+	got2, err := store.GetByID(ctx, log.ID)
+	require.NoError(t, err)
+	assert.JSONEq(t, string(snapshot), string(got2.PlanSnapshot))
+	assert.Equal(t, float64(100), got2.Entries[0].Sets[0].Fields["weight_kg"])
 }

@@ -36,6 +36,10 @@ func (s *logStore) Create(ctx context.Context, log *domain.Log) error {
 	for i := range log.Entries {
 		log.Entries[i].ID = uuid.New()
 		log.Entries[i].LogID = log.ID
+		for j := range log.Entries[i].Sets {
+			log.Entries[i].Sets[j].ID = uuid.New()
+			log.Entries[i].Sets[j].EntryID = log.Entries[i].ID
+		}
 	}
 
 	s.logs[log.ID] = log
@@ -66,10 +70,27 @@ func (s *logStore) copyLog(l *domain.Log) *domain.Log {
 			}
 			cp.Entries[i].Fields = fields
 		}
+		if e.Sets != nil {
+			cp.Entries[i].Sets = make([]domain.LogSet, len(e.Sets))
+			for j, s := range e.Sets {
+				cp.Entries[i].Sets[j] = s
+				if s.Fields != nil {
+					fields := make(map[string]interface{}, len(s.Fields))
+					for k, v := range s.Fields {
+						fields[k] = v
+					}
+					cp.Entries[i].Sets[j].Fields = fields
+				}
+			}
+		}
 	}
 	if l.Metadata != nil {
 		cp.Metadata = make([]byte, len(l.Metadata))
 		copy(cp.Metadata, l.Metadata)
+	}
+	if l.PlanSnapshot != nil {
+		cp.PlanSnapshot = make([]byte, len(l.PlanSnapshot))
+		copy(cp.PlanSnapshot, l.PlanSnapshot)
 	}
 	return &cp
 }
@@ -89,9 +110,15 @@ func (s *logStore) Update(ctx context.Context, log *domain.Log) error {
 			log.Entries[i].ID = uuid.New()
 		}
 		log.Entries[i].LogID = log.ID
+		for j := range log.Entries[i].Sets {
+			if log.Entries[i].Sets[j].ID == uuid.Nil {
+				log.Entries[i].Sets[j].ID = uuid.New()
+			}
+			log.Entries[i].Sets[j].EntryID = log.Entries[i].ID
+		}
 	}
 
-	s.logs[log.ID] = log
+	s.logs[log.ID] = s.copyLog(log)
 	return nil
 }
 
@@ -173,57 +200,4 @@ func (s *logStore) listWithFilter(ctx context.Context, programID *uuid.UUID, per
 	}
 
 	return copies, nextCursor, hasMore, nil
-}
-
-func (s *logStore) ListLoggedSessionsByProgramID(ctx context.Context, programID uuid.UUID) ([]domain.LoggedSession, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	seen := make(map[string]struct{})
-	var result []domain.LoggedSession
-
-	for _, l := range s.logs {
-		if l.ProgramID == nil || *l.ProgramID != programID || l.SessionName == nil {
-			continue
-		}
-		if _, exists := seen[*l.SessionName]; !exists {
-			seen[*l.SessionName] = struct{}{}
-			result = append(result, domain.LoggedSession{
-				SessionName: *l.SessionName,
-				LogID:       l.ID,
-				PerformedAt: l.PerformedAt,
-				StartedAt:   l.StartedAt,
-				FinishedAt:  l.FinishedAt,
-			})
-		}
-	}
-
-	if result == nil {
-		result = []domain.LoggedSession{}
-	}
-	return result, nil
-}
-
-func (s *logStore) ExistsByProgramIDAndSessionName(ctx context.Context, programID uuid.UUID, sessionName string) (bool, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	for _, l := range s.logs {
-		if l.ProgramID != nil && *l.ProgramID == programID && l.SessionName != nil && *l.SessionName == sessionName {
-			return true, nil
-		}
-	}
-	return false, nil
-}
-
-func (s *logStore) ExistsByProgramIDAndSessionNameExcluding(ctx context.Context, programID uuid.UUID, sessionName string, excludeID uuid.UUID) (bool, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	for _, l := range s.logs {
-		if l.ProgramID != nil && *l.ProgramID == programID && l.SessionName != nil && *l.SessionName == sessionName && l.ID != excludeID {
-			return true, nil
-		}
-	}
-	return false, nil
 }

@@ -33,6 +33,13 @@ func (s *programStore) Create(ctx context.Context, program *domain.Program) erro
 	program.CreatedAt = now
 	program.UpdatedAt = now
 
+	for i := range program.Groups {
+		if program.Groups[i].ID == uuid.Nil {
+			program.Groups[i].ID = uuid.New()
+		}
+		program.Groups[i].ProgramID = program.ID
+	}
+
 	for i := range program.Sessions {
 		program.Sessions[i].ID = uuid.New()
 		program.Sessions[i].ProgramID = program.ID
@@ -60,24 +67,42 @@ func (s *programStore) GetByID(ctx context.Context, id uuid.UUID) (*domain.Progr
 
 func (s *programStore) copyProgram(p *domain.Program) *domain.Program {
 	cp := *p
-	cp.Sessions = make([]domain.ProgramSession, len(p.Sessions))
-	for i, sess := range p.Sessions {
-		cp.Sessions[i] = sess
-		cp.Sessions[i].Entries = make([]domain.ProgramSessionEntry, len(sess.Entries))
-		for j, e := range sess.Entries {
-			cp.Sessions[i].Entries[j] = e
-			if e.Fields != nil {
-				fields := make(map[string]interface{}, len(e.Fields))
-				for k, v := range e.Fields {
-					fields[k] = v
-				}
-				cp.Sessions[i].Entries[j].Fields = fields
+	if p.Groups != nil {
+		cp.Groups = make([]domain.ProgramGroup, len(p.Groups))
+		for i, g := range p.Groups {
+			cp.Groups[i] = g
+			if g.ParentGroupID != nil {
+				id := *g.ParentGroupID
+				cp.Groups[i].ParentGroupID = &id
+			}
+			if g.Notes != nil {
+				notes := *g.Notes
+				cp.Groups[i].Notes = &notes
 			}
 		}
 	}
-	if p.Metadata != nil {
-		cp.Metadata = make([]byte, len(p.Metadata))
-		copy(cp.Metadata, p.Metadata)
+	if p.Sessions != nil {
+		cp.Sessions = make([]domain.ProgramSession, len(p.Sessions))
+		for i, sess := range p.Sessions {
+			cp.Sessions[i] = sess
+			if sess.GroupID != nil {
+				id := *sess.GroupID
+				cp.Sessions[i].GroupID = &id
+			}
+			if sess.Entries != nil {
+				cp.Sessions[i].Entries = make([]domain.ProgramSessionEntry, len(sess.Entries))
+				for j, e := range sess.Entries {
+					cp.Sessions[i].Entries[j] = e
+					if e.Fields != nil {
+						fields := make(map[string]interface{}, len(e.Fields))
+						for k, v := range e.Fields {
+							fields[k] = v
+						}
+						cp.Sessions[i].Entries[j].Fields = fields
+					}
+				}
+			}
+		}
 	}
 	if p.ProgramFields != nil {
 		cp.ProgramFields = make([]domain.FieldDef, len(p.ProgramFields))
@@ -102,6 +127,13 @@ func (s *programStore) Update(ctx context.Context, program *domain.Program) erro
 	program.CreatedAt = existing.CreatedAt
 	program.UpdatedAt = time.Now()
 
+	for i := range program.Groups {
+		if program.Groups[i].ID == uuid.Nil {
+			program.Groups[i].ID = uuid.New()
+		}
+		program.Groups[i].ProgramID = program.ID
+	}
+
 	for i := range program.Sessions {
 		program.Sessions[i].ID = uuid.New()
 		program.Sessions[i].ProgramID = program.ID
@@ -112,20 +144,6 @@ func (s *programStore) Update(ctx context.Context, program *domain.Program) erro
 	}
 
 	s.programs[program.ID] = program
-	return nil
-}
-
-func (s *programStore) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ProgramStatus) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	program, exists := s.programs[id]
-	if !exists {
-		return domain.ErrNotFound
-	}
-
-	program.Status = status
-	program.UpdatedAt = time.Now()
 	return nil
 }
 
@@ -141,15 +159,12 @@ func (s *programStore) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (s *programStore) List(ctx context.Context, limit int, after string, status string) ([]*domain.Program, string, bool, error) {
+func (s *programStore) List(ctx context.Context, limit int, after string) ([]*domain.Program, string, bool, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	programs := make([]*domain.Program, 0, len(s.programs))
 	for _, p := range s.programs {
-		if status != "" && string(p.Status) != status {
-			continue
-		}
 		programs = append(programs, p)
 	}
 

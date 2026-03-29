@@ -37,8 +37,16 @@ func TestProgramRepository_ExistsByName(t *testing.T) {
 	ctx := context.Background()
 
 	existing := &domain.Program{
-		Name:   "ExistingProgram_ExistsByName",
-		Status: domain.ProgramStatusCreated,
+		Name: "ExistingProgram_ExistsByName",
+		Sessions: []domain.ProgramSession{
+			{
+				SessionName: "Day 1",
+				Order:       0,
+				Entries: []domain.ProgramSessionEntry{
+					{Order: 0, ExerciseName: "Squat", Fields: map[string]interface{}{"sets": 3, "reps": 5}},
+				},
+			},
+		},
 	}
 	require.NoError(t, repo.Create(ctx, existing))
 	t.Cleanup(func() { _ = repo.Delete(ctx, existing.ID) })

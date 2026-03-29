@@ -1,5 +1,8 @@
 // Package seed provides local development seed data.
 // It is intended for use with in-memory storage and local postgres only.
+//
+// NOTE: This file is a stub pending Task 14 (Final Integration & Cleanup).
+// The seed data needs to be updated for the new domain model (no Status/Metadata on Program).
 package seed
 
 import (
@@ -24,26 +27,13 @@ func fieldsWithRPE(sets, reps int, loadKg, rpe float64) map[string]interface{} {
 }
 
 // Run inserts sample powerlifting data into the provided repositories.
-//
-// Program lifecycle simulated:
-//
-//	Completed:  SBD Peaking — Jan 2026        (all sessions logged)
-//	Completed:  Upper/Lower Split — Feb 2026   (all sessions logged)
-//	Ongoing:    Block Periodization — Mar 2026 (3/6 sessions logged)
-//	Created:    Competition Prep — Apr 2026    (not started)
 func Run(ctx context.Context, programRepo repository.ProgramRepository, logRepo repository.LogRepository) error {
-	// ── Program 1: SBD Peaking (completed) ──────────────────────────────────
+	// ── Program 1: SBD Peaking ──────────────────────────────────
 	prog1 := sbdPeaking()
 	if err := programRepo.Create(ctx, prog1); err != nil {
 		return fmt.Errorf("create SBD Peaking program: %w", err)
 	}
-	if err := programRepo.UpdateStatus(ctx, prog1.ID, domain.ProgramStatusOngoing); err != nil {
-		return fmt.Errorf("update SBD Peaking to ongoing: %w", err)
-	}
-	if err := programRepo.UpdateStatus(ctx, prog1.ID, domain.ProgramStatusCompleted); err != nil {
-		return fmt.Errorf("update SBD Peaking to completed: %w", err)
-	}
-	slog.Info("seeded program", "name", prog1.Name, "status", "completed")
+	slog.Info("seeded program", "name", prog1.Name)
 
 	// Logs for all 4 sessions
 	for i, s := range prog1.Sessions {
@@ -53,18 +43,12 @@ func Run(ctx context.Context, programRepo repository.ProgramRepository, logRepo 
 		}
 	}
 
-	// ── Program 2: Upper/Lower Split (completed) ────────────────────────────
+	// ── Program 2: Upper/Lower Split ────────────────────────────
 	prog2 := upperLowerSplit()
 	if err := programRepo.Create(ctx, prog2); err != nil {
 		return fmt.Errorf("create Upper/Lower Split program: %w", err)
 	}
-	if err := programRepo.UpdateStatus(ctx, prog2.ID, domain.ProgramStatusOngoing); err != nil {
-		return fmt.Errorf("update Upper/Lower to ongoing: %w", err)
-	}
-	if err := programRepo.UpdateStatus(ctx, prog2.ID, domain.ProgramStatusCompleted); err != nil {
-		return fmt.Errorf("update Upper/Lower to completed: %w", err)
-	}
-	slog.Info("seeded program", "name", prog2.Name, "status", "completed")
+	slog.Info("seeded program", "name", prog2.Name)
 
 	for i, s := range prog2.Sessions {
 		log := logForSession(prog2.ID, s, time.Date(2026, 2, 2+i*2, 18, 0, 0, 0, time.UTC))
@@ -73,15 +57,12 @@ func Run(ctx context.Context, programRepo repository.ProgramRepository, logRepo 
 		}
 	}
 
-	// ── Program 3: Block Periodization (ongoing, 3/6 logged) ────────────────
+	// ── Program 3: Block Periodization (3/6 logged) ────────────────
 	prog3 := blockPeriodization()
 	if err := programRepo.Create(ctx, prog3); err != nil {
 		return fmt.Errorf("create Block Periodization program: %w", err)
 	}
-	if err := programRepo.UpdateStatus(ctx, prog3.ID, domain.ProgramStatusOngoing); err != nil {
-		return fmt.Errorf("update Block Periodization to ongoing: %w", err)
-	}
-	slog.Info("seeded program", "name", prog3.Name, "status", "ongoing")
+	slog.Info("seeded program", "name", prog3.Name)
 
 	for i := 0; i < 3; i++ {
 		s := prog3.Sessions[i]
@@ -91,12 +72,12 @@ func Run(ctx context.Context, programRepo repository.ProgramRepository, logRepo 
 		}
 	}
 
-	// ── Program 4: Competition Prep (created, no logs) ──────────────────────
+	// ── Program 4: Competition Prep (no logs) ──────────────────────
 	prog4 := competitionPrep()
 	if err := programRepo.Create(ctx, prog4); err != nil {
 		return fmt.Errorf("create Competition Prep program: %w", err)
 	}
-	slog.Info("seeded program", "name", prog4.Name, "status", "created")
+	slog.Info("seeded program", "name", prog4.Name)
 
 	slog.Info("seed data loaded successfully")
 	return nil
@@ -109,10 +90,9 @@ func sbdPeaking() *domain.Program {
 	s1ID, s2ID, s3ID, s4ID := uuid.New(), uuid.New(), uuid.New(), uuid.New()
 
 	return &domain.Program{
-		ID:     progID,
-		Name:   "SBD Peaking — Jan 2026",
-		Status: domain.ProgramStatusCreated,
-		Notes:  stringPtr("4-session peaking block focusing on competition lifts"),
+		ID:    progID,
+		Name:  "SBD Peaking — Jan 2026",
+		Notes: stringPtr("4-session peaking block focusing on competition lifts"),
 		Sessions: []domain.ProgramSession{
 			{
 				ID: s1ID, ProgramID: progID, SessionName: "Heavy Squat", Order: 1,
@@ -155,10 +135,9 @@ func upperLowerSplit() *domain.Program {
 	s1ID, s2ID, s3ID, s4ID := uuid.New(), uuid.New(), uuid.New(), uuid.New()
 
 	return &domain.Program{
-		ID:     progID,
-		Name:   "Upper/Lower Split — Feb 2026",
-		Status: domain.ProgramStatusCreated,
-		Notes:  stringPtr("Hypertrophy-focused upper/lower split"),
+		ID:    progID,
+		Name:  "Upper/Lower Split — Feb 2026",
+		Notes: stringPtr("Hypertrophy-focused upper/lower split"),
 		Sessions: []domain.ProgramSession{
 			{
 				ID: s1ID, ProgramID: progID, SessionName: "Upper A", Order: 1,
@@ -208,10 +187,9 @@ func blockPeriodization() *domain.Program {
 	}
 
 	return &domain.Program{
-		ID:     progID,
-		Name:   "Block Periodization — Mar 2026",
-		Status: domain.ProgramStatusCreated,
-		Notes:  stringPtr("Accumulation → Transmutation → Realization"),
+		ID:    progID,
+		Name:  "Block Periodization — Mar 2026",
+		Notes: stringPtr("Accumulation → Transmutation → Realization"),
 		Sessions: []domain.ProgramSession{
 			{
 				ID: sIDs[0], ProgramID: progID, SessionName: "Week 1 — SBD", Order: 1,
@@ -270,10 +248,9 @@ func competitionPrep() *domain.Program {
 	s1ID, s2ID, s3ID := uuid.New(), uuid.New(), uuid.New()
 
 	return &domain.Program{
-		ID:     progID,
-		Name:   "Competition Prep — Apr 2026",
-		Status: domain.ProgramStatusCreated,
-		Notes:  stringPtr("Final peaking block before April competition"),
+		ID:    progID,
+		Name:  "Competition Prep — Apr 2026",
+		Notes: stringPtr("Final peaking block before April competition"),
 		Sessions: []domain.ProgramSession{
 			{
 				ID: s1ID, ProgramID: progID, SessionName: "Opener Rehearsal", Order: 1,
