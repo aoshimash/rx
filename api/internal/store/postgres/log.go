@@ -422,13 +422,6 @@ func (r *logRepository) listWithFilter(ctx context.Context, programID *uuid.UUID
 		if len(planSnapshotRaw) > 0 {
 			log.PlanSnapshot = json.RawMessage(planSnapshotRaw)
 		}
-
-		entries, err := r.getEntriesForLog(ctx, log.ID)
-		if err != nil {
-			return nil, "", false, err
-		}
-		log.Entries = entries
-
 		logs = append(logs, &log)
 	}
 
@@ -441,10 +434,114 @@ func (r *logRepository) listWithFilter(ctx context.Context, programID *uuid.UUID
 		logs = logs[:limit]
 	}
 
+	if len(logs) > 0 {
+		logIDs := make([]uuid.UUID, len(logs))
+		for i, l := range logs {
+			logIDs[i] = l.ID
+		}
+		entriesByLog, err := r.getEntriesForLogsBatch(ctx, logIDs)
+		if err != nil {
+			return nil, "", false, err
+		}
+		for _, l := range logs {
+			l.Entries = entriesByLog[l.ID]
+		}
+	}
+
 	var nextCursor string
 	if hasMore && len(logs) > 0 {
 		nextCursor = encodeCursor(logs[len(logs)-1].ID)
 	}
 
 	return logs, nextCursor, hasMore, nil
+}
+
+func (r *logRepository) getEntriesForLogsBatch(ctx context.Context, logIDs []uuid.UUID) (map[uuid.UUID][]domain.LogEntry, error) {
+	query := `
+		SELECT id, log_id, "order", exercise_name,
+		       fields,
+		       notes, video_object_key, started_at, finished_at
+		FROM log_entries
+		WHERE log_id = ANY($1::uuid[])
+		ORDER BY log_id, "order" ASC
+	`
+
+	rows, err := r.pool.Query(ctx, query, uuidStrings(logIDs))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var entries []domain.LogEntry
+	for rows.Next() {
+		var entry domain.LogEntry
+		var fieldsRaw []byte
+		if err := rows.Scan(
+			&entry.ID, &entry.LogID, &entry.Order, &entry.ExerciseName,
+			&fieldsRaw, &entry.Notes, &entry.VideoObjectKey, &entry.StartedAt, &entry.FinishedAt,
+		); err != nil {
+			return nil, err
+		}
+		if len(fieldsRaw) > 0 {
+			if err := json.Unmarshal(fieldsRaw, &entry.Fields); err != nil {
+				return nil, fmt.Errorf("unmarshal fields for entry %s: %w", entry.ID, err)
+			}
+		}
+		entries = append(entries, entry)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	if len(entries) > 0 {
+		entryIDs := make([]uuid.UUID, len(entries))
+		for i, e := range entries {
+			entryIDs[i] = e.ID
+		}
+		setsByEntry, err := r.getSetsForEntriesBatch(ctx, entryIDs)
+		if err != nil {
+			return nil, err
+		}
+		for i := range entries {
+			entries[i].Sets = setsByEntry[entries[i].ID]
+		}
+	}
+
+	result := make(map[uuid.UUID][]domain.LogEntry)
+	for _, entry := range entries {
+		result[entry.LogID] = append(result[entry.LogID], entry)
+	}
+	return result, nil
+}
+
+func (r *logRepository) getSetsForEntriesBatch(ctx context.Context, entryIDs []uuid.UUID) (map[uuid.UUID][]domain.LogSet, error) {
+	query := `
+		SELECT id, entry_id, set_number, fields, video_url, notes
+		FROM log_sets
+		WHERE entry_id = ANY($1::uuid[])
+		ORDER BY entry_id, set_number ASC
+	`
+
+	rows, err := r.pool.Query(ctx, query, uuidStrings(entryIDs))
+	if err != nil {
+		slog.Error("Failed to batch get log sets", "error", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[uuid.UUID][]domain.LogSet)
+	for rows.Next() {
+		var s domain.LogSet
+		var fieldsRaw []byte
+		if err := rows.Scan(&s.ID, &s.EntryID, &s.SetNumber, &fieldsRaw, &s.VideoURL, &s.Notes); err != nil {
+			return nil, err
+		}
+		if len(fieldsRaw) > 0 {
+			if err := json.Unmarshal(fieldsRaw, &s.Fields); err != nil {
+				return nil, fmt.Errorf("unmarshal fields for set %s: %w", s.ID, err)
+			}
+		}
+		result[s.EntryID] = append(result[s.EntryID], s)
+	}
+	return result, rows.Err()
 }

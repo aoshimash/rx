@@ -13,6 +13,15 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// uuidStrings converts a []uuid.UUID to []string for use with ANY($1::uuid[]) queries.
+func uuidStrings(ids []uuid.UUID) []string {
+	strs := make([]string, len(ids))
+	for i, id := range ids {
+		strs[i] = id.String()
+	}
+	return strs
+}
+
 // marshalJSONBField marshals a value to JSON bytes for JSONB columns.
 // Returns nil if the value is nil or empty slice/map.
 func marshalJSONBField(v interface{}) ([]byte, error) {
@@ -541,18 +550,24 @@ func (r *programRepository) List(ctx context.Context, limit int, after string) (
 		programs = programs[:limit]
 	}
 
-	for _, program := range programs {
-		groups, err := r.getGroupsForProgram(ctx, program.ID)
-		if err != nil {
-			return nil, "", false, err
+	if len(programs) > 0 {
+		programIDs := make([]uuid.UUID, len(programs))
+		for i, p := range programs {
+			programIDs[i] = p.ID
 		}
-		program.Groups = groups
 
-		sessions, err := r.getSessionsForProgram(ctx, program.ID)
+		groupsByProgram, err := r.getGroupsForProgramsBatch(ctx, programIDs)
 		if err != nil {
 			return nil, "", false, err
 		}
-		program.Sessions = sessions
+		sessionsByProgram, err := r.getSessionsForProgramsBatch(ctx, programIDs)
+		if err != nil {
+			return nil, "", false, err
+		}
+		for _, program := range programs {
+			program.Groups = groupsByProgram[program.ID]
+			program.Sessions = sessionsByProgram[program.ID]
+		}
 	}
 
 	var nextCursor string
@@ -561,6 +576,112 @@ func (r *programRepository) List(ctx context.Context, limit int, after string) (
 	}
 
 	return programs, nextCursor, hasMore, nil
+}
+
+func (r *programRepository) getGroupsForProgramsBatch(ctx context.Context, programIDs []uuid.UUID) (map[uuid.UUID][]domain.ProgramGroup, error) {
+	query := `
+		SELECT id, program_id, parent_group_id, name, "order", notes
+		FROM program_groups
+		WHERE program_id = ANY($1::uuid[])
+		ORDER BY program_id, "order" ASC
+	`
+
+	rows, err := r.pool.Query(ctx, query, uuidStrings(programIDs))
+	if err != nil {
+		slog.Error("Failed to batch get program groups", "error", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[uuid.UUID][]domain.ProgramGroup)
+	for rows.Next() {
+		var g domain.ProgramGroup
+		if err := rows.Scan(&g.ID, &g.ProgramID, &g.ParentGroupID, &g.Name, &g.Order, &g.Notes); err != nil {
+			return nil, err
+		}
+		result[g.ProgramID] = append(result[g.ProgramID], g)
+	}
+	return result, rows.Err()
+}
+
+func (r *programRepository) getSessionsForProgramsBatch(ctx context.Context, programIDs []uuid.UUID) (map[uuid.UUID][]domain.ProgramSession, error) {
+	query := `
+		SELECT id, program_id, group_id, session_name, "order", date
+		FROM program_sessions
+		WHERE program_id = ANY($1::uuid[])
+		ORDER BY program_id, "order" ASC
+	`
+
+	rows, err := r.pool.Query(ctx, query, uuidStrings(programIDs))
+	if err != nil {
+		slog.Error("Failed to batch get program sessions", "error", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var sessions []domain.ProgramSession
+	for rows.Next() {
+		var sess domain.ProgramSession
+		if err := rows.Scan(&sess.ID, &sess.ProgramID, &sess.GroupID, &sess.SessionName, &sess.Order, &sess.Date); err != nil {
+			return nil, err
+		}
+		sessions = append(sessions, sess)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	if len(sessions) > 0 {
+		sessionIDs := make([]uuid.UUID, len(sessions))
+		for i, s := range sessions {
+			sessionIDs[i] = s.ID
+		}
+		entriesBySession, err := r.getEntriesForSessionsBatch(ctx, sessionIDs)
+		if err != nil {
+			return nil, err
+		}
+		for i := range sessions {
+			sessions[i].Entries = entriesBySession[sessions[i].ID]
+		}
+	}
+
+	result := make(map[uuid.UUID][]domain.ProgramSession)
+	for _, sess := range sessions {
+		result[sess.ProgramID] = append(result[sess.ProgramID], sess)
+	}
+	return result, nil
+}
+
+func (r *programRepository) getEntriesForSessionsBatch(ctx context.Context, sessionIDs []uuid.UUID) (map[uuid.UUID][]domain.ProgramSessionEntry, error) {
+	query := `
+		SELECT id, session_id, "order", exercise_name, fields, notes
+		FROM program_session_entries
+		WHERE session_id = ANY($1::uuid[])
+		ORDER BY session_id, "order" ASC
+	`
+
+	rows, err := r.pool.Query(ctx, query, uuidStrings(sessionIDs))
+	if err != nil {
+		slog.Error("Failed to batch get program session entries", "error", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[uuid.UUID][]domain.ProgramSessionEntry)
+	for rows.Next() {
+		var entry domain.ProgramSessionEntry
+		var fieldsRaw []byte
+		if err := rows.Scan(&entry.ID, &entry.SessionID, &entry.Order, &entry.ExerciseName, &fieldsRaw, &entry.Notes); err != nil {
+			return nil, err
+		}
+		if len(fieldsRaw) > 0 {
+			if err := json.Unmarshal(fieldsRaw, &entry.Fields); err != nil {
+				return nil, fmt.Errorf("unmarshal fields for entry %s: %w", entry.ID, err)
+			}
+		}
+		result[entry.SessionID] = append(result[entry.SessionID], entry)
+	}
+	return result, rows.Err()
 }
 
 func (r *programRepository) ExistsByName(ctx context.Context, name string) (bool, error) {
