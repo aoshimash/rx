@@ -55,7 +55,6 @@ type Plan struct {
 	ID        uuid.UUID     `json:"id"`
 	Name      *string       `json:"name,omitempty"`
 	Notes     *string       `json:"notes,omitempty"`
-	ProgramID *uuid.UUID    `json:"program_id,omitempty"`
 	Sessions  []PlanSession `json:"sessions,omitempty"`
 	CreatedAt time.Time     `json:"created_at"`
 	UpdatedAt time.Time     `json:"updated_at"`

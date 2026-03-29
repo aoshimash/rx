@@ -221,9 +221,5 @@ func (s *planStore) copyPlan(p *domain.Plan) *domain.Plan {
 			cp.Sessions[i] = s.copySession(sess)
 		}
 	}
-	if p.ProgramID != nil {
-		id := *p.ProgramID
-		cp.ProgramID = &id
-	}
 	return &cp
 }

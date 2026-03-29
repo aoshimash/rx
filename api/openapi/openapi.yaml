@@ -914,10 +914,6 @@ components:
         notes:
           type: string
           maxLength: 5000
-        program_id:
-          type: string
-          format: uuid
-          description: Optional reference to the source program
         sessions:
           type: array
           items:
@@ -938,9 +934,6 @@ components:
         notes:
           type: string
           maxLength: 5000
-        program_id:
-          type: string
-          format: uuid
         sessions:
           type: array
           items:
