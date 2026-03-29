@@ -249,6 +249,12 @@ func ValidateProgramSession(s *ProgramSession) error {
 
 // ValidateFieldDef validates a FieldDef entry.
 func ValidateFieldDef(prefix string, f *FieldDef) error {
+	if f == nil {
+		return &ValidationError{
+			Field:   prefix,
+			Message: "field_def cannot be nil",
+		}
+	}
 	if f.Description != "" {
 		if err := ValidateStringLength(prefix+".description", f.Description, 0, 500); err != nil {
 			return err
