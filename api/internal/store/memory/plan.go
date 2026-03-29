@@ -124,7 +124,9 @@ func (s *planStore) AddSessions(ctx context.Context, userID string, sessions []d
 		}
 	}
 
-	plan.Sessions = append(plan.Sessions, sessions...)
+	for _, sess := range sessions {
+		plan.Sessions = append(plan.Sessions, s.copySession(sess))
+	}
 	plan.UpdatedAt = time.Now()
 	return nil
 }
@@ -147,7 +149,7 @@ func (s *planStore) UpdateSession(ctx context.Context, userID string, session *d
 				}
 				session.Entries[j].SessionID = session.ID
 			}
-			plan.Sessions[i] = *session
+			plan.Sessions[i] = s.copySession(*session)
 			plan.UpdatedAt = time.Now()
 			return nil
 		}
@@ -181,37 +183,42 @@ func (s *planStore) DeleteSession(ctx context.Context, userID string, sessionID 
 	return domain.ErrNotFound
 }
 
+func (s *planStore) copySession(sess domain.PlanSession) domain.PlanSession {
+	cp := sess
+	if sess.Date != nil {
+		d := *sess.Date
+		cp.Date = &d
+	}
+	if sess.SourceProgramID != nil {
+		id := *sess.SourceProgramID
+		cp.SourceProgramID = &id
+	}
+	if sess.SourceSessionID != nil {
+		id := *sess.SourceSessionID
+		cp.SourceSessionID = &id
+	}
+	if sess.Entries != nil {
+		cp.Entries = make([]domain.PlanSessionEntry, len(sess.Entries))
+		for j, e := range sess.Entries {
+			cp.Entries[j] = e
+			if e.Fields != nil {
+				fields := make(map[string]interface{}, len(e.Fields))
+				for k, v := range e.Fields {
+					fields[k] = v
+				}
+				cp.Entries[j].Fields = fields
+			}
+		}
+	}
+	return cp
+}
+
 func (s *planStore) copyPlan(p *domain.Plan) *domain.Plan {
 	cp := *p
 	if p.Sessions != nil {
 		cp.Sessions = make([]domain.PlanSession, len(p.Sessions))
 		for i, sess := range p.Sessions {
-			cp.Sessions[i] = sess
-			if sess.Date != nil {
-				d := *sess.Date
-				cp.Sessions[i].Date = &d
-			}
-			if sess.SourceProgramID != nil {
-				id := *sess.SourceProgramID
-				cp.Sessions[i].SourceProgramID = &id
-			}
-			if sess.SourceSessionID != nil {
-				id := *sess.SourceSessionID
-				cp.Sessions[i].SourceSessionID = &id
-			}
-			if sess.Entries != nil {
-				cp.Sessions[i].Entries = make([]domain.PlanSessionEntry, len(sess.Entries))
-				for j, e := range sess.Entries {
-					cp.Sessions[i].Entries[j] = e
-					if e.Fields != nil {
-						fields := make(map[string]interface{}, len(e.Fields))
-						for k, v := range e.Fields {
-							fields[k] = v
-						}
-						cp.Sessions[i].Entries[j].Fields = fields
-					}
-				}
-			}
+			cp.Sessions[i] = s.copySession(sess)
 		}
 	}
 	if p.ProgramID != nil {
