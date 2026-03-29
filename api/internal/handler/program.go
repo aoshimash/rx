@@ -96,7 +96,66 @@ func parseGroups(groups []programGroupRequest) ([]domain.ProgramGroup, map[strin
 		result[i].ParentGroupID = &parentUUID
 	}
 
-	return result, tempIDMap, nil
+	// Topological sort so parents always precede children.
+	// Required for Postgres FK constraint on parent_group_id.
+	sorted, err := topoSortGroups(result)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return sorted, tempIDMap, nil
+}
+
+// topoSortGroups returns groups ordered so every parent appears before its children.
+// Uses Kahn's algorithm. Returns a ValidationError if a cycle is detected.
+func topoSortGroups(groups []domain.ProgramGroup) ([]domain.ProgramGroup, error) {
+	byID := make(map[uuid.UUID]int, len(groups)) // id → index in groups
+	for i, g := range groups {
+		byID[g.ID] = i
+	}
+
+	inDegree := make([]int, len(groups))
+	children := make([][]int, len(groups)) // parent index → child indices
+	for i, g := range groups {
+		if g.ParentGroupID == nil {
+			continue
+		}
+		parentIdx, ok := byID[*g.ParentGroupID]
+		if !ok {
+			continue // parent not in this batch; not our concern here
+		}
+		inDegree[i]++
+		children[parentIdx] = append(children[parentIdx], i)
+	}
+
+	queue := make([]int, 0, len(groups))
+	for i, deg := range inDegree {
+		if deg == 0 {
+			queue = append(queue, i)
+		}
+	}
+
+	sorted := make([]domain.ProgramGroup, 0, len(groups))
+	for len(queue) > 0 {
+		cur := queue[0]
+		queue = queue[1:]
+		sorted = append(sorted, groups[cur])
+		for _, child := range children[cur] {
+			inDegree[child]--
+			if inDegree[child] == 0 {
+				queue = append(queue, child)
+			}
+		}
+	}
+
+	if len(sorted) != len(groups) {
+		return nil, &domain.ValidationError{
+			Field:   "groups",
+			Message: "circular parent_group_id reference detected",
+		}
+	}
+
+	return sorted, nil
 }
 
 // parseSessions converts session request objects to domain ProgramSession slice.
