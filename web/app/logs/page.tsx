@@ -1,7 +1,7 @@
 'use client';
 
 import { ExportButton } from '@/components/export/ExportButton';
-import { LogTable } from '@/components/logs/LogTable';
+import { LogCard } from '@/components/logs/LogCard';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLogs } from '@/lib/hooks/useLogs';
@@ -24,11 +24,10 @@ export default function LogsPage() {
     return (
       <main className="container mx-auto p-6 space-y-4">
         <Skeleton className="h-12 w-[300px]" />
-        <div className="space-y-2">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
+        <div className="space-y-3">
+          <Skeleton className="h-[120px] w-full" />
+          <Skeleton className="h-[120px] w-full" />
+          <Skeleton className="h-[120px] w-full" />
         </div>
       </main>
     );
@@ -73,7 +72,15 @@ export default function LogsPage() {
           </Button>
         </div>
       ) : (
-        <LogTable logs={sortedLogs} programMap={programMap} />
+        <div className="space-y-3">
+          {sortedLogs.map((log) => (
+            <LogCard
+              key={log.id}
+              log={log}
+              programName={log.program_id ? programMap.get(log.program_id) : undefined}
+            />
+          ))}
+        </div>
       )}
     </main>
   );

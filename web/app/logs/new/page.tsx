@@ -3,6 +3,7 @@
 import { LogEntryTable } from '@/components/log-entry-table/LogEntryTable';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCreateLog } from '@/lib/hooks/useLogs';
+import { useDeletePlanSession, usePlan } from '@/lib/hooks/usePlans';
 import { useProgram } from '@/lib/hooks/usePrograms';
 import type { LogEntryCreate } from '@/types/api';
 import { ArrowLeft } from 'lucide-react';
@@ -13,15 +14,28 @@ import { Suspense } from 'react';
 function NewLogPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const planSessionId = searchParams.get('planSessionId');
   const programId = searchParams.get('programId');
   const sessionName = searchParams.get('session');
+
+  const { data: plan, isLoading: planLoading } = usePlan();
   const { data: program, isLoading: programLoading } = useProgram(programId);
   const createLog = useCreateLog();
+  const deletePlanSession = useDeletePlanSession();
 
-  const session = program?.sessions.find((s) => s.session_name === sessionName);
-  const planEntries = session?.entries?.slice().sort((a, b) => a.order - b.order);
+  const planSession = planSessionId
+    ? plan?.sessions.find((s) => s.id === planSessionId)
+    : undefined;
 
-  const backHref = programId ? `/programs/${programId}` : '/logs';
+  const programSession = program?.sessions.find((s) => s.session_name === sessionName);
+
+  const templateEntries = planSession
+    ? planSession.entries.slice().sort((a, b) => a.order - b.order)
+    : programSession?.entries?.slice().sort((a, b) => a.order - b.order);
+
+  const displayName = planSession?.session_name ?? sessionName;
+  const displayProgramName = program?.name;
+  const backHref = planSessionId ? '/' : programId ? `/programs/${programId}` : '/logs';
 
   const handleSave = async (data: {
     entries: LogEntryCreate[];
@@ -29,19 +43,37 @@ function NewLogPageContent() {
     startedAt?: string;
     finishedAt?: string;
   }) => {
+    const planSnapshot = planSession
+      ? {
+          session_name: planSession.session_name,
+          entries: planSession.entries.map((e) => ({
+            exercise_name: e.exercise_name,
+            order: e.order,
+            fields: e.fields,
+            notes: e.notes,
+          })),
+        }
+      : undefined;
+
     await createLog.mutateAsync({
-      program_id: programId ?? undefined,
-      session_name: sessionName ?? undefined,
+      program_id: planSession?.source_program_id ?? programId ?? undefined,
+      session_name: displayName ?? undefined,
       performed_at: new Date().toISOString(),
       started_at: data.startedAt,
       finished_at: data.finishedAt,
       notes: data.notes || undefined,
+      plan_snapshot: planSnapshot,
       entries: data.entries,
     });
+
+    if (planSessionId) {
+      await deletePlanSession.mutateAsync(planSessionId);
+    }
+
     router.push(backHref);
   };
 
-  if (programId && programLoading) {
+  if ((planSessionId && planLoading) || (programId && programLoading)) {
     return (
       <main className="container mx-auto p-6 space-y-4">
         <Skeleton className="h-8 w-[200px]" />
@@ -62,16 +94,16 @@ function NewLogPageContent() {
 
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Record Log</h1>
-        {program && (
+        {(displayProgramName || displayName) && (
           <p className="text-muted-foreground mt-1">
-            {program.name}
-            {sessionName && <span> — {sessionName}</span>}
+            {displayProgramName}
+            {displayName && <span> — {displayName}</span>}
           </p>
         )}
       </div>
 
       <LogEntryTable
-        initialEntries={planEntries}
+        initialEntries={templateEntries}
         onSave={handleSave}
         onCancel={() => router.push(backHref)}
       />

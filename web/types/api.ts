@@ -29,6 +29,7 @@ export interface Log {
   finished_at?: string;
   notes?: string;
   metadata?: Record<string, unknown>;
+  plan_snapshot?: Record<string, unknown>;
   entries: LogEntry[];
   created_at: string;
   updated_at: string;
@@ -42,6 +43,7 @@ export interface LogCreate {
   finished_at?: string;
   notes?: string;
   metadata?: Record<string, unknown>;
+  plan_snapshot?: Record<string, unknown>;
   entries: LogEntryCreate[];
 }
 
@@ -141,6 +143,67 @@ export interface ProgramSessionEntry {
 }
 
 export interface ProgramSessionEntryCreate {
+  exercise_name: string;
+  order: number;
+  fields?: Record<string, unknown>;
+  notes?: string;
+}
+
+// ============================================================================
+// Plan
+// ============================================================================
+
+export interface Plan {
+  id: string;
+  name?: string;
+  notes?: string;
+  sessions: PlanSession[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlanCreate {
+  name?: string;
+  notes?: string;
+  sessions?: PlanSessionCreate[];
+}
+
+export interface PlanUpdate {
+  name?: string;
+  notes?: string;
+  sessions?: PlanSessionCreate[];
+}
+
+export interface PlanSession {
+  id: string;
+  plan_id: string;
+  session_name: string;
+  order: number;
+  date?: string;
+  source_program_id?: string;
+  source_session_id?: string;
+  entries: PlanSessionEntry[];
+}
+
+export interface PlanSessionCreate {
+  session_name: string;
+  order: number;
+  date?: string;
+  source_program_id?: string;
+  source_session_id?: string;
+  entries?: PlanSessionEntryCreate[];
+}
+
+export interface PlanSessionEntry {
+  id: string;
+  session_id: string;
+  order: number;
+  exercise_name: string;
+  fields?: Record<string, unknown>;
+  notes?: string;
+}
+
+export interface PlanSessionEntryCreate {
   exercise_name: string;
   order: number;
   fields?: Record<string, unknown>;
