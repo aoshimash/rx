@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/aoshimash/rx/api/internal/domain"
@@ -115,7 +116,7 @@ func (h *PlanHandler) GetPlan(w http.ResponseWriter, r *http.Request) {
 
 	plan, err := h.planRepo.GetByUserID(ctx, userID)
 	if err != nil {
-		if err == domain.ErrNotFound {
+		if errors.Is(err, domain.ErrNotFound) {
 			middleware.WriteNotFoundError(w, "Plan not found")
 			return
 		}
@@ -221,7 +222,7 @@ func (h *PlanHandler) UpdatePlan(w http.ResponseWriter, r *http.Request) {
 	// Get existing to preserve program_id
 	existing, err := h.planRepo.GetByUserID(ctx, userID)
 	if err != nil {
-		if err == domain.ErrNotFound {
+		if errors.Is(err, domain.ErrNotFound) {
 			middleware.WriteNotFoundError(w, "Plan not found")
 			return
 		}
@@ -260,7 +261,7 @@ func (h *PlanHandler) UpdatePlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.planRepo.Update(ctx, userID, plan); err != nil {
-		if err == domain.ErrNotFound {
+		if errors.Is(err, domain.ErrNotFound) {
 			middleware.WriteNotFoundError(w, "Plan not found")
 			return
 		}
@@ -283,7 +284,7 @@ func (h *PlanHandler) DeletePlan(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(ctx)
 
 	if err := h.planRepo.Delete(ctx, userID); err != nil {
-		if err == domain.ErrNotFound {
+		if errors.Is(err, domain.ErrNotFound) {
 			middleware.WriteNotFoundError(w, "Plan not found")
 			return
 		}
@@ -336,7 +337,7 @@ func (h *PlanHandler) AddPlanSessions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.planRepo.AddSessions(ctx, userID, sessions); err != nil {
-		if err == domain.ErrNotFound {
+		if errors.Is(err, domain.ErrNotFound) {
 			middleware.WriteNotFoundError(w, "Plan not found")
 			return
 		}
@@ -391,7 +392,7 @@ func (h *PlanHandler) UpdatePlanSession(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if err := h.planRepo.UpdateSession(ctx, userID, &sess); err != nil {
-		if err == domain.ErrNotFound {
+		if errors.Is(err, domain.ErrNotFound) {
 			middleware.WriteNotFoundError(w, "Plan or session not found")
 			return
 		}
@@ -414,7 +415,7 @@ func (h *PlanHandler) DeletePlanSession(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if err := h.planRepo.DeleteSession(ctx, userID, sessionID.String()); err != nil {
-		if err == domain.ErrNotFound {
+		if errors.Is(err, domain.ErrNotFound) {
 			middleware.WriteNotFoundError(w, "Plan or session not found")
 			return
 		}
@@ -439,7 +440,7 @@ func (h *PlanHandler) ExpandProgram(w http.ResponseWriter, r *http.Request) {
 	// Load the program
 	program, err := h.programRepo.GetByID(ctx, programID)
 	if err != nil {
-		if err == domain.ErrNotFound {
+		if errors.Is(err, domain.ErrNotFound) {
 			middleware.WriteNotFoundError(w, "Program not found")
 			return
 		}
@@ -474,7 +475,7 @@ func (h *PlanHandler) ExpandProgram(w http.ResponseWriter, r *http.Request) {
 
 	// Check if a plan already exists
 	_, err = h.planRepo.GetByUserID(ctx, userID)
-	if err == domain.ErrNotFound {
+	if errors.Is(err, domain.ErrNotFound) {
 		// Create a new plan with the program's sessions
 		plan := &domain.Plan{
 			ProgramID: &programID,

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -195,7 +196,7 @@ func (h *LogHandler) CreateLog(w http.ResponseWriter, r *http.Request) {
 	// Validate program exists before creating log
 	if log.ProgramID != nil {
 		if _, err := h.programRepo.GetByID(ctx, *log.ProgramID); err != nil {
-			if err == domain.ErrNotFound {
+			if errors.Is(err, domain.ErrNotFound) {
 				middleware.WriteValidationError(w, "Program not found", map[string]interface{}{
 					"program_id": log.ProgramID.String(),
 				})
@@ -226,7 +227,7 @@ func (h *LogHandler) GetLog(w http.ResponseWriter, r *http.Request) {
 
 	log, err := h.repo.GetByID(ctx, id)
 	if err != nil {
-		if err == domain.ErrNotFound {
+		if errors.Is(err, domain.ErrNotFound) {
 			middleware.WriteNotFoundError(w, "Log not found")
 			return
 		}
@@ -249,7 +250,7 @@ func (h *LogHandler) UpdateLog(w http.ResponseWriter, r *http.Request) {
 
 	existing, err := h.repo.GetByID(ctx, id)
 	if err != nil {
-		if err == domain.ErrNotFound {
+		if errors.Is(err, domain.ErrNotFound) {
 			middleware.WriteNotFoundError(w, "Log not found")
 			return
 		}
@@ -288,7 +289,7 @@ func (h *LogHandler) UpdateLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.repo.Update(ctx, updated); err != nil {
-		if err == domain.ErrNotFound {
+		if errors.Is(err, domain.ErrNotFound) {
 			middleware.WriteNotFoundError(w, "Log not found")
 			return
 		}
@@ -310,7 +311,7 @@ func (h *LogHandler) DeleteLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := h.repo.GetByID(ctx, id); err != nil {
-		if err == domain.ErrNotFound {
+		if errors.Is(err, domain.ErrNotFound) {
 			middleware.WriteNotFoundError(w, "Log not found")
 			return
 		}
@@ -319,7 +320,7 @@ func (h *LogHandler) DeleteLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.repo.Delete(ctx, id); err != nil {
-		if err == domain.ErrNotFound {
+		if errors.Is(err, domain.ErrNotFound) {
 			middleware.WriteNotFoundError(w, "Log not found")
 			return
 		}

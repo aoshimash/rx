@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/aoshimash/rx/api/internal/domain"
@@ -207,7 +208,7 @@ func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
 
 	existing, err := h.repo.GetByID(ctx, id)
 	if err != nil {
-		if err == domain.ErrNotFound {
+		if errors.Is(err, domain.ErrNotFound) {
 			middleware.WriteNotFoundError(w, "Program not found")
 			return
 		}
@@ -285,7 +286,7 @@ func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.repo.Update(ctx, program); err != nil {
-		if err == domain.ErrNotFound {
+		if errors.Is(err, domain.ErrNotFound) {
 			middleware.WriteNotFoundError(w, "Program not found")
 			return
 		}
@@ -308,7 +309,7 @@ func (h *ProgramHandler) GetProgram(w http.ResponseWriter, r *http.Request) {
 
 	program, err := h.repo.GetByID(ctx, id)
 	if err != nil {
-		if err == domain.ErrNotFound {
+		if errors.Is(err, domain.ErrNotFound) {
 			middleware.WriteNotFoundError(w, "Program not found")
 			return
 		}
@@ -330,7 +331,7 @@ func (h *ProgramHandler) DeleteProgram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := h.repo.GetByID(ctx, id); err != nil {
-		if err == domain.ErrNotFound {
+		if errors.Is(err, domain.ErrNotFound) {
 			middleware.WriteNotFoundError(w, "Program not found")
 			return
 		}
@@ -339,7 +340,7 @@ func (h *ProgramHandler) DeleteProgram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.repo.Delete(ctx, id); err != nil {
-		if err == domain.ErrNotFound {
+		if errors.Is(err, domain.ErrNotFound) {
 			middleware.WriteNotFoundError(w, "Program not found")
 			return
 		}

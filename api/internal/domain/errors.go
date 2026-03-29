@@ -21,6 +21,14 @@ func (e *DomainError) Error() string {
 	return e.Code + ": " + e.Message
 }
 
+func (e *DomainError) Is(target error) bool {
+	t, ok := target.(*DomainError)
+	if !ok {
+		return false
+	}
+	return e.Code == t.Code
+}
+
 // Error codes
 const (
 	ErrCodeInvalidTimestamp     = "INVALID_TIMESTAMP"
