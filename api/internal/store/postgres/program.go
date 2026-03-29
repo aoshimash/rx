@@ -192,12 +192,12 @@ func (r *programRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.
 
 	if len(programFieldsRaw) > 0 {
 		if err := json.Unmarshal(programFieldsRaw, &program.ProgramFields); err != nil {
-			slog.Error("Failed to unmarshal program_fields", "error", err)
+			return nil, fmt.Errorf("unmarshal program_fields for program %s: %w", program.ID, err)
 		}
 	}
 	if len(logFieldsRaw) > 0 {
 		if err := json.Unmarshal(logFieldsRaw, &program.LogFields); err != nil {
-			slog.Error("Failed to unmarshal log_fields", "error", err)
+			return nil, fmt.Errorf("unmarshal log_fields for program %s: %w", program.ID, err)
 		}
 	}
 
@@ -330,7 +330,7 @@ func (r *programRepository) getEntriesForSession(ctx context.Context, sessionID 
 		}
 		if len(fieldsRaw) > 0 {
 			if err := json.Unmarshal(fieldsRaw, &entry.Fields); err != nil {
-				slog.Error("Failed to unmarshal entry fields", "error", err)
+				return nil, fmt.Errorf("unmarshal fields for entry %s: %w", entry.ID, err)
 			}
 		}
 		entries = append(entries, entry)
@@ -521,12 +521,12 @@ func (r *programRepository) List(ctx context.Context, limit int, after string) (
 		}
 		if len(programFieldsRaw) > 0 {
 			if err := json.Unmarshal(programFieldsRaw, &program.ProgramFields); err != nil {
-				slog.Error("Failed to unmarshal program_fields", "error", err)
+				return nil, "", false, fmt.Errorf("unmarshal program_fields for program %s: %w", program.ID, err)
 			}
 		}
 		if len(logFieldsRaw) > 0 {
 			if err := json.Unmarshal(logFieldsRaw, &program.LogFields); err != nil {
-				slog.Error("Failed to unmarshal log_fields", "error", err)
+				return nil, "", false, fmt.Errorf("unmarshal log_fields for program %s: %w", program.ID, err)
 			}
 		}
 		programs = append(programs, &program)
