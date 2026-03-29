@@ -3,7 +3,7 @@ import { z } from 'zod';
 const programSessionEntryImportSchema = z.object({
   exercise_name: z.string().min(1),
   order: z.number().int().min(0),
-  fields: z.record(z.unknown()).optional(),
+  fields: z.record(z.string(), z.unknown()).optional(),
   notes: z.string().optional(),
 });
 

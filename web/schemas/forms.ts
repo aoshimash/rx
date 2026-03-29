@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 export const logEntrySchema = z.object({
   exercise_name: z.string().min(1, 'Exercise name is required').max(200, 'Name too long'),
-  fields: z.record(z.unknown()).optional(),
+  fields: z.record(z.string(), z.unknown()).optional(),
   notes: z.string().max(2000, 'Notes too long').optional(),
 });
 
