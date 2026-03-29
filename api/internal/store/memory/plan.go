@@ -187,6 +187,10 @@ func (s *planStore) copyPlan(p *domain.Plan) *domain.Plan {
 		cp.Sessions = make([]domain.PlanSession, len(p.Sessions))
 		for i, sess := range p.Sessions {
 			cp.Sessions[i] = sess
+			if sess.Date != nil {
+				d := *sess.Date
+				cp.Sessions[i].Date = &d
+			}
 			if sess.SourceProgramID != nil {
 				id := *sess.SourceProgramID
 				cp.Sessions[i].SourceProgramID = &id

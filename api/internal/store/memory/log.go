@@ -118,7 +118,7 @@ func (s *logStore) Update(ctx context.Context, log *domain.Log) error {
 		}
 	}
 
-	s.logs[log.ID] = log
+	s.logs[log.ID] = s.copyLog(log)
 	return nil
 }
 

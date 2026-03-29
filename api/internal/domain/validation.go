@@ -294,6 +294,11 @@ func ValidateProgram(p *Program) error {
 		}
 	}
 
+	groupIDs := make(map[uuid.UUID]struct{}, len(p.Groups))
+	for _, g := range p.Groups {
+		groupIDs[g.ID] = struct{}{}
+	}
+
 	seenSessions := make(map[string]struct{}, len(p.Sessions))
 	for i := range p.Sessions {
 		if err := ValidateProgramSession(&p.Sessions[i]); err != nil {
@@ -303,6 +308,14 @@ func ValidateProgram(p *Program) error {
 			}
 		}
 		s := &p.Sessions[i]
+		if s.GroupID != nil {
+			if _, ok := groupIDs[*s.GroupID]; !ok {
+				return &ValidationError{
+					Field:   fmt.Sprintf("sessions[%d].group_id", i),
+					Message: fmt.Sprintf("group_id %s not found in program groups", s.GroupID),
+				}
+			}
+		}
 		if _, exists := seenSessions[s.SessionName]; exists {
 			return &ValidationError{
 				Field:   fmt.Sprintf("sessions[%d]", i),

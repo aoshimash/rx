@@ -45,7 +45,7 @@ func main() {
 		slog.Info("Using PostgreSQL storage backend")
 		programRepo = postgresstore.NewProgramRepository(db.Pool())
 		logRepo = postgresstore.NewLogRepository(db.Pool())
-		planRepo = memory.NewPlanRepository() // TODO: implement postgres plan repo
+		planRepo = postgresstore.NewPlanRepository(db.Pool())
 	} else {
 		slog.Info("Using in-memory storage backend")
 		programRepo = memory.NewProgramRepository()

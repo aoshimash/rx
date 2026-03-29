@@ -25,16 +25,14 @@ func NewPlanRepository(pool *pgxpool.Pool) repository.PlanRepository {
 
 func (r *planRepository) GetByUserID(ctx context.Context, userID string) (*domain.Plan, error) {
 	query := `
-		SELECT id, user_id, name, notes, program_id, created_at, updated_at
+		SELECT id, name, notes, program_id, created_at, updated_at
 		FROM plans
 		WHERE user_id = $1
 	`
 
 	var plan domain.Plan
-	var uid string
 	err := r.pool.QueryRow(ctx, query, userID).Scan(
 		&plan.ID,
-		&uid,
 		&plan.Name,
 		&plan.Notes,
 		&plan.ProgramID,
@@ -267,24 +265,18 @@ func (r *planRepository) Update(ctx context.Context, userID string, plan *domain
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
-	// Update the plan row
-	result, err := tx.Exec(ctx, `
+	// Update the plan row and get its ID
+	var planID uuid.UUID
+	err = tx.QueryRow(ctx, `
 		UPDATE plans SET name = $2, notes = $3, program_id = $4, updated_at = NOW()
 		WHERE user_id = $1
 		RETURNING id
-	`, userID, plan.Name, plan.Notes, plan.ProgramID)
-	if err != nil {
-		slog.Error("Failed to update plan", "userID", userID, "error", err)
-		return err
-	}
-	if result.RowsAffected() == 0 {
+	`, userID, plan.Name, plan.Notes, plan.ProgramID).Scan(&planID)
+	if err == pgx.ErrNoRows {
 		return domain.ErrNotFound
 	}
-
-	// Get plan ID for the user
-	var planID uuid.UUID
-	err = tx.QueryRow(ctx, `SELECT id FROM plans WHERE user_id = $1`, userID).Scan(&planID)
 	if err != nil {
+		slog.Error("Failed to update plan", "userID", userID, "error", err)
 		return err
 	}
 	plan.ID = planID
