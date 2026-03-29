@@ -34,7 +34,9 @@ func (s *programStore) Create(ctx context.Context, program *domain.Program) erro
 	program.UpdatedAt = now
 
 	for i := range program.Groups {
-		program.Groups[i].ID = uuid.New()
+		if program.Groups[i].ID == uuid.Nil {
+			program.Groups[i].ID = uuid.New()
+		}
 		program.Groups[i].ProgramID = program.ID
 	}
 
@@ -126,7 +128,9 @@ func (s *programStore) Update(ctx context.Context, program *domain.Program) erro
 	program.UpdatedAt = time.Now()
 
 	for i := range program.Groups {
-		program.Groups[i].ID = uuid.New()
+		if program.Groups[i].ID == uuid.Nil {
+			program.Groups[i].ID = uuid.New()
+		}
 		program.Groups[i].ProgramID = program.ID
 	}
 
