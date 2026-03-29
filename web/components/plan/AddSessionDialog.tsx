@@ -70,16 +70,12 @@ export function AddSessionDialog({ open, onOpenChange, onAdd, nextOrder }: AddSe
   };
 
   const updateEntry = (id: string, field: string, value: string) => {
-    setEntries((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, [field]: value } : e))
-    );
+    setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
   };
 
   const updateEntryField = (id: string, fieldName: string, value: string) => {
     setEntries((prev) =>
-      prev.map((e) =>
-        e.id === id ? { ...e, fields: { ...e.fields, [fieldName]: value } } : e
-      )
+      prev.map((e) => (e.id === id ? { ...e, fields: { ...e.fields, [fieldName]: value } } : e))
     );
   };
 

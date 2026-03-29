@@ -83,9 +83,7 @@ export default function PlanPage() {
                 key={session.id}
                 session={session}
                 programName={
-                  session.source_program_id
-                    ? programMap.get(session.source_program_id)
-                    : undefined
+                  session.source_program_id ? programMap.get(session.source_program_id) : undefined
                 }
                 onLog={handleLog}
                 onDelete={handleDelete}

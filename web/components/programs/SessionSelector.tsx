@@ -81,11 +81,19 @@ export function SessionSelector({
 
         <div className="border rounded-md divide-y">
           {sortedSessions.map((session) => (
-            <label
+            <div
               key={session.id}
               className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-muted/50"
+              onClick={() => toggleSession(session.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleSession(session.id);
+                }
+              }}
             >
               <Checkbox
+                id={`session-${session.id}`}
                 checked={selected.has(session.id)}
                 onCheckedChange={() => toggleSession(session.id)}
               />
@@ -93,7 +101,7 @@ export function SessionSelector({
               <span className="text-xs text-muted-foreground">
                 {session.entries.length} exercise{session.entries.length !== 1 ? 's' : ''}
               </span>
-            </label>
+            </div>
           ))}
         </div>
 

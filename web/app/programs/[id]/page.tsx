@@ -478,9 +478,7 @@ export default function ProgramDetailPage() {
               {updateStatus.isPending ? 'Resuming...' : 'Resume Program'}
             </Button>
           )}
-          <Button onClick={() => setSelectorOpen(true)}>
-            Add to Plan
-          </Button>
+          <Button onClick={() => setSelectorOpen(true)}>Add to Plan</Button>
           {program.status !== 'completed' && (
             <Button variant="outline" size="sm" asChild>
               <Link href={`/programs/${programId}/edit`}>

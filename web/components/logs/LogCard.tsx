@@ -49,11 +49,7 @@ function DiffCell({ planValue, actualValue }: { planValue: unknown; actualValue:
   const pNum = typeof planValue === 'number' ? planValue : null;
   const aNum = typeof actualValue === 'number' ? actualValue : null;
   const color =
-    pNum != null && aNum != null
-      ? aNum > pNum
-        ? 'text-green-600'
-        : 'text-red-500'
-      : '';
+    pNum != null && aNum != null ? (aNum > pNum ? 'text-green-600' : 'text-red-500') : '';
 
   return (
     <span className="tabular-nums">
@@ -123,9 +119,7 @@ export function LogCard({ log, programName }: LogCardProps) {
                               actualValue={entry.fields?.[key]}
                             />
                           ) : (
-                            <span className="tabular-nums">
-                              {formatValue(entry.fields?.[key])}
-                            </span>
+                            <span className="tabular-nums">{formatValue(entry.fields?.[key])}</span>
                           )}
                         </td>
                       ))}
