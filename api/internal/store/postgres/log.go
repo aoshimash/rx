@@ -36,8 +36,8 @@ func (r *logRepository) Create(ctx context.Context, log *domain.Log) error {
 	}
 
 	query := `
-		INSERT INTO logs (id, program_id, session_name, performed_at, started_at, finished_at, notes, metadata, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+		INSERT INTO logs (id, program_id, session_name, performed_at, started_at, finished_at, notes, metadata, plan_snapshot, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
 		RETURNING created_at, updated_at
 	`
 
@@ -50,6 +50,7 @@ func (r *logRepository) Create(ctx context.Context, log *domain.Log) error {
 		log.FinishedAt,
 		log.Notes,
 		log.Metadata,
+		log.PlanSnapshot,
 	).Scan(&log.CreatedAt, &log.UpdatedAt)
 
 	if err != nil {
@@ -108,6 +109,38 @@ func (r *logRepository) insertEntries(ctx context.Context, tx pgx.Tx, logID uuid
 
 		entries[i].ID = entryID
 		entries[i].LogID = logID
+
+		// Insert sets for this entry
+		for k := range entries[i].Sets {
+			setID := uuid.New()
+			if entries[i].Sets[k].ID != uuid.Nil {
+				setID = entries[i].Sets[k].ID
+			}
+
+			setFieldsJSON, err := marshalJSONBField(entries[i].Sets[k].Fields)
+			if err != nil {
+				return err
+			}
+
+			setQuery := `
+				INSERT INTO log_sets (id, entry_id, set_number, fields, video_url, notes)
+				VALUES ($1, $2, $3, $4, $5, $6)
+			`
+			_, err = tx.Exec(ctx, setQuery,
+				setID,
+				entryID,
+				entries[i].Sets[k].SetNumber,
+				setFieldsJSON,
+				entries[i].Sets[k].VideoURL,
+				entries[i].Sets[k].Notes,
+			)
+			if err != nil {
+				slog.Error("Failed to insert log set", "error", err)
+				return err
+			}
+			entries[i].Sets[k].ID = setID
+			entries[i].Sets[k].EntryID = entryID
+		}
 	}
 
 	return nil
@@ -115,13 +148,14 @@ func (r *logRepository) insertEntries(ctx context.Context, tx pgx.Tx, logID uuid
 
 func (r *logRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Log, error) {
 	query := `
-		SELECT id, program_id, session_name, performed_at, started_at, finished_at, notes, metadata, created_at, updated_at
+		SELECT id, program_id, session_name, performed_at, started_at, finished_at, notes, metadata, plan_snapshot, created_at, updated_at
 		FROM logs
 		WHERE id = $1
 	`
 
 	var log domain.Log
 	var metadataRaw []byte
+	var planSnapshotRaw []byte
 	err := r.pool.QueryRow(ctx, query, id).Scan(
 		&log.ID,
 		&log.ProgramID,
@@ -131,6 +165,7 @@ func (r *logRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Log,
 		&log.FinishedAt,
 		&log.Notes,
 		&metadataRaw,
+		&planSnapshotRaw,
 		&log.CreatedAt,
 		&log.UpdatedAt,
 	)
@@ -144,6 +179,9 @@ func (r *logRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Log,
 
 	if len(metadataRaw) > 0 {
 		log.Metadata = json.RawMessage(metadataRaw)
+	}
+	if len(planSnapshotRaw) > 0 {
+		log.PlanSnapshot = json.RawMessage(planSnapshotRaw)
 	}
 
 	entries, err := r.getEntriesForLog(ctx, id)
@@ -197,8 +235,61 @@ func (r *logRepository) getEntriesForLog(ctx context.Context, logID uuid.UUID) (
 		}
 		entries = append(entries, entry)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
-	return entries, rows.Err()
+	// Load sets for each entry
+	for i := range entries {
+		sets, err := r.getSetsForEntry(ctx, entries[i].ID)
+		if err != nil {
+			return nil, err
+		}
+		entries[i].Sets = sets
+	}
+
+	return entries, nil
+}
+
+func (r *logRepository) getSetsForEntry(ctx context.Context, entryID uuid.UUID) ([]domain.LogSet, error) {
+	query := `
+		SELECT id, entry_id, set_number, fields, video_url, notes
+		FROM log_sets
+		WHERE entry_id = $1
+		ORDER BY set_number ASC
+	`
+
+	rows, err := r.pool.Query(ctx, query, entryID)
+	if err != nil {
+		slog.Error("Failed to get log sets", "entryID", entryID, "error", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var sets []domain.LogSet
+	for rows.Next() {
+		var s domain.LogSet
+		var fieldsRaw []byte
+		err := rows.Scan(
+			&s.ID,
+			&s.EntryID,
+			&s.SetNumber,
+			&fieldsRaw,
+			&s.VideoURL,
+			&s.Notes,
+		)
+		if err != nil {
+			return nil, err
+		}
+		if len(fieldsRaw) > 0 {
+			if err := json.Unmarshal(fieldsRaw, &s.Fields); err != nil {
+				slog.Error("Failed to unmarshal log set fields", "error", err)
+			}
+		}
+		sets = append(sets, s)
+	}
+
+	return sets, rows.Err()
 }
 
 func (r *logRepository) Update(ctx context.Context, log *domain.Log) error {
@@ -211,7 +302,7 @@ func (r *logRepository) Update(ctx context.Context, log *domain.Log) error {
 	query := `
 		UPDATE logs
 		SET program_id = $2, session_name = $3, performed_at = $4, started_at = $5, finished_at = $6,
-		    notes = $7, metadata = $8, updated_at = NOW()
+		    notes = $7, metadata = $8, plan_snapshot = $9, updated_at = NOW()
 		WHERE id = $1
 		RETURNING updated_at
 	`
@@ -225,6 +316,7 @@ func (r *logRepository) Update(ctx context.Context, log *domain.Log) error {
 		log.FinishedAt,
 		log.Notes,
 		log.Metadata,
+		log.PlanSnapshot,
 	).Scan(&log.UpdatedAt)
 
 	if err == pgx.ErrNoRows {
@@ -284,7 +376,7 @@ func (r *logRepository) listWithFilter(ctx context.Context, programID *uuid.UUID
 	}
 
 	query := `
-		SELECT id, program_id, session_name, performed_at, started_at, finished_at, notes, metadata, created_at, updated_at
+		SELECT id, program_id, session_name, performed_at, started_at, finished_at, notes, metadata, plan_snapshot, created_at, updated_at
 		FROM logs
 		WHERE ($1::uuid IS NULL OR id > $1)
 		  AND ($2::uuid IS NULL OR program_id = $2)
@@ -306,6 +398,7 @@ func (r *logRepository) listWithFilter(ctx context.Context, programID *uuid.UUID
 	for rows.Next() {
 		var log domain.Log
 		var metadataRaw []byte
+		var planSnapshotRaw []byte
 		err := rows.Scan(
 			&log.ID,
 			&log.ProgramID,
@@ -315,6 +408,7 @@ func (r *logRepository) listWithFilter(ctx context.Context, programID *uuid.UUID
 			&log.FinishedAt,
 			&log.Notes,
 			&metadataRaw,
+			&planSnapshotRaw,
 			&log.CreatedAt,
 			&log.UpdatedAt,
 		)
@@ -323,6 +417,9 @@ func (r *logRepository) listWithFilter(ctx context.Context, programID *uuid.UUID
 		}
 		if len(metadataRaw) > 0 {
 			log.Metadata = json.RawMessage(metadataRaw)
+		}
+		if len(planSnapshotRaw) > 0 {
+			log.PlanSnapshot = json.RawMessage(planSnapshotRaw)
 		}
 
 		entries, err := r.getEntriesForLog(ctx, log.ID)
@@ -350,4 +447,3 @@ func (r *logRepository) listWithFilter(ctx context.Context, programID *uuid.UUID
 
 	return logs, nextCursor, hasMore, nil
 }
-
