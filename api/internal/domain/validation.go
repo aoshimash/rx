@@ -315,6 +315,158 @@ func ValidateProgram(p *Program) error {
 	return nil
 }
 
+// ValidatePlanSessionEntry validates a PlanSessionEntry entity.
+func ValidatePlanSessionEntry(e *PlanSessionEntry) error {
+	if e == nil {
+		return &ValidationError{
+			Field:   "plan_session_entry",
+			Message: "plan_session_entry cannot be nil",
+		}
+	}
+
+	if err := ValidateRequiredString("exercise_name", e.ExerciseName); err != nil {
+		return err
+	}
+	if err := ValidateStringLength("exercise_name", e.ExerciseName, 1, 200); err != nil {
+		return err
+	}
+
+	if e.Order < 0 {
+		return &ValidationError{
+			Field:   "order",
+			Message: "order must be greater than or equal to 0",
+		}
+	}
+
+	if e.Notes != nil {
+		if err := ValidateStringLength("notes", *e.Notes, 0, 2000); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ValidatePlanSession validates a PlanSession entity.
+func ValidatePlanSession(s *PlanSession) error {
+	if s == nil {
+		return &ValidationError{
+			Field:   "plan_session",
+			Message: "plan_session cannot be nil",
+		}
+	}
+
+	if err := ValidateRequiredString("session_name", s.SessionName); err != nil {
+		return err
+	}
+	if err := ValidateStringLength("session_name", s.SessionName, 1, 200); err != nil {
+		return err
+	}
+
+	if s.Order < 0 {
+		return &ValidationError{
+			Field:   "order",
+			Message: "order must be greater than or equal to 0",
+		}
+	}
+
+	if len(s.Entries) > 1000 {
+		return &ValidationError{
+			Field:   "entries",
+			Message: "session cannot have more than 1000 entries",
+		}
+	}
+
+	for i := range s.Entries {
+		if err := ValidatePlanSessionEntry(&s.Entries[i]); err != nil {
+			return &ValidationError{
+				Field:   fmt.Sprintf("entries[%d]", i),
+				Message: err.Error(),
+			}
+		}
+	}
+
+	return nil
+}
+
+// ValidatePlan validates a Plan entity.
+func ValidatePlan(p *Plan) error {
+	if p == nil {
+		return &ValidationError{
+			Field:   "plan",
+			Message: "plan cannot be nil",
+		}
+	}
+
+	if p.Name != nil {
+		if err := ValidateStringLength("name", *p.Name, 1, 200); err != nil {
+			return err
+		}
+	}
+
+	if p.Notes != nil {
+		if err := ValidateStringLength("notes", *p.Notes, 0, 5000); err != nil {
+			return err
+		}
+	}
+
+	if len(p.Sessions) > 200 {
+		return &ValidationError{
+			Field:   "sessions",
+			Message: "plan cannot have more than 200 sessions",
+		}
+	}
+
+	for i := range p.Sessions {
+		if err := ValidatePlanSession(&p.Sessions[i]); err != nil {
+			return &ValidationError{
+				Field:   fmt.Sprintf("sessions[%d]", i),
+				Message: err.Error(),
+			}
+		}
+	}
+
+	return nil
+}
+
+// ValidateLogSet validates a LogSet entity.
+func ValidateLogSet(s *LogSet) error {
+	if s == nil {
+		return &ValidationError{
+			Field:   "log_set",
+			Message: "log_set cannot be nil",
+		}
+	}
+
+	if s.SetNumber < 1 {
+		return &ValidationError{
+			Field:   "set_number",
+			Message: "set_number must be greater than or equal to 1",
+		}
+	}
+
+	if s.Fields == nil {
+		return &ValidationError{
+			Field:   "fields",
+			Message: "fields is required",
+		}
+	}
+
+	if s.VideoURL != nil {
+		if err := ValidateStringLength("video_url", *s.VideoURL, 1, 2000); err != nil {
+			return err
+		}
+	}
+
+	if s.Notes != nil {
+		if err := ValidateStringLength("notes", *s.Notes, 0, 2000); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // ValidateLogEntry validates a LogEntry entity.
 func ValidateLogEntry(e *LogEntry) error {
 	if e == nil {
@@ -385,6 +537,15 @@ func ValidateLogEntry(e *LogEntry) error {
 	}
 	if err := ValidateTimeRange("started_at", e.StartedAt, e.FinishedAt); err != nil {
 		return err
+	}
+
+	for i := range e.Sets {
+		if err := ValidateLogSet(&e.Sets[i]); err != nil {
+			return &ValidationError{
+				Field:   fmt.Sprintf("sets[%d]", i),
+				Message: err.Error(),
+			}
+		}
 	}
 
 	return nil
