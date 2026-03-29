@@ -472,7 +472,7 @@ function ProgramExerciseRow({
                       ))}
                     </SelectContent>
                   </Select>
-                  {exercise.fields?.[field.name] && !disabled && (
+                  {!!exercise.fields?.[field.name] && !disabled && (
                     <button
                       type="button"
                       onClick={() => updateField(field.name, '', false)}
