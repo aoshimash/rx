@@ -8,9 +8,10 @@ import (
 
 // FieldDef defines a field schema for program or log entries.
 type FieldDef struct {
-	Name    string   `json:"name"`
-	Type    string   `json:"type"`
-	Options []string `json:"options,omitempty"`
+	Name        string   `json:"name"`
+	Type        string   `json:"type"`
+	Options     []string `json:"options,omitempty"`
+	Description string   `json:"description,omitempty"`
 }
 
 // ProgramSessionEntry represents a single exercise prescription within a program session.

@@ -50,6 +50,7 @@ export interface CustomFieldDef {
   name: string;
   type: CustomFieldType;
   options?: string[];
+  description?: string;
   builtin?: BuiltinFieldKey;
 }
 
@@ -238,34 +239,42 @@ function SortableFieldRow({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="flex items-start gap-2 rounded-md border p-2">
-      <button
-        type="button"
-        className="text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing mt-0.5 shrink-0"
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical className="h-3.5 w-3.5" />
-      </button>
-      <div className="flex items-center gap-2 flex-1 min-w-0">
-        <span className="text-sm font-medium whitespace-nowrap">{field.name}</span>
-        <span className="text-xs text-muted-foreground">({field.type})</span>
-        {field.type === 'select' && (
-          <SelectOptionsEditor
-            options={field.options ?? []}
-            onChange={(options) => onUpdate({ ...field, options })}
-          />
-        )}
-      </div>
-      {!field.builtin && (
+    <div ref={setNodeRef} style={style} className="rounded-md border p-2 space-y-1">
+      <div className="flex items-start gap-2">
         <button
           type="button"
-          onClick={onRemove}
-          className="text-muted-foreground hover:text-foreground cursor-pointer mt-0.5 shrink-0"
+          className="text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing mt-0.5 shrink-0"
+          {...attributes}
+          {...listeners}
         >
-          <X className="h-3.5 w-3.5" />
+          <GripVertical className="h-3.5 w-3.5" />
         </button>
-      )}
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <span className="text-sm font-medium whitespace-nowrap">{field.name}</span>
+          <span className="text-xs text-muted-foreground">({field.type})</span>
+          {field.type === 'select' && (
+            <SelectOptionsEditor
+              options={field.options ?? []}
+              onChange={(options) => onUpdate({ ...field, options })}
+            />
+          )}
+        </div>
+        {!field.builtin && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="text-muted-foreground hover:text-foreground cursor-pointer mt-0.5 shrink-0"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+      <Input
+        value={field.description ?? ''}
+        onChange={(e) => onUpdate({ ...field, description: e.target.value || undefined })}
+        placeholder="Description (e.g., unit, scale, format)"
+        className="h-7 text-xs ml-6"
+      />
     </div>
   );
 }
@@ -463,7 +472,7 @@ function ProgramExerciseRow({
                       ))}
                     </SelectContent>
                   </Select>
-                  {exercise.fields?.[field.name] && !disabled && (
+                  {!!exercise.fields?.[field.name] && !disabled && (
                     <button
                       type="button"
                       onClick={() => updateField(field.name, '', false)}

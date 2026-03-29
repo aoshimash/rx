@@ -13,6 +13,7 @@ export interface FieldDef {
   name: string;
   type: 'text' | 'number' | 'select';
   options?: string[];
+  description?: string;
 }
 
 // ============================================================================

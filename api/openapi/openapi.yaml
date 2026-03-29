@@ -595,6 +595,10 @@ components:
           items:
             type: string
           description: Available options (only for type=select)
+        description:
+          type: string
+          maxLength: 500
+          description: Human-readable description of the field (e.g., unit, scale, format)
 
     # ========================================
     # Program
