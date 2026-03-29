@@ -1,5 +1,6 @@
 'use client';
 
+import { SessionSelector } from '@/components/programs/SessionSelector';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLogs } from '@/lib/hooks/useLogs';
+import { useAddPlanSessions } from '@/lib/hooks/usePlans';
 import {
   useDeleteProgram,
   useLoggedSessions,
@@ -22,6 +24,7 @@ import type {
   Log,
   LogEntry,
   LoggedSession,
+  PlanSessionCreate,
   Program,
   ProgramSession,
   ProgramSessionEntry,
@@ -373,7 +376,9 @@ export default function ProgramDetailPage() {
   const { data: logsData } = useLogs({ program_id: programId });
   const deleteProgram = useDeleteProgram();
   const updateStatus = useUpdateProgramStatus();
+  const addPlanSessions = useAddPlanSessions();
   const [copied, setCopied] = useState(false);
+  const [selectorOpen, setSelectorOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -394,7 +399,13 @@ export default function ProgramDetailPage() {
 
   const handleDelete = async () => {
     await deleteProgram.mutateAsync(programId);
-    router.push('/programs');
+    router.push('/');
+  };
+
+  const handleAddToPlan = async (sessions: PlanSessionCreate[]) => {
+    await addPlanSessions.mutateAsync(sessions);
+    setSelectorOpen(false);
+    router.push('/');
   };
 
   const handleCopyToClipboard = async () => {
@@ -467,6 +478,9 @@ export default function ProgramDetailPage() {
               {updateStatus.isPending ? 'Resuming...' : 'Resume Program'}
             </Button>
           )}
+          <Button onClick={() => setSelectorOpen(true)}>
+            Add to Plan
+          </Button>
           {program.status !== 'completed' && (
             <Button variant="outline" size="sm" asChild>
               <Link href={`/programs/${programId}/edit`}>
@@ -517,6 +531,15 @@ export default function ProgramDetailPage() {
           ))}
         </div>
       )}
+
+      <SessionSelector
+        open={selectorOpen}
+        onOpenChange={setSelectorOpen}
+        sessions={program.sessions}
+        programId={programId}
+        onConfirm={handleAddToPlan}
+        isPending={addPlanSessions.isPending}
+      />
     </main>
   );
 }
