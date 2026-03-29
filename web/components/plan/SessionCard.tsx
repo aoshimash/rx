@@ -66,7 +66,9 @@ export function SessionCard({ session, programName, onLog, onDelete }: SessionCa
               className="h-6 w-6 text-muted-foreground hover:text-destructive"
               onClick={(e) => {
                 e.stopPropagation();
-                onDelete(session.id);
+                if (window.confirm(`Remove "${session.session_name}" from plan?`)) {
+                  onDelete(session.id);
+                }
               }}
             >
               <X className="h-3.5 w-3.5" />
