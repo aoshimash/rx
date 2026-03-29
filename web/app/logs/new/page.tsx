@@ -18,7 +18,7 @@ function NewLogPageContent() {
   const programId = searchParams.get('programId');
   const sessionName = searchParams.get('session');
 
-  const { data: plan } = usePlan();
+  const { data: plan, isLoading: planLoading } = usePlan();
   const { data: program, isLoading: programLoading } = useProgram(programId);
   const createLog = useCreateLog();
   const deletePlanSession = useDeletePlanSession();
@@ -73,7 +73,7 @@ function NewLogPageContent() {
     router.push(backHref);
   };
 
-  if (programId && programLoading) {
+  if ((planSessionId && planLoading) || (programId && programLoading)) {
     return (
       <main className="container mx-auto p-6 space-y-4">
         <Skeleton className="h-8 w-[200px]" />
