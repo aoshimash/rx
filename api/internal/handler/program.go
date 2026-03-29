@@ -13,6 +13,7 @@ import (
 
 // programGroupRequest represents a program group in the request body
 type programGroupRequest struct {
+	TempID        *string `json:"temp_id,omitempty"`
 	Name          string  `json:"name"`
 	Order         int     `json:"order"`
 	ParentGroupID *string `json:"parent_group_id,omitempty"`
@@ -48,33 +49,59 @@ func NewProgramHandler(repo repository.ProgramRepository) *ProgramHandler {
 	}
 }
 
-// parseGroups converts group request objects to domain ProgramGroup slice
-func parseGroups(groups []programGroupRequest) ([]domain.ProgramGroup, error) {
+// parseGroups converts group request objects to domain ProgramGroup slice.
+// It returns a tempIDMap mapping each group's temp_id to its server-assigned UUID,
+// which callers use to resolve group references in sessions and parent_group_id fields.
+func parseGroups(groups []programGroupRequest) ([]domain.ProgramGroup, map[string]uuid.UUID, error) {
+	// First pass: assign UUIDs and build temp_id → UUID map.
+	tempIDMap := make(map[string]uuid.UUID, len(groups))
 	result := make([]domain.ProgramGroup, len(groups))
 	for i, g := range groups {
-		group := domain.ProgramGroup{
-			ID:    uuid.New(),
+		id := uuid.New()
+		result[i] = domain.ProgramGroup{
+			ID:    id,
 			Name:  g.Name,
 			Order: g.Order,
 			Notes: g.Notes,
 		}
-		if g.ParentGroupID != nil {
-			pid, err := uuid.Parse(*g.ParentGroupID)
-			if err != nil {
-				return nil, &domain.ValidationError{
-					Field:   "groups[].parent_group_id",
-					Message: "invalid UUID format: " + err.Error(),
+		if g.TempID != nil {
+			if *g.TempID == "" {
+				return nil, nil, &domain.ValidationError{
+					Field:   "groups[].temp_id",
+					Message: "temp_id cannot be empty",
 				}
 			}
-			group.ParentGroupID = &pid
+			if _, exists := tempIDMap[*g.TempID]; exists {
+				return nil, nil, &domain.ValidationError{
+					Field:   "groups[].temp_id",
+					Message: "duplicate temp_id: " + *g.TempID,
+				}
+			}
+			tempIDMap[*g.TempID] = id
 		}
-		result[i] = group
 	}
-	return result, nil
+
+	// Second pass: resolve parent_group_id references via temp_id map.
+	for i, g := range groups {
+		if g.ParentGroupID == nil {
+			continue
+		}
+		parentUUID, ok := tempIDMap[*g.ParentGroupID]
+		if !ok {
+			return nil, nil, &domain.ValidationError{
+				Field:   "groups[].parent_group_id",
+				Message: "references unknown temp_id: " + *g.ParentGroupID,
+			}
+		}
+		result[i].ParentGroupID = &parentUUID
+	}
+
+	return result, tempIDMap, nil
 }
 
-// parseSessions converts session request objects to domain ProgramSession slice
-func parseSessions(sessions []programSessionRequest) ([]domain.ProgramSession, error) {
+// parseSessions converts session request objects to domain ProgramSession slice.
+// tempIDMap maps group temp_ids to their server-assigned UUIDs; pass nil if no groups.
+func parseSessions(sessions []programSessionRequest, tempIDMap map[string]uuid.UUID) ([]domain.ProgramSession, error) {
 	result := make([]domain.ProgramSession, len(sessions))
 	for i, sessReq := range sessions {
 		sess := domain.ProgramSession{
@@ -84,11 +111,11 @@ func parseSessions(sessions []programSessionRequest) ([]domain.ProgramSession, e
 		}
 
 		if sessReq.GroupID != nil {
-			gid, err := uuid.Parse(*sessReq.GroupID)
-			if err != nil {
+			gid, ok := tempIDMap[*sessReq.GroupID]
+			if !ok {
 				return nil, &domain.ValidationError{
 					Field:   "sessions[].group_id",
-					Message: "invalid UUID format: " + err.Error(),
+					Message: "references unknown temp_id: " + *sessReq.GroupID,
 				}
 			}
 			sess.GroupID = &gid
@@ -151,7 +178,7 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	groups, err := parseGroups(req.Groups)
+	groups, tempIDMap, err := parseGroups(req.Groups)
 	if err != nil {
 		if handleValidationError(w, err) {
 			return
@@ -160,7 +187,7 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessions, err := parseSessions(req.Sessions)
+	sessions, err := parseSessions(req.Sessions, tempIDMap)
 	if err != nil {
 		if handleValidationError(w, err) {
 			return
@@ -247,7 +274,7 @@ func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	groups, err := parseGroups(req.Groups)
+	groups, tempIDMap, err := parseGroups(req.Groups)
 	if err != nil {
 		if handleValidationError(w, err) {
 			return
@@ -256,7 +283,7 @@ func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessions, err := parseSessions(req.Sessions)
+	sessions, err := parseSessions(req.Sessions, tempIDMap)
 	if err != nil {
 		if handleValidationError(w, err) {
 			return

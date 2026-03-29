@@ -745,6 +745,10 @@ components:
         - name
         - order
       properties:
+        temp_id:
+          type: string
+          maxLength: 200
+          description: Client-assigned temporary ID used to reference this group from sessions and other groups within the same request. Not persisted; the server assigns a real UUID.
         name:
           type: string
           minLength: 1
@@ -754,7 +758,7 @@ components:
           minimum: 0
         parent_group_id:
           type: string
-          format: uuid
+          description: References the temp_id of another group in this request to establish a parent-child relationship.
         notes:
           type: string
           maxLength: 5000
@@ -812,8 +816,7 @@ components:
           minimum: 0
         group_id:
           type: string
-          format: uuid
-          description: Optional reference to a ProgramGroup
+          description: References the temp_id of a group defined in the groups array of this request.
         date:
           type: string
           format: date

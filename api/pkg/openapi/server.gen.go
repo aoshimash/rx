@@ -291,10 +291,15 @@ type ProgramGroup struct {
 
 // ProgramGroupCreate defines model for ProgramGroupCreate.
 type ProgramGroupCreate struct {
-	Name          string              `json:"name"`
-	Notes         *string             `json:"notes,omitempty"`
-	Order         int                 `json:"order"`
-	ParentGroupId *openapi_types.UUID `json:"parent_group_id,omitempty"`
+	Name  string  `json:"name"`
+	Notes *string `json:"notes,omitempty"`
+	Order int     `json:"order"`
+
+	// ParentGroupId References the temp_id of another group in this request to establish a parent-child relationship.
+	ParentGroupId *string `json:"parent_group_id,omitempty"`
+
+	// TempId Client-assigned temporary ID used to reference this group from sessions and other groups within the same request. Not persisted; the server assigns a real UUID.
+	TempId *string `json:"temp_id,omitempty"`
 }
 
 // ProgramListResponse defines model for ProgramListResponse.
@@ -329,10 +334,10 @@ type ProgramSessionCreate struct {
 	Date    *openapi_types.Date          `json:"date,omitempty"`
 	Entries *[]ProgramSessionEntryCreate `json:"entries,omitempty"`
 
-	// GroupId Optional reference to a ProgramGroup
-	GroupId     *openapi_types.UUID `json:"group_id,omitempty"`
-	Order       int                 `json:"order"`
-	SessionName string              `json:"session_name"`
+	// GroupId References the temp_id of a group defined in the groups array of this request.
+	GroupId     *string `json:"group_id,omitempty"`
+	Order       int     `json:"order"`
+	SessionName string  `json:"session_name"`
 }
 
 // ProgramSessionEntry defines model for ProgramSessionEntry.
