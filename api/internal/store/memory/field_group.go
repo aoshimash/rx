@@ -112,6 +112,18 @@ func (s *fieldGroupStore) Update(ctx context.Context, userID string, fg *domain.
 		return domain.ErrNotFound
 	}
 
+	// Check for duplicate name within user (excluding the current field group)
+	for id := range ids {
+		if id != fg.ID {
+			if other, exists := s.groups[id]; exists && other.Name == fg.Name {
+				return &domain.DomainError{
+					Code:    domain.ErrorCodeConflict,
+					Message: "field group with this name already exists",
+				}
+			}
+		}
+	}
+
 	fg.CreatedAt = existing.CreatedAt
 	fg.UpdatedAt = time.Now()
 

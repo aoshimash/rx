@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/aoshimash/rx/api/internal/domain"
 	"github.com/aoshimash/rx/api/internal/repository"
@@ -100,6 +101,12 @@ func (r *fieldGroupRepository) Create(ctx context.Context, userID string, fg *do
 		logFieldsJSON,
 	).Scan(&fg.CreatedAt, &fg.UpdatedAt)
 	if err != nil {
+		if strings.Contains(err.Error(), "field_groups_user_id_name_key") || strings.Contains(err.Error(), "duplicate key") {
+			return &domain.DomainError{
+				Code:    domain.ErrorCodeConflict,
+				Message: "field group with this name already exists",
+			}
+		}
 		slog.Error("Failed to create field group", "error", err)
 		return err
 	}
