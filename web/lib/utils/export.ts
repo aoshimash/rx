@@ -39,10 +39,7 @@ function downloadCSV(filename: string, csv: string): void {
   }
 }
 
-export function exportLogsToCSV(
-  logs: Log[],
-  _options: { scope: 'all' | 'current-week' } = { scope: 'all' }
-): void {
+export function exportLogsToCSV(logs: Log[]): void {
   const headers = ['Date', 'Time', 'Session', 'Exercise', 'Sets', 'Reps', 'Load (kg)', 'Notes'];
 
   const rows: string[][] = [headers];

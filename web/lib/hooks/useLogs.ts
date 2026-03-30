@@ -45,14 +45,3 @@ export function useUpdateLog() {
     },
   });
 }
-
-export function useDeleteLog() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => logsApi.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['logs'] });
-    },
-  });
-}

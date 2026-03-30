@@ -324,7 +324,7 @@ type ProgramSession struct {
 	Order     int                `json:"order"`
 	ProgramId openapi_types.UUID `json:"program_id"`
 
-	// SessionName Day name within the week (e.g., "Day 1", "Heavy", "Volume")
+	// SessionName Session name (e.g., "Day 1", "Heavy", "Volume")
 	SessionName string `json:"session_name"`
 }
 

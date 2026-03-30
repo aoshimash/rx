@@ -149,12 +149,10 @@ export default function EditProgramPage() {
       <h1 className="text-2xl font-bold mb-6">Edit Program</h1>
       <ProgramForm
         programName={name ?? program.name}
-        programDescription=""
         programNotes={notes ?? program.notes ?? ''}
         initialEntries={initialEntries}
         initialCustomFields={program.metadata?.custom_fields as CustomFieldDef[] | undefined}
         onNameChange={setName}
-        onDescriptionChange={() => {}}
         onNotesChange={setNotes}
         onSave={handleSave}
         isSaving={updateProgram.isPending}
