@@ -47,6 +47,7 @@ func main() {
 		programRepo = postgresstore.NewProgramRepository(db.Pool())
 		logRepo = postgresstore.NewLogRepository(db.Pool())
 		planRepo = postgresstore.NewPlanRepository(db.Pool())
+		fieldGroupRepo = postgresstore.NewFieldGroupRepository(db.Pool())
 	} else {
 		slog.Info("Using in-memory storage backend")
 		programRepo = memory.NewProgramRepository()

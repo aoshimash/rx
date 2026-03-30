@@ -106,8 +106,8 @@ func (r *programRepository) Create(ctx context.Context, program *domain.Program)
 	for i := range program.Sessions {
 		sessionID := uuid.New()
 		sessionQuery := `
-			INSERT INTO program_sessions (id, program_id, group_id, session_name, "order", date)
-			VALUES ($1, $2, $3, $4, $5, $6)
+			INSERT INTO program_sessions (id, program_id, group_id, field_group_id, session_name, "order", date)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)
 		`
 		var dateVal interface{}
 		if program.Sessions[i].Date != nil {
@@ -117,6 +117,7 @@ func (r *programRepository) Create(ctx context.Context, program *domain.Program)
 			sessionID,
 			id,
 			program.Sessions[i].GroupID,
+			program.Sessions[i].FieldGroupID,
 			program.Sessions[i].SessionName,
 			program.Sessions[i].Order,
 			dateVal,
@@ -236,7 +237,7 @@ func (r *programRepository) getGroupsForProgram(ctx context.Context, programID u
 
 func (r *programRepository) getSessionsForProgram(ctx context.Context, programID uuid.UUID) ([]domain.ProgramSession, error) {
 	query := `
-		SELECT id, program_id, group_id, session_name, "order", date
+		SELECT id, program_id, group_id, field_group_id, session_name, "order", date
 		FROM program_sessions
 		WHERE program_id = $1
 		ORDER BY "order" ASC
@@ -256,6 +257,7 @@ func (r *programRepository) getSessionsForProgram(ctx context.Context, programID
 			&sess.ID,
 			&sess.ProgramID,
 			&sess.GroupID,
+			&sess.FieldGroupID,
 			&sess.SessionName,
 			&sess.Order,
 			&sess.Date,
@@ -387,9 +389,9 @@ func (r *programRepository) Update(ctx context.Context, program *domain.Program)
 			dateVal = program.Sessions[i].Date
 		}
 		_, err = tx.Exec(ctx, `
-			INSERT INTO program_sessions (id, program_id, group_id, session_name, "order", date)
-			VALUES ($1, $2, $3, $4, $5, $6)
-		`, sessionID, program.ID, program.Sessions[i].GroupID, program.Sessions[i].SessionName, program.Sessions[i].Order, dateVal)
+			INSERT INTO program_sessions (id, program_id, group_id, field_group_id, session_name, "order", date)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)
+		`, sessionID, program.ID, program.Sessions[i].GroupID, program.Sessions[i].FieldGroupID, program.Sessions[i].SessionName, program.Sessions[i].Order, dateVal)
 		if err != nil {
 			slog.Error("Failed to insert program session", "error", err)
 			return err
@@ -557,7 +559,7 @@ func (r *programRepository) getGroupsForProgramsBatch(ctx context.Context, progr
 
 func (r *programRepository) getSessionsForProgramsBatch(ctx context.Context, programIDs []uuid.UUID) (map[uuid.UUID][]domain.ProgramSession, error) {
 	query := `
-		SELECT id, program_id, group_id, session_name, "order", date
+		SELECT id, program_id, group_id, field_group_id, session_name, "order", date
 		FROM program_sessions
 		WHERE program_id = ANY($1::uuid[])
 		ORDER BY program_id, "order" ASC
@@ -573,7 +575,7 @@ func (r *programRepository) getSessionsForProgramsBatch(ctx context.Context, pro
 	var sessions []domain.ProgramSession
 	for rows.Next() {
 		var sess domain.ProgramSession
-		if err := rows.Scan(&sess.ID, &sess.ProgramID, &sess.GroupID, &sess.SessionName, &sess.Order, &sess.Date); err != nil {
+		if err := rows.Scan(&sess.ID, &sess.ProgramID, &sess.GroupID, &sess.FieldGroupID, &sess.SessionName, &sess.Order, &sess.Date); err != nil {
 			return nil, err
 		}
 		sessions = append(sessions, sess)
