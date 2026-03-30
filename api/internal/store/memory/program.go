@@ -104,14 +104,6 @@ func (s *programStore) copyProgram(p *domain.Program) *domain.Program {
 			}
 		}
 	}
-	if p.ProgramFields != nil {
-		cp.ProgramFields = make([]domain.FieldDef, len(p.ProgramFields))
-		copy(cp.ProgramFields, p.ProgramFields)
-	}
-	if p.LogFields != nil {
-		cp.LogFields = make([]domain.FieldDef, len(p.LogFields))
-		copy(cp.LogFields, p.LogFields)
-	}
 	return &cp
 }
 

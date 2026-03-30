@@ -210,12 +210,10 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req struct {
-		Name          string                  `json:"name"`
-		Notes         *string                 `json:"notes,omitempty"`
-		ProgramFields []domain.FieldDef       `json:"program_fields,omitempty"`
-		LogFields     []domain.FieldDef       `json:"log_fields,omitempty"`
-		Groups        []programGroupRequest   `json:"groups,omitempty"`
-		Sessions      []programSessionRequest `json:"sessions,omitempty"`
+		Name     string                  `json:"name"`
+		Notes    *string                 `json:"notes,omitempty"`
+		Groups   []programGroupRequest   `json:"groups,omitempty"`
+		Sessions []programSessionRequest `json:"sessions,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -256,12 +254,10 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	program := &domain.Program{
-		Name:          req.Name,
-		Notes:         req.Notes,
-		ProgramFields: req.ProgramFields,
-		LogFields:     req.LogFields,
-		Groups:        groups,
-		Sessions:      sessions,
+		Name:     req.Name,
+		Notes:    req.Notes,
+		Groups:   groups,
+		Sessions: sessions,
 	}
 
 	if err := domain.ValidateProgram(program); err != nil {
@@ -303,12 +299,10 @@ func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		Name          string                  `json:"name"`
-		Notes         *string                 `json:"notes,omitempty"`
-		ProgramFields []domain.FieldDef       `json:"program_fields,omitempty"`
-		LogFields     []domain.FieldDef       `json:"log_fields,omitempty"`
-		Groups        []programGroupRequest   `json:"groups,omitempty"`
-		Sessions      []programSessionRequest `json:"sessions,omitempty"`
+		Name     string                  `json:"name"`
+		Notes    *string                 `json:"notes,omitempty"`
+		Groups   []programGroupRequest   `json:"groups,omitempty"`
+		Sessions []programSessionRequest `json:"sessions,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -352,13 +346,11 @@ func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	program := &domain.Program{
-		ID:            existing.ID,
-		Name:          req.Name,
-		Notes:         req.Notes,
-		ProgramFields: req.ProgramFields,
-		LogFields:     req.LogFields,
-		Groups:        groups,
-		Sessions:      sessions,
+		ID:       existing.ID,
+		Name:     req.Name,
+		Notes:    req.Notes,
+		Groups:   groups,
+		Sessions: sessions,
 	}
 
 	if err := domain.ValidateProgram(program); err != nil {

@@ -60,18 +60,9 @@ func (r *programRepository) Create(ctx context.Context, program *domain.Program)
 		id = program.ID
 	}
 
-	programFieldsJSON, err := marshalJSONBField(program.ProgramFields)
-	if err != nil {
-		return err
-	}
-	logFieldsJSON, err := marshalJSONBField(program.LogFields)
-	if err != nil {
-		return err
-	}
-
 	query := `
-		INSERT INTO programs (id, name, notes, program_fields, log_fields, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+		INSERT INTO programs (id, name, notes, created_at, updated_at)
+		VALUES ($1, $2, $3, NOW(), NOW())
 		RETURNING created_at, updated_at
 	`
 
@@ -79,8 +70,6 @@ func (r *programRepository) Create(ctx context.Context, program *domain.Program)
 		id,
 		program.Name,
 		program.Notes,
-		programFieldsJSON,
-		logFieldsJSON,
 	).Scan(&program.CreatedAt, &program.UpdatedAt)
 	if err != nil {
 		slog.Error("Failed to create program", "error", err)
@@ -174,20 +163,16 @@ func (r *programRepository) Create(ctx context.Context, program *domain.Program)
 
 func (r *programRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Program, error) {
 	query := `
-		SELECT id, name, notes, program_fields, log_fields, created_at, updated_at
+		SELECT id, name, notes, created_at, updated_at
 		FROM programs
 		WHERE id = $1
 	`
 
 	var program domain.Program
-	var programFieldsRaw []byte
-	var logFieldsRaw []byte
 	err := r.pool.QueryRow(ctx, query, id).Scan(
 		&program.ID,
 		&program.Name,
 		&program.Notes,
-		&programFieldsRaw,
-		&logFieldsRaw,
 		&program.CreatedAt,
 		&program.UpdatedAt,
 	)
@@ -197,17 +182,6 @@ func (r *programRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.
 	if err != nil {
 		slog.Error("Failed to get program by ID", "id", id, "error", err)
 		return nil, err
-	}
-
-	if len(programFieldsRaw) > 0 {
-		if err := json.Unmarshal(programFieldsRaw, &program.ProgramFields); err != nil {
-			return nil, fmt.Errorf("unmarshal program_fields for program %s: %w", program.ID, err)
-		}
-	}
-	if len(logFieldsRaw) > 0 {
-		if err := json.Unmarshal(logFieldsRaw, &program.LogFields); err != nil {
-			return nil, fmt.Errorf("unmarshal log_fields for program %s: %w", program.ID, err)
-		}
 	}
 
 	groups, err := r.getGroupsForProgram(ctx, id)
@@ -355,20 +329,11 @@ func (r *programRepository) Update(ctx context.Context, program *domain.Program)
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
-	programFieldsJSON, err := marshalJSONBField(program.ProgramFields)
-	if err != nil {
-		return err
-	}
-	logFieldsJSON, err := marshalJSONBField(program.LogFields)
-	if err != nil {
-		return err
-	}
-
 	// Update the program row
 	result, err := tx.Exec(ctx, `
-		UPDATE programs SET name = $2, notes = $3, program_fields = $4, log_fields = $5, updated_at = NOW()
+		UPDATE programs SET name = $2, notes = $3, updated_at = NOW()
 		WHERE id = $1
-	`, program.ID, program.Name, program.Notes, programFieldsJSON, logFieldsJSON)
+	`, program.ID, program.Name, program.Notes)
 	if err != nil {
 		slog.Error("Failed to update program", "id", program.ID, "error", err)
 		return err
@@ -497,7 +462,7 @@ func (r *programRepository) List(ctx context.Context, limit int, after string) (
 	}
 
 	query := `
-		SELECT id, name, notes, program_fields, log_fields, created_at, updated_at
+		SELECT id, name, notes, created_at, updated_at
 		FROM programs
 		WHERE ($1::uuid IS NULL OR id > $1)
 		ORDER BY id ASC
@@ -514,29 +479,15 @@ func (r *programRepository) List(ctx context.Context, limit int, after string) (
 	programs := make([]*domain.Program, 0, limit)
 	for rows.Next() {
 		var program domain.Program
-		var programFieldsRaw []byte
-		var logFieldsRaw []byte
 		err := rows.Scan(
 			&program.ID,
 			&program.Name,
 			&program.Notes,
-			&programFieldsRaw,
-			&logFieldsRaw,
 			&program.CreatedAt,
 			&program.UpdatedAt,
 		)
 		if err != nil {
 			return nil, "", false, err
-		}
-		if len(programFieldsRaw) > 0 {
-			if err := json.Unmarshal(programFieldsRaw, &program.ProgramFields); err != nil {
-				return nil, "", false, fmt.Errorf("unmarshal program_fields for program %s: %w", program.ID, err)
-			}
-		}
-		if len(logFieldsRaw) > 0 {
-			if err := json.Unmarshal(logFieldsRaw, &program.LogFields); err != nil {
-				return nil, "", false, fmt.Errorf("unmarshal log_fields for program %s: %w", program.ID, err)
-			}
 		}
 		programs = append(programs, &program)
 	}

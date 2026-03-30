@@ -41,6 +41,7 @@ type PlanSessionEntry struct {
 type PlanSession struct {
 	ID              uuid.UUID          `json:"id"`
 	PlanID          uuid.UUID          `json:"plan_id"`
+	FieldGroupID    *uuid.UUID         `json:"field_group_id,omitempty"`
 	SessionName     string             `json:"session_name"`
 	Order           int                `json:"order"`
 	Date            *DateOnly          `json:"date,omitempty"`

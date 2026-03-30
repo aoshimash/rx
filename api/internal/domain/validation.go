@@ -263,6 +263,55 @@ func ValidateFieldDef(prefix string, f *FieldDef) error {
 	return nil
 }
 
+// ValidateFieldGroup validates a FieldGroup entity.
+func ValidateFieldGroup(fg *FieldGroup) error {
+	if fg == nil {
+		return &ValidationError{
+			Field:   "field_group",
+			Message: "field_group cannot be nil",
+		}
+	}
+
+	if err := ValidateRequiredString("name", fg.Name); err != nil {
+		return err
+	}
+	if err := ValidateStringLength("name", fg.Name, 1, 200); err != nil {
+		return err
+	}
+
+	if fg.Description != nil {
+		if err := ValidateStringLength("description", *fg.Description, 0, 2000); err != nil {
+			return err
+		}
+	}
+
+	if len(fg.ProgramFields) == 0 {
+		return &ValidationError{
+			Field:   "program_fields",
+			Message: "at least one program field is required",
+		}
+	}
+	for i, f := range fg.ProgramFields {
+		if err := ValidateFieldDef(fmt.Sprintf("program_fields[%d]", i), &f); err != nil {
+			return err
+		}
+	}
+
+	if len(fg.LogFields) == 0 {
+		return &ValidationError{
+			Field:   "log_fields",
+			Message: "at least one log field is required",
+		}
+	}
+	for i, f := range fg.LogFields {
+		if err := ValidateFieldDef(fmt.Sprintf("log_fields[%d]", i), &f); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // ValidateProgram validates a Program entity.
 func ValidateProgram(p *Program) error {
 	if p == nil {
@@ -281,17 +330,6 @@ func ValidateProgram(p *Program) error {
 
 	if p.Notes != nil {
 		if err := ValidateStringLength("notes", *p.Notes, 0, 5000); err != nil {
-			return err
-		}
-	}
-
-	for i, f := range p.ProgramFields {
-		if err := ValidateFieldDef(fmt.Sprintf("program_fields[%d]", i), &f); err != nil {
-			return err
-		}
-	}
-	for i, f := range p.LogFields {
-		if err := ValidateFieldDef(fmt.Sprintf("log_fields[%d]", i), &f); err != nil {
 			return err
 		}
 	}
