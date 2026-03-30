@@ -37,7 +37,8 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Copy, GripVertical, Lock, Plus, Trash2, X } from 'lucide-react';
+import { Copy, ExternalLink, GripVertical, Lock, Plus, Trash2, X } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 
 // ============================================================================
@@ -334,7 +335,16 @@ function CustomFieldsEditor({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <Label>Fields</Label>
+        <div className="flex items-center gap-3">
+          <Label>Fields</Label>
+          <Link
+            href="/settings#field-groups"
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+          >
+            Manage Field Groups
+            <ExternalLink className="h-3 w-3" />
+          </Link>
+        </div>
         {programsWithFields && programsWithFields.length > 0 && (
           <Select onValueChange={handleCopyFrom}>
             <SelectTrigger className="h-8 w-auto gap-2 text-xs">
