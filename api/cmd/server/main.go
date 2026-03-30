@@ -30,6 +30,7 @@ func main() {
 	var programRepo repository.ProgramRepository
 	var logRepo repository.LogRepository
 	var planRepo repository.PlanRepository
+	var fieldGroupRepo repository.FieldGroupRepository
 
 	ctx := context.Background()
 
@@ -46,11 +47,13 @@ func main() {
 		programRepo = postgresstore.NewProgramRepository(db.Pool())
 		logRepo = postgresstore.NewLogRepository(db.Pool())
 		planRepo = postgresstore.NewPlanRepository(db.Pool())
+		fieldGroupRepo = postgresstore.NewFieldGroupRepository(db.Pool())
 	} else {
 		slog.Info("Using in-memory storage backend")
 		programRepo = memory.NewProgramRepository()
 		logRepo = memory.NewLogRepository()
 		planRepo = memory.NewPlanRepository()
+		fieldGroupRepo = memory.NewFieldGroupRepository()
 
 		// Seed data is disabled until seed.go is updated for new domain model (Task 14)
 		slog.Info("Development seed data skipped (pending Task 14 update)")
@@ -84,6 +87,7 @@ func main() {
 	programHandler := handler.NewProgramHandler(programRepo)
 	logHandler := handler.NewLogHandler(logRepo, programRepo)
 	planHandler := handler.NewPlanHandler(planRepo, programRepo)
+	fieldGroupHandler := handler.NewFieldGroupHandler(fieldGroupRepo)
 	videoHandler := handler.NewVideoHandler(storageProvider, logger)
 	healthHandler := handler.NewHealthHandler(logRepo)
 
@@ -122,6 +126,13 @@ func main() {
 	// API routes require authentication
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Use(middleware.AuthMiddleware(authProvider))
+
+		// FieldGroup routes
+		r.Get("/field-groups", fieldGroupHandler.ListFieldGroups)
+		r.Post("/field-groups", fieldGroupHandler.CreateFieldGroup)
+		r.Get("/field-groups/{id}", fieldGroupHandler.GetFieldGroup)
+		r.Put("/field-groups/{id}", fieldGroupHandler.UpdateFieldGroup)
+		r.Delete("/field-groups/{id}", fieldGroupHandler.DeleteFieldGroup)
 
 		// Program routes
 		r.Post("/programs", programHandler.CreateProgram)

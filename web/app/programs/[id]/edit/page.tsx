@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  type CustomFieldDef,
-  ProgramForm,
-  type ProgramFormEntry,
-} from '@/components/programs/ProgramForm';
+import { ProgramForm, type ProgramFormEntry } from '@/components/programs/ProgramForm';
 import { useProgram, useUpdateProgram } from '@/lib/hooks/usePrograms';
 import type {
   Program,
@@ -23,6 +19,7 @@ function programToEntries(program: Program): ProgramFormEntry[] {
     for (const entry of session.entries) {
       const metadata: Record<string, unknown> = { session: session.session_name };
       if (session.date) metadata.date = session.date;
+      if (session.field_group_id) metadata.field_group_id = session.field_group_id;
       if (entry.fields?.label) metadata.label = entry.fields.label;
 
       entries.push({
@@ -56,10 +53,12 @@ function convertEntryToProgramEntry(
 function entriesToProgramUpdate(
   name: string,
   notes: string,
-  entries: ProgramFormEntry[],
-  customFields: CustomFieldDef[]
+  entries: ProgramFormEntry[]
 ): ProgramUpdate {
-  const sessionMap = new Map<string, { date?: string; entries: ProgramSessionEntryCreate[] }>();
+  const sessionMap = new Map<
+    string,
+    { date?: string; field_group_id?: string; entries: ProgramSessionEntryCreate[] }
+  >();
   const sessionOrder: string[] = [];
 
   for (const entry of entries) {
@@ -67,6 +66,7 @@ function entriesToProgramUpdate(
     if (!sessionMap.has(sessionName)) {
       sessionMap.set(sessionName, {
         date: entry.metadata?.date as string | undefined,
+        field_group_id: entry.metadata?.field_group_id as string | undefined,
         entries: [],
       });
       sessionOrder.push(sessionName);
@@ -86,13 +86,13 @@ function entriesToProgramUpdate(
       entries: data?.entries ?? [],
     };
     if (data?.date) session.date = data.date;
+    if (data?.field_group_id) session.field_group_id = data.field_group_id;
     return session;
   });
 
   return {
     name,
     notes: notes || undefined,
-    metadata: customFields.length > 0 ? { custom_fields: customFields } : undefined,
     sessions,
   };
 }
@@ -129,10 +129,10 @@ export default function EditProgramPage() {
     );
   }
 
-  const handleSave = (entries: ProgramFormEntry[], customFields: CustomFieldDef[]) => {
+  const handleSave = (entries: ProgramFormEntry[]) => {
     const programName = name ?? program.name;
     const programNotes = notes ?? program.notes ?? '';
-    const data = entriesToProgramUpdate(programName, programNotes, entries, customFields);
+    const data = entriesToProgramUpdate(programName, programNotes, entries);
 
     updateProgram.mutate(
       { id: programId, data },
@@ -151,7 +151,6 @@ export default function EditProgramPage() {
         programName={name ?? program.name}
         programNotes={notes ?? program.notes ?? ''}
         initialEntries={initialEntries}
-        initialCustomFields={program.metadata?.custom_fields as CustomFieldDef[] | undefined}
         onNameChange={setName}
         onNotesChange={setNotes}
         onSave={handleSave}

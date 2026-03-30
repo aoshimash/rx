@@ -17,6 +17,34 @@ export interface FieldDef {
 }
 
 // ============================================================================
+// FieldGroup
+// ============================================================================
+
+export interface FieldGroup {
+  id: string;
+  name: string;
+  description?: string;
+  program_fields: FieldDef[];
+  log_fields: FieldDef[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FieldGroupCreate {
+  name: string;
+  description?: string;
+  program_fields: FieldDef[];
+  log_fields: FieldDef[];
+}
+
+export interface FieldGroupUpdate {
+  name: string;
+  description?: string;
+  program_fields: FieldDef[];
+  log_fields: FieldDef[];
+}
+
+// ============================================================================
 // Log
 // ============================================================================
 
@@ -81,8 +109,6 @@ export interface Program {
   name: string;
   notes?: string;
   metadata?: Record<string, unknown>;
-  program_fields?: FieldDef[];
-  log_fields?: FieldDef[];
   sessions: ProgramSession[];
   created_at: string;
   updated_at: string;
@@ -92,8 +118,6 @@ export interface ProgramCreate {
   name: string;
   notes?: string;
   metadata?: Record<string, unknown>;
-  program_fields?: FieldDef[];
-  log_fields?: FieldDef[];
   sessions?: ProgramSessionCreate[];
 }
 
@@ -101,8 +125,6 @@ export interface ProgramUpdate {
   name: string;
   notes?: string;
   metadata?: Record<string, unknown>;
-  program_fields?: FieldDef[];
-  log_fields?: FieldDef[];
   sessions: ProgramSessionCreate[];
 }
 
@@ -113,6 +135,7 @@ export interface ProgramUpdate {
 export interface ProgramSession {
   id: string;
   program_id: string;
+  field_group_id?: string;
   session_name: string;
   order: number;
   date?: string;
@@ -122,6 +145,7 @@ export interface ProgramSession {
 export interface ProgramSessionCreate {
   session_name: string;
   order: number;
+  field_group_id?: string;
   date?: string;
   entries?: ProgramSessionEntryCreate[];
 }
@@ -174,6 +198,7 @@ export interface PlanUpdate {
 export interface PlanSession {
   id: string;
   plan_id: string;
+  field_group_id?: string;
   session_name: string;
   order: number;
   date?: string;
@@ -185,6 +210,7 @@ export interface PlanSession {
 export interface PlanSessionCreate {
   session_name: string;
   order: number;
+  field_group_id?: string;
   date?: string;
   source_program_id?: string;
   source_session_id?: string;

@@ -189,6 +189,10 @@ func (s *planStore) copySession(sess domain.PlanSession) domain.PlanSession {
 		d := *sess.Date
 		cp.Date = &d
 	}
+	if sess.FieldGroupID != nil {
+		id := *sess.FieldGroupID
+		cp.FieldGroupID = &id
+	}
 	if sess.SourceProgramID != nil {
 		id := *sess.SourceProgramID
 		cp.SourceProgramID = &id

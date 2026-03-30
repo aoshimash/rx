@@ -55,6 +55,41 @@ type FieldDef struct {
 // FieldDefType Input type for this field
 type FieldDefType string
 
+// FieldGroup defines model for FieldGroup.
+type FieldGroup struct {
+	CreatedAt time.Time `json:"created_at"`
+
+	// Description Description of the field group's purpose for humans and AI
+	Description *string            `json:"description,omitempty"`
+	Id          openapi_types.UUID `json:"id"`
+
+	// LogFields Field definitions for log entries
+	LogFields []FieldDef `json:"log_fields"`
+
+	// Name Human-readable group name (e.g., "Strength", "Conditioning")
+	Name string `json:"name"`
+
+	// ProgramFields Field definitions for plan/program session entries
+	ProgramFields []FieldDef `json:"program_fields"`
+	UpdatedAt     time.Time  `json:"updated_at"`
+}
+
+// FieldGroupCreate defines model for FieldGroupCreate.
+type FieldGroupCreate struct {
+	Description   *string    `json:"description,omitempty"`
+	LogFields     []FieldDef `json:"log_fields"`
+	Name          string     `json:"name"`
+	ProgramFields []FieldDef `json:"program_fields"`
+}
+
+// FieldGroupUpdate defines model for FieldGroupUpdate.
+type FieldGroupUpdate struct {
+	Description   *string    `json:"description,omitempty"`
+	LogFields     []FieldDef `json:"log_fields"`
+	Name          string     `json:"name"`
+	ProgramFields []FieldDef `json:"program_fields"`
+}
+
 // Log defines model for Log.
 type Log struct {
 	CreatedAt time.Time `json:"created_at"`
@@ -197,12 +232,15 @@ type PlanCreate struct {
 // PlanSession defines model for PlanSession.
 type PlanSession struct {
 	// Date Scheduled date (YYYY-MM-DD, optional)
-	Date        *openapi_types.Date `json:"date,omitempty"`
-	Entries     []PlanSessionEntry  `json:"entries"`
-	Id          openapi_types.UUID  `json:"id"`
-	Order       int                 `json:"order"`
-	PlanId      openapi_types.UUID  `json:"plan_id"`
-	SessionName string              `json:"session_name"`
+	Date    *openapi_types.Date `json:"date,omitempty"`
+	Entries []PlanSessionEntry  `json:"entries"`
+
+	// FieldGroupId Reference to a FieldGroup that defines the fields for this session
+	FieldGroupId *openapi_types.UUID `json:"field_group_id,omitempty"`
+	Id           openapi_types.UUID  `json:"id"`
+	Order        int                 `json:"order"`
+	PlanId       openapi_types.UUID  `json:"plan_id"`
+	SessionName  string              `json:"session_name"`
 
 	// SourceProgramId Program this session was derived from
 	SourceProgramId *openapi_types.UUID `json:"source_program_id,omitempty"`
@@ -213,12 +251,15 @@ type PlanSession struct {
 
 // PlanSessionCreate defines model for PlanSessionCreate.
 type PlanSessionCreate struct {
-	Date            *openapi_types.Date       `json:"date,omitempty"`
-	Entries         *[]PlanSessionEntryCreate `json:"entries,omitempty"`
-	Order           int                       `json:"order"`
-	SessionName     string                    `json:"session_name"`
-	SourceProgramId *openapi_types.UUID       `json:"source_program_id,omitempty"`
-	SourceSessionId *openapi_types.UUID       `json:"source_session_id,omitempty"`
+	Date    *openapi_types.Date       `json:"date,omitempty"`
+	Entries *[]PlanSessionEntryCreate `json:"entries,omitempty"`
+
+	// FieldGroupId Reference to a FieldGroup that defines the fields for this session
+	FieldGroupId    *openapi_types.UUID `json:"field_group_id,omitempty"`
+	Order           int                 `json:"order"`
+	SessionName     string              `json:"session_name"`
+	SourceProgramId *openapi_types.UUID `json:"source_program_id,omitempty"`
+	SourceSessionId *openapi_types.UUID `json:"source_session_id,omitempty"`
 }
 
 // PlanSessionEntry defines model for PlanSessionEntry.
@@ -253,14 +294,8 @@ type Program struct {
 	// Groups Hierarchical grouping of sessions
 	Groups *[]ProgramGroup    `json:"groups,omitempty"`
 	Id     openapi_types.UUID `json:"id"`
-
-	// LogFields Field definitions for log entries
-	LogFields *[]FieldDef `json:"log_fields,omitempty"`
-	Name      string      `json:"name"`
-	Notes     *string     `json:"notes,omitempty"`
-
-	// ProgramFields Field definitions for program session entries
-	ProgramFields *[]FieldDef `json:"program_fields,omitempty"`
+	Name   string             `json:"name"`
+	Notes  *string            `json:"notes,omitempty"`
 
 	// Sessions Ordered training sessions (each contains entries with absolute weights)
 	Sessions  []ProgramSession `json:"sessions"`
@@ -270,12 +305,10 @@ type Program struct {
 // ProgramCreate defines model for ProgramCreate.
 type ProgramCreate struct {
 	// Groups Hierarchical grouping of sessions
-	Groups        *[]ProgramGroupCreate  `json:"groups,omitempty"`
-	LogFields     *[]FieldDef            `json:"log_fields,omitempty"`
-	Name          string                 `json:"name"`
-	Notes         *string                `json:"notes,omitempty"`
-	ProgramFields *[]FieldDef            `json:"program_fields,omitempty"`
-	Sessions      []ProgramSessionCreate `json:"sessions"`
+	Groups   *[]ProgramGroupCreate  `json:"groups,omitempty"`
+	Name     string                 `json:"name"`
+	Notes    *string                `json:"notes,omitempty"`
+	Sessions []ProgramSessionCreate `json:"sessions"`
 }
 
 // ProgramGroup defines model for ProgramGroup.
@@ -316,6 +349,9 @@ type ProgramSession struct {
 	// Entries Exercise prescriptions with absolute weights
 	Entries []ProgramSessionEntry `json:"entries"`
 
+	// FieldGroupId Reference to a FieldGroup that defines the fields for this session
+	FieldGroupId *openapi_types.UUID `json:"field_group_id,omitempty"`
+
 	// GroupId Optional reference to a ProgramGroup
 	GroupId *openapi_types.UUID `json:"group_id,omitempty"`
 	Id      openapi_types.UUID  `json:"id"`
@@ -332,6 +368,9 @@ type ProgramSession struct {
 type ProgramSessionCreate struct {
 	Date    *openapi_types.Date          `json:"date,omitempty"`
 	Entries *[]ProgramSessionEntryCreate `json:"entries,omitempty"`
+
+	// FieldGroupId Reference to a FieldGroup that defines the fields for this session
+	FieldGroupId *openapi_types.UUID `json:"field_group_id,omitempty"`
 
 	// GroupId References the temp_id of a group defined in the groups array of this request.
 	GroupId     *string `json:"group_id,omitempty"`
@@ -367,12 +406,10 @@ type ProgramSessionEntryCreate struct {
 // ProgramUpdate defines model for ProgramUpdate.
 type ProgramUpdate struct {
 	// Groups Hierarchical grouping of sessions
-	Groups        *[]ProgramGroupCreate  `json:"groups,omitempty"`
-	LogFields     *[]FieldDef            `json:"log_fields,omitempty"`
-	Name          string                 `json:"name"`
-	Notes         *string                `json:"notes,omitempty"`
-	ProgramFields *[]FieldDef            `json:"program_fields,omitempty"`
-	Sessions      []ProgramSessionCreate `json:"sessions"`
+	Groups   *[]ProgramGroupCreate  `json:"groups,omitempty"`
+	Name     string                 `json:"name"`
+	Notes    *string                `json:"notes,omitempty"`
+	Sessions []ProgramSessionCreate `json:"sessions"`
 }
 
 // VideoDownloadURLRequest defines model for VideoDownloadURLRequest.
@@ -416,6 +453,9 @@ type VideoUploadURLResponse struct {
 
 // After defines model for After.
 type After = string
+
+// FieldGroupId defines model for FieldGroupId.
+type FieldGroupId = openapi_types.UUID
 
 // Limit defines model for Limit.
 type Limit = int
@@ -470,6 +510,12 @@ type ListProgramsParams struct {
 	After *After `form:"after,omitempty" json:"after,omitempty"`
 }
 
+// CreateFieldGroupJSONRequestBody defines body for CreateFieldGroup for application/json ContentType.
+type CreateFieldGroupJSONRequestBody = FieldGroupCreate
+
+// UpdateFieldGroupJSONRequestBody defines body for UpdateFieldGroup for application/json ContentType.
+type UpdateFieldGroupJSONRequestBody = FieldGroupUpdate
+
 // CreateLogJSONRequestBody defines body for CreateLog for application/json ContentType.
 type CreateLogJSONRequestBody = LogCreate
 
@@ -502,6 +548,21 @@ type GenerateVideoUploadURLJSONRequestBody = VideoUploadURLRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// List field groups
+	// (GET /field-groups)
+	ListFieldGroups(w http.ResponseWriter, r *http.Request)
+	// Create field group
+	// (POST /field-groups)
+	CreateFieldGroup(w http.ResponseWriter, r *http.Request)
+	// Delete field group
+	// (DELETE /field-groups/{id})
+	DeleteFieldGroup(w http.ResponseWriter, r *http.Request, id FieldGroupId)
+	// Get field group by ID
+	// (GET /field-groups/{id})
+	GetFieldGroup(w http.ResponseWriter, r *http.Request, id FieldGroupId)
+	// Update field group
+	// (PUT /field-groups/{id})
+	UpdateFieldGroup(w http.ResponseWriter, r *http.Request, id FieldGroupId)
 	// List logs
 	// (GET /logs)
 	ListLogs(w http.ResponseWriter, r *http.Request, params ListLogsParams)
@@ -567,6 +628,36 @@ type ServerInterface interface {
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
 
 type Unimplemented struct{}
+
+// List field groups
+// (GET /field-groups)
+func (_ Unimplemented) ListFieldGroups(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create field group
+// (POST /field-groups)
+func (_ Unimplemented) CreateFieldGroup(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete field group
+// (DELETE /field-groups/{id})
+func (_ Unimplemented) DeleteFieldGroup(w http.ResponseWriter, r *http.Request, id FieldGroupId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get field group by ID
+// (GET /field-groups/{id})
+func (_ Unimplemented) GetFieldGroup(w http.ResponseWriter, r *http.Request, id FieldGroupId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update field group
+// (PUT /field-groups/{id})
+func (_ Unimplemented) UpdateFieldGroup(w http.ResponseWriter, r *http.Request, id FieldGroupId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
 
 // List logs
 // (GET /logs)
@@ -696,6 +787,139 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// ListFieldGroups operation middleware
+func (siw *ServerInterfaceWrapper) ListFieldGroups(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListFieldGroups(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateFieldGroup operation middleware
+func (siw *ServerInterfaceWrapper) CreateFieldGroup(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateFieldGroup(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteFieldGroup operation middleware
+func (siw *ServerInterfaceWrapper) DeleteFieldGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id FieldGroupId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteFieldGroup(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetFieldGroup operation middleware
+func (siw *ServerInterfaceWrapper) GetFieldGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id FieldGroupId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetFieldGroup(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateFieldGroup operation middleware
+func (siw *ServerInterfaceWrapper) UpdateFieldGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id FieldGroupId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateFieldGroup(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // ListLogs operation middleware
 func (siw *ServerInterfaceWrapper) ListLogs(w http.ResponseWriter, r *http.Request) {
@@ -1375,6 +1599,21 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/field-groups", wrapper.ListFieldGroups)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/field-groups", wrapper.CreateFieldGroup)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/field-groups/{id}", wrapper.DeleteFieldGroup)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/field-groups/{id}", wrapper.GetFieldGroup)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/field-groups/{id}", wrapper.UpdateFieldGroup)
+	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/logs", wrapper.ListLogs)
 	})

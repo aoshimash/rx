@@ -109,6 +109,106 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /field-groups:
+    get:
+      summary: List field groups
+      operationId: listFieldGroups
+      tags: [FieldGroup]
+      responses:
+        '200':
+          description: List of field groups
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FieldGroup'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      summary: Create field group
+      operationId: createFieldGroup
+      tags: [FieldGroup]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FieldGroupCreate'
+      responses:
+        '201':
+          description: Field group created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FieldGroup'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /field-groups/{id}:
+    parameters:
+      - $ref: '#/components/parameters/FieldGroupId'
+    get:
+      summary: Get field group by ID
+      operationId: getFieldGroup
+      tags: [FieldGroup]
+      responses:
+        '200':
+          description: Field group found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FieldGroup'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Update field group
+      operationId: updateFieldGroup
+      tags: [FieldGroup]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FieldGroupUpdate'
+      responses:
+        '200':
+          description: Field group updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FieldGroup'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      summary: Delete field group
+      operationId: deleteFieldGroup
+      tags: [FieldGroup]
+      responses:
+        '204':
+          description: Field group deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /plan:
     get:
       summary: Get user's plan
@@ -515,6 +615,15 @@ components:
         format: uuid
       description: Program ID
 
+    FieldGroupId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Field group ID
+
     LogId:
       name: id
       in: path
@@ -601,6 +710,98 @@ components:
           description: Human-readable description of the field (e.g., unit, scale, format)
 
     # ========================================
+    # FieldGroup
+    # ========================================
+    FieldGroup:
+      type: object
+      required:
+        - id
+        - name
+        - program_fields
+        - log_fields
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Human-readable group name (e.g., "Strength", "Conditioning")
+        description:
+          type: string
+          maxLength: 2000
+          description: Description of the field group's purpose for humans and AI
+        program_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldDef'
+          description: Field definitions for plan/program session entries
+        log_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldDef'
+          description: Field definitions for log entries
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    FieldGroupCreate:
+      type: object
+      required:
+        - name
+        - program_fields
+        - log_fields
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        program_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldDef'
+          minItems: 1
+        log_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldDef'
+          minItems: 1
+
+    FieldGroupUpdate:
+      type: object
+      required:
+        - name
+        - program_fields
+        - log_fields
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        program_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldDef'
+          minItems: 1
+        log_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldDef'
+          minItems: 1
+
+    # ========================================
     # Program
     # ========================================
     Program:
@@ -622,16 +823,6 @@ components:
         notes:
           type: string
           maxLength: 5000
-        program_fields:
-          type: array
-          items:
-            $ref: '#/components/schemas/FieldDef'
-          description: Field definitions for program session entries
-        log_fields:
-          type: array
-          items:
-            $ref: '#/components/schemas/FieldDef'
-          description: Field definitions for log entries
         groups:
           type: array
           items:
@@ -662,14 +853,6 @@ components:
         notes:
           type: string
           maxLength: 5000
-        program_fields:
-          type: array
-          items:
-            $ref: '#/components/schemas/FieldDef'
-        log_fields:
-          type: array
-          items:
-            $ref: '#/components/schemas/FieldDef'
         groups:
           type: array
           items:
@@ -695,14 +878,6 @@ components:
         notes:
           type: string
           maxLength: 5000
-        program_fields:
-          type: array
-          items:
-            $ref: '#/components/schemas/FieldDef'
-        log_fields:
-          type: array
-          items:
-            $ref: '#/components/schemas/FieldDef'
         groups:
           type: array
           items:
@@ -795,6 +970,10 @@ components:
           type: integer
           minimum: 0
           description: Global position in program (0-based)
+        field_group_id:
+          type: string
+          format: uuid
+          description: Reference to a FieldGroup that defines the fields for this session
         date:
           type: string
           format: date
@@ -821,6 +1000,10 @@ components:
         group_id:
           type: string
           description: References the temp_id of a group defined in the groups array of this request.
+        field_group_id:
+          type: string
+          format: uuid
+          description: Reference to a FieldGroup that defines the fields for this session
         date:
           type: string
           format: date
@@ -979,6 +1162,10 @@ components:
         order:
           type: integer
           minimum: 0
+        field_group_id:
+          type: string
+          format: uuid
+          description: Reference to a FieldGroup that defines the fields for this session
         date:
           type: string
           format: date
@@ -1009,6 +1196,10 @@ components:
         order:
           type: integer
           minimum: 0
+        field_group_id:
+          type: string
+          format: uuid
+          description: Reference to a FieldGroup that defines the fields for this session
         date:
           type: string
           format: date

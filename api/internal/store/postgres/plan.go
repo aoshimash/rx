@@ -58,7 +58,7 @@ func (r *planRepository) GetByUserID(ctx context.Context, userID string) (*domai
 
 func (r *planRepository) getSessionsForPlan(ctx context.Context, planID uuid.UUID) ([]domain.PlanSession, error) {
 	query := `
-		SELECT id, plan_id, session_name, "order", date, source_program_id, source_session_id
+		SELECT id, plan_id, field_group_id, session_name, "order", date, source_program_id, source_session_id
 		FROM plan_sessions
 		WHERE plan_id = $1
 		ORDER BY "order" ASC
@@ -77,6 +77,7 @@ func (r *planRepository) getSessionsForPlan(ctx context.Context, planID uuid.UUI
 		err := rows.Scan(
 			&sess.ID,
 			&sess.PlanID,
+			&sess.FieldGroupID,
 			&sess.SessionName,
 			&sess.Order,
 			&sess.Date,
@@ -201,12 +202,13 @@ func (r *planRepository) insertSession(ctx context.Context, tx pgx.Tx, planID uu
 	}
 
 	query := `
-		INSERT INTO plan_sessions (id, plan_id, session_name, "order", date, source_program_id, source_session_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO plan_sessions (id, plan_id, field_group_id, session_name, "order", date, source_program_id, source_session_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
 	_, err := tx.Exec(ctx, query,
 		sessionID,
 		planID,
+		session.FieldGroupID,
 		session.SessionName,
 		session.Order,
 		dateVal,
@@ -389,9 +391,9 @@ func (r *planRepository) UpdateSession(ctx context.Context, userID string, sessi
 	// Update the session
 	_, err = tx.Exec(ctx, `
 		UPDATE plan_sessions
-		SET session_name = $2, "order" = $3, date = $4, source_program_id = $5, source_session_id = $6
+		SET field_group_id = $2, session_name = $3, "order" = $4, date = $5, source_program_id = $6, source_session_id = $7
 		WHERE id = $1
-	`, session.ID, session.SessionName, session.Order, dateVal, session.SourceProgramID, session.SourceSessionID)
+	`, session.ID, session.FieldGroupID, session.SessionName, session.Order, dateVal, session.SourceProgramID, session.SourceSessionID)
 	if err != nil {
 		slog.Error("Failed to update plan session", "sessionID", session.ID, "error", err)
 		return err

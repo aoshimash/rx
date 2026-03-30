@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  type CustomFieldDef,
-  ProgramForm,
-  type ProgramFormEntry,
-} from '@/components/programs/ProgramForm';
+import { ProgramForm, type ProgramFormEntry } from '@/components/programs/ProgramForm';
 import { useCreateProgram } from '@/lib/hooks/usePrograms';
 import type { ProgramSessionCreate, ProgramSessionEntryCreate } from '@/types/api';
 import { useRouter } from 'next/navigation';
@@ -26,7 +22,10 @@ function convertEntryToProgramEntry(
 }
 
 function entriesToSessions(entries: ProgramFormEntry[]): ProgramSessionCreate[] {
-  const sessionMap = new Map<string, { date?: string; entries: ProgramSessionEntryCreate[] }>();
+  const sessionMap = new Map<
+    string,
+    { date?: string; field_group_id?: string; entries: ProgramSessionEntryCreate[] }
+  >();
   const sessionOrder: string[] = [];
 
   for (const entry of entries) {
@@ -34,6 +33,7 @@ function entriesToSessions(entries: ProgramFormEntry[]): ProgramSessionCreate[] 
     if (!sessionMap.has(sessionName)) {
       sessionMap.set(sessionName, {
         date: entry.metadata?.date as string | undefined,
+        field_group_id: entry.metadata?.field_group_id as string | undefined,
         entries: [],
       });
       sessionOrder.push(sessionName);
@@ -53,6 +53,7 @@ function entriesToSessions(entries: ProgramFormEntry[]): ProgramSessionCreate[] 
       entries: data?.entries ?? [],
     };
     if (data?.date) session.date = data.date;
+    if (data?.field_group_id) session.field_group_id = data.field_group_id;
     return session;
   });
 }
@@ -63,11 +64,10 @@ export default function NewProgramPage() {
   const [name, setName] = useState('');
   const [notes, setNotes] = useState('');
 
-  const handleSave = (entries: ProgramFormEntry[], customFields: CustomFieldDef[]) => {
+  const handleSave = (entries: ProgramFormEntry[]) => {
     const sessions = entriesToSessions(entries);
-    const metadata = customFields.length > 0 ? { custom_fields: customFields } : undefined;
     createProgram.mutate(
-      { name, notes: notes || undefined, metadata, sessions },
+      { name, notes: notes || undefined, sessions },
       {
         onSuccess: () => {
           router.push('/');

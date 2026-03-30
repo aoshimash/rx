@@ -30,11 +30,12 @@ type programSessionEntryRequest struct {
 
 // programSessionRequest represents a program session in the request body
 type programSessionRequest struct {
-	SessionName string                       `json:"session_name"`
-	Order       int                          `json:"order"`
-	GroupID     *string                      `json:"group_id,omitempty"`
-	Date        *string                      `json:"date,omitempty"`
-	Entries     []programSessionEntryRequest `json:"entries,omitempty"`
+	SessionName  string                       `json:"session_name"`
+	Order        int                          `json:"order"`
+	GroupID      *string                      `json:"group_id,omitempty"`
+	FieldGroupID *string                      `json:"field_group_id,omitempty"`
+	Date         *string                      `json:"date,omitempty"`
+	Entries      []programSessionEntryRequest `json:"entries,omitempty"`
 }
 
 // ProgramHandler handles Program-related HTTP requests
@@ -180,6 +181,17 @@ func parseSessions(sessions []programSessionRequest, tempIDMap map[string]uuid.U
 			sess.GroupID = &gid
 		}
 
+		if sessReq.FieldGroupID != nil {
+			fgid, err := uuid.Parse(*sessReq.FieldGroupID)
+			if err != nil {
+				return nil, &domain.ValidationError{
+					Field:   "sessions[].field_group_id",
+					Message: "invalid UUID format: " + err.Error(),
+				}
+			}
+			sess.FieldGroupID = &fgid
+		}
+
 		if sessReq.Date != nil {
 			var d domain.DateOnly
 			if err := json.Unmarshal([]byte(`"`+*sessReq.Date+`"`), &d); err != nil {
@@ -210,12 +222,10 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req struct {
-		Name          string                  `json:"name"`
-		Notes         *string                 `json:"notes,omitempty"`
-		ProgramFields []domain.FieldDef       `json:"program_fields,omitempty"`
-		LogFields     []domain.FieldDef       `json:"log_fields,omitempty"`
-		Groups        []programGroupRequest   `json:"groups,omitempty"`
-		Sessions      []programSessionRequest `json:"sessions,omitempty"`
+		Name     string                  `json:"name"`
+		Notes    *string                 `json:"notes,omitempty"`
+		Groups   []programGroupRequest   `json:"groups,omitempty"`
+		Sessions []programSessionRequest `json:"sessions,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -256,12 +266,10 @@ func (h *ProgramHandler) CreateProgram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	program := &domain.Program{
-		Name:          req.Name,
-		Notes:         req.Notes,
-		ProgramFields: req.ProgramFields,
-		LogFields:     req.LogFields,
-		Groups:        groups,
-		Sessions:      sessions,
+		Name:     req.Name,
+		Notes:    req.Notes,
+		Groups:   groups,
+		Sessions: sessions,
 	}
 
 	if err := domain.ValidateProgram(program); err != nil {
@@ -303,12 +311,10 @@ func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		Name          string                  `json:"name"`
-		Notes         *string                 `json:"notes,omitempty"`
-		ProgramFields []domain.FieldDef       `json:"program_fields,omitempty"`
-		LogFields     []domain.FieldDef       `json:"log_fields,omitempty"`
-		Groups        []programGroupRequest   `json:"groups,omitempty"`
-		Sessions      []programSessionRequest `json:"sessions,omitempty"`
+		Name     string                  `json:"name"`
+		Notes    *string                 `json:"notes,omitempty"`
+		Groups   []programGroupRequest   `json:"groups,omitempty"`
+		Sessions []programSessionRequest `json:"sessions,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -352,13 +358,11 @@ func (h *ProgramHandler) UpdateProgram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	program := &domain.Program{
-		ID:            existing.ID,
-		Name:          req.Name,
-		Notes:         req.Notes,
-		ProgramFields: req.ProgramFields,
-		LogFields:     req.LogFields,
-		Groups:        groups,
-		Sessions:      sessions,
+		ID:       existing.ID,
+		Name:     req.Name,
+		Notes:    req.Notes,
+		Groups:   groups,
+		Sessions: sessions,
 	}
 
 	if err := domain.ValidateProgram(program); err != nil {

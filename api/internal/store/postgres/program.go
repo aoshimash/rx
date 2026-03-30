@@ -60,18 +60,9 @@ func (r *programRepository) Create(ctx context.Context, program *domain.Program)
 		id = program.ID
 	}
 
-	programFieldsJSON, err := marshalJSONBField(program.ProgramFields)
-	if err != nil {
-		return err
-	}
-	logFieldsJSON, err := marshalJSONBField(program.LogFields)
-	if err != nil {
-		return err
-	}
-
 	query := `
-		INSERT INTO programs (id, name, notes, program_fields, log_fields, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+		INSERT INTO programs (id, name, notes, created_at, updated_at)
+		VALUES ($1, $2, $3, NOW(), NOW())
 		RETURNING created_at, updated_at
 	`
 
@@ -79,8 +70,6 @@ func (r *programRepository) Create(ctx context.Context, program *domain.Program)
 		id,
 		program.Name,
 		program.Notes,
-		programFieldsJSON,
-		logFieldsJSON,
 	).Scan(&program.CreatedAt, &program.UpdatedAt)
 	if err != nil {
 		slog.Error("Failed to create program", "error", err)
@@ -117,8 +106,8 @@ func (r *programRepository) Create(ctx context.Context, program *domain.Program)
 	for i := range program.Sessions {
 		sessionID := uuid.New()
 		sessionQuery := `
-			INSERT INTO program_sessions (id, program_id, group_id, session_name, "order", date)
-			VALUES ($1, $2, $3, $4, $5, $6)
+			INSERT INTO program_sessions (id, program_id, group_id, field_group_id, session_name, "order", date)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)
 		`
 		var dateVal interface{}
 		if program.Sessions[i].Date != nil {
@@ -128,6 +117,7 @@ func (r *programRepository) Create(ctx context.Context, program *domain.Program)
 			sessionID,
 			id,
 			program.Sessions[i].GroupID,
+			program.Sessions[i].FieldGroupID,
 			program.Sessions[i].SessionName,
 			program.Sessions[i].Order,
 			dateVal,
@@ -174,20 +164,16 @@ func (r *programRepository) Create(ctx context.Context, program *domain.Program)
 
 func (r *programRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Program, error) {
 	query := `
-		SELECT id, name, notes, program_fields, log_fields, created_at, updated_at
+		SELECT id, name, notes, created_at, updated_at
 		FROM programs
 		WHERE id = $1
 	`
 
 	var program domain.Program
-	var programFieldsRaw []byte
-	var logFieldsRaw []byte
 	err := r.pool.QueryRow(ctx, query, id).Scan(
 		&program.ID,
 		&program.Name,
 		&program.Notes,
-		&programFieldsRaw,
-		&logFieldsRaw,
 		&program.CreatedAt,
 		&program.UpdatedAt,
 	)
@@ -197,17 +183,6 @@ func (r *programRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.
 	if err != nil {
 		slog.Error("Failed to get program by ID", "id", id, "error", err)
 		return nil, err
-	}
-
-	if len(programFieldsRaw) > 0 {
-		if err := json.Unmarshal(programFieldsRaw, &program.ProgramFields); err != nil {
-			return nil, fmt.Errorf("unmarshal program_fields for program %s: %w", program.ID, err)
-		}
-	}
-	if len(logFieldsRaw) > 0 {
-		if err := json.Unmarshal(logFieldsRaw, &program.LogFields); err != nil {
-			return nil, fmt.Errorf("unmarshal log_fields for program %s: %w", program.ID, err)
-		}
 	}
 
 	groups, err := r.getGroupsForProgram(ctx, id)
@@ -262,7 +237,7 @@ func (r *programRepository) getGroupsForProgram(ctx context.Context, programID u
 
 func (r *programRepository) getSessionsForProgram(ctx context.Context, programID uuid.UUID) ([]domain.ProgramSession, error) {
 	query := `
-		SELECT id, program_id, group_id, session_name, "order", date
+		SELECT id, program_id, group_id, field_group_id, session_name, "order", date
 		FROM program_sessions
 		WHERE program_id = $1
 		ORDER BY "order" ASC
@@ -282,6 +257,7 @@ func (r *programRepository) getSessionsForProgram(ctx context.Context, programID
 			&sess.ID,
 			&sess.ProgramID,
 			&sess.GroupID,
+			&sess.FieldGroupID,
 			&sess.SessionName,
 			&sess.Order,
 			&sess.Date,
@@ -355,20 +331,11 @@ func (r *programRepository) Update(ctx context.Context, program *domain.Program)
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
-	programFieldsJSON, err := marshalJSONBField(program.ProgramFields)
-	if err != nil {
-		return err
-	}
-	logFieldsJSON, err := marshalJSONBField(program.LogFields)
-	if err != nil {
-		return err
-	}
-
 	// Update the program row
 	result, err := tx.Exec(ctx, `
-		UPDATE programs SET name = $2, notes = $3, program_fields = $4, log_fields = $5, updated_at = NOW()
+		UPDATE programs SET name = $2, notes = $3, updated_at = NOW()
 		WHERE id = $1
-	`, program.ID, program.Name, program.Notes, programFieldsJSON, logFieldsJSON)
+	`, program.ID, program.Name, program.Notes)
 	if err != nil {
 		slog.Error("Failed to update program", "id", program.ID, "error", err)
 		return err
@@ -422,9 +389,9 @@ func (r *programRepository) Update(ctx context.Context, program *domain.Program)
 			dateVal = program.Sessions[i].Date
 		}
 		_, err = tx.Exec(ctx, `
-			INSERT INTO program_sessions (id, program_id, group_id, session_name, "order", date)
-			VALUES ($1, $2, $3, $4, $5, $6)
-		`, sessionID, program.ID, program.Sessions[i].GroupID, program.Sessions[i].SessionName, program.Sessions[i].Order, dateVal)
+			INSERT INTO program_sessions (id, program_id, group_id, field_group_id, session_name, "order", date)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)
+		`, sessionID, program.ID, program.Sessions[i].GroupID, program.Sessions[i].FieldGroupID, program.Sessions[i].SessionName, program.Sessions[i].Order, dateVal)
 		if err != nil {
 			slog.Error("Failed to insert program session", "error", err)
 			return err
@@ -497,7 +464,7 @@ func (r *programRepository) List(ctx context.Context, limit int, after string) (
 	}
 
 	query := `
-		SELECT id, name, notes, program_fields, log_fields, created_at, updated_at
+		SELECT id, name, notes, created_at, updated_at
 		FROM programs
 		WHERE ($1::uuid IS NULL OR id > $1)
 		ORDER BY id ASC
@@ -514,29 +481,15 @@ func (r *programRepository) List(ctx context.Context, limit int, after string) (
 	programs := make([]*domain.Program, 0, limit)
 	for rows.Next() {
 		var program domain.Program
-		var programFieldsRaw []byte
-		var logFieldsRaw []byte
 		err := rows.Scan(
 			&program.ID,
 			&program.Name,
 			&program.Notes,
-			&programFieldsRaw,
-			&logFieldsRaw,
 			&program.CreatedAt,
 			&program.UpdatedAt,
 		)
 		if err != nil {
 			return nil, "", false, err
-		}
-		if len(programFieldsRaw) > 0 {
-			if err := json.Unmarshal(programFieldsRaw, &program.ProgramFields); err != nil {
-				return nil, "", false, fmt.Errorf("unmarshal program_fields for program %s: %w", program.ID, err)
-			}
-		}
-		if len(logFieldsRaw) > 0 {
-			if err := json.Unmarshal(logFieldsRaw, &program.LogFields); err != nil {
-				return nil, "", false, fmt.Errorf("unmarshal log_fields for program %s: %w", program.ID, err)
-			}
 		}
 		programs = append(programs, &program)
 	}
@@ -606,7 +559,7 @@ func (r *programRepository) getGroupsForProgramsBatch(ctx context.Context, progr
 
 func (r *programRepository) getSessionsForProgramsBatch(ctx context.Context, programIDs []uuid.UUID) (map[uuid.UUID][]domain.ProgramSession, error) {
 	query := `
-		SELECT id, program_id, group_id, session_name, "order", date
+		SELECT id, program_id, group_id, field_group_id, session_name, "order", date
 		FROM program_sessions
 		WHERE program_id = ANY($1::uuid[])
 		ORDER BY program_id, "order" ASC
@@ -622,7 +575,7 @@ func (r *programRepository) getSessionsForProgramsBatch(ctx context.Context, pro
 	var sessions []domain.ProgramSession
 	for rows.Next() {
 		var sess domain.ProgramSession
-		if err := rows.Scan(&sess.ID, &sess.ProgramID, &sess.GroupID, &sess.SessionName, &sess.Order, &sess.Date); err != nil {
+		if err := rows.Scan(&sess.ID, &sess.ProgramID, &sess.GroupID, &sess.FieldGroupID, &sess.SessionName, &sess.Order, &sess.Date); err != nil {
 			return nil, err
 		}
 		sessions = append(sessions, sess)

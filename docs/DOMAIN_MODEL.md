@@ -12,12 +12,23 @@ Program → Plan → Log
 
 ## Key Concepts
 
+### FieldGroup
+
+A **FieldGroup** is a user-level reusable resource that defines paired field schemas for program entries and log entries. It:
+
+- Contains **program_fields** (field definitions for exercise prescriptions — e.g., load_kg, sets, reps)
+- Contains **log_fields** (field definitions for recording actual performance — e.g., actual_load_kg, actual_reps, RPE)
+- Has an optional **description** for AI readability, as does each individual **FieldDef**
+- Is referenced by **ProgramSession** and **PlanSession** via `field_group_id` (per-session assignment)
+- Is a user-scoped singleton: different sessions within the same program can use different FieldGroups
+
 ### Program
 
 A **Program** is a reusable training template. It:
 
 - Contains **ProgramSessions** (named workout days with an order and optional date)
-- Each session has **ProgramSessionEntries** (exercises with prescribed weights)
+- Each session has **ProgramSessionEntries** (exercises with field values driven by the session's FieldGroup)
+- Each session optionally references a **FieldGroup** via `field_group_id`
 - Optionally organizes sessions into **ProgramGroups** (hierarchical, max 2 levels deep — e.g., Block → Week)
 - Has no lifecycle status — Programs are inert templates, not stateful entities
 
@@ -26,7 +37,8 @@ A **Program** is a reusable training template. It:
 A **Plan** is the user's execution queue. It:
 
 - Contains **PlanSessions** — concrete workout prescriptions the user intends to perform
-- Is populated by expanding a Program (copies sessions into the Plan) or by adding sessions manually
+- Each session optionally references a **FieldGroup** via `field_group_id`
+- Is populated by expanding a Program (copies sessions into the Plan, preserving FieldGroup references) or by adding sessions manually
 - Each user has at most one Plan (singleton per user)
 - Sessions can be removed individually as they are completed or skipped
 
@@ -37,12 +49,19 @@ A **Log** records what was actually performed in one training session. A Log **o
 ## Entity Relationships
 
 ```
+┌───────────────────┐
+│   FieldGroup      │  (user-level, reusable field definitions)
+│  program_fields   │
+│  log_fields       │
+└────────┬──────────┘
+         │ referenced by (field_group_id)
+         ▼
 ┌───────────────────┐     ┌──────────────────────┐
 │     Program       │────►│   ProgramSession      │  (named training day)
 │  (reusable        │     └──────────┬───────────┘
 │   template)       │               │
 │                   │     ┌──────────▼───────────┐
-│                   │     │ ProgramSessionEntry   │  (exercise with load_kg)
+│                   │     │ ProgramSessionEntry   │  (exercise with fields)
 └────────┬──────────┘     └──────────────────────┘
          │
          │ expand into
@@ -86,6 +105,8 @@ Groups are purely organizational — they carry no business logic. The API enfor
 - **Program has no status** — Programs are reusable templates; execution state lives in Plan and Log
 - **Plan is a singleton per user** — Simplifies the "what's next?" question
 - **Log.program_id is optional** — Supports both program-linked and ad-hoc training sessions
+- **FieldGroup is user-scoped and reusable** — Field definitions are separated from Programs so they can be shared across multiple Programs and Plans. Each session independently references a FieldGroup, allowing different training modalities (e.g., Strength vs Conditioning) within the same Program
+- **FieldGroup pairs program_fields and log_fields** — A single FieldGroup defines both what to prescribe and what to record, ensuring they stay in sync
 - **Flexible metadata** — Domain-specific data like RPE, tempo, rest time is stored in the `metadata` JSON field rather than dedicated columns, following the "Dumb Backend" philosophy
 
 For schema details, see `api/internal/domain/`.

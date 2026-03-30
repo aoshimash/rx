@@ -1,5 +1,6 @@
 'use client';
 
+import { FieldGroupEditor } from '@/components/settings/FieldGroupEditor';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -70,6 +71,19 @@ export default function SettingsPage() {
           </div>
 
           {hasToken && <div className="text-sm text-green-600">✓ Token is configured</div>}
+        </CardContent>
+      </Card>
+
+      <Card id="field-groups">
+        <CardHeader>
+          <CardTitle>Field Groups</CardTitle>
+          <CardDescription>
+            Define reusable sets of program fields and log fields. Assign them to individual
+            sessions in your programs and plans.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FieldGroupEditor />
         </CardContent>
       </Card>
     </main>
