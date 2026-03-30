@@ -165,7 +165,7 @@ export function AddSessionDialog({ open, onOpenChange, onAdd, nextOrder }: AddSe
             Cancel
           </Button>
           <Button onClick={handleAdd} disabled={!sessionName.trim()}>
-            Add to Plan
+            Add Session
           </Button>
         </DialogFooter>
       </DialogContent>

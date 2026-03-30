@@ -275,7 +275,7 @@ function SortableFieldRow({
         value={field.description ?? ''}
         onChange={(e) => onUpdate({ ...field, description: e.target.value || undefined })}
         placeholder="Description (e.g., unit, scale, format)"
-        className="h-7 text-xs ml-6"
+        className="h-7 text-xs ml-6 w-[calc(100%-1.5rem)]"
       />
     </div>
   );
@@ -334,7 +334,7 @@ function CustomFieldsEditor({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <Label>Custom Fields</Label>
+        <Label>Fields</Label>
         {programsWithFields && programsWithFields.length > 0 && (
           <Select onValueChange={handleCopyFrom}>
             <SelectTrigger className="h-8 w-auto gap-2 text-xs">
