@@ -1,5 +1,6 @@
 #!/bin/sh
-# PostToolUse hook: remind to check docs when key code areas change.
+# PostToolUse hook: remind to check docs when key code areas change,
+# and remind to run `task generate` after OpenAPI spec changes.
 # Receives CLAUDE_FILE_PATHS (newline-separated list of modified files).
 # Outputs a reminder to stdout (injected into Claude's context).
 
@@ -15,7 +16,8 @@ while IFS= read -r filepath; do
       ;;
     */api/openapi/openapi.yaml)
       reminders="${reminders}
-- OpenAPI spec changed → run \`task generate\` and verify docs/DOMAIN_MODEL.md if schemas changed"
+- OpenAPI spec changed → you MUST run \`task generate\` (from api/) before committing
+- OpenAPI spec changed → verify docs/DOMAIN_MODEL.md if schemas changed"
       ;;
     */web/app/*/page.tsx)
       reminders="${reminders}
