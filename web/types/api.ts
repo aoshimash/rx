@@ -76,12 +76,9 @@ export interface LogEntryCreate {
 // Program
 // ============================================================================
 
-export type ProgramStatus = 'created' | 'ongoing' | 'completed' | 'cancelled';
-
 export interface Program {
   id: string;
   name: string;
-  status: ProgramStatus;
   notes?: string;
   metadata?: Record<string, unknown>;
   program_fields?: FieldDef[];
@@ -208,22 +205,6 @@ export interface PlanSessionEntryCreate {
   order: number;
   fields?: Record<string, unknown>;
   notes?: string;
-}
-
-// ============================================================================
-// LoggedSessions
-// ============================================================================
-
-export interface LoggedSession {
-  session_name: string;
-  log_id: string;
-  performed_at: string;
-  started_at?: string;
-  finished_at?: string;
-}
-
-export interface LoggedSessionsResponse {
-  sessions: LoggedSession[];
 }
 
 // ============================================================================
