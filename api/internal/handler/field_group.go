@@ -179,6 +179,10 @@ func (h *FieldGroupHandler) UpdateFieldGroup(w http.ResponseWriter, r *http.Requ
 			middleware.WriteNotFoundError(w, "Field group not found")
 			return
 		}
+		if de, ok := err.(*domain.DomainError); ok && de.Code == domain.ErrorCodeConflict {
+			middleware.WriteConflictError(w, "A field group with this name already exists", nil)
+			return
+		}
 		middleware.WriteInternalError(w, "Failed to update field group")
 		return
 	}

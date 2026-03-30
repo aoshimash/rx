@@ -144,6 +144,12 @@ func (r *fieldGroupRepository) Update(ctx context.Context, userID string, fg *do
 		return domain.ErrNotFound
 	}
 	if err != nil {
+		if strings.Contains(err.Error(), "field_groups_user_id_name_key") || strings.Contains(err.Error(), "duplicate key") {
+			return &domain.DomainError{
+				Code:    domain.ErrorCodeConflict,
+				Message: "field group with this name already exists",
+			}
+		}
 		slog.Error("Failed to update field group", "id", fg.ID, "error", err)
 		return err
 	}
