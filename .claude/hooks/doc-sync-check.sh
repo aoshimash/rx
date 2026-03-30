@@ -27,6 +27,10 @@ while IFS= read -r filepath; do
       reminders="${reminders}
 - handler changed → verify AGENTS.md error flow table if error handling changed"
       ;;
+    *docs/PHILOSOPHY.md)
+      reminders="${reminders}
+- PHILOSOPHY.md changed → verify terminology table matches api/internal/domain/ types"
+      ;;
   esac
 done <<EOF
 $CLAUDE_FILE_PATHS
