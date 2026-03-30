@@ -105,3 +105,17 @@ All list endpoints use cursor-based pagination: `limit` (1–100) + `after` (bas
 - [Frontend Architecture](docs/FRONTEND_ARCHITECTURE.md) - Web/Mobile architecture and standards
 - [Architecture](docs/ARCHITECTURE.md) - System architecture
 - [Development Guide](docs/DEVELOPMENT.md) - Development setup
+
+### Documentation Sync
+
+A PostToolUse hook (`.claude/hooks/doc-sync-check.sh`) automatically reminds you when code changes may require documentation updates. The mapping:
+
+| Code change | Check this document |
+|---|---|
+| `api/internal/domain/` (add/rename/remove entities or fields) | `docs/DOMAIN_MODEL.md` |
+| `api/openapi/openapi.yaml` (schema changes) | `docs/DOMAIN_MODEL.md` |
+| `web/app/**/page.tsx` (add/remove/rename routes) | `docs/WEB_UI_DESIGN.md` |
+| `api/internal/handler/` (error handling changes) | AGENTS.md error flow table |
+| `docs/PHILOSOPHY.md` terminology table | Verify against `api/internal/domain/` types |
+
+Only structural changes (new entities, renamed fields, new routes) require doc updates — bug fixes and refactors within the same structure generally do not.
