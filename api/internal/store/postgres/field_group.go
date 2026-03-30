@@ -38,7 +38,7 @@ func (r *fieldGroupRepository) List(ctx context.Context, userID string) ([]domai
 	}
 	defer rows.Close()
 
-	var groups []domain.FieldGroup
+	groups := make([]domain.FieldGroup, 0)
 	for rows.Next() {
 		fg, err := scanFieldGroup(rows)
 		if err != nil {
@@ -50,14 +50,14 @@ func (r *fieldGroupRepository) List(ctx context.Context, userID string) ([]domai
 	return groups, rows.Err()
 }
 
-func (r *fieldGroupRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.FieldGroup, error) {
+func (r *fieldGroupRepository) GetByID(ctx context.Context, userID string, id uuid.UUID) (*domain.FieldGroup, error) {
 	query := `
 		SELECT id, name, description, program_fields, log_fields, created_at, updated_at
 		FROM field_groups
-		WHERE id = $1
+		WHERE id = $1 AND user_id = $2
 	`
 
-	row := r.pool.QueryRow(ctx, query, id)
+	row := r.pool.QueryRow(ctx, query, id, userID)
 	fg, err := scanFieldGroupRow(row)
 	if err == pgx.ErrNoRows {
 		return nil, domain.ErrNotFound
@@ -108,7 +108,7 @@ func (r *fieldGroupRepository) Create(ctx context.Context, userID string, fg *do
 	return nil
 }
 
-func (r *fieldGroupRepository) Update(ctx context.Context, fg *domain.FieldGroup) error {
+func (r *fieldGroupRepository) Update(ctx context.Context, userID string, fg *domain.FieldGroup) error {
 	programFieldsJSON, err := json.Marshal(fg.ProgramFields)
 	if err != nil {
 		return fmt.Errorf("marshal program_fields: %w", err)
@@ -121,7 +121,7 @@ func (r *fieldGroupRepository) Update(ctx context.Context, fg *domain.FieldGroup
 	query := `
 		UPDATE field_groups
 		SET name = $2, description = $3, program_fields = $4, log_fields = $5, updated_at = NOW()
-		WHERE id = $1
+		WHERE id = $1 AND user_id = $6
 		RETURNING updated_at
 	`
 
@@ -131,6 +131,7 @@ func (r *fieldGroupRepository) Update(ctx context.Context, fg *domain.FieldGroup
 		fg.Description,
 		programFieldsJSON,
 		logFieldsJSON,
+		userID,
 	).Scan(&fg.UpdatedAt)
 	if err == pgx.ErrNoRows {
 		return domain.ErrNotFound
@@ -143,8 +144,8 @@ func (r *fieldGroupRepository) Update(ctx context.Context, fg *domain.FieldGroup
 	return nil
 }
 
-func (r *fieldGroupRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	result, err := r.pool.Exec(ctx, `DELETE FROM field_groups WHERE id = $1`, id)
+func (r *fieldGroupRepository) Delete(ctx context.Context, userID string, id uuid.UUID) error {
+	result, err := r.pool.Exec(ctx, `DELETE FROM field_groups WHERE id = $1 AND user_id = $2`, id, userID)
 	if err != nil {
 		slog.Error("Failed to delete field group", "id", id, "error", err)
 		return err

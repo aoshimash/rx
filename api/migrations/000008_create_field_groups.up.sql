@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS field_groups (
     program_fields JSONB NOT NULL DEFAULT '[]',
     log_fields     JSONB NOT NULL DEFAULT '[]',
     created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (user_id, name)
 );
 
 CREATE INDEX idx_field_groups_user_id ON field_groups (user_id);

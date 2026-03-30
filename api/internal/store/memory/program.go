@@ -89,6 +89,10 @@ func (s *programStore) copyProgram(p *domain.Program) *domain.Program {
 				id := *sess.GroupID
 				cp.Sessions[i].GroupID = &id
 			}
+			if sess.FieldGroupID != nil {
+				id := *sess.FieldGroupID
+				cp.Sessions[i].FieldGroupID = &id
+			}
 			if sess.Entries != nil {
 				cp.Sessions[i].Entries = make([]domain.ProgramSessionEntry, len(sess.Entries))
 				for j, e := range sess.Entries {

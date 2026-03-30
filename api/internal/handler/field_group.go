@@ -105,6 +105,7 @@ func (h *FieldGroupHandler) CreateFieldGroup(w http.ResponseWriter, r *http.Requ
 // GetFieldGroup handles GET /field-groups/{id}
 func (h *FieldGroupHandler) GetFieldGroup(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	userID := middleware.GetUserID(ctx)
 
 	id, err := parseUUIDParam(r, "id", "field group")
 	if err != nil {
@@ -112,7 +113,7 @@ func (h *FieldGroupHandler) GetFieldGroup(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	fg, err := h.repo.GetByID(ctx, id)
+	fg, err := h.repo.GetByID(ctx, userID, id)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
 			middleware.WriteNotFoundError(w, "Field group not found")
@@ -128,6 +129,7 @@ func (h *FieldGroupHandler) GetFieldGroup(w http.ResponseWriter, r *http.Request
 // UpdateFieldGroup handles PUT /field-groups/{id}
 func (h *FieldGroupHandler) UpdateFieldGroup(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	userID := middleware.GetUserID(ctx)
 
 	id, err := parseUUIDParam(r, "id", "field group")
 	if err != nil {
@@ -135,7 +137,7 @@ func (h *FieldGroupHandler) UpdateFieldGroup(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	existing, err := h.repo.GetByID(ctx, id)
+	existing, err := h.repo.GetByID(ctx, userID, id)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
 			middleware.WriteNotFoundError(w, "Field group not found")
@@ -172,7 +174,7 @@ func (h *FieldGroupHandler) UpdateFieldGroup(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if err := h.repo.Update(ctx, existing); err != nil {
+	if err := h.repo.Update(ctx, userID, existing); err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
 			middleware.WriteNotFoundError(w, "Field group not found")
 			return
@@ -187,6 +189,7 @@ func (h *FieldGroupHandler) UpdateFieldGroup(w http.ResponseWriter, r *http.Requ
 // DeleteFieldGroup handles DELETE /field-groups/{id}
 func (h *FieldGroupHandler) DeleteFieldGroup(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	userID := middleware.GetUserID(ctx)
 
 	id, err := parseUUIDParam(r, "id", "field group")
 	if err != nil {
@@ -194,7 +197,7 @@ func (h *FieldGroupHandler) DeleteFieldGroup(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if err := h.repo.Delete(ctx, id); err != nil {
+	if err := h.repo.Delete(ctx, userID, id); err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
 			middleware.WriteNotFoundError(w, "Field group not found")
 			return

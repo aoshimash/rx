@@ -42,9 +42,17 @@ func (s *fieldGroupStore) List(ctx context.Context, userID string) ([]domain.Fie
 	return result, nil
 }
 
-func (s *fieldGroupStore) GetByID(ctx context.Context, id uuid.UUID) (*domain.FieldGroup, error) {
+func (s *fieldGroupStore) GetByID(ctx context.Context, userID string, id uuid.UUID) (*domain.FieldGroup, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+
+	ids, ok := s.userIndex[userID]
+	if !ok {
+		return nil, domain.ErrNotFound
+	}
+	if _, owns := ids[id]; !owns {
+		return nil, domain.ErrNotFound
+	}
 
 	fg, exists := s.groups[id]
 	if !exists {
@@ -87,9 +95,17 @@ func (s *fieldGroupStore) Create(ctx context.Context, userID string, fg *domain.
 	return nil
 }
 
-func (s *fieldGroupStore) Update(ctx context.Context, fg *domain.FieldGroup) error {
+func (s *fieldGroupStore) Update(ctx context.Context, userID string, fg *domain.FieldGroup) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	ids, ok := s.userIndex[userID]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	if _, owns := ids[fg.ID]; !owns {
+		return domain.ErrNotFound
+	}
 
 	existing, exists := s.groups[fg.ID]
 	if !exists {
@@ -104,20 +120,22 @@ func (s *fieldGroupStore) Update(ctx context.Context, fg *domain.FieldGroup) err
 	return nil
 }
 
-func (s *fieldGroupStore) Delete(ctx context.Context, id uuid.UUID) error {
+func (s *fieldGroupStore) Delete(ctx context.Context, userID string, id uuid.UUID) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if _, exists := s.groups[id]; !exists {
+	ids, ok := s.userIndex[userID]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	if _, owns := ids[id]; !owns {
 		return domain.ErrNotFound
 	}
 
 	delete(s.groups, id)
-	for userID, ids := range s.userIndex {
-		delete(ids, id)
-		if len(ids) == 0 {
-			delete(s.userIndex, userID)
-		}
+	delete(ids, id)
+	if len(ids) == 0 {
+		delete(s.userIndex, userID)
 	}
 	return nil
 }
