@@ -23,6 +23,7 @@ type planSessionEntryRequest struct {
 type planSessionRequest struct {
 	SessionName     string                    `json:"session_name"`
 	Order           int                       `json:"order"`
+	FieldGroupID    *string                   `json:"field_group_id,omitempty"`
 	Date            *string                   `json:"date,omitempty"`
 	SourceProgramID *string                   `json:"source_program_id,omitempty"`
 	SourceSessionID *string                   `json:"source_session_id,omitempty"`
@@ -60,6 +61,17 @@ func parsePlanSession(req planSessionRequest) (domain.PlanSession, error) {
 			}
 		}
 		sess.Date = &d
+	}
+
+	if req.FieldGroupID != nil {
+		fgid, err := uuid.Parse(*req.FieldGroupID)
+		if err != nil {
+			return sess, &domain.ValidationError{
+				Field:   "field_group_id",
+				Message: "invalid UUID format: " + err.Error(),
+			}
+		}
+		sess.FieldGroupID = &fgid
 	}
 
 	if req.SourceProgramID != nil {
@@ -454,6 +466,7 @@ func (h *PlanHandler) ExpandProgram(w http.ResponseWriter, r *http.Request) {
 		planSessions[i] = domain.PlanSession{
 			SessionName:     ps.SessionName,
 			Order:           ps.Order,
+			FieldGroupID:    ps.FieldGroupID,
 			Date:            ps.Date,
 			SourceProgramID: &srcProgramID,
 			SourceSessionID: &srcSessionID,
