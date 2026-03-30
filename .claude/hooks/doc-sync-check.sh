@@ -10,20 +10,20 @@ reminders=""
 
 while IFS= read -r filepath; do
   case "$filepath" in
-    */api/internal/domain/*)
+    *api/internal/domain/*)
       reminders="${reminders}
 - domain layer changed → verify docs/DOMAIN_MODEL.md is still accurate"
       ;;
-    */api/openapi/openapi.yaml)
+    *openapi/openapi.yaml)
       reminders="${reminders}
 - OpenAPI spec changed → you MUST run \`task generate\` (from api/) before committing
 - OpenAPI spec changed → verify docs/DOMAIN_MODEL.md if schemas changed"
       ;;
-    */web/app/*/page.tsx)
+    *web/app/*/page.tsx)
       reminders="${reminders}
 - route structure changed → verify docs/WEB_UI_DESIGN.md screen structure is still accurate"
       ;;
-    */api/internal/handler/*.go)
+    *api/internal/handler/*.go)
       reminders="${reminders}
 - handler changed → verify AGENTS.md error flow table if error handling changed"
       ;;
