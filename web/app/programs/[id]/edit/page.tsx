@@ -5,7 +5,7 @@ import {
   ProgramForm,
   type ProgramFormEntry,
 } from '@/components/programs/ProgramForm';
-import { useLoggedSessions, useProgram, useUpdateProgram } from '@/lib/hooks/usePrograms';
+import { useProgram, useUpdateProgram } from '@/lib/hooks/usePrograms';
 import type {
   Program,
   ProgramSessionCreate,
@@ -103,23 +103,17 @@ export default function EditProgramPage() {
   const programId = params.id as string;
 
   const { data: program, isLoading: programLoading } = useProgram(programId);
-  const { data: loggedSessionsData, isLoading: sessionsLoading } = useLoggedSessions(programId);
   const updateProgram = useUpdateProgram();
 
   const [name, setName] = useState<string | null>(null);
   const [notes, setNotes] = useState<string | null>(null);
-
-  const lockedSessionNames = useMemo(() => {
-    if (!loggedSessionsData?.sessions) return new Set<string>();
-    return new Set(loggedSessionsData.sessions.map((s) => s.session_name));
-  }, [loggedSessionsData]);
 
   const initialEntries = useMemo(() => {
     if (!program) return undefined;
     return programToEntries(program);
   }, [program]);
 
-  if (programLoading || sessionsLoading) {
+  if (programLoading) {
     return (
       <main className="container max-w-4xl mx-auto py-8 px-4">
         <p className="text-muted-foreground">Loading...</p>
@@ -153,11 +147,6 @@ export default function EditProgramPage() {
   return (
     <main className="container max-w-4xl mx-auto py-8 px-4">
       <h1 className="text-2xl font-bold mb-6">Edit Program</h1>
-      {lockedSessionNames.size > 0 && (
-        <p className="text-sm text-muted-foreground mb-4">
-          Sessions with logged data are locked and cannot be modified.
-        </p>
-      )}
       <ProgramForm
         programName={name ?? program.name}
         programDescription=""
@@ -170,7 +159,6 @@ export default function EditProgramPage() {
         onSave={handleSave}
         isSaving={updateProgram.isPending}
         isEditing
-        lockedSessionNames={lockedSessionNames}
       />
     </main>
   );
