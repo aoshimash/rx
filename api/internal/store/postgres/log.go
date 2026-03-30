@@ -87,9 +87,9 @@ func (r *logRepository) insertEntries(ctx context.Context, tx pgx.Tx, logID uuid
 			INSERT INTO log_entries (
 				id, log_id, "order", exercise_name,
 				fields,
-				notes, video_object_key, started_at, finished_at
+				notes, started_at, finished_at
 			)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		`
 
 		_, err = tx.Exec(ctx, query,
@@ -99,7 +99,6 @@ func (r *logRepository) insertEntries(ctx context.Context, tx pgx.Tx, logID uuid
 			entries[i].ExerciseName,
 			fieldsJSON,
 			entries[i].Notes,
-			entries[i].VideoObjectKey,
 			entries[i].StartedAt,
 			entries[i].FinishedAt,
 		)
@@ -124,7 +123,7 @@ func (r *logRepository) insertEntries(ctx context.Context, tx pgx.Tx, logID uuid
 			}
 
 			setQuery := `
-				INSERT INTO log_sets (id, entry_id, set_number, fields, video_url, notes)
+				INSERT INTO log_sets (id, entry_id, set_number, fields, video_object_key, notes)
 				VALUES ($1, $2, $3, $4, $5, $6)
 			`
 			_, err = tx.Exec(ctx, setQuery,
@@ -132,7 +131,7 @@ func (r *logRepository) insertEntries(ctx context.Context, tx pgx.Tx, logID uuid
 				entryID,
 				entries[i].Sets[k].SetNumber,
 				setFieldsJSON,
-				entries[i].Sets[k].VideoURL,
+				entries[i].Sets[k].VideoObjectKey,
 				entries[i].Sets[k].Notes,
 			)
 			if err != nil {
@@ -199,7 +198,7 @@ func (r *logRepository) getEntriesForLog(ctx context.Context, logID uuid.UUID) (
 	query := `
 		SELECT id, log_id, "order", exercise_name,
 		       fields,
-		       notes, video_object_key, started_at, finished_at
+		       notes, started_at, finished_at
 		FROM log_entries
 		WHERE log_id = $1
 		ORDER BY "order" ASC
@@ -222,7 +221,6 @@ func (r *logRepository) getEntriesForLog(ctx context.Context, logID uuid.UUID) (
 			&entry.ExerciseName,
 			&fieldsRaw,
 			&entry.Notes,
-			&entry.VideoObjectKey,
 			&entry.StartedAt,
 			&entry.FinishedAt,
 		)
@@ -254,7 +252,7 @@ func (r *logRepository) getEntriesForLog(ctx context.Context, logID uuid.UUID) (
 
 func (r *logRepository) getSetsForEntry(ctx context.Context, entryID uuid.UUID) ([]domain.LogSet, error) {
 	query := `
-		SELECT id, entry_id, set_number, fields, video_url, notes
+		SELECT id, entry_id, set_number, fields, video_object_key, notes
 		FROM log_sets
 		WHERE entry_id = $1
 		ORDER BY set_number ASC
@@ -276,7 +274,7 @@ func (r *logRepository) getSetsForEntry(ctx context.Context, entryID uuid.UUID) 
 			&s.EntryID,
 			&s.SetNumber,
 			&fieldsRaw,
-			&s.VideoURL,
+			&s.VideoObjectKey,
 			&s.Notes,
 		)
 		if err != nil {
@@ -460,7 +458,7 @@ func (r *logRepository) getEntriesForLogsBatch(ctx context.Context, logIDs []uui
 	query := `
 		SELECT id, log_id, "order", exercise_name,
 		       fields,
-		       notes, video_object_key, started_at, finished_at
+		       notes, started_at, finished_at
 		FROM log_entries
 		WHERE log_id = ANY($1::uuid[])
 		ORDER BY log_id, "order" ASC
@@ -478,7 +476,7 @@ func (r *logRepository) getEntriesForLogsBatch(ctx context.Context, logIDs []uui
 		var fieldsRaw []byte
 		if err := rows.Scan(
 			&entry.ID, &entry.LogID, &entry.Order, &entry.ExerciseName,
-			&fieldsRaw, &entry.Notes, &entry.VideoObjectKey, &entry.StartedAt, &entry.FinishedAt,
+			&fieldsRaw, &entry.Notes, &entry.StartedAt, &entry.FinishedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -516,7 +514,7 @@ func (r *logRepository) getEntriesForLogsBatch(ctx context.Context, logIDs []uui
 
 func (r *logRepository) getSetsForEntriesBatch(ctx context.Context, entryIDs []uuid.UUID) (map[uuid.UUID][]domain.LogSet, error) {
 	query := `
-		SELECT id, entry_id, set_number, fields, video_url, notes
+		SELECT id, entry_id, set_number, fields, video_object_key, notes
 		FROM log_sets
 		WHERE entry_id = ANY($1::uuid[])
 		ORDER BY entry_id, set_number ASC
@@ -533,7 +531,7 @@ func (r *logRepository) getSetsForEntriesBatch(ctx context.Context, entryIDs []u
 	for rows.Next() {
 		var s domain.LogSet
 		var fieldsRaw []byte
-		if err := rows.Scan(&s.ID, &s.EntryID, &s.SetNumber, &fieldsRaw, &s.VideoURL, &s.Notes); err != nil {
+		if err := rows.Scan(&s.ID, &s.EntryID, &s.SetNumber, &fieldsRaw, &s.VideoObjectKey, &s.Notes); err != nil {
 			return nil, err
 		}
 		if len(fieldsRaw) > 0 {

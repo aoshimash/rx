@@ -85,8 +85,8 @@ export interface LogEntry {
   exercise_name: string;
   order: number;
   fields?: Record<string, unknown>;
+  sets?: LogSet[];
   notes?: string;
-  video_object_key?: string;
   started_at?: string;
   finished_at?: string;
 }
@@ -94,10 +94,30 @@ export interface LogEntry {
 export interface LogEntryCreate {
   exercise_name: string;
   fields?: Record<string, unknown>;
+  sets?: LogSetCreate[];
   notes?: string;
-  video_object_key?: string;
   started_at?: string;
   finished_at?: string;
+}
+
+// ============================================================================
+// LogSet
+// ============================================================================
+
+export interface LogSet {
+  id: string;
+  entry_id: string;
+  set_number: number;
+  fields: Record<string, unknown>;
+  video_object_key?: string;
+  notes?: string;
+}
+
+export interface LogSetCreate {
+  set_number: number;
+  fields: Record<string, unknown>;
+  video_object_key?: string;
+  notes?: string;
 }
 
 // ============================================================================

@@ -14,21 +14,20 @@ import (
 
 // logSetRequest represents a log set in the request body
 type logSetRequest struct {
-	SetNumber int                    `json:"set_number"`
-	Fields    map[string]interface{} `json:"fields"`
-	VideoURL  *string                `json:"video_url,omitempty"`
-	Notes     *string                `json:"notes,omitempty"`
+	SetNumber      int                    `json:"set_number"`
+	Fields         map[string]interface{} `json:"fields"`
+	VideoObjectKey *string                `json:"video_object_key,omitempty"`
+	Notes          *string                `json:"notes,omitempty"`
 }
 
 // logEntryRequest represents a log entry in the request body
 type logEntryRequest struct {
-	ExerciseName   string                 `json:"exercise_name"`
-	Fields         map[string]interface{} `json:"fields,omitempty"`
-	Sets           []logSetRequest        `json:"sets,omitempty"`
-	Notes          *string                `json:"notes,omitempty"`
-	VideoObjectKey *string                `json:"video_object_key,omitempty"`
-	StartedAt      *string                `json:"started_at,omitempty"`
-	FinishedAt     *string                `json:"finished_at,omitempty"`
+	ExerciseName string                 `json:"exercise_name"`
+	Fields       map[string]interface{} `json:"fields,omitempty"`
+	Sets         []logSetRequest        `json:"sets,omitempty"`
+	Notes        *string                `json:"notes,omitempty"`
+	StartedAt    *string                `json:"started_at,omitempty"`
+	FinishedAt   *string                `json:"finished_at,omitempty"`
 }
 
 // logRequest represents the request body for creating/updating a log
@@ -112,11 +111,10 @@ func (h *LogHandler) parseLogRequest(req *logRequest) (*domain.Log, error) {
 	entries := make([]domain.LogEntry, len(req.Entries))
 	for i, entryReq := range req.Entries {
 		entry := domain.LogEntry{
-			ExerciseName:   entryReq.ExerciseName,
-			Order:          i,
-			Fields:         entryReq.Fields,
-			Notes:          entryReq.Notes,
-			VideoObjectKey: entryReq.VideoObjectKey,
+			ExerciseName: entryReq.ExerciseName,
+			Order:        i,
+			Fields:       entryReq.Fields,
+			Notes:        entryReq.Notes,
 		}
 
 		// Parse sets
@@ -124,10 +122,10 @@ func (h *LogHandler) parseLogRequest(req *logRequest) (*domain.Log, error) {
 			sets := make([]domain.LogSet, len(entryReq.Sets))
 			for j, setReq := range entryReq.Sets {
 				sets[j] = domain.LogSet{
-					SetNumber: setReq.SetNumber,
-					Fields:    setReq.Fields,
-					VideoURL:  setReq.VideoURL,
-					Notes:     setReq.Notes,
+					SetNumber:      setReq.SetNumber,
+					Fields:         setReq.Fields,
+					VideoObjectKey: setReq.VideoObjectKey,
+					Notes:          setReq.Notes,
 				}
 			}
 			entry.Sets = sets

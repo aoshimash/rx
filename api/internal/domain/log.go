@@ -9,16 +9,15 @@ import (
 
 // LogEntry represents a single performed exercise entry within a training log.
 type LogEntry struct {
-	ID             uuid.UUID              `json:"id"`
-	LogID          uuid.UUID              `json:"log_id"`
-	Order          int                    `json:"order"`
-	ExerciseName   string                 `json:"exercise_name"`
-	Fields         map[string]interface{} `json:"fields,omitempty"`
-	Sets           []LogSet               `json:"sets,omitempty"`
-	Notes          *string                `json:"notes,omitempty"`
-	VideoObjectKey *string                `json:"video_object_key,omitempty"`
-	StartedAt      *time.Time             `json:"started_at,omitempty"`
-	FinishedAt     *time.Time             `json:"finished_at,omitempty"`
+	ID           uuid.UUID              `json:"id"`
+	LogID        uuid.UUID              `json:"log_id"`
+	Order        int                    `json:"order"`
+	ExerciseName string                 `json:"exercise_name"`
+	Fields       map[string]interface{} `json:"fields,omitempty"`
+	Sets         []LogSet               `json:"sets,omitempty"`
+	Notes        *string                `json:"notes,omitempty"`
+	StartedAt    *time.Time             `json:"started_at,omitempty"`
+	FinishedAt   *time.Time             `json:"finished_at,omitempty"`
 }
 
 // LoggedSession represents a session that has a recorded log, used for navigation.
