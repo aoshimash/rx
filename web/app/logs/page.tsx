@@ -49,7 +49,7 @@ export default function LogsPage() {
           <p className="text-muted-foreground mt-1">View and record your sessions</p>
         </div>
         <div className="flex items-center gap-2">
-          <ExportButton logs={logs} plan={null} />
+          <ExportButton logs={logs} />
           <Button asChild>
             <Link href="/logs/new">
               <Plus className="h-4 w-4 mr-2" />

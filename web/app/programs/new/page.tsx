@@ -91,10 +91,8 @@ export default function NewProgramPage() {
       <h1 className="text-2xl font-bold mb-6">Create Program</h1>
       <ProgramForm
         programName={name}
-        programDescription=""
         programNotes={notes}
         onNameChange={setName}
-        onDescriptionChange={() => {}}
         onNotesChange={setNotes}
         onSave={handleSave}
         isSaving={createProgram.isPending}

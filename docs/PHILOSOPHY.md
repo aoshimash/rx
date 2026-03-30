@@ -82,10 +82,12 @@ Every feature MUST be accessible via API (and ideally CLI).
 
 | Term | Description |
 |------|-------------|
-| Program | A reusable training template containing multiple sessions (created typically by AI) |
-| Session | A grouping of exercises for one workout within a Program (metadata concept, not a DB entity) |
-| Plan | A concrete single-workout prescription with actual weights, optionally derived from a Program session |
-| Log | A record of one training session actually performed, optionally linked 1:1 to a Plan |
+| Program | A reusable training template containing multiple sessions (created by humans, AI, or import) |
+| ProgramSession | A named workout day within a Program, containing exercise prescriptions |
+| ProgramGroup | An optional organizational grouping of sessions (e.g., Block, Week), max 2 levels deep |
+| Plan | The user's execution queue — an ordered list of upcoming sessions to perform (singleton per user) |
+| PlanSession | A concrete single-workout prescription within a Plan, optionally derived from a Program session |
+| Log | A record of one training session actually performed, optionally linked to a Program |
 | Exercise | A specific movement or activity |
 | Rep | A single repetition of an exercise |
 | Set | A group of repetitions |

@@ -60,7 +60,7 @@ paths:
       tags: [Program]
       responses:
         '200':
-          description: Program found (includes all sessions and entries)
+          description: Program found (includes all groups, sessions, and their entries)
           content:
             application/json:
               schema:
@@ -103,7 +103,7 @@ paths:
       tags: [Program]
       responses:
         '204':
-          description: Program deleted (sessions and entries cascade deleted, referencing logs have program_id cleared)
+          description: Program deleted (groups, sessions, and entries cascade deleted; referencing logs have program_id cleared)
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -790,7 +790,7 @@ components:
           type: string
           minLength: 1
           maxLength: 200
-          description: Day name within the week (e.g., "Day 1", "Heavy", "Volume")
+          description: Session name (e.g., "Day 1", "Heavy", "Volume")
         order:
           type: integer
           minimum: 0

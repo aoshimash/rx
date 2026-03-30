@@ -54,7 +54,7 @@ function groupByExercise(entries: ProgramSessionEntry[]): ExerciseGroup[] {
   return groups;
 }
 
-function SessionCard({
+function ProgramSessionCard({
   session,
   programId,
 }: {
@@ -250,7 +250,7 @@ export default function ProgramDetailPage() {
       ) : (
         <div className="space-y-3">
           {sortedSessions.map((session) => (
-            <SessionCard key={session.id} session={session} programId={programId} />
+            <ProgramSessionCard key={session.id} session={session} programId={programId} />
           ))}
         </div>
       )}

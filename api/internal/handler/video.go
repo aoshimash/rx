@@ -32,14 +32,14 @@ func (h *VideoHandler) GenerateVideoUploadURL(w http.ResponseWriter, r *http.Req
 
 	// Check if storage is configured
 	if h.storage == nil {
-		middleware.WriteError(w, "SERVICE_UNAVAILABLE", "Video storage is not configured", http.StatusServiceUnavailable, nil)
+		middleware.WriteServiceUnavailableError(w, "Video storage is not configured")
 		return
 	}
 
 	// Get user ID from context (set by auth middleware)
 	userID := middleware.GetUserID(ctx)
 	if userID == "" {
-		middleware.WriteError(w, "UNAUTHORIZED", "User ID not found in context", http.StatusUnauthorized, nil)
+		middleware.WriteUnauthorizedError(w, "User ID not found in context")
 		return
 	}
 
@@ -104,14 +104,14 @@ func (h *VideoHandler) GenerateVideoDownloadURL(w http.ResponseWriter, r *http.R
 
 	// Check if storage is configured
 	if h.storage == nil {
-		middleware.WriteError(w, "SERVICE_UNAVAILABLE", "Video storage is not configured", http.StatusServiceUnavailable, nil)
+		middleware.WriteServiceUnavailableError(w, "Video storage is not configured")
 		return
 	}
 
 	// Get user ID from context (set by auth middleware)
 	userID := middleware.GetUserID(ctx)
 	if userID == "" {
-		middleware.WriteError(w, "UNAUTHORIZED", "User ID not found in context", http.StatusUnauthorized, nil)
+		middleware.WriteUnauthorizedError(w, "User ID not found in context")
 		return
 	}
 

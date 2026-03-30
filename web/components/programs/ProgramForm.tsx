@@ -1,6 +1,5 @@
 'use client';
 
-import { DeleteConfirmDialog } from '@/components/plan-editor/DeleteConfirmDialog';
 import {
   Accordion,
   AccordionContent,
@@ -8,6 +7,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
+import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -544,12 +544,10 @@ function ProgramExerciseRow({
 
 interface ProgramFormProps {
   programName: string;
-  programDescription: string;
   programNotes: string;
   initialEntries?: ProgramFormEntry[];
   initialCustomFields?: CustomFieldDef[];
   onNameChange: (name: string) => void;
-  onDescriptionChange: (description: string) => void;
   onNotesChange: (notes: string) => void;
   onSave: (entries: ProgramFormEntry[], customFields: CustomFieldDef[]) => void;
   onDelete?: () => void;
@@ -560,12 +558,10 @@ interface ProgramFormProps {
 
 export function ProgramForm({
   programName,
-  programDescription,
   programNotes,
   initialEntries,
   initialCustomFields,
   onNameChange,
-  onDescriptionChange,
   onNotesChange,
   onSave,
   onDelete,
@@ -642,15 +638,6 @@ export function ProgramForm({
             value={programName}
             onChange={(e) => onNameChange(e.target.value)}
             placeholder="e.g., 5/3/1 BBB, GZCL"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="program-description">Description</Label>
-          <Input
-            id="program-description"
-            value={programDescription}
-            onChange={(e) => onDescriptionChange(e.target.value)}
-            placeholder="Brief description of the program"
           />
         </div>
         <div className="space-y-2">

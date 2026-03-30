@@ -28,6 +28,7 @@ func setupProgramTestRouter() (chi.Router, *ProgramHandler) {
 	r.Post("/programs", h.CreateProgram)
 	r.Get("/programs", h.ListPrograms)
 	r.Get("/programs/{id}", h.GetProgram)
+	r.Put("/programs/{id}", h.UpdateProgram)
 	r.Delete("/programs/{id}", h.DeleteProgram)
 
 	return r, h
@@ -40,7 +41,6 @@ func createTestProgram(t *testing.T, router chi.Router) map[string]interface{} {
 		"name": %q,`, name) + `
 		"sessions": [
 			{
-				"week": 1,
 				"session_name": "Day 1",
 				"order": 0,
 				"entries": [

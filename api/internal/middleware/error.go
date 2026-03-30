@@ -44,6 +44,16 @@ func WriteConflictError(w http.ResponseWriter, message string, details map[strin
 	WriteError(w, "CONFLICT", message, http.StatusConflict, details)
 }
 
+// WriteUnauthorizedError writes a 401 Unauthorized error
+func WriteUnauthorizedError(w http.ResponseWriter, message string) {
+	WriteError(w, "UNAUTHORIZED", message, http.StatusUnauthorized, nil)
+}
+
+// WriteServiceUnavailableError writes a 503 Service Unavailable error
+func WriteServiceUnavailableError(w http.ResponseWriter, message string) {
+	WriteError(w, "SERVICE_UNAVAILABLE", message, http.StatusServiceUnavailable, nil)
+}
+
 // WriteInternalError writes a 500 Internal Server Error
 func WriteInternalError(w http.ResponseWriter, message string) {
 	WriteError(w, "INTERNAL_ERROR", message, http.StatusInternalServerError, nil)
