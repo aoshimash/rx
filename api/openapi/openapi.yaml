@@ -508,7 +508,7 @@ paths:
       description: |
         Generates a pre-signed URL for uploading a video file directly to object storage.
         The client should use this URL to upload the video via HTTP PUT.
-        After successful upload, include the returned object_key in the LogEntry.
+        After successful upload, include the returned object_key in the LogSet.
       operationId: generateVideoUploadURL
       tags: [Video]
       requestBody:
@@ -1397,10 +1397,6 @@ components:
         notes:
           type: string
           maxLength: 2000
-        video_object_key:
-          type: string
-          maxLength: 500
-          description: Object key for uploaded video in storage (from upload-url response)
         started_at:
           type: string
           format: date-time
@@ -1431,9 +1427,6 @@ components:
         notes:
           type: string
           maxLength: 2000
-        video_object_key:
-          type: string
-          maxLength: 500
         started_at:
           type: string
           format: date-time
@@ -1462,9 +1455,10 @@ components:
           type: object
           additionalProperties: true
           description: Set-level data (e.g., reps, load_kg, rpe)
-        video_url:
+        video_object_key:
           type: string
-          maxLength: 2000
+          maxLength: 500
+          description: Object key for uploaded video in storage (from upload-url response)
         notes:
           type: string
           maxLength: 2000
@@ -1481,9 +1475,9 @@ components:
         fields:
           type: object
           additionalProperties: true
-        video_url:
+        video_object_key:
           type: string
-          maxLength: 2000
+          maxLength: 500
         notes:
           type: string
           maxLength: 2000
@@ -1546,7 +1540,7 @@ components:
           description: Pre-signed URL for uploading the video via HTTP PUT
         object_key:
           type: string
-          description: Object key to be stored in LogEntry.video_object_key after successful upload
+          description: Object key to be stored in LogSet.video_object_key after successful upload
         expires_in:
           type: integer
           description: Seconds until the upload URL expires
@@ -1560,7 +1554,7 @@ components:
         object_key:
           type: string
           maxLength: 500
-          description: Object key from LogEntry.video_object_key
+          description: Object key from LogSet.video_object_key
 
     VideoDownloadURLResponse:
       type: object

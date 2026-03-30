@@ -530,8 +530,8 @@ func ValidateLogSet(s *LogSet) error {
 		}
 	}
 
-	if s.VideoURL != nil {
-		if err := ValidateStringLength("video_url", *s.VideoURL, 1, 2000); err != nil {
+	if s.VideoObjectKey != nil {
+		if err := ValidateStringLength("video_object_key", *s.VideoObjectKey, 1, 500); err != nil {
 			return err
 		}
 	}
@@ -605,11 +605,6 @@ func ValidateLogEntry(e *LogEntry) error {
 	}
 	if e.Notes != nil {
 		if err := ValidateStringLength("notes", *e.Notes, 0, 2000); err != nil {
-			return err
-		}
-	}
-	if e.VideoObjectKey != nil {
-		if err := ValidateStringLength("video_object_key", *e.VideoObjectKey, 1, 500); err != nil {
 			return err
 		}
 	}

@@ -165,9 +165,6 @@ type LogEntry struct {
 
 	// StartedAt When the exercise started (optional)
 	StartedAt *time.Time `json:"started_at,omitempty"`
-
-	// VideoObjectKey Object key for uploaded video in storage (from upload-url response)
-	VideoObjectKey *string `json:"video_object_key,omitempty"`
 }
 
 // LogEntryCreate defines model for LogEntryCreate.
@@ -180,9 +177,8 @@ type LogEntryCreate struct {
 	Notes      *string                 `json:"notes,omitempty"`
 
 	// Sets Individual sets for this exercise
-	Sets           *[]LogSetCreate `json:"sets,omitempty"`
-	StartedAt      *time.Time      `json:"started_at,omitempty"`
-	VideoObjectKey *string         `json:"video_object_key,omitempty"`
+	Sets      *[]LogSetCreate `json:"sets,omitempty"`
+	StartedAt *time.Time      `json:"started_at,omitempty"`
 }
 
 // LogListResponse defines model for LogListResponse.
@@ -201,15 +197,17 @@ type LogSet struct {
 	Id        openapi_types.UUID     `json:"id"`
 	Notes     *string                `json:"notes,omitempty"`
 	SetNumber int                    `json:"set_number"`
-	VideoUrl  *string                `json:"video_url,omitempty"`
+
+	// VideoObjectKey Object key for uploaded video in storage (from upload-url response)
+	VideoObjectKey *string `json:"video_object_key,omitempty"`
 }
 
 // LogSetCreate defines model for LogSetCreate.
 type LogSetCreate struct {
-	Fields    map[string]interface{} `json:"fields"`
-	Notes     *string                `json:"notes,omitempty"`
-	SetNumber int                    `json:"set_number"`
-	VideoUrl  *string                `json:"video_url,omitempty"`
+	Fields         map[string]interface{} `json:"fields"`
+	Notes          *string                `json:"notes,omitempty"`
+	SetNumber      int                    `json:"set_number"`
+	VideoObjectKey *string                `json:"video_object_key,omitempty"`
 }
 
 // Plan defines model for Plan.
@@ -414,7 +412,7 @@ type ProgramUpdate struct {
 
 // VideoDownloadURLRequest defines model for VideoDownloadURLRequest.
 type VideoDownloadURLRequest struct {
-	// ObjectKey Object key from LogEntry.video_object_key
+	// ObjectKey Object key from LogSet.video_object_key
 	ObjectKey string `json:"object_key"`
 }
 
@@ -444,7 +442,7 @@ type VideoUploadURLResponse struct {
 	// ExpiresIn Seconds until the upload URL expires
 	ExpiresIn int `json:"expires_in"`
 
-	// ObjectKey Object key to be stored in LogEntry.video_object_key after successful upload
+	// ObjectKey Object key to be stored in LogSet.video_object_key after successful upload
 	ObjectKey string `json:"object_key"`
 
 	// UploadUrl Pre-signed URL for uploading the video via HTTP PUT

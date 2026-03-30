@@ -90,22 +90,6 @@ func TestValidateLogEntry(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("valid video_object_key", func(t *testing.T) {
-		e := validEntry()
-		key := "videos/test.mp4"
-		e.VideoObjectKey = &key
-		err := ValidateLogEntry(e)
-		assert.NoError(t, err)
-	})
-
-	t.Run("empty video_object_key", func(t *testing.T) {
-		e := validEntry()
-		key := ""
-		e.VideoObjectKey = &key
-		err := ValidateLogEntry(e)
-		assert.Error(t, err)
-	})
-
 	t.Run("fields with extra data is accepted", func(t *testing.T) {
 		e := validEntry()
 		e.Fields["tempo"] = "3-1-1-0"

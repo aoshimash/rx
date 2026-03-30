@@ -64,26 +64,34 @@ func TestValidateLogSet(t *testing.T) {
 		assert.Equal(t, "notes", ve.Field)
 	})
 
-	t.Run("video_url too long", func(t *testing.T) {
+	t.Run("video_object_key too long", func(t *testing.T) {
 		s := validLogSet()
-		longURL := strings.Repeat("a", 2001)
-		s.VideoURL = &longURL
+		longKey := strings.Repeat("a", 501)
+		s.VideoObjectKey = &longKey
 		err := ValidateLogSet(s)
 		require.Error(t, err)
 		var ve *ValidationError
 		require.ErrorAs(t, err, &ve)
-		assert.Equal(t, "video_url", ve.Field)
+		assert.Equal(t, "video_object_key", ve.Field)
 	})
 
-	t.Run("empty video_url", func(t *testing.T) {
+	t.Run("empty video_object_key", func(t *testing.T) {
 		s := validLogSet()
 		empty := ""
-		s.VideoURL = &empty
+		s.VideoObjectKey = &empty
 		err := ValidateLogSet(s)
 		require.Error(t, err)
 		var ve *ValidationError
 		require.ErrorAs(t, err, &ve)
-		assert.Equal(t, "video_url", ve.Field)
+		assert.Equal(t, "video_object_key", ve.Field)
+	})
+
+	t.Run("valid video_object_key", func(t *testing.T) {
+		s := validLogSet()
+		key := "videos/user123/abc.mp4"
+		s.VideoObjectKey = &key
+		err := ValidateLogSet(s)
+		require.NoError(t, err)
 	})
 }
 
