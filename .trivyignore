@@ -1,0 +1,6 @@
+# CVE-2026-34040: github.com/docker/docker - AuthZ plugin bypass with oversized request bodies
+# This is a transitive dependency from golang-migrate/migrate v4.19.1.
+# The fix (v29.3.1) is not yet available as a Go module (+incompatible).
+# This CVE does not affect our use case (we don't use Docker AuthZ plugins).
+# TODO: Remove once docker/docker v29+ is available as a Go module or golang-migrate updates.
+CVE-2026-34040
