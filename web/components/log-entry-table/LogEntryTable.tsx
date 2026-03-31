@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import type { LogEntryCreate, ProgramSessionEntry } from '@/types/api';
+import type { FieldDef, LogEntryCreate, ProgramSessionEntry } from '@/types/api';
 import {
   DndContext,
   type DragEndEvent,
@@ -26,6 +26,38 @@ import { useState } from 'react';
 import { LogEntryRow } from './LogEntryRow';
 import { type TableEntry, createEmptyTableEntry, createTableEntryFromPlan } from './types';
 
+function buildDynamicLogEntry(entry: TableEntry, fieldDefs: FieldDef[]): LogEntryCreate {
+  const fields: Record<string, unknown> = {};
+  for (const fd of fieldDefs.filter((fd) => fd.type !== 'video')) {
+    if (entry.logFieldValues[fd.name] !== undefined) {
+      fields[fd.name] = entry.logFieldValues[fd.name];
+    }
+  }
+  const hasVideoField = fieldDefs.some((fd) => fd.type === 'video');
+  const sets =
+    hasVideoField && entry.videoObjectKey
+      ? [{ set_number: 1, fields: {}, video_object_key: entry.videoObjectKey }]
+      : undefined;
+  return {
+    exercise_name: entry.exercise_name,
+    fields: Object.keys(fields).length > 0 ? fields : undefined,
+    sets,
+    notes: entry.notes || undefined,
+  };
+}
+
+function buildFallbackLogEntry(entry: TableEntry): LogEntryCreate {
+  const fields: Record<string, unknown> = { ...entry.fields };
+  if (entry.sets !== undefined) fields.sets = entry.sets;
+  if (entry.reps !== undefined) fields.reps = entry.reps;
+  if (entry.load_kg !== undefined) fields.load_kg = entry.load_kg;
+  return {
+    exercise_name: entry.exercise_name,
+    fields: Object.keys(fields).length > 0 ? fields : undefined,
+    notes: entry.notes || undefined,
+  };
+}
+
 interface LogEntryTableProps {
   initialEntries?: ProgramSessionEntry[];
   /** Pre-existing log entries for edit mode */
@@ -41,6 +73,8 @@ interface LogEntryTableProps {
   initialNotes?: string;
   initialStartedAt?: string;
   initialFinishedAt?: string;
+  /** FieldDef definitions from the session's FieldGroup.log_fields */
+  fieldDefs?: FieldDef[];
 }
 
 export function LogEntryTable({
@@ -52,6 +86,7 @@ export function LogEntryTable({
   initialNotes = '',
   initialStartedAt = '',
   initialFinishedAt = '',
+  fieldDefs,
 }: LogEntryTableProps) {
   const [entries, setEntries] = useState<TableEntry[]>(() => {
     if (existingEntries) return existingEntries;
@@ -91,23 +126,18 @@ export function LogEntryTable({
     setEntries((prev) => [...prev, createEmptyTableEntry()]);
   };
 
+  const buildLogEntry = (entry: TableEntry): LogEntryCreate =>
+    fieldDefs && fieldDefs.length > 0
+      ? buildDynamicLogEntry(entry, fieldDefs)
+      : buildFallbackLogEntry(entry);
+
   const handleSave = async () => {
     const validEntries = entries.filter((e) => e.exercise_name.trim() !== '');
     if (validEntries.length === 0) return;
 
     setIsSaving(true);
     try {
-      const logEntries: LogEntryCreate[] = validEntries.map((entry) => {
-        const fields: Record<string, unknown> = { ...entry.fields };
-        if (entry.sets !== undefined) fields.sets = entry.sets;
-        if (entry.reps !== undefined) fields.reps = entry.reps;
-        if (entry.load_kg !== undefined) fields.load_kg = entry.load_kg;
-        return {
-          exercise_name: entry.exercise_name,
-          fields: Object.keys(fields).length > 0 ? fields : undefined,
-          notes: entry.notes || undefined,
-        };
-      });
+      const logEntries: LogEntryCreate[] = validEntries.map(buildLogEntry);
 
       await onSave({
         entries: logEntries,
@@ -119,6 +149,15 @@ export function LogEntryTable({
       setIsSaving(false);
     }
   };
+
+  const dynamicHeaders = fieldDefs?.map((fd) => (
+    <TableHead key={fd.name} className="min-w-[80px]">
+      {fd.name}
+      {fd.description && (
+        <span className="text-xs font-normal text-muted-foreground ml-1">({fd.description})</span>
+      )}
+    </TableHead>
+  ));
 
   return (
     <div className="space-y-6">
@@ -154,9 +193,15 @@ export function LogEntryTable({
             <TableRow>
               <TableHead className="w-8" />
               <TableHead>Exercise</TableHead>
-              <TableHead className="w-20 text-right">Sets</TableHead>
-              <TableHead className="w-20 text-right">Reps</TableHead>
-              <TableHead className="w-24 text-right">Load (kg)</TableHead>
+              {fieldDefs ? (
+                dynamicHeaders
+              ) : (
+                <>
+                  <TableHead className="w-20 text-right">Sets</TableHead>
+                  <TableHead className="w-20 text-right">Reps</TableHead>
+                  <TableHead className="w-24 text-right">Load (kg)</TableHead>
+                </>
+              )}
               <TableHead>Notes</TableHead>
               <TableHead className="w-10" />
             </TableRow>
@@ -169,6 +214,7 @@ export function LogEntryTable({
                   entry={entry}
                   onUpdate={handleUpdate}
                   onRemove={handleRemove}
+                  fieldDefs={fieldDefs}
                 />
               ))}
             </TableBody>

@@ -3,11 +3,13 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { videosApi } from '@/lib/api/videos';
 import { useLog } from '@/lib/hooks/useLogs';
-import type { LogEntry } from '@/types/api';
+import type { LogEntry, LogSet } from '@/types/api';
 import { ArrowLeft, Pencil } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 type LogExerciseGroup = { name: string; entries: LogEntry[] };
 
@@ -20,10 +22,170 @@ function groupByExercise(entries: LogEntry[]): LogExerciseGroup[] {
       groups.push(g);
       map.set(entry.exercise_name, g);
     }
-    map.get(entry.exercise_name)!.entries.push(entry);
+    map.get(entry.exercise_name)?.entries.push(entry);
   }
   return groups;
 }
+
+// ============================================================================
+// VideoPlayer — fetches a pre-signed download URL and renders a video element
+// ============================================================================
+
+function VideoPlayer({ objectKey }: { objectKey: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    videosApi
+      .getDownloadUrl({ object_key: objectKey })
+      .then(({ download_url }) => {
+        if (!cancelled) setUrl(download_url);
+      })
+      .catch(() => {
+        if (!cancelled) setError(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [objectKey]);
+
+  if (error) return <p className="text-xs text-destructive">Video unavailable</p>;
+  if (!url) return <p className="text-xs text-muted-foreground">Loading video…</p>;
+
+  return (
+    // biome-ignore lint/a11y/useMediaCaption: captions not available for user-uploaded training videos
+    <video src={url} controls className="max-w-full rounded mt-1" style={{ maxHeight: '200px' }} />
+  );
+}
+
+// ============================================================================
+// SetRow — displays a single LogSet with dynamic fields and optional video
+// ============================================================================
+
+function SetRow({ set }: { set: LogSet }) {
+  const fieldEntries = Object.entries(set.fields ?? {}).filter(([, v]) => v != null);
+
+  return (
+    <div className="space-y-1">
+      <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+        <span className="text-xs font-medium">Set {set.set_number}</span>
+        {fieldEntries.map(([key, val]) => (
+          <span key={key} className="tabular-nums">
+            {key}: {String(val)}
+          </span>
+        ))}
+        {set.notes && <span className="text-xs italic">{set.notes}</span>}
+      </div>
+      {set.video_object_key && <VideoPlayer objectKey={set.video_object_key} />}
+    </div>
+  );
+}
+
+// ============================================================================
+// LegacyEntryRow — renders a single LogEntry in the legacy fields table
+// ============================================================================
+
+function LegacyEntryRow({
+  entry,
+  hasLabel,
+  hasLoad,
+}: {
+  entry: LogEntry;
+  hasLabel: boolean;
+  hasLoad: boolean;
+}) {
+  const label = entry.fields?.label as string | undefined;
+  const loadKg = entry.fields?.load_kg as number | null | undefined;
+  const reps = entry.fields?.reps as number | null | undefined;
+  const sets = entry.fields?.sets as number | null | undefined;
+
+  const hasStandardFields = reps != null || sets != null || loadKg != null;
+  if (!hasStandardFields) {
+    const kvPairs = Object.entries(entry.fields ?? {}).filter(([, v]) => v != null);
+    if (kvPairs.length === 0) return null;
+    return (
+      <tr key={entry.id}>
+        <td colSpan={3} className="py-0.5">
+          <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+            {kvPairs.map(([k, v]) => (
+              <span key={k} className="tabular-nums">
+                {k}: {String(v)}
+              </span>
+            ))}
+          </div>
+        </td>
+      </tr>
+    );
+  }
+
+  return (
+    <tr key={entry.id} className="text-muted-foreground">
+      {hasLabel && <td className="text-xs pr-3 py-0.5">{label ?? ''}</td>}
+      {hasLoad && (
+        <td className="text-right tabular-nums pr-4 py-0.5">
+          {loadKg != null ? `${loadKg}kg` : '—'}
+        </td>
+      )}
+      <td className="text-right tabular-nums pr-4 py-0.5">{reps ?? '—'}</td>
+      <td className="text-right tabular-nums pr-4 py-0.5">{sets ?? '—'}</td>
+    </tr>
+  );
+}
+
+// ============================================================================
+// EntryCard — displays one exercise group
+// ============================================================================
+
+function EntryCard({ group }: { group: LogExerciseGroup }) {
+  const hasSets = group.entries.some((e) => e.sets && e.sets.length > 0);
+  const hasLabel = group.entries.some((e) => e.fields?.label);
+  const hasLoad = group.entries.some((e) => e.fields?.load_kg != null);
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">{group.name}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {hasSets ? (
+          // New model: render sets with dynamic fields and video
+          <div className="space-y-3">
+            {group.entries.map((entry) =>
+              (entry.sets ?? []).map((set) => <SetRow key={set.id} set={set} />)
+            )}
+          </div>
+        ) : (
+          // Legacy model: render entry.fields as key-value pairs
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-xs text-muted-foreground">
+                {hasLabel && <th className="text-left font-normal pb-1 w-16" />}
+                {hasLoad && <th className="text-right font-normal pb-1 pr-4">Load</th>}
+                <th className="text-right font-normal pb-1 pr-4">Reps</th>
+                <th className="text-right font-normal pb-1 pr-4">Sets</th>
+              </tr>
+            </thead>
+            <tbody>
+              {group.entries.map((entry) => (
+                <LegacyEntryRow
+                  key={entry.id}
+                  entry={entry}
+                  hasLabel={hasLabel}
+                  hasLoad={hasLoad}
+                />
+              ))}
+            </tbody>
+          </table>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============================================================================
+// LogDetailPage
+// ============================================================================
 
 export default function LogDetailPage() {
   const params = useParams();
@@ -113,49 +275,7 @@ export default function LogDetailPage() {
 
       <div className="space-y-4">
         {groups.map((group) => (
-          <Card key={group.name}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">{group.name}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-xs text-muted-foreground">
-                    {group.entries.some((e) => e.fields?.label) && (
-                      <th className="text-left font-normal pb-1 w-16" />
-                    )}
-                    {group.entries.some((e) => e.fields?.load_kg != null) && (
-                      <th className="text-right font-normal pb-1 pr-4">Load</th>
-                    )}
-                    <th className="text-right font-normal pb-1 pr-4">Reps</th>
-                    <th className="text-right font-normal pb-1 pr-4">Sets</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {group.entries.map((entry) => {
-                    const label = entry.fields?.label as string | undefined;
-                    const hasLabel = group.entries.some((e) => e.fields?.label);
-                    const hasLoad = group.entries.some((e) => e.fields?.load_kg != null);
-                    const loadKg = entry.fields?.load_kg as number | null | undefined;
-                    const reps = entry.fields?.reps as number | null | undefined;
-                    const sets = entry.fields?.sets as number | null | undefined;
-                    return (
-                      <tr key={entry.id} className="text-muted-foreground">
-                        {hasLabel && <td className="text-xs pr-3 py-0.5">{label ?? ''}</td>}
-                        {hasLoad && (
-                          <td className="text-right tabular-nums pr-4 py-0.5">
-                            {loadKg != null ? `${loadKg}kg` : '—'}
-                          </td>
-                        )}
-                        <td className="text-right tabular-nums pr-4 py-0.5">{reps ?? '—'}</td>
-                        <td className="text-right tabular-nums pr-4 py-0.5">{sets ?? '—'}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </CardContent>
-          </Card>
+          <EntryCard key={group.name} group={group} />
         ))}
       </div>
     </main>
