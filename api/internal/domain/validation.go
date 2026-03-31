@@ -247,12 +247,26 @@ func ValidateProgramSession(s *ProgramSession) error {
 	return nil
 }
 
+// allowedFieldDefTypes is the set of valid FieldDef type values.
+var allowedFieldDefTypes = map[string]struct{}{
+	"text":   {},
+	"number": {},
+	"select": {},
+	"video":  {},
+}
+
 // ValidateFieldDef validates a FieldDef entry.
 func ValidateFieldDef(prefix string, f *FieldDef) error {
 	if f == nil {
 		return &ValidationError{
 			Field:   prefix,
 			Message: "field_def cannot be nil",
+		}
+	}
+	if _, ok := allowedFieldDefTypes[f.Type]; !ok {
+		return &ValidationError{
+			Field:   prefix + ".type",
+			Message: fmt.Sprintf("type must be one of: text, number, select, video; got %q", f.Type),
 		}
 	}
 	if f.Description != "" {
@@ -294,6 +308,12 @@ func ValidateFieldGroup(fg *FieldGroup) error {
 	for i, f := range fg.ProgramFields {
 		if err := ValidateFieldDef(fmt.Sprintf("program_fields[%d]", i), &f); err != nil {
 			return err
+		}
+		if f.Type == "video" {
+			return &ValidationError{
+				Field:   fmt.Sprintf("program_fields[%d].type", i),
+				Message: "video type is not allowed in program_fields",
+			}
 		}
 	}
 

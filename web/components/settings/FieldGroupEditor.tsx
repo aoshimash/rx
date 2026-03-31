@@ -38,13 +38,15 @@ function FieldDefListEditor({
   fields,
   onChange,
   label,
+  isLogFields = false,
 }: {
   fields: FieldDef[];
   onChange: (fields: FieldDef[]) => void;
   label: string;
+  isLogFields?: boolean;
 }) {
   const [newName, setNewName] = useState('');
-  const [newType, setNewType] = useState<'text' | 'number' | 'select'>('number');
+  const [newType, setNewType] = useState<'text' | 'number' | 'select' | 'video'>('number');
 
   const addField = () => {
     const trimmed = newName.trim();
@@ -100,7 +102,7 @@ function FieldDefListEditor({
         />
         <Select
           value={newType}
-          onValueChange={(v) => setNewType(v as 'text' | 'number' | 'select')}
+          onValueChange={(v) => setNewType(v as 'text' | 'number' | 'select' | 'video')}
         >
           <SelectTrigger className="h-8 w-28">
             <SelectValue />
@@ -109,6 +111,7 @@ function FieldDefListEditor({
             <SelectItem value="number">Number</SelectItem>
             <SelectItem value="text">Text</SelectItem>
             <SelectItem value="select">Select</SelectItem>
+            {isLogFields && <SelectItem value="video">Video</SelectItem>}
           </SelectContent>
         </Select>
         <Button variant="ghost" size="sm" onClick={addField} disabled={!newName.trim()}>
@@ -183,6 +186,7 @@ function FieldGroupForm({ initial, onSave, onCancel, isSaving }: FieldGroupFormP
           fields={logFields}
           onChange={setLogFields}
           label="Log Fields (Record)"
+          isLogFields
         />
       </div>
 
