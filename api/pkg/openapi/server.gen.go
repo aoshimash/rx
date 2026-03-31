@@ -23,6 +23,7 @@ const (
 	Number FieldDefType = "number"
 	Select FieldDefType = "select"
 	Text   FieldDefType = "text"
+	Video  FieldDefType = "video"
 )
 
 // Error defines model for Error.

@@ -697,7 +697,7 @@ components:
           description: Field key used in the fields object (e.g., "load_kg", "rpe")
         type:
           type: string
-          enum: [text, number, select]
+          enum: [text, number, select, video]
           description: Input type for this field
         options:
           type: array

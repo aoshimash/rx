@@ -11,7 +11,7 @@
 
 export interface FieldDef {
   name: string;
-  type: 'text' | 'number' | 'select';
+  type: 'text' | 'number' | 'select' | 'video';
   options?: string[];
   description?: string;
 }
