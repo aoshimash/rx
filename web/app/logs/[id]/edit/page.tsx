@@ -36,6 +36,8 @@ function logToTableEntries(log: {
       load_kg: entry.fields?.load_kg as number | undefined,
       notes: entry.notes ?? '',
       fields: entry.fields ?? {},
+      logFieldValues: {},
+      videoObjectKey: undefined,
       setsEdited: true,
       repsEdited: true,
     }));
