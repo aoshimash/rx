@@ -51,9 +51,13 @@ function buildFallbackLogEntry(entry: TableEntry): LogEntryCreate {
   if (entry.sets !== undefined) fields.sets = entry.sets;
   if (entry.reps !== undefined) fields.reps = entry.reps;
   if (entry.load_kg !== undefined) fields.load_kg = entry.load_kg;
+  const sets = entry.videoObjectKey
+    ? [{ set_number: 1, fields: {}, video_object_key: entry.videoObjectKey }]
+    : undefined;
   return {
     exercise_name: entry.exercise_name,
     fields: Object.keys(fields).length > 0 ? fields : undefined,
+    sets,
     notes: entry.notes || undefined,
   };
 }
