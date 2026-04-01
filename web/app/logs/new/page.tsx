@@ -31,7 +31,12 @@ function NewLogPageContent() {
   const programSession = program?.sessions.find((s) => s.session_name === sessionName);
 
   const fieldGroupId = planSession?.field_group_id ?? programSession?.field_group_id ?? null;
-  const { data: fieldGroup } = useFieldGroup(fieldGroupId);
+  const { data: fieldGroup, isLoading: fieldGroupLoading } = useFieldGroup(fieldGroupId);
+
+  const isDataLoading =
+    (planSessionId && planLoading) ||
+    (programId && programLoading) ||
+    (fieldGroupId && fieldGroupLoading);
 
   const templateEntries = planSession
     ? planSession.entries.slice().sort((a, b) => a.order - b.order)
@@ -77,7 +82,7 @@ function NewLogPageContent() {
     router.push(backHref);
   };
 
-  if ((planSessionId && planLoading) || (programId && programLoading)) {
+  if (isDataLoading) {
     return (
       <main className="container mx-auto p-6 space-y-4">
         <Skeleton className="h-8 w-[200px]" />
