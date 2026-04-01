@@ -106,7 +106,7 @@ function LegacyEntryRow({
     if (kvPairs.length === 0) return null;
     return (
       <tr key={entry.id}>
-        <td colSpan={3} className="py-0.5">
+        <td colSpan={2 + (hasLabel ? 1 : 0) + (hasLoad ? 1 : 0)} className="py-0.5">
           <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
             {kvPairs.map(([k, v]) => (
               <span key={k} className="tabular-nums">

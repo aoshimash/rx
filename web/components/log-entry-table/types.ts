@@ -33,7 +33,7 @@ export function createTableEntryFromPlan(entry: ProgramSessionEntry, index: numb
     load_kg,
     notes: '',
     fields: entry.fields ?? {},
-    logFieldValues: {},
+    logFieldValues: entry.fields ? { ...entry.fields } : {},
     videoObjectKey: undefined,
     plan: {
       fields: entry.fields,
