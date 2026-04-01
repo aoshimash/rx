@@ -193,7 +193,7 @@ export function LogEntryTable({
             <TableRow>
               <TableHead className="w-8" />
               <TableHead>Exercise</TableHead>
-              {fieldDefs ? (
+              {fieldDefs && fieldDefs.length > 0 ? (
                 dynamicHeaders
               ) : (
                 <>

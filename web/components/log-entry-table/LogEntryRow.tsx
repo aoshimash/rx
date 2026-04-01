@@ -58,7 +58,7 @@ export function LogEntryRow({ entry, onUpdate, onRemove, fieldDefs }: LogEntryRo
         )}
       </TableCell>
 
-      {fieldDefs ? (
+      {fieldDefs && fieldDefs.length > 0 ? (
         // Dynamic mode: render cells for each FieldDef
         fieldDefs.map((fd) => (
           <TableCell key={fd.name} className="min-w-[80px]">

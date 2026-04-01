@@ -149,11 +149,27 @@ function EntryCard({ group }: { group: LogExerciseGroup }) {
       </CardHeader>
       <CardContent>
         {hasSets ? (
-          // New model: render sets with dynamic fields and video
+          // New model: render entry-level fields (e.g. reps/weight) then sets (video)
           <div className="space-y-3">
-            {group.entries.map((entry) =>
-              (entry.sets ?? []).map((set) => <SetRow key={set.id} set={set} />)
-            )}
+            {group.entries.map((entry) => {
+              const entryFields = Object.entries(entry.fields ?? {}).filter(([, v]) => v != null);
+              return (
+                <div key={entry.id} className="space-y-1">
+                  {entryFields.length > 0 && (
+                    <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                      {entryFields.map(([key, val]) => (
+                        <span key={key} className="tabular-nums">
+                          {key}: {String(val)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {(entry.sets ?? []).map((set) => (
+                    <SetRow key={set.id} set={set} />
+                  ))}
+                </div>
+              );
+            })}
           </div>
         ) : (
           // Legacy model: render entry.fields as key-value pairs
