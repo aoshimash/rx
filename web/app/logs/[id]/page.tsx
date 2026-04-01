@@ -37,6 +37,8 @@ function VideoPlayer({ objectKey }: { objectKey: string }) {
 
   useEffect(() => {
     let cancelled = false;
+    setUrl(null);
+    setError(false);
     videosApi
       .getDownloadUrl({ object_key: objectKey })
       .then(({ download_url }) => {
