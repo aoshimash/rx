@@ -40,7 +40,7 @@ export function FieldCell({
         value={value as number | undefined}
         onChange={onChange}
         defaultReadOnly={defaultReadOnly}
-        isEdited={value !== undefined && value !== planValue}
+        isEdited={value !== planValue}
         displayText={planValue != null ? String(planValue) : undefined}
         min={0}
         step={0.5}
