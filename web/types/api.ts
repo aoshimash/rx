@@ -267,6 +267,27 @@ export type LogListResponse = PaginatedResponse<Log>;
 export type ProgramListResponse = PaginatedResponse<Program>;
 
 // ============================================================================
+// Video
+// ============================================================================
+
+export interface VideoUploadURLRequest {
+  content_type: string;
+}
+
+export interface VideoUploadURLResponse {
+  upload_url: string;
+  object_key: string;
+}
+
+export interface VideoDownloadURLRequest {
+  object_key: string;
+}
+
+export interface VideoDownloadURLResponse {
+  download_url: string;
+}
+
+// ============================================================================
 // Error
 // ============================================================================
 

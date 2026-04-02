@@ -2,6 +2,7 @@
 
 import { LogEntryTable } from '@/components/log-entry-table/LogEntryTable';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useFieldGroup } from '@/lib/hooks/useFieldGroups';
 import { useCreateLog } from '@/lib/hooks/useLogs';
 import { useDeletePlanSession, usePlan } from '@/lib/hooks/usePlans';
 import { useProgram } from '@/lib/hooks/usePrograms';
@@ -28,6 +29,14 @@ function NewLogPageContent() {
     : undefined;
 
   const programSession = program?.sessions.find((s) => s.session_name === sessionName);
+
+  const fieldGroupId = planSession?.field_group_id ?? programSession?.field_group_id ?? null;
+  const { data: fieldGroup, isLoading: fieldGroupLoading } = useFieldGroup(fieldGroupId);
+
+  const isDataLoading =
+    (planSessionId && planLoading) ||
+    (programId && programLoading) ||
+    (fieldGroupId && fieldGroupLoading);
 
   const templateEntries = planSession
     ? planSession.entries.slice().sort((a, b) => a.order - b.order)
@@ -73,7 +82,7 @@ function NewLogPageContent() {
     router.push(backHref);
   };
 
-  if ((planSessionId && planLoading) || (programId && programLoading)) {
+  if (isDataLoading) {
     return (
       <main className="container mx-auto p-6 space-y-4">
         <Skeleton className="h-8 w-[200px]" />
@@ -100,12 +109,16 @@ function NewLogPageContent() {
             {displayName && <span> — {displayName}</span>}
           </p>
         )}
+        {fieldGroup && (
+          <p className="text-xs text-muted-foreground mt-1">Fields: {fieldGroup.name}</p>
+        )}
       </div>
 
       <LogEntryTable
         initialEntries={templateEntries}
         onSave={handleSave}
         onCancel={() => router.push(backHref)}
+        fieldDefs={fieldGroup?.log_fields}
       />
     </main>
   );

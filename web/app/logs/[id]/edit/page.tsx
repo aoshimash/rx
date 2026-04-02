@@ -22,6 +22,7 @@ function logToTableEntries(log: {
     exercise_name: string;
     order: number;
     fields?: Record<string, unknown>;
+    sets?: Array<{ video_object_key?: string }>;
     notes?: string;
   }>;
 }): TableEntry[] {
@@ -36,6 +37,8 @@ function logToTableEntries(log: {
       load_kg: entry.fields?.load_kg as number | undefined,
       notes: entry.notes ?? '',
       fields: entry.fields ?? {},
+      logFieldValues: entry.fields ? { ...entry.fields } : {},
+      videoObjectKey: entry.sets?.[0]?.video_object_key ?? undefined,
       setsEdited: true,
       repsEdited: true,
     }));

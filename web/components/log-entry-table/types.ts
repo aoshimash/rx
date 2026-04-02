@@ -3,17 +3,22 @@ import type { ProgramSessionEntry } from '@/types/api';
 export interface TableEntry {
   id: string;
   exercise_name: string;
+  // Fallback fields (used when no FieldGroup is provided)
   sets: number | undefined;
   reps: number | undefined;
   load_kg: number | undefined;
+  /** true when sets or reps were manually edited away from plan values */
+  setsEdited: boolean;
+  repsEdited: boolean;
+  // Dynamic field values (keyed by FieldDef.name, used in FieldDef-driven mode)
+  logFieldValues: Record<string, unknown>;
+  /** Object key for video uploaded via pre-signed URL (video FieldDef only) */
+  videoObjectKey: string | undefined;
   notes: string;
   fields: Record<string, unknown>;
   plan?: {
     fields?: Record<string, unknown>;
   };
-  /** true when sets or reps were manually edited away from plan values */
-  setsEdited: boolean;
-  repsEdited: boolean;
 }
 
 export function createTableEntryFromPlan(entry: ProgramSessionEntry, index: number): TableEntry {
@@ -28,6 +33,8 @@ export function createTableEntryFromPlan(entry: ProgramSessionEntry, index: numb
     load_kg,
     notes: '',
     fields: entry.fields ?? {},
+    logFieldValues: entry.fields ? { ...entry.fields } : {},
+    videoObjectKey: undefined,
     plan: {
       fields: entry.fields,
     },
@@ -45,6 +52,8 @@ export function createEmptyTableEntry(): TableEntry {
     load_kg: undefined,
     notes: '',
     fields: {},
+    logFieldValues: {},
+    videoObjectKey: undefined,
     setsEdited: false,
     repsEdited: false,
   };

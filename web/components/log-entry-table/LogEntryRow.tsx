@@ -3,19 +3,23 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TableCell, TableRow } from '@/components/ui/table';
+import type { FieldDef } from '@/types/api';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, X } from 'lucide-react';
 import { EditableCell } from './EditableCell';
+import { FieldCell } from './FieldCell';
 import type { TableEntry } from './types';
 
 interface LogEntryRowProps {
   entry: TableEntry;
   onUpdate: (id: string, field: keyof TableEntry, value: unknown) => void;
   onRemove: (id: string) => void;
+  /** When provided, renders dynamic field cells instead of hardcoded sets/reps/load_kg */
+  fieldDefs?: FieldDef[];
 }
 
-export function LogEntryRow({ entry, onUpdate, onRemove }: LogEntryRowProps) {
+export function LogEntryRow({ entry, onUpdate, onRemove, fieldDefs }: LogEntryRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: entry.id,
   });
@@ -54,45 +58,70 @@ export function LogEntryRow({ entry, onUpdate, onRemove }: LogEntryRowProps) {
         )}
       </TableCell>
 
-      <TableCell className="w-20">
-        <EditableCell
-          value={entry.sets}
-          onChange={(v) => {
-            onUpdate(entry.id, 'sets', v);
-            onUpdate(entry.id, 'setsEdited', true);
-          }}
-          defaultReadOnly={hasPlan && !entry.setsEdited}
-          displayText={(entry.plan?.fields?.sets as number | undefined)?.toString()}
-          isEdited={entry.setsEdited}
-          min={1}
-          step={1}
-        />
-      </TableCell>
+      {fieldDefs && fieldDefs.length > 0 ? (
+        // Dynamic mode: render cells for each FieldDef
+        fieldDefs.map((fd) => (
+          <TableCell key={fd.name} className="min-w-[80px]">
+            <FieldCell
+              fieldDef={fd}
+              value={entry.logFieldValues[fd.name]}
+              onChange={(v) =>
+                onUpdate(entry.id, 'logFieldValues', {
+                  ...entry.logFieldValues,
+                  [fd.name]: v,
+                })
+              }
+              videoObjectKey={fd.type === 'video' ? entry.videoObjectKey : undefined}
+              onVideoUploaded={(key) => onUpdate(entry.id, 'videoObjectKey', key)}
+              defaultReadOnly={hasPlan && fd.type === 'number'}
+              planValue={hasPlan ? entry.plan?.fields?.[fd.name] : undefined}
+            />
+          </TableCell>
+        ))
+      ) : (
+        // Fallback mode: hardcoded sets / reps / load_kg
+        <>
+          <TableCell className="w-20">
+            <EditableCell
+              value={entry.sets}
+              onChange={(v) => {
+                onUpdate(entry.id, 'sets', v);
+                onUpdate(entry.id, 'setsEdited', true);
+              }}
+              defaultReadOnly={hasPlan && !entry.setsEdited}
+              displayText={(entry.plan?.fields?.sets as number | undefined)?.toString()}
+              isEdited={entry.setsEdited}
+              min={1}
+              step={1}
+            />
+          </TableCell>
 
-      <TableCell className="w-20">
-        <EditableCell
-          value={entry.reps}
-          onChange={(v) => {
-            onUpdate(entry.id, 'reps', v);
-            onUpdate(entry.id, 'repsEdited', true);
-          }}
-          defaultReadOnly={hasPlan && !entry.repsEdited}
-          displayText={(entry.plan?.fields?.reps as number | undefined)?.toString()}
-          isEdited={entry.repsEdited}
-          min={1}
-          step={1}
-        />
-      </TableCell>
+          <TableCell className="w-20">
+            <EditableCell
+              value={entry.reps}
+              onChange={(v) => {
+                onUpdate(entry.id, 'reps', v);
+                onUpdate(entry.id, 'repsEdited', true);
+              }}
+              defaultReadOnly={hasPlan && !entry.repsEdited}
+              displayText={(entry.plan?.fields?.reps as number | undefined)?.toString()}
+              isEdited={entry.repsEdited}
+              min={1}
+              step={1}
+            />
+          </TableCell>
 
-      <TableCell className="w-24">
-        <EditableCell
-          value={entry.load_kg}
-          onChange={(v) => onUpdate(entry.id, 'load_kg', v)}
-          placeholder={(entry.plan?.fields?.load_kg as number | undefined)?.toString()}
-          min={0}
-          step={0.5}
-        />
-      </TableCell>
+          <TableCell className="w-24">
+            <EditableCell
+              value={entry.load_kg}
+              onChange={(v) => onUpdate(entry.id, 'load_kg', v)}
+              placeholder={(entry.plan?.fields?.load_kg as number | undefined)?.toString()}
+              min={0}
+              step={0.5}
+            />
+          </TableCell>
+        </>
+      )}
 
       <TableCell className="min-w-[120px]">
         <Input
