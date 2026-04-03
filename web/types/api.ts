@@ -237,6 +237,16 @@ export interface PlanSessionCreate {
   entries?: PlanSessionEntryCreate[];
 }
 
+export interface PlanSessionUpdate {
+  session_name: string;
+  order: number;
+  field_group_id?: string;
+  date?: string;
+  source_program_id?: string;
+  source_session_id?: string;
+  entries?: PlanSessionEntryCreate[];
+}
+
 export interface PlanSessionEntry {
   id: string;
   session_id: string;
