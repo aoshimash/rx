@@ -28,6 +28,9 @@ func NewLogServer(repo repository.LogRepository, programRepo repository.ProgramR
 }
 
 func logFromProto(req *pb.CreateLogRequest) (*domain.Log, error) {
+	if req.GetPerformedAt() == nil {
+		return nil, status.Error(codes.InvalidArgument, "performed_at is required")
+	}
 	log := &domain.Log{
 		SessionName:  optionalString(req.GetSessionName()),
 		PerformedAt:  timestampToTime(req.GetPerformedAt()),
@@ -71,6 +74,9 @@ func logFromProto(req *pb.CreateLogRequest) (*domain.Log, error) {
 }
 
 func logFromUpdateProto(req *pb.UpdateLogRequest) (*domain.Log, error) {
+	if req.GetPerformedAt() == nil {
+		return nil, status.Error(codes.InvalidArgument, "performed_at is required")
+	}
 	log := &domain.Log{
 		SessionName:  optionalString(req.GetSessionName()),
 		PerformedAt:  timestampToTime(req.GetPerformedAt()),

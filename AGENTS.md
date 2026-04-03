@@ -11,7 +11,7 @@ This repository (`rx`) manages Programs, Plans, and Logs with a plan-first philo
 ## Key Principles
 
 1. **"Dumb Backend"** - No business logic for "health." Strictly stores and retrieves data.
-2. **Domain-Driven Schema-First** - Domain models define business logic, OpenAPI spec defines API contract. Code is generated from OpenAPI spec.
+2. **Domain-Driven Schema-First** - Domain models define business logic, protobuf defines API contract. Code is generated from proto files via buf.
 
 For details, see [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md).
 
@@ -20,12 +20,12 @@ For details, see [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md).
 ### API (run from `api/`)
 
 ```bash
-task generate   # OpenAPI spec → Go code (run after editing openapi/openapi.yaml)
+task generate   # proto → Go code (runs cd ../proto && buf generate)
 task check      # generate + format + lint + test (run before committing)
 task test       # unit tests with race detection
 task lint       # golangci-lint
 task format     # gofmt check
-task run        # dev server (localhost:8080)
+task run        # dev server (gRPC :9090 + HTTP :8080)
 task migrate    # run DB migrations
 ```
 
@@ -53,7 +53,7 @@ lefthook install  # registers git hooks
 If upgrading from the old `githooks/` setup: `git config --unset core.hooksPath` first.
 
 - **pre-commit**: runs `task format`, `task lint`, `task test` for API changes; `pnpm check` for web changes
-- **pre-push**: runs `task generate` and verifies no stale generated code when `api/openapi/openapi.yaml` is changed
+- **pre-push**: runs `buf lint`, `buf generate` (verifies no stale generated code), and `buf breaking` when `proto/**/*.proto` is changed
 
 **Never use `git commit --no-verify`.**
 
@@ -62,32 +62,34 @@ If upgrading from the old `githooks/` setup: `git config --unset core.hooksPath`
 ### API Layer Flow
 
 ```
-openapi/openapi.yaml  →  task generate  →  pkg/openapi/server.gen.go (do not edit)
-                                                    ↓
-                                          internal/handler/      ← implements generated interface
-                                                    ↓
-                                          internal/domain/       ← validates business rules
-                                                    ↓
-                                          internal/repository/   ← interfaces (ports)
-                                                    ↓
-                                          internal/store/{memory,postgres}/  ← implementations
+proto/rx/api/v1/*.proto  →  buf generate  →  pkg/gen/rx/api/v1/ (do not edit)
+                                                      ↓
+                                            internal/handler/      ← gRPC server implementations
+                                                      ↓
+                                            internal/domain/       ← validates business rules
+                                                      ↓
+                                            internal/repository/   ← interfaces (ports)
+                                                      ↓
+                                            internal/store/{memory,postgres}/  ← implementations
 ```
 
-**Key constraint:** Handlers convert between OpenAPI types and domain types manually — there is no auto-mapping. Domain entities go through `Validate*()` before being passed to the repository.
+**Dual server:** gRPC server (port 9090) + gRPC-Gateway HTTP server (port 8080). REST paths are defined by `google.api.http` annotations in proto files.
+
+**Key constraint:** Handlers convert between proto types and domain types manually via `internal/handler/convert.go` — there is no auto-mapping. Domain entities go through `Validate*()` before being passed to the repository.
 
 ### Error Flow
 
-Domain errors (`internal/domain/errors.go`) → handler catches with type assertion → middleware helpers write HTTP response:
+Domain errors (`internal/domain/errors.go`) → handler converts via `domainErrToStatus()` (`internal/handler/convert.go`) → gRPC status codes (mapped to HTTP by grpc-gateway):
 
-| Domain error | HTTP status |
-|---|---|
-| `ValidationError` | 400 |
-| `DomainError{Code: NOT_FOUND}` | 404 |
-| `DomainError{Code: CONFLICT}` | 409 |
+| Domain error | gRPC code | HTTP status |
+|---|---|---|
+| `ValidationError` | `InvalidArgument` | 400 |
+| `DomainError{Code: NOT_FOUND}` | `NotFound` | 404 |
+| `DomainError{Code: CONFLICT}` | `AlreadyExists` | 409 |
 
 ### Auth
 
-Middleware-based (`internal/middleware/auth.go`). `AuthProvider` interface with `StubProvider` for dev (accepts any Bearer token, uses value as userID). UserID is stored in request context; retrieve with `middleware.GetUserID(ctx)`.
+gRPC interceptor-based (`internal/middleware/grpc_auth.go`). `GRPCAuthProvider` interface with `GRPCStubProvider` for dev (accepts any Bearer token, uses value as userID). `UnaryAuthInterceptor` extracts Bearer token from gRPC metadata (HealthService is exempt). UserID is stored in context; retrieve with `middleware.GetUserID(ctx)` (`internal/middleware/context.go`).
 
 ### Pagination
 
@@ -113,7 +115,7 @@ A PostToolUse hook (`.claude/hooks/doc-sync-check.sh`) automatically reminds you
 | Code change | Check this document |
 |---|---|
 | `api/internal/domain/` (add/rename/remove entities or fields) | `docs/DOMAIN_MODEL.md` |
-| `api/openapi/openapi.yaml` (schema changes) | `docs/DOMAIN_MODEL.md` |
+| `proto/rx/api/v1/*.proto` (schema changes) | `docs/DOMAIN_MODEL.md` |
 | `web/app/**/page.tsx` (add/remove/rename routes) | `docs/WEB_UI_DESIGN.md` |
 | `api/internal/handler/` (error handling changes) | AGENTS.md error flow table |
 | `docs/PHILOSOPHY.md` terminology table | Verify against `api/internal/domain/` types |
