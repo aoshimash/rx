@@ -1,0 +1,563 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "rx/api/v1/plan.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "PlanService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/plan": {
+      "get": {
+        "operationId": "PlanService_GetPlan",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetPlanResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "PlanService"
+        ]
+      },
+      "delete": {
+        "operationId": "PlanService_DeletePlan",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeletePlanResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "PlanService"
+        ]
+      },
+      "post": {
+        "operationId": "PlanService_CreatePlan",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreatePlanResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreatePlanRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PlanService"
+        ]
+      },
+      "put": {
+        "operationId": "PlanService_UpdatePlan",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdatePlanResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1UpdatePlanRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PlanService"
+        ]
+      }
+    },
+    "/api/v1/plan/expand-program/{programId}": {
+      "post": {
+        "operationId": "PlanService_ExpandProgram",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ExpandProgramResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PlanService"
+        ]
+      }
+    },
+    "/api/v1/plan/sessions": {
+      "post": {
+        "operationId": "PlanService_AddPlanSessions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AddPlanSessionsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AddPlanSessionsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PlanService"
+        ]
+      }
+    },
+    "/api/v1/plan/sessions/{sessionId}": {
+      "delete": {
+        "operationId": "PlanService_DeletePlanSession",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeletePlanSessionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PlanService"
+        ]
+      },
+      "put": {
+        "operationId": "PlanService_UpdatePlanSession",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdatePlanSessionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PlanServiceUpdatePlanSessionBody"
+            }
+          }
+        ],
+        "tags": [
+          "PlanService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "PlanServiceUpdatePlanSessionBody": {
+      "type": "object",
+      "properties": {
+        "sessionName": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "fieldGroupId": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "sourceProgramId": {
+          "type": "string"
+        },
+        "sourceSessionId": {
+          "type": "string"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PlanSessionEntryCreate"
+          }
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "protobufNullValue": {
+      "type": "string",
+      "enum": [
+        "NULL_VALUE"
+      ],
+      "default": "NULL_VALUE",
+      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\nThe JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1AddPlanSessionsRequest": {
+      "type": "object",
+      "properties": {
+        "sessions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PlanSessionCreate"
+          }
+        }
+      },
+      "title": "Plan session operations"
+    },
+    "v1AddPlanSessionsResponse": {
+      "type": "object",
+      "properties": {
+        "plan": {
+          "$ref": "#/definitions/v1Plan"
+        }
+      }
+    },
+    "v1CreatePlanRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "sessions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PlanSessionCreate"
+          }
+        }
+      }
+    },
+    "v1CreatePlanResponse": {
+      "type": "object",
+      "properties": {
+        "plan": {
+          "$ref": "#/definitions/v1Plan"
+        }
+      }
+    },
+    "v1DeletePlanResponse": {
+      "type": "object"
+    },
+    "v1DeletePlanSessionResponse": {
+      "type": "object"
+    },
+    "v1ExpandProgramResponse": {
+      "type": "object",
+      "properties": {
+        "plan": {
+          "$ref": "#/definitions/v1Plan"
+        }
+      }
+    },
+    "v1GetPlanResponse": {
+      "type": "object",
+      "properties": {
+        "plan": {
+          "$ref": "#/definitions/v1Plan"
+        }
+      }
+    },
+    "v1Plan": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "sessions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PlanSession"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1PlanSession": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "planId": {
+          "type": "string"
+        },
+        "sessionName": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "fieldGroupId": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string",
+          "title": "YYYY-MM-DD format"
+        },
+        "sourceProgramId": {
+          "type": "string"
+        },
+        "sourceSessionId": {
+          "type": "string"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PlanSessionEntry"
+          }
+        }
+      }
+    },
+    "v1PlanSessionCreate": {
+      "type": "object",
+      "properties": {
+        "sessionName": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "fieldGroupId": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string",
+          "title": "YYYY-MM-DD format"
+        },
+        "sourceProgramId": {
+          "type": "string"
+        },
+        "sourceSessionId": {
+          "type": "string"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PlanSessionEntryCreate"
+          }
+        }
+      }
+    },
+    "v1PlanSessionEntry": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "sessionId": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "exerciseName": {
+          "type": "string"
+        },
+        "fields": {
+          "type": "object"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "v1PlanSessionEntryCreate": {
+      "type": "object",
+      "properties": {
+        "exerciseName": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "fields": {
+          "type": "object"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "v1UpdatePlanRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "sessions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PlanSessionCreate"
+          }
+        }
+      }
+    },
+    "v1UpdatePlanResponse": {
+      "type": "object",
+      "properties": {
+        "plan": {
+          "$ref": "#/definitions/v1Plan"
+        }
+      }
+    },
+    "v1UpdatePlanSessionResponse": {
+      "type": "object",
+      "properties": {
+        "session": {
+          "$ref": "#/definitions/v1PlanSession"
+        }
+      }
+    }
+  }
+}

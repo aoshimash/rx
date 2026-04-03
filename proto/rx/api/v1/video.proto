@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package rx.api.v1;
+
+option go_package = "github.com/aoshimash/rx/api/pkg/gen/rx/api/v1";
+
+import "google/api/annotations.proto";
+
+service VideoService {
+  rpc GenerateUploadURL(GenerateUploadURLRequest) returns (GenerateUploadURLResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/videos/upload-url"
+      body: "*"
+    };
+  }
+
+  rpc GenerateDownloadURL(GenerateDownloadURLRequest) returns (GenerateDownloadURLResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/videos/download-url"
+      body: "*"
+    };
+  }
+}
+
+message GenerateUploadURLRequest {
+  string content_type = 1;
+  string filename = 2;
+  int64 content_length = 3;
+}
+
+message GenerateUploadURLResponse {
+  string upload_url = 1;
+  string object_key = 2;
+  int32 expires_in = 3;
+}
+
+message GenerateDownloadURLRequest {
+  string object_key = 1;
+}
+
+message GenerateDownloadURLResponse {
+  string download_url = 1;
+  int32 expires_in = 2;
+}

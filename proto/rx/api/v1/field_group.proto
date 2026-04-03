@@ -1,0 +1,105 @@
+syntax = "proto3";
+
+package rx.api.v1;
+
+option go_package = "github.com/aoshimash/rx/api/pkg/gen/rx/api/v1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+service FieldGroupService {
+  rpc CreateFieldGroup(CreateFieldGroupRequest) returns (CreateFieldGroupResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/field-groups"
+      body: "*"
+    };
+  }
+
+  rpc GetFieldGroup(GetFieldGroupRequest) returns (GetFieldGroupResponse) {
+    option (google.api.http) = {get: "/api/v1/field-groups/{id}"};
+  }
+
+  rpc ListFieldGroups(ListFieldGroupsRequest) returns (ListFieldGroupsResponse) {
+    option (google.api.http) = {get: "/api/v1/field-groups"};
+  }
+
+  rpc UpdateFieldGroup(UpdateFieldGroupRequest) returns (UpdateFieldGroupResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/field-groups/{id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteFieldGroup(DeleteFieldGroupRequest) returns (DeleteFieldGroupResponse) {
+    option (google.api.http) = {delete: "/api/v1/field-groups/{id}"};
+  }
+}
+
+// FieldDef defines a single field schema used in program/log entries.
+message FieldDef {
+  string name = 1;
+  FieldType type = 2;
+  repeated string options = 3;
+  string description = 4;
+}
+
+enum FieldType {
+  FIELD_TYPE_UNSPECIFIED = 0;
+  FIELD_TYPE_TEXT = 1;
+  FIELD_TYPE_NUMBER = 2;
+  FIELD_TYPE_SELECT = 3;
+  FIELD_TYPE_VIDEO = 4;
+}
+
+message FieldGroup {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  repeated FieldDef program_fields = 4;
+  repeated FieldDef log_fields = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+message CreateFieldGroupRequest {
+  string name = 1;
+  string description = 2;
+  repeated FieldDef program_fields = 3;
+  repeated FieldDef log_fields = 4;
+}
+
+message CreateFieldGroupResponse {
+  FieldGroup field_group = 1;
+}
+
+message GetFieldGroupRequest {
+  string id = 1;
+}
+
+message GetFieldGroupResponse {
+  FieldGroup field_group = 1;
+}
+
+message ListFieldGroupsRequest {}
+
+message ListFieldGroupsResponse {
+  repeated FieldGroup data = 1;
+}
+
+message UpdateFieldGroupRequest {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  repeated FieldDef program_fields = 4;
+  repeated FieldDef log_fields = 5;
+}
+
+message UpdateFieldGroupResponse {
+  FieldGroup field_group = 1;
+}
+
+message DeleteFieldGroupRequest {
+  string id = 1;
+}
+
+message DeleteFieldGroupResponse {}

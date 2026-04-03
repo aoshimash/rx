@@ -1,0 +1,150 @@
+syntax = "proto3";
+
+package rx.api.v1;
+
+option go_package = "github.com/aoshimash/rx/api/pkg/gen/rx/api/v1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+service LogService {
+  rpc CreateLog(CreateLogRequest) returns (CreateLogResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/logs"
+      body: "*"
+    };
+  }
+
+  rpc GetLog(GetLogRequest) returns (GetLogResponse) {
+    option (google.api.http) = {get: "/api/v1/logs/{id}"};
+  }
+
+  rpc ListLogs(ListLogsRequest) returns (ListLogsResponse) {
+    option (google.api.http) = {get: "/api/v1/logs"};
+  }
+
+  rpc UpdateLog(UpdateLogRequest) returns (UpdateLogResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/logs/{id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteLog(DeleteLogRequest) returns (DeleteLogResponse) {
+    option (google.api.http) = {delete: "/api/v1/logs/{id}"};
+  }
+}
+
+message Log {
+  string id = 1;
+  string program_id = 2;
+  string session_name = 3;
+  google.protobuf.Timestamp performed_at = 4;
+  string notes = 5;
+  google.protobuf.Struct metadata = 6;
+  google.protobuf.Struct plan_snapshot = 7;
+  google.protobuf.Timestamp started_at = 8;
+  google.protobuf.Timestamp finished_at = 9;
+  repeated LogEntry entries = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
+}
+
+message LogEntry {
+  string id = 1;
+  string log_id = 2;
+  int32 order = 3;
+  string exercise_name = 4;
+  google.protobuf.Struct fields = 5;
+  repeated LogSet sets = 6;
+  string notes = 7;
+  google.protobuf.Timestamp started_at = 8;
+  google.protobuf.Timestamp finished_at = 9;
+}
+
+message LogSet {
+  string id = 1;
+  string entry_id = 2;
+  int32 set_number = 3;
+  google.protobuf.Struct fields = 4;
+  string video_object_key = 5;
+  string notes = 6;
+}
+
+message LogEntryCreate {
+  string exercise_name = 1;
+  google.protobuf.Struct fields = 2;
+  repeated LogSetCreate sets = 3;
+  string notes = 4;
+  google.protobuf.Timestamp started_at = 5;
+  google.protobuf.Timestamp finished_at = 6;
+}
+
+message LogSetCreate {
+  int32 set_number = 1;
+  google.protobuf.Struct fields = 2;
+  string video_object_key = 3;
+  string notes = 4;
+}
+
+message CreateLogRequest {
+  string program_id = 1;
+  string session_name = 2;
+  google.protobuf.Timestamp performed_at = 3;
+  string notes = 4;
+  google.protobuf.Timestamp started_at = 5;
+  google.protobuf.Timestamp finished_at = 6;
+  google.protobuf.Struct metadata = 7;
+  google.protobuf.Struct plan_snapshot = 8;
+  repeated LogEntryCreate entries = 9;
+}
+
+message CreateLogResponse {
+  Log log = 1;
+}
+
+message GetLogRequest {
+  string id = 1;
+}
+
+message GetLogResponse {
+  Log log = 1;
+}
+
+message ListLogsRequest {
+  int32 limit = 1;
+  string after = 2;
+  string program_id = 3;
+  google.protobuf.Timestamp performed_at_from = 4;
+  google.protobuf.Timestamp performed_at_to = 5;
+}
+
+message ListLogsResponse {
+  repeated Log data = 1;
+  string next_cursor = 2;
+  bool has_more = 3;
+}
+
+message UpdateLogRequest {
+  string id = 1;
+  string program_id = 2;
+  string session_name = 3;
+  google.protobuf.Timestamp performed_at = 4;
+  string notes = 5;
+  google.protobuf.Timestamp started_at = 6;
+  google.protobuf.Timestamp finished_at = 7;
+  google.protobuf.Struct metadata = 8;
+  google.protobuf.Struct plan_snapshot = 9;
+  repeated LogEntryCreate entries = 10;
+}
+
+message UpdateLogResponse {
+  Log log = 1;
+}
+
+message DeleteLogRequest {
+  string id = 1;
+}
+
+message DeleteLogResponse {}

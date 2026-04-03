@@ -23,10 +23,12 @@ services:
       dockerfile: Dockerfile
     container_name: rx-api
     environment:
-      - PORT=${PORT:-8080}
+      - HTTP_PORT=${HTTP_PORT:-8080}
+      - GRPC_PORT=${GRPC_PORT:-9090}
       - LOG_LEVEL=${LOG_LEVEL:-info}
     ports:
       - "${HOST_PORT:-8080}:8080"
+      - "${GRPC_HOST_PORT:-9090}:9090"
     restart: unless-stopped
 
   minio:
@@ -48,19 +50,6 @@ services:
       retries: 5
     restart: unless-stopped
 
-  api-docs:
-    image: scalarapi/api-reference:latest
-    container_name: rx-api-docs
-    ports:
-      - "${API_DOCS_PORT:-8081}:8080"
-    volumes:
-      - ./api/openapi/openapi.yaml:/docs/openapi.yaml:ro
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-    restart: unless-stopped
 
 volumes:
   postgres_data:

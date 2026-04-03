@@ -1,0 +1,164 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "rx/api/v1/video.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "VideoService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/videos/download-url": {
+      "post": {
+        "operationId": "VideoService_GenerateDownloadURL",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GenerateDownloadURLResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1GenerateDownloadURLRequest"
+            }
+          }
+        ],
+        "tags": [
+          "VideoService"
+        ]
+      }
+    },
+    "/api/v1/videos/upload-url": {
+      "post": {
+        "operationId": "VideoService_GenerateUploadURL",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GenerateUploadURLResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1GenerateUploadURLRequest"
+            }
+          }
+        ],
+        "tags": [
+          "VideoService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1GenerateDownloadURLRequest": {
+      "type": "object",
+      "properties": {
+        "objectKey": {
+          "type": "string"
+        }
+      }
+    },
+    "v1GenerateDownloadURLResponse": {
+      "type": "object",
+      "properties": {
+        "downloadUrl": {
+          "type": "string"
+        },
+        "expiresIn": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1GenerateUploadURLRequest": {
+      "type": "object",
+      "properties": {
+        "contentType": {
+          "type": "string"
+        },
+        "filename": {
+          "type": "string"
+        },
+        "contentLength": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "v1GenerateUploadURLResponse": {
+      "type": "object",
+      "properties": {
+        "uploadUrl": {
+          "type": "string"
+        },
+        "objectKey": {
+          "type": "string"
+        },
+        "expiresIn": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    }
+  }
+}

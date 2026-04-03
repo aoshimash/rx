@@ -1,0 +1,172 @@
+syntax = "proto3";
+
+package rx.api.v1;
+
+option go_package = "github.com/aoshimash/rx/api/pkg/gen/rx/api/v1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+service PlanService {
+  rpc GetPlan(GetPlanRequest) returns (GetPlanResponse) {
+    option (google.api.http) = {get: "/api/v1/plan"};
+  }
+
+  rpc CreatePlan(CreatePlanRequest) returns (CreatePlanResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/plan"
+      body: "*"
+    };
+  }
+
+  rpc UpdatePlan(UpdatePlanRequest) returns (UpdatePlanResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/plan"
+      body: "*"
+    };
+  }
+
+  rpc DeletePlan(DeletePlanRequest) returns (DeletePlanResponse) {
+    option (google.api.http) = {delete: "/api/v1/plan"};
+  }
+
+  rpc AddPlanSessions(AddPlanSessionsRequest) returns (AddPlanSessionsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/plan/sessions"
+      body: "*"
+    };
+  }
+
+  rpc UpdatePlanSession(UpdatePlanSessionRequest) returns (UpdatePlanSessionResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/plan/sessions/{session_id}"
+      body: "*"
+    };
+  }
+
+  rpc DeletePlanSession(DeletePlanSessionRequest) returns (DeletePlanSessionResponse) {
+    option (google.api.http) = {delete: "/api/v1/plan/sessions/{session_id}"};
+  }
+
+  rpc ExpandProgram(ExpandProgramRequest) returns (ExpandProgramResponse) {
+    option (google.api.http) = {post: "/api/v1/plan/expand-program/{program_id}"};
+  }
+}
+
+message Plan {
+  string id = 1;
+  string name = 2;
+  string notes = 3;
+  repeated PlanSession sessions = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+message PlanSession {
+  string id = 1;
+  string plan_id = 2;
+  string session_name = 3;
+  int32 order = 4;
+  string field_group_id = 5;
+  string date = 6; // YYYY-MM-DD format
+  string source_program_id = 7;
+  string source_session_id = 8;
+  repeated PlanSessionEntry entries = 9;
+}
+
+message PlanSessionCreate {
+  string session_name = 1;
+  int32 order = 2;
+  string field_group_id = 3;
+  string date = 4; // YYYY-MM-DD format
+  string source_program_id = 5;
+  string source_session_id = 6;
+  repeated PlanSessionEntryCreate entries = 7;
+}
+
+message PlanSessionEntry {
+  string id = 1;
+  string session_id = 2;
+  int32 order = 3;
+  string exercise_name = 4;
+  google.protobuf.Struct fields = 5;
+  string notes = 6;
+}
+
+message PlanSessionEntryCreate {
+  string exercise_name = 1;
+  int32 order = 2;
+  google.protobuf.Struct fields = 3;
+  string notes = 4;
+}
+
+// Plan CRUD
+message GetPlanRequest {}
+
+message GetPlanResponse {
+  Plan plan = 1;
+}
+
+message CreatePlanRequest {
+  string name = 1;
+  string notes = 2;
+  repeated PlanSessionCreate sessions = 3;
+}
+
+message CreatePlanResponse {
+  Plan plan = 1;
+}
+
+message UpdatePlanRequest {
+  string name = 1;
+  string notes = 2;
+  repeated PlanSessionCreate sessions = 3;
+}
+
+message UpdatePlanResponse {
+  Plan plan = 1;
+}
+
+message DeletePlanRequest {}
+
+message DeletePlanResponse {}
+
+// Plan session operations
+message AddPlanSessionsRequest {
+  repeated PlanSessionCreate sessions = 1;
+}
+
+message AddPlanSessionsResponse {
+  Plan plan = 1;
+}
+
+message UpdatePlanSessionRequest {
+  string session_id = 1;
+  string session_name = 2;
+  int32 order = 3;
+  string field_group_id = 4;
+  string date = 5;
+  string source_program_id = 6;
+  string source_session_id = 7;
+  repeated PlanSessionEntryCreate entries = 8;
+}
+
+message UpdatePlanSessionResponse {
+  PlanSession session = 1;
+}
+
+message DeletePlanSessionRequest {
+  string session_id = 1;
+}
+
+message DeletePlanSessionResponse {}
+
+// Program expansion
+message ExpandProgramRequest {
+  string program_id = 1;
+}
+
+message ExpandProgramResponse {
+  Plan plan = 1;
+}

@@ -34,8 +34,8 @@ COPY --from=builder /build/bin/server /app/server
 # Use nonroot user (distroless provides nonroot user: 65532:65532)
 USER nonroot:nonroot
 
-# Expose port
-EXPOSE 8080
+# Expose ports (HTTP gateway + gRPC)
+EXPOSE 8080 9090
 
 # Health check (requires /health endpoint to be implemented)
 # Note: distroless has no shell, so health check must use binary directly
