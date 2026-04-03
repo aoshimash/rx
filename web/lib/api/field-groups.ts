@@ -7,15 +7,20 @@ export const fieldGroupsApi = {
   },
 
   async get(id: string): Promise<FieldGroup> {
-    return api.get(`field-groups/${id}`).json<FieldGroup>();
+    const res = await api.get(`field-groups/${id}`).json<{ fieldGroup: FieldGroup }>();
+    return res.fieldGroup;
   },
 
   async create(data: FieldGroupCreate): Promise<FieldGroup> {
-    return api.post('field-groups', { json: data }).json<FieldGroup>();
+    const res = await api.post('field-groups', { json: data }).json<{ fieldGroup: FieldGroup }>();
+    return res.fieldGroup;
   },
 
   async update(id: string, data: FieldGroupUpdate): Promise<FieldGroup> {
-    return api.put(`field-groups/${id}`, { json: data }).json<FieldGroup>();
+    const res = await api
+      .put(`field-groups/${id}`, { json: data })
+      .json<{ fieldGroup: FieldGroup }>();
+    return res.fieldGroup;
   },
 
   async delete(id: string): Promise<void> {
