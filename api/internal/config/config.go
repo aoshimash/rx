@@ -9,6 +9,12 @@ import (
 
 // Config holds application configuration
 type Config struct {
+	// HTTPPort is the port for the HTTP/gRPC-Gateway server
+	HTTPPort string
+
+	// GRPCPort is the port for the gRPC server
+	GRPCPort string
+
 	// AuthProvider specifies which authentication provider to use
 	// Options: "stub", "jwt", "cognito"
 	AuthProvider string
@@ -71,6 +77,8 @@ type DatabaseConfig struct {
 // Load reads configuration from environment variables
 func Load() *Config {
 	cfg := &Config{
+		HTTPPort:           getEnvOrDefault("HTTP_PORT", "8080"),
+		GRPCPort:           getEnvOrDefault("GRPC_PORT", "9090"),
 		AuthProvider:       getEnvOrDefault("AUTH_PROVIDER", "stub"),
 		AuthProviderConfig: make(map[string]string),
 	}

@@ -36,13 +36,23 @@ pre-commit:
 
 pre-push:
   commands:
-    api-generate-check:
-      glob: "api/openapi/openapi.yaml"
-      root: "api/"
+    buf-lint:
+      glob: "proto/**/*.proto"
+      root: "proto/"
+      run: buf lint
+
+    buf-generate-check:
+      glob: "proto/**/*.proto"
+      root: "proto/"
       run: |
-        task generate
-        if ! git diff --exit-code HEAD -- pkg/openapi/server.gen.go; then
-          echo "❌ Generated code is stale. Run 'cd api && task generate' and commit the changes."
+        buf generate
+        if ! git diff --exit-code -- ../api/pkg/gen/; then
+          echo "Generated code is stale. Run 'cd proto && buf generate' and commit the changes."
           exit 1
         fi
-        echo "✅ Generated code is up to date."
+        echo "Generated code is up to date."
+
+    buf-breaking:
+      glob: "proto/**/*.proto"
+      root: "proto/"
+      run: buf breaking --against '.git#subdir=proto'

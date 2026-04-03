@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package rx.api.v1;
+
+option go_package = "github.com/aoshimash/rx/api/pkg/gen/rx/api/v1";
+
+import "google/api/annotations.proto";
+
+service HealthService {
+  rpc Check(CheckRequest) returns (CheckResponse) {
+    option (google.api.http) = {get: "/health"};
+  }
+}
+
+message CheckRequest {}
+
+message CheckResponse {
+  string status = 1;
+}

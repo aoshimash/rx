@@ -2,9 +2,17 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
+	"strings"
+
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/reflection"
 
 	"github.com/aoshimash/rx/api/internal/config"
 	"github.com/aoshimash/rx/api/internal/handler"
@@ -14,19 +22,15 @@ import (
 	s3storage "github.com/aoshimash/rx/api/internal/storage/s3"
 	"github.com/aoshimash/rx/api/internal/store/memory"
 	postgresstore "github.com/aoshimash/rx/api/internal/store/postgres"
-	"github.com/go-chi/chi/v5"
-	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+	pb "github.com/aoshimash/rx/api/pkg/gen/rx/api/v1"
 )
 
 func main() {
-	// Initialize structured logging
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
-	// Load configuration
 	cfg := config.Load()
 
-	// Initialize repositories based on storage type
 	var programRepo repository.ProgramRepository
 	var logRepo repository.LogRepository
 	var planRepo repository.PlanRepository
@@ -35,7 +39,6 @@ func main() {
 	ctx := context.Background()
 
 	if cfg.Database.StorageType == "postgres" {
-		// Initialize PostgreSQL connection pool
 		db, err := postgresstore.NewDB(ctx, cfg.Database)
 		if err != nil {
 			slog.Error("Failed to initialize PostgreSQL connection", "error", err)
@@ -54,12 +57,8 @@ func main() {
 		logRepo = memory.NewLogRepository()
 		planRepo = memory.NewPlanRepository()
 		fieldGroupRepo = memory.NewFieldGroupRepository()
-
-		// Seed data is disabled until seed.go is updated for new domain model (Task 14)
-		slog.Info("Development seed data skipped (pending Task 14 update)")
 	}
 
-	// Initialize storage provider (optional)
 	var storageProvider storage.Provider
 	if cfg.Storage.IsStorageEnabled() {
 		switch cfg.Storage.Provider {
@@ -83,89 +82,79 @@ func main() {
 		slog.Info("Video storage is disabled (STORAGE_PROVIDER not set)")
 	}
 
-	// Initialize handlers
-	programHandler := handler.NewProgramHandler(programRepo)
-	logHandler := handler.NewLogHandler(logRepo, programRepo)
-	planHandler := handler.NewPlanHandler(planRepo, programRepo)
-	fieldGroupHandler := handler.NewFieldGroupHandler(fieldGroupRepo)
-	videoHandler := handler.NewVideoHandler(storageProvider, logger)
-	healthHandler := handler.NewHealthHandler(logRepo)
+	authProvider := newAuthProvider(cfg.AuthProvider)
 
-	// Initialize authentication provider based on config
-	var authProvider middleware.AuthProvider
-	switch cfg.AuthProvider {
-	case "stub":
-		authProvider = middleware.NewStubProvider()
-		slog.Info("Using stub authentication provider")
-	case "jwt":
-		// TODO: Implement JWT provider
-		slog.Warn("JWT provider not yet implemented, falling back to stub")
-		authProvider = middleware.NewStubProvider()
-	case "cognito":
-		// TODO: Implement Cognito provider
-		slog.Warn("Cognito provider not yet implemented, falling back to stub")
-		authProvider = middleware.NewStubProvider()
-	default:
-		slog.Warn("Unknown auth provider, falling back to stub", "provider", cfg.AuthProvider)
-		authProvider = middleware.NewStubProvider()
+	// --- gRPC server ---
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(middleware.UnaryAuthInterceptor(authProvider)),
+	)
+
+	pb.RegisterHealthServiceServer(grpcServer, handler.NewHealthServer(logRepo))
+	pb.RegisterFieldGroupServiceServer(grpcServer, handler.NewFieldGroupServer(fieldGroupRepo))
+	pb.RegisterProgramServiceServer(grpcServer, handler.NewProgramServer(programRepo))
+	pb.RegisterPlanServiceServer(grpcServer, handler.NewPlanServer(planRepo, programRepo))
+	pb.RegisterLogServiceServer(grpcServer, handler.NewLogServer(logRepo, programRepo))
+	pb.RegisterVideoServiceServer(grpcServer, handler.NewVideoServer(storageProvider, logger))
+	reflection.Register(grpcServer)
+
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", cfg.GRPCPort))
+	if err != nil {
+		slog.Error("Failed to listen on gRPC port", "port", cfg.GRPCPort, "error", err)
+		os.Exit(1)
 	}
 
-	// Create chi router
-	r := chi.NewRouter()
+	go func() {
+		slog.Info("gRPC server listening", "port", cfg.GRPCPort)
+		if err := grpcServer.Serve(lis); err != nil {
+			slog.Error("gRPC server failed", "error", err)
+			os.Exit(1)
+		}
+	}()
 
-	// Add middleware
-	r.Use(middleware.CORSMiddleware(middleware.DefaultCORSConfig())) // CORS
-	r.Use(middleware.RequestID)                                      // Custom request ID middleware
-	r.Use(chiMiddleware.RealIP)
-	r.Use(chiMiddleware.Logger)
-	r.Use(chiMiddleware.Recoverer)
+	// --- gRPC-Gateway (HTTP) ---
+	mux := runtime.NewServeMux(
+		runtime.WithIncomingHeaderMatcher(func(key string) (string, bool) {
+			if strings.EqualFold(key, "authorization") {
+				return "authorization", true
+			}
+			return runtime.DefaultHeaderMatcher(key)
+		}),
+	)
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+	endpoint := fmt.Sprintf("localhost:%s", cfg.GRPCPort)
 
-	// Health check endpoint (no auth required)
-	r.Get("/health", healthHandler.Health)
+	registrations := []func(context.Context, *runtime.ServeMux, string, []grpc.DialOption) error{
+		pb.RegisterHealthServiceHandlerFromEndpoint,
+		pb.RegisterFieldGroupServiceHandlerFromEndpoint,
+		pb.RegisterProgramServiceHandlerFromEndpoint,
+		pb.RegisterPlanServiceHandlerFromEndpoint,
+		pb.RegisterLogServiceHandlerFromEndpoint,
+		pb.RegisterVideoServiceHandlerFromEndpoint,
+	}
+	for _, register := range registrations {
+		if err := register(ctx, mux, endpoint, opts); err != nil {
+			slog.Error("Failed to register gateway handler", "error", err)
+			os.Exit(1)
+		}
+	}
 
-	// API routes require authentication
-	r.Route("/api/v1", func(r chi.Router) {
-		r.Use(middleware.AuthMiddleware(authProvider))
+	// Wrap with CORS middleware for the HTTP gateway
+	httpHandler := middleware.CORSMiddleware(middleware.DefaultCORSConfig())(mux)
 
-		// FieldGroup routes
-		r.Get("/field-groups", fieldGroupHandler.ListFieldGroups)
-		r.Post("/field-groups", fieldGroupHandler.CreateFieldGroup)
-		r.Get("/field-groups/{id}", fieldGroupHandler.GetFieldGroup)
-		r.Put("/field-groups/{id}", fieldGroupHandler.UpdateFieldGroup)
-		r.Delete("/field-groups/{id}", fieldGroupHandler.DeleteFieldGroup)
-
-		// Program routes
-		r.Post("/programs", programHandler.CreateProgram)
-		r.Get("/programs", programHandler.ListPrograms)
-		r.Get("/programs/{id}", programHandler.GetProgram)
-		r.Put("/programs/{id}", programHandler.UpdateProgram)
-		r.Delete("/programs/{id}", programHandler.DeleteProgram)
-
-		// Plan routes
-		r.Get("/plan", planHandler.GetPlan)
-		r.Post("/plan", planHandler.CreatePlan)
-		r.Put("/plan", planHandler.UpdatePlan)
-		r.Delete("/plan", planHandler.DeletePlan)
-		r.Post("/plan/sessions", planHandler.AddPlanSessions)
-		r.Put("/plan/sessions/{session_id}", planHandler.UpdatePlanSession)
-		r.Delete("/plan/sessions/{session_id}", planHandler.DeletePlanSession)
-		r.Post("/plan/expand-program/{program_id}", planHandler.ExpandProgram)
-
-		// Log routes
-		r.Post("/logs", logHandler.CreateLog)
-		r.Get("/logs", logHandler.ListLogs)
-		r.Get("/logs/{id}", logHandler.GetLog)
-		r.Put("/logs/{id}", logHandler.UpdateLog)
-		r.Delete("/logs/{id}", logHandler.DeleteLog)
-
-		// Video routes
-		r.Post("/videos/upload-url", videoHandler.GenerateVideoUploadURL)
-		r.Post("/videos/download-url", videoHandler.GenerateVideoDownloadURL)
-	})
-
-	slog.Info("Server starting", "port", 8080)
-	if err := http.ListenAndServe(":8080", r); err != nil {
-		slog.Error("Server failed", "error", err)
+	slog.Info("HTTP server listening", "port", cfg.HTTPPort)
+	if err := http.ListenAndServe(fmt.Sprintf(":%s", cfg.HTTPPort), httpHandler); err != nil { //nolint:gosec // bind address is configurable via env
+		slog.Error("HTTP server failed", "error", err)
 		os.Exit(1)
+	}
+}
+
+func newAuthProvider(providerName string) middleware.GRPCAuthProvider {
+	switch providerName {
+	case "stub":
+		slog.Info("Using stub authentication provider")
+		return &middleware.GRPCStubProvider{}
+	default:
+		slog.Warn("Unknown auth provider, defaulting to stub", "provider", providerName)
+		return &middleware.GRPCStubProvider{}
 	}
 }

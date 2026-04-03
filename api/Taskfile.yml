@@ -20,14 +20,10 @@ tasks:
       - go tool covdata version >/dev/null 2>&1 || go install -a cmd/covdata || true
 
   generate:
-    desc: Generate code from OpenAPI spec
+    desc: Generate Go code from proto files
     deps: [deps]
     cmds:
-      - |
-        oapi-codegen -generate types,chi-server -package openapi \
-          -o pkg/openapi/server.gen.go openapi/openapi.yaml
-      # Note: go mod tidy is run in deps target, but if generated code adds new dependencies,
-      # you may need to run 'go mod tidy' manually after generate
+      - cd ../proto && buf generate
 
   format:
     desc: Check code formatting

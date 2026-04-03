@@ -1,0 +1,522 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "rx/api/v1/log.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "LogService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/logs": {
+      "get": {
+        "operationId": "LogService_ListLogs",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListLogsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "programId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "performedAtFrom",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "performedAtTo",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          }
+        ],
+        "tags": [
+          "LogService"
+        ]
+      },
+      "post": {
+        "operationId": "LogService_CreateLog",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateLogResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateLogRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LogService"
+        ]
+      }
+    },
+    "/api/v1/logs/{id}": {
+      "get": {
+        "operationId": "LogService_GetLog",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetLogResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "LogService"
+        ]
+      },
+      "delete": {
+        "operationId": "LogService_DeleteLog",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteLogResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "LogService"
+        ]
+      },
+      "put": {
+        "operationId": "LogService_UpdateLog",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateLogResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/LogServiceUpdateLogBody"
+            }
+          }
+        ],
+        "tags": [
+          "LogService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "LogServiceUpdateLogBody": {
+      "type": "object",
+      "properties": {
+        "programId": {
+          "type": "string"
+        },
+        "sessionName": {
+          "type": "string"
+        },
+        "performedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finishedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "planSnapshot": {
+          "type": "object"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1LogEntryCreate"
+          }
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "protobufNullValue": {
+      "type": "string",
+      "enum": [
+        "NULL_VALUE"
+      ],
+      "default": "NULL_VALUE",
+      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\nThe JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1CreateLogRequest": {
+      "type": "object",
+      "properties": {
+        "programId": {
+          "type": "string"
+        },
+        "sessionName": {
+          "type": "string"
+        },
+        "performedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finishedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "planSnapshot": {
+          "type": "object"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1LogEntryCreate"
+          }
+        }
+      }
+    },
+    "v1CreateLogResponse": {
+      "type": "object",
+      "properties": {
+        "log": {
+          "$ref": "#/definitions/v1Log"
+        }
+      }
+    },
+    "v1DeleteLogResponse": {
+      "type": "object"
+    },
+    "v1GetLogResponse": {
+      "type": "object",
+      "properties": {
+        "log": {
+          "$ref": "#/definitions/v1Log"
+        }
+      }
+    },
+    "v1ListLogsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Log"
+          }
+        },
+        "nextCursor": {
+          "type": "string"
+        },
+        "hasMore": {
+          "type": "boolean"
+        }
+      }
+    },
+    "v1Log": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "programId": {
+          "type": "string"
+        },
+        "sessionName": {
+          "type": "string"
+        },
+        "performedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "planSnapshot": {
+          "type": "object"
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finishedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1LogEntry"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1LogEntry": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "logId": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "exerciseName": {
+          "type": "string"
+        },
+        "fields": {
+          "type": "object"
+        },
+        "sets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1LogSet"
+          }
+        },
+        "notes": {
+          "type": "string"
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finishedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1LogEntryCreate": {
+      "type": "object",
+      "properties": {
+        "exerciseName": {
+          "type": "string"
+        },
+        "fields": {
+          "type": "object"
+        },
+        "sets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1LogSetCreate"
+          }
+        },
+        "notes": {
+          "type": "string"
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finishedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1LogSet": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "entryId": {
+          "type": "string"
+        },
+        "setNumber": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "fields": {
+          "type": "object"
+        },
+        "videoObjectKey": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "v1LogSetCreate": {
+      "type": "object",
+      "properties": {
+        "setNumber": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "fields": {
+          "type": "object"
+        },
+        "videoObjectKey": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "v1UpdateLogResponse": {
+      "type": "object",
+      "properties": {
+        "log": {
+          "$ref": "#/definitions/v1Log"
+        }
+      }
+    }
+  }
+}

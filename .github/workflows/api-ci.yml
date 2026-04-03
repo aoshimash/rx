@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths: &api-ci-paths
       - 'api/**'
+      - 'proto/**'
       - '.github/workflows/api-ci.yml'
       - 'aqua.yaml'
   pull_request:

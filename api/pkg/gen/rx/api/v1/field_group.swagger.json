@@ -1,0 +1,353 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "rx/api/v1/field_group.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "FieldGroupService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/field-groups": {
+      "get": {
+        "operationId": "FieldGroupService_ListFieldGroups",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListFieldGroupsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "FieldGroupService"
+        ]
+      },
+      "post": {
+        "operationId": "FieldGroupService_CreateFieldGroup",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateFieldGroupResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateFieldGroupRequest"
+            }
+          }
+        ],
+        "tags": [
+          "FieldGroupService"
+        ]
+      }
+    },
+    "/api/v1/field-groups/{id}": {
+      "get": {
+        "operationId": "FieldGroupService_GetFieldGroup",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetFieldGroupResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "FieldGroupService"
+        ]
+      },
+      "delete": {
+        "operationId": "FieldGroupService_DeleteFieldGroup",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteFieldGroupResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "FieldGroupService"
+        ]
+      },
+      "put": {
+        "operationId": "FieldGroupService_UpdateFieldGroup",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateFieldGroupResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/FieldGroupServiceUpdateFieldGroupBody"
+            }
+          }
+        ],
+        "tags": [
+          "FieldGroupService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "FieldGroupServiceUpdateFieldGroupBody": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "programFields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1FieldDef"
+          }
+        },
+        "logFields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1FieldDef"
+          }
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1CreateFieldGroupRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "programFields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1FieldDef"
+          }
+        },
+        "logFields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1FieldDef"
+          }
+        }
+      }
+    },
+    "v1CreateFieldGroupResponse": {
+      "type": "object",
+      "properties": {
+        "fieldGroup": {
+          "$ref": "#/definitions/v1FieldGroup"
+        }
+      }
+    },
+    "v1DeleteFieldGroupResponse": {
+      "type": "object"
+    },
+    "v1FieldDef": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/v1FieldType"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "description": "FieldDef defines a single field schema used in program/log entries."
+    },
+    "v1FieldGroup": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "programFields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1FieldDef"
+          }
+        },
+        "logFields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1FieldDef"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1FieldType": {
+      "type": "string",
+      "enum": [
+        "FIELD_TYPE_UNSPECIFIED",
+        "FIELD_TYPE_TEXT",
+        "FIELD_TYPE_NUMBER",
+        "FIELD_TYPE_SELECT",
+        "FIELD_TYPE_VIDEO"
+      ],
+      "default": "FIELD_TYPE_UNSPECIFIED"
+    },
+    "v1GetFieldGroupResponse": {
+      "type": "object",
+      "properties": {
+        "fieldGroup": {
+          "$ref": "#/definitions/v1FieldGroup"
+        }
+      }
+    },
+    "v1ListFieldGroupsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1FieldGroup"
+          }
+        }
+      }
+    },
+    "v1UpdateFieldGroupResponse": {
+      "type": "object",
+      "properties": {
+        "fieldGroup": {
+          "$ref": "#/definitions/v1FieldGroup"
+        }
+      }
+    }
+  }
+}
