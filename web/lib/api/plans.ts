@@ -3,15 +3,18 @@ import { api } from './client';
 
 export const plansApi = {
   async get(): Promise<Plan> {
-    return api.get('plan').json<Plan>();
+    const res = await api.get('plan').json<{ plan: Plan }>();
+    return res.plan;
   },
 
   async create(data: PlanCreate): Promise<Plan> {
-    return api.post('plan', { json: data }).json<Plan>();
+    const res = await api.post('plan', { json: data }).json<{ plan: Plan }>();
+    return res.plan;
   },
 
   async update(data: PlanUpdate): Promise<Plan> {
-    return api.put('plan', { json: data }).json<Plan>();
+    const res = await api.put('plan', { json: data }).json<{ plan: Plan }>();
+    return res.plan;
   },
 
   async delete(): Promise<void> {
@@ -19,7 +22,8 @@ export const plansApi = {
   },
 
   async addSessions(sessions: PlanSessionCreate[]): Promise<Plan> {
-    return api.post('plan/sessions', { json: { sessions } }).json<Plan>();
+    const res = await api.post('plan/sessions', { json: { sessions } }).json<{ plan: Plan }>();
+    return res.plan;
   },
 
   async deleteSession(sessionId: string): Promise<void> {
@@ -27,6 +31,7 @@ export const plansApi = {
   },
 
   async expandProgram(programId: string): Promise<Plan> {
-    return api.post(`plan/expand-program/${programId}`).json<Plan>();
+    const res = await api.post(`plan/expand-program/${programId}`).json<{ plan: Plan }>();
+    return res.plan;
   },
 };

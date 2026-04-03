@@ -16,15 +16,18 @@ export const programsApi = {
   },
 
   async get(id: string): Promise<Program> {
-    return api.get(`programs/${id}`).json<Program>();
+    const res = await api.get(`programs/${id}`).json<{ program: Program }>();
+    return res.program;
   },
 
   async create(data: ProgramCreate): Promise<Program> {
-    return api.post('programs', { json: data }).json<Program>();
+    const res = await api.post('programs', { json: data }).json<{ program: Program }>();
+    return res.program;
   },
 
   async update(id: string, data: ProgramUpdate): Promise<Program> {
-    return api.put(`programs/${id}`, { json: data }).json<Program>();
+    const res = await api.put(`programs/${id}`, { json: data }).json<{ program: Program }>();
+    return res.program;
   },
 
   async delete(id: string): Promise<void> {

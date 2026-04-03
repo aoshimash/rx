@@ -25,15 +25,18 @@ export const logsApi = {
   },
 
   async get(id: string): Promise<Log> {
-    return api.get(`logs/${id}`).json<Log>();
+    const res = await api.get(`logs/${id}`).json<{ log: Log }>();
+    return res.log;
   },
 
   async create(data: LogCreate): Promise<Log> {
-    return api.post('logs', { json: data }).json<Log>();
+    const res = await api.post('logs', { json: data }).json<{ log: Log }>();
+    return res.log;
   },
 
   async update(id: string, data: LogCreate): Promise<Log> {
-    return api.put(`logs/${id}`, { json: data }).json<Log>();
+    const res = await api.put(`logs/${id}`, { json: data }).json<{ log: Log }>();
+    return res.log;
   },
 
   async delete(id: string): Promise<void> {
