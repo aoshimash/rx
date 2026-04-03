@@ -41,10 +41,11 @@ interface EntryDraft {
   id: string;
   exercise_name: string;
   fields: Record<string, string>;
+  notes: string;
 }
 
 function createEmptyEntry(): EntryDraft {
-  return { id: crypto.randomUUID(), exercise_name: '', fields: {} };
+  return { id: crypto.randomUUID(), exercise_name: '', fields: {}, notes: '' };
 }
 
 function parseFieldValue(value: string, type: FieldDef['type']): string | number {
@@ -87,6 +88,7 @@ function entriesToDrafts(session: PlanSession): EntryDraft[] {
       fields: Object.fromEntries(
         Object.entries(e.fields ?? {}).map(([k, v]) => [k, String(v ?? '')])
       ),
+      notes: e.notes ?? '',
     }));
 }
 
@@ -147,6 +149,7 @@ export function SessionCard({
           exercise_name: e.exercise_name.trim(),
           order: i,
           fields: Object.keys(fields).length > 0 ? fields : undefined,
+          notes: e.notes.trim() || undefined,
         };
       });
 
