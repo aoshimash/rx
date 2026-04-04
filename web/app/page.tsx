@@ -162,10 +162,12 @@ export default function PlanPage() {
             </Button>
           </div>
         ) : (
-          <Button variant="outline" className="w-full mt-3 border-dashed" onClick={startAdding}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Session
-          </Button>
+          sessions.length > 0 && (
+            <Button variant="outline" className="w-full mt-3 border-dashed" onClick={startAdding}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Session
+            </Button>
+          )
         )}
       </div>
 
