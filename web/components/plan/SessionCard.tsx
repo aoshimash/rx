@@ -1,9 +1,8 @@
 'use client';
 
+import { InlineEdit } from '@/components/plan/InlineEdit';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -13,14 +12,13 @@ import {
 } from '@/components/ui/select';
 import { useFieldGroups } from '@/lib/hooks/useFieldGroups';
 import type { FieldDef, PlanSession, PlanSessionEntryCreate } from '@/types/api';
-import { CalendarDays, Check, Pencil, Plus, Trash2, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { CalendarDays, ClipboardList, Plus, Trash2, X } from 'lucide-react';
+import { useCallback } from 'react';
 
 interface SessionCardProps {
   session: PlanSession;
   programName?: string;
-  isNew?: boolean;
-  onLog: (session: PlanSession) => void;
+  onRecord: (session: PlanSession) => void;
   onDelete: (sessionId: string) => void;
   onUpdate: (
     sessionId: string,
@@ -34,18 +32,6 @@ interface SessionCardProps {
       entries?: PlanSessionEntryCreate[];
     }
   ) => Promise<void>;
-  onNewHandled?: () => void;
-}
-
-interface EntryDraft {
-  id: string;
-  exercise_name: string;
-  fields: Record<string, string>;
-  notes: string;
-}
-
-function createEmptyEntry(): EntryDraft {
-  return { id: crypto.randomUUID(), exercise_name: '', fields: {}, notes: '' };
 }
 
 function parseFieldValue(value: string, type: FieldDef['type']): string | number {
@@ -78,230 +64,172 @@ function formatFieldValue(value: unknown): string {
   return String(value);
 }
 
-function entriesToDrafts(session: PlanSession): EntryDraft[] {
-  if (session.entries.length === 0) return [];
-  return [...session.entries]
-    .sort((a, b) => a.order - b.order)
-    .map((e) => ({
-      id: e.id,
-      exercise_name: e.exercise_name,
-      fields: Object.fromEntries(
-        Object.entries(e.fields ?? {}).map(([k, v]) => [k, String(v ?? '')])
-      ),
-      notes: e.notes ?? '',
-    }));
+function resolveFields(
+  rawFields: Record<string, unknown> | undefined,
+  programFields: FieldDef[]
+): Record<string, unknown> | undefined {
+  if (!rawFields) return undefined;
+  const result: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(rawFields)) {
+    if (v == null || String(v).trim() === '') continue;
+    const fieldDef = programFields.find((f) => f.name === k);
+    result[k] = fieldDef ? parseFieldValue(String(v), fieldDef.type) : v;
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
+function entriesToCreatePayload(
+  entries: PlanSession['entries'],
+  programFields: FieldDef[]
+): PlanSessionEntryCreate[] | undefined {
+  const sorted = [...entries].sort((a, b) => a.order - b.order);
+  if (sorted.length === 0) return undefined;
+  return sorted.map((e, i) => ({
+    exercise_name: e.exercise_name,
+    order: i,
+    fields: resolveFields(e.fields, programFields),
+    notes: e.notes || undefined,
+  }));
+}
+
+function entryToCreate(e: PlanSession['entries'][number], order: number): PlanSessionEntryCreate {
+  return {
+    exercise_name: e.exercise_name,
+    order,
+    fields: e.fields ? { ...e.fields } : undefined,
+    notes: e.notes || undefined,
+  };
 }
 
 export function SessionCard({
   session,
   programName,
-  isNew,
-  onLog,
+  onRecord,
   onDelete,
   onUpdate,
-  onNewHandled,
 }: SessionCardProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [sessionName, setSessionName] = useState(session.session_name);
-  const [date, setDate] = useState(session.date ?? '');
-  const [fieldGroupId, setFieldGroupId] = useState(session.field_group_id ?? '');
-  const [entries, setEntries] = useState<EntryDraft[]>(entriesToDrafts(session));
-  const [isSaving, setIsSaving] = useState(false);
-
   const { data: fieldGroupsData } = useFieldGroups();
   const fieldGroups = fieldGroupsData?.data ?? [];
-  const selectedGroup = fieldGroups.find((g) => g.id === fieldGroupId);
+  const selectedGroup = fieldGroups.find((g) => g.id === session.field_group_id);
   const programFields = selectedGroup?.program_fields ?? [];
 
-  // Auto-enter edit mode for newly created sessions
-  useEffect(() => {
-    if (isNew) {
-      setIsEditing(true);
-      onNewHandled?.();
-    }
-  }, [isNew, onNewHandled]);
-
-  const startEditing = () => {
-    setSessionName(session.session_name);
-    setDate(session.date ?? '');
-    setFieldGroupId(session.field_group_id ?? '');
-    setEntries(entriesToDrafts(session));
-    setIsEditing(true);
-  };
-
-  const cancelEditing = () => {
-    setIsEditing(false);
-  };
-
-  const handleSave = async () => {
-    if (!sessionName.trim()) return;
-    setIsSaving(true);
-    try {
-      const validEntries = entries.filter((e) => e.exercise_name.trim() !== '');
-      const planEntries: PlanSessionEntryCreate[] = validEntries.map((e, i) => {
-        const fields: Record<string, unknown> = {};
-        for (const [k, v] of Object.entries(e.fields)) {
-          if (v.trim() === '') continue;
-          const fieldDef = programFields.find((f) => f.name === k);
-          fields[k] = fieldDef ? parseFieldValue(v, fieldDef.type) : v;
-        }
-        return {
-          exercise_name: e.exercise_name.trim(),
-          order: i,
-          fields: Object.keys(fields).length > 0 ? fields : undefined,
-          notes: e.notes.trim() || undefined,
-        };
-      });
-
-      await onUpdate(session.id, {
-        session_name: sessionName.trim(),
+  const saveSession = useCallback(
+    (
+      patch: Partial<{
+        session_name: string;
+        date: string | undefined;
+        field_group_id: string | undefined;
+        entries: PlanSessionEntryCreate[];
+      }>
+    ) => {
+      const entries = patch.entries ?? entriesToCreatePayload(session.entries, programFields);
+      onUpdate(session.id, {
+        session_name: patch.session_name ?? session.session_name,
         order: session.order,
-        date: date || undefined,
-        field_group_id: fieldGroupId || undefined,
+        date: patch.date !== undefined ? patch.date : session.date || undefined,
+        field_group_id:
+          patch.field_group_id !== undefined
+            ? patch.field_group_id
+            : session.field_group_id || undefined,
         source_program_id: session.source_program_id || undefined,
         source_session_id: session.source_session_id || undefined,
-        entries: planEntries.length > 0 ? planEntries : undefined,
+        entries,
       });
-      setIsEditing(false);
-    } finally {
-      setIsSaving(false);
-    }
-  };
+    },
+    [session, programFields, onUpdate]
+  );
 
-  const updateEntry = (id: string, field: string, value: string) => {
-    setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
-  };
+  const handleSessionNameSave = useCallback(
+    (value: string) => {
+      if (!value) return;
+      saveSession({ session_name: value });
+    },
+    [saveSession]
+  );
 
-  const updateEntryField = (id: string, fieldName: string, value: string) => {
-    setEntries((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, fields: { ...e.fields, [fieldName]: value } } : e))
-    );
-  };
+  const handleDateSave = useCallback(
+    (value: string) => {
+      saveSession({ date: value || undefined });
+    },
+    [saveSession]
+  );
 
-  const removeEntry = (id: string) => {
-    setEntries((prev) => prev.filter((e) => e.id !== id));
-  };
+  const handleFieldGroupChange = useCallback(
+    (value: string) => {
+      saveSession({ field_group_id: value || undefined });
+    },
+    [saveSession]
+  );
 
-  // ─── Edit Mode ───
-  if (isEditing) {
-    return (
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <Input
-              value={sessionName}
-              onChange={(e) => setSessionName(e.target.value)}
-              placeholder="Session name"
-              className="font-semibold text-base h-8 max-w-[300px]"
-              autoFocus
-            />
-            <div className="flex items-center gap-1 shrink-0">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-primary"
-                onClick={handleSave}
-                disabled={!sessionName.trim() || isSaving}
-              >
-                <Check className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-muted-foreground"
-                onClick={cancelEditing}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0 space-y-3">
-          <div className="flex gap-3">
-            <div className="space-y-1 flex-1">
-              <Label className="text-xs">Date</Label>
-              <Input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="h-8"
-              />
-            </div>
-            <div className="space-y-1 flex-1">
-              <Label className="text-xs">Field Group</Label>
-              <Select value={fieldGroupId} onValueChange={setFieldGroupId}>
-                <SelectTrigger className="h-8">
-                  <SelectValue placeholder="Select..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {fieldGroups.map((fg) => (
-                    <SelectItem key={fg.id} value={fg.id}>
-                      {fg.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+  const handleExerciseNameSave = useCallback(
+    (entryId: string, value: string) => {
+      if (!value) return;
+      const updatedEntries = [...session.entries]
+        .sort((a, b) => a.order - b.order)
+        .map((e, i) => ({
+          ...entryToCreate(e, i),
+          exercise_name: e.id === entryId ? value : e.exercise_name,
+        }));
+      saveSession({ entries: updatedEntries });
+    },
+    [session.entries, saveSession]
+  );
 
-          <div className="space-y-2">
-            <Label className="text-xs">Exercises</Label>
-            {entries.map((entry) => (
-              <div key={entry.id} className="flex items-center gap-2">
-                <Input
-                  placeholder="Exercise name"
-                  value={entry.exercise_name}
-                  onChange={(e) => updateEntry(entry.id, 'exercise_name', e.target.value)}
-                  className="flex-1 h-8"
-                />
-                {programFields.map((field) => (
-                  <Input
-                    key={field.name}
-                    placeholder={field.name}
-                    value={entry.fields[field.name] ?? ''}
-                    onChange={(e) => updateEntryField(entry.id, field.name, e.target.value)}
-                    type={field.type === 'number' ? 'number' : 'text'}
-                    className="w-20 h-8"
-                  />
-                ))}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
-                  onClick={() => removeEntry(entry.id)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            ))}
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs"
-              onClick={() => setEntries((prev) => [...prev, createEmptyEntry()])}
-            >
-              <Plus className="h-3 w-3 mr-1" />
-              Add Exercise
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  const handleFieldValueSave = useCallback(
+    (entryId: string, fieldName: string, value: string) => {
+      const updatedEntries = [...session.entries]
+        .sort((a, b) => a.order - b.order)
+        .map((e, i) => {
+          const base = entryToCreate(e, i);
+          if (e.id !== entryId) return base;
+          const fields = { ...(e.fields ?? {}) };
+          const fieldDef = programFields.find((f) => f.name === fieldName);
+          if (value.trim()) {
+            fields[fieldName] = fieldDef ? parseFieldValue(value, fieldDef.type) : value;
+          } else {
+            delete fields[fieldName];
+          }
+          return { ...base, fields: Object.keys(fields).length > 0 ? fields : undefined };
+        });
+      saveSession({ entries: updatedEntries });
+    },
+    [session.entries, programFields, saveSession]
+  );
 
-  // ─── View Mode ───
+  const handleAddExercise = useCallback(() => {
+    const sorted = [...session.entries].sort((a, b) => a.order - b.order);
+    const newEntries: PlanSessionEntryCreate[] = [
+      ...sorted.map((e, i) => entryToCreate(e, i)),
+      { exercise_name: 'New Exercise', order: sorted.length },
+    ];
+    saveSession({ entries: newEntries });
+  }, [session.entries, saveSession]);
+
+  const handleRemoveExercise = useCallback(
+    (entryId: string) => {
+      const remaining = [...session.entries]
+        .sort((a, b) => a.order - b.order)
+        .filter((e) => e.id !== entryId)
+        .map((e, i) => entryToCreate(e, i));
+      saveSession({ entries: remaining.length > 0 ? remaining : undefined });
+    },
+    [session.entries, saveSession]
+  );
+
   const sortedEntries = [...session.entries].sort((a, b) => a.order - b.order);
   const fieldKeys = collectFieldKeys(session);
 
   return (
-    <Card
-      className="cursor-pointer transition-colors hover:border-primary"
-      onClick={() => onLog(session)}
-    >
+    <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="font-semibold truncate">{session.session_name}</span>
+            <InlineEdit
+              value={session.session_name}
+              onSave={handleSessionNameSave}
+              placeholder="Session name"
+              className="font-semibold"
+            />
             {session.source_program_id && programName ? (
               <span className="text-xs text-muted-foreground shrink-0">from {programName}</span>
             ) : !session.source_program_id ? (
@@ -309,29 +237,20 @@ export function SessionCard({
             ) : null}
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {session.date && (
-              <span className="flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                <CalendarDays className="h-3 w-3" />
-                {session.date}
-              </span>
-            )}
             <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 text-muted-foreground hover:text-primary"
-              onClick={(e) => {
-                e.stopPropagation();
-                startEditing();
-              }}
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1"
+              onClick={() => onRecord(session)}
             >
-              <Pencil className="h-3.5 w-3.5" />
+              <ClipboardList className="h-3.5 w-3.5" />
+              Record
             </Button>
             <Button
               variant="ghost"
               size="icon"
               className="h-6 w-6 text-muted-foreground hover:text-destructive"
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={() => {
                 if (window.confirm(`Remove "${session.session_name}" from plan?`)) {
                   onDelete(session.id);
                 }
@@ -341,36 +260,101 @@ export function SessionCard({
             </Button>
           </div>
         </div>
+
+        <div className="flex items-center gap-3 mt-1">
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <CalendarDays className="h-3 w-3" />
+            <InlineEdit
+              value={session.date ?? ''}
+              onSave={handleDateSave}
+              type="date"
+              emptyDisplay="No date"
+              className="text-xs"
+              inputClassName="text-xs w-[140px]"
+            />
+          </span>
+          <span className="text-xs text-muted-foreground">
+            <Select value={session.field_group_id ?? ''} onValueChange={handleFieldGroupChange}>
+              <SelectTrigger className="h-6 text-xs border-none shadow-none px-1 hover:bg-muted">
+                <SelectValue placeholder="Field group..." />
+              </SelectTrigger>
+              <SelectContent>
+                {fieldGroups.map((fg) => (
+                  <SelectItem key={fg.id} value={fg.id}>
+                    {fg.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </span>
+        </div>
       </CardHeader>
+
       <CardContent className="pt-0">
         {sortedEntries.length === 0 ? (
           <p className="text-sm text-muted-foreground">No exercises</p>
         ) : (
-          <table className="text-sm border-collapse">
+          <table className="text-sm border-collapse w-full">
             <thead>
               <tr className="text-xs text-muted-foreground">
-                <th className="text-left font-medium pb-1 pr-4 w-[150px]">Exercise</th>
+                <th className="text-left font-medium pb-1 pr-4 w-[180px]">Exercise</th>
                 {fieldKeys.map((key) => (
-                  <th key={key} className="text-left font-medium pb-1 px-2 w-[60px]">
+                  <th key={key} className="text-left font-medium pb-1 px-2 w-[80px]">
                     {key}
                   </th>
                 ))}
+                <th className="w-[32px]" />
               </tr>
             </thead>
             <tbody>
               {sortedEntries.map((entry) => (
-                <tr key={entry.id} className="text-muted-foreground">
-                  <td className="pr-4 py-0.5">{entry.exercise_name}</td>
+                <tr key={entry.id}>
+                  <td className="pr-4 py-0.5">
+                    <InlineEdit
+                      value={entry.exercise_name}
+                      onSave={(v) => handleExerciseNameSave(entry.id, v)}
+                      placeholder="Exercise name"
+                    />
+                  </td>
                   {fieldKeys.map((key) => (
                     <td key={key} className="px-2 py-0.5 tabular-nums">
-                      {formatFieldValue(entry.fields?.[key])}
+                      <InlineEdit
+                        value={formatFieldValue(entry.fields?.[key])}
+                        onSave={(v) => handleFieldValueSave(entry.id, key, v)}
+                        type={
+                          programFields.find((f) => f.name === key)?.type === 'number'
+                            ? 'number'
+                            : 'text'
+                        }
+                        emptyDisplay="—"
+                        className="text-muted-foreground"
+                      />
                     </td>
                   ))}
+                  <td className="py-0.5">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                      onClick={() => handleRemoveExercise(entry.id)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 text-xs mt-2"
+          onClick={handleAddExercise}
+        >
+          <Plus className="h-3 w-3 mr-1" />
+          Add Exercise
+        </Button>
       </CardContent>
     </Card>
   );
