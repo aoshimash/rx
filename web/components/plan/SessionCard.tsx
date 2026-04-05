@@ -58,12 +58,6 @@ function collectFieldKeys(session: PlanSession): string[] {
   return keys;
 }
 
-function formatFieldValue(value: unknown): string {
-  if (value == null) return '—';
-  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-  return String(value);
-}
-
 function resolveFields(
   rawFields: Record<string, unknown> | undefined,
   programFields: FieldDef[]
@@ -211,7 +205,7 @@ export function SessionCard({
         .sort((a, b) => a.order - b.order)
         .filter((e) => e.id !== entryId)
         .map((e, i) => entryToCreate(e, i));
-      saveSession({ entries: remaining.length > 0 ? remaining : undefined });
+      saveSession({ entries: remaining.length > 0 ? remaining : [] });
     },
     [session.entries, saveSession]
   );
@@ -319,7 +313,7 @@ export function SessionCard({
                   {fieldKeys.map((key) => (
                     <td key={key} className="px-2 py-0.5 tabular-nums">
                       <InlineEdit
-                        value={formatFieldValue(entry.fields?.[key])}
+                        value={entry.fields?.[key] != null ? String(entry.fields[key]) : ''}
                         onSave={(v) => handleFieldValueSave(entry.id, key, v)}
                         type={
                           programFields.find((f) => f.name === key)?.type === 'number'
