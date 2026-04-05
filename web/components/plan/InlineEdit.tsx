@@ -26,6 +26,7 @@ export function InlineEdit({
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
+  const skipBlurRef = useRef(false);
 
   useEffect(() => {
     setDraft(value);
@@ -60,14 +61,22 @@ export function InlineEdit({
         type={type}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
+        onBlur={() => {
+          if (skipBlurRef.current) {
+            skipBlurRef.current = false;
+            return;
+          }
+          commit();
+        }}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
             e.preventDefault();
+            skipBlurRef.current = true;
             commit();
           }
           if (e.key === 'Escape') {
             e.preventDefault();
+            skipBlurRef.current = true;
             cancel();
           }
         }}
