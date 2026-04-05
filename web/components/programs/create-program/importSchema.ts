@@ -14,10 +14,20 @@ const programSessionImportSchema = z.object({
   entries: z.array(programSessionEntryImportSchema).optional(),
 });
 
+const loadSpecTypeSchema = z.enum([
+  'LOAD_SPEC_TYPE_UNSPECIFIED',
+  'LOAD_SPEC_TYPE_ABSOLUTE',
+  'LOAD_SPEC_TYPE_PERCENTAGE_1RM',
+  'LOAD_SPEC_TYPE_RPE',
+  'LOAD_SPEC_TYPE_RELATIVE',
+]);
+
 export const programImportSchema = z.object({
   rx_version: z.literal('1'),
   name: z.string().min(1),
   notes: z.string().optional(),
+  load_spec_type: loadSpecTypeSchema.optional(),
+  load_spec_formula: z.string().optional(),
   sessions: z.array(programSessionImportSchema),
 });
 
