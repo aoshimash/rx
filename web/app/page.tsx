@@ -17,7 +17,7 @@ import type { PlanSession, PlanSessionUpdate } from '@/types/api';
 import { HTTPError } from 'ky';
 import { Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 export default function PlanPage() {
   const router = useRouter();
@@ -28,14 +28,13 @@ export default function PlanPage() {
   const updateSession = useUpdatePlanSession();
   const [isAdding, setIsAdding] = useState(false);
   const [newSessionName, setNewSessionName] = useState('');
-  const [newSessionId, setNewSessionId] = useState<string | null>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   const noPlan = error instanceof HTTPError && error.response.status === 404;
   const sessions = plan?.sessions?.slice().sort((a, b) => a.order - b.order) ?? [];
   const programMap = new Map((programsData?.data ?? []).map((p) => [p.id, p.name]));
 
-  const handleLog = (session: PlanSession) => {
+  const handleRecord = (session: PlanSession) => {
     const params = new URLSearchParams();
     params.set('planSessionId', session.id);
     if (session.source_program_id) params.set('programId', session.source_program_id);
@@ -69,20 +68,8 @@ export default function PlanPage() {
     if (!name) return;
     setIsAdding(false);
     setNewSessionName('');
-    const result = await addSessions.mutateAsync([{ session_name: name, order: nextOrder }]);
-    // Find the newly created session to auto-open edit mode
-    const created = result.sessions
-      ?.slice()
-      .sort((a, b) => b.order - a.order)
-      .find((s) => s.session_name === name);
-    if (created) {
-      setNewSessionId(created.id);
-    }
+    await addSessions.mutateAsync([{ session_name: name, order: nextOrder }]);
   };
-
-  const handleNewHandled = useCallback(() => {
-    setNewSessionId(null);
-  }, []);
 
   if (isLoading) {
     return (
@@ -127,11 +114,9 @@ export default function PlanPage() {
                 programName={
                   session.source_program_id ? programMap.get(session.source_program_id) : undefined
                 }
-                isNew={session.id === newSessionId}
-                onLog={handleLog}
+                onRecord={handleRecord}
                 onDelete={handleDelete}
                 onUpdate={handleUpdate}
-                onNewHandled={handleNewHandled}
               />
             ))}
           </div>
