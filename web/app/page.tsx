@@ -1,18 +1,23 @@
 'use client';
 
-import { AddSessionDialog } from '@/components/plan/AddSessionDialog';
 import { EmptyState } from '@/components/plan/EmptyState';
 import { ProgramSidebar } from '@/components/plan/ProgramSidebar';
 import { SessionCard } from '@/components/plan/SessionCard';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAddPlanSessions, useDeletePlanSession, usePlan } from '@/lib/hooks/usePlans';
+import {
+  useAddPlanSessions,
+  useDeletePlanSession,
+  usePlan,
+  useUpdatePlanSession,
+} from '@/lib/hooks/usePlans';
 import { usePrograms } from '@/lib/hooks/usePrograms';
-import type { PlanSession, PlanSessionCreate } from '@/types/api';
+import type { PlanSession, PlanSessionUpdate } from '@/types/api';
 import { HTTPError } from 'ky';
 import { Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 export default function PlanPage() {
   const router = useRouter();
@@ -20,7 +25,11 @@ export default function PlanPage() {
   const { data: programsData } = usePrograms();
   const addSessions = useAddPlanSessions();
   const deleteSession = useDeletePlanSession();
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const updateSession = useUpdatePlanSession();
+  const [isAdding, setIsAdding] = useState(false);
+  const [newSessionName, setNewSessionName] = useState('');
+  const [newSessionId, setNewSessionId] = useState<string | null>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   const noPlan = error instanceof HTTPError && error.response.status === 404;
   const sessions = plan?.sessions?.slice().sort((a, b) => a.order - b.order) ?? [];
@@ -38,9 +47,42 @@ export default function PlanPage() {
     await deleteSession.mutateAsync(sessionId);
   };
 
-  const handleAddSession = async (session: PlanSessionCreate) => {
-    await addSessions.mutateAsync([session]);
+  const handleUpdate = async (sessionId: string, data: PlanSessionUpdate) => {
+    await updateSession.mutateAsync({ sessionId, data });
   };
+
+  const nextOrder = sessions.length > 0 ? Math.max(...sessions.map((s) => s.order)) + 1 : 0;
+
+  const startAdding = () => {
+    setIsAdding(true);
+    setNewSessionName('');
+    setTimeout(() => nameInputRef.current?.focus(), 0);
+  };
+
+  const cancelAdding = () => {
+    setIsAdding(false);
+    setNewSessionName('');
+  };
+
+  const handleCreateSession = async () => {
+    const name = newSessionName.trim();
+    if (!name) return;
+    setIsAdding(false);
+    setNewSessionName('');
+    const result = await addSessions.mutateAsync([{ session_name: name, order: nextOrder }]);
+    // Find the newly created session to auto-open edit mode
+    const created = result.sessions
+      ?.slice()
+      .sort((a, b) => b.order - a.order)
+      .find((s) => s.session_name === name);
+    if (created) {
+      setNewSessionId(created.id);
+    }
+  };
+
+  const handleNewHandled = useCallback(() => {
+    setNewSessionId(null);
+  }, []);
 
   if (isLoading) {
     return (
@@ -59,8 +101,6 @@ export default function PlanPage() {
     );
   }
 
-  const nextOrder = sessions.length > 0 ? Math.max(...sessions.map((s) => s.order)) + 1 : 0;
-
   return (
     <main className="flex flex-1">
       {/* Sessions (70%) */}
@@ -75,7 +115,9 @@ export default function PlanPage() {
         </div>
 
         {noPlan || sessions.length === 0 ? (
-          <EmptyState onAddSession={() => setAddDialogOpen(true)} />
+          isAdding ? null : (
+            <EmptyState onAddSession={startAdding} />
+          )
         ) : (
           <div className="space-y-3">
             {sessions.map((session) => (
@@ -85,30 +127,48 @@ export default function PlanPage() {
                 programName={
                   session.source_program_id ? programMap.get(session.source_program_id) : undefined
                 }
+                isNew={session.id === newSessionId}
                 onLog={handleLog}
                 onDelete={handleDelete}
+                onUpdate={handleUpdate}
+                onNewHandled={handleNewHandled}
               />
             ))}
           </div>
         )}
 
-        {sessions.length > 0 && (
-          <Button
-            variant="outline"
-            className="w-full mt-3 border-dashed"
-            onClick={() => setAddDialogOpen(true)}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Session
-          </Button>
+        {isAdding ? (
+          <div className="mt-3 flex items-center gap-2">
+            <Input
+              ref={nameInputRef}
+              placeholder="Session name (e.g., Upper Body A)"
+              value={newSessionName}
+              onChange={(e) => setNewSessionName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleCreateSession();
+                if (e.key === 'Escape') cancelAdding();
+              }}
+              className="flex-1"
+            />
+            <Button
+              size="sm"
+              onClick={handleCreateSession}
+              disabled={!newSessionName.trim() || addSessions.isPending}
+            >
+              Create
+            </Button>
+            <Button size="sm" variant="ghost" onClick={cancelAdding}>
+              Cancel
+            </Button>
+          </div>
+        ) : (
+          sessions.length > 0 && (
+            <Button variant="outline" className="w-full mt-3 border-dashed" onClick={startAdding}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Session
+            </Button>
+          )
         )}
-
-        <AddSessionDialog
-          open={addDialogOpen}
-          onOpenChange={setAddDialogOpen}
-          onAdd={handleAddSession}
-          nextOrder={nextOrder}
-        />
       </div>
 
       {/* Programs Sidebar (30%) */}

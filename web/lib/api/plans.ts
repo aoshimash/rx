@@ -1,4 +1,11 @@
-import type { Plan, PlanCreate, PlanSessionCreate, PlanUpdate } from '@/types/api';
+import type {
+  Plan,
+  PlanCreate,
+  PlanSession,
+  PlanSessionCreate,
+  PlanSessionUpdate,
+  PlanUpdate,
+} from '@/types/api';
 import { api } from './client';
 
 export const plansApi = {
@@ -24,6 +31,13 @@ export const plansApi = {
   async addSessions(sessions: PlanSessionCreate[]): Promise<Plan> {
     const res = await api.post('plan/sessions', { json: { sessions } }).json<{ plan: Plan }>();
     return res.plan;
+  },
+
+  async updateSession(sessionId: string, data: PlanSessionUpdate): Promise<PlanSession> {
+    const res = await api
+      .put(`plan/sessions/${sessionId}`, { json: data })
+      .json<{ session: PlanSession }>();
+    return res.session;
   },
 
   async deleteSession(sessionId: string): Promise<void> {

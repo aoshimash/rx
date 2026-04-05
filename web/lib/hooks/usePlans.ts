@@ -1,5 +1,5 @@
 import { plansApi } from '@/lib/api/plans';
-import type { PlanCreate, PlanSessionCreate } from '@/types/api';
+import type { PlanCreate, PlanSessionCreate, PlanSessionUpdate } from '@/types/api';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { HTTPError } from 'ky';
 import { toast } from 'sonner';
@@ -46,6 +46,30 @@ export function useAddPlanSessions() {
     },
     onError: async (error) => {
       let message = 'Failed to add sessions to plan';
+      if (error instanceof HTTPError) {
+        try {
+          const body = await error.response.json();
+          if (body.message) message = body.message;
+        } catch {
+          // use default
+        }
+      }
+      toast.error(message);
+    },
+  });
+}
+
+export function useUpdatePlanSession() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ sessionId, data }: { sessionId: string; data: PlanSessionUpdate }) =>
+      plansApi.updateSession(sessionId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['plan'] });
+    },
+    onError: async (error) => {
+      let message = 'Failed to update session';
       if (error instanceof HTTPError) {
         try {
           const body = await error.response.json();
