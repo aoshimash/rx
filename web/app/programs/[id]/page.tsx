@@ -224,14 +224,16 @@ export default function ProgramDetailPage() {
         order: i,
         field_group_id: s.field_group_id || undefined,
         date: s.date || undefined,
-        entries: s.entries.map(
-          (e, j): ProgramSessionEntryCreate => ({
-            exercise_name: e.exercise_name,
-            order: j,
-            fields: e.fields || undefined,
-            notes: e.notes || undefined,
-          })
-        ),
+        entries: [...s.entries]
+          .sort((a, b) => a.order - b.order)
+          .map(
+            (e, j): ProgramSessionEntryCreate => ({
+              exercise_name: e.exercise_name,
+              order: j,
+              fields: e.fields || undefined,
+              notes: e.notes || undefined,
+            })
+          ),
       }));
     const newProgram = await createProgram.mutateAsync({
       name: `Copy of ${program.name}`,
