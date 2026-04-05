@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAddPlanSessions } from '@/lib/hooks/usePlans';
-import { useDeleteProgram, useProgram, useUpdateProgram } from '@/lib/hooks/usePrograms';
+import { useDeleteProgram, useProgram, useUpdateProgramStatus } from '@/lib/hooks/usePrograms';
 import type { PlanSessionCreate, Program, ProgramSession, ProgramSessionEntry } from '@/types/api';
 import { CalendarDays, ClipboardPen, Copy, Download, Pencil, Share2, Trash2 } from 'lucide-react';
 import Link from 'next/link';
@@ -155,7 +155,7 @@ export default function ProgramDetailPage() {
   const programId = params.id as string;
   const { data: program, isLoading } = useProgram(programId);
   const deleteProgram = useDeleteProgram();
-  const updateProgram = useUpdateProgram();
+  const updateStatus = useUpdateProgramStatus();
   const addPlanSessions = useAddPlanSessions();
   const [copied, setCopied] = useState(false);
   const [selectorOpen, setSelectorOpen] = useState(false);
@@ -181,26 +181,7 @@ export default function ProgramDetailPage() {
 
   const handleToggleStatus = () => {
     const newStatus = isDraft ? 'published' : 'draft';
-    updateProgram.mutate({
-      id: programId,
-      data: {
-        name: program.name,
-        notes: program.notes,
-        status: newStatus,
-        sessions: program.sessions.map((s) => ({
-          session_name: s.session_name,
-          order: s.order,
-          ...(s.field_group_id ? { field_group_id: s.field_group_id } : {}),
-          ...(s.date ? { date: s.date } : {}),
-          entries: s.entries.map((e) => ({
-            exercise_name: e.exercise_name,
-            order: e.order,
-            ...(e.fields ? { fields: e.fields } : {}),
-            ...(e.notes ? { notes: e.notes } : {}),
-          })),
-        })),
-      },
-    });
+    updateStatus.mutate({ id: programId, status: newStatus });
   };
 
   const handleDelete = async () => {
@@ -253,7 +234,7 @@ export default function ProgramDetailPage() {
             variant="outline"
             size="sm"
             onClick={handleToggleStatus}
-            disabled={updateProgram.isPending}
+            disabled={updateStatus.isPending}
           >
             {isDraft ? 'Publish' : 'Unpublish'}
           </Button>

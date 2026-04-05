@@ -443,6 +443,22 @@ func (r *programRepository) Update(ctx context.Context, program *domain.Program)
 	return nil
 }
 
+func (r *programRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ProgramStatus) (*domain.Program, error) {
+	result, err := r.pool.Exec(ctx, `
+		UPDATE programs SET status = $2, updated_at = NOW()
+		WHERE id = $1
+	`, id, string(status))
+	if err != nil {
+		slog.Error("Failed to update program status", "id", id, "error", err)
+		return nil, err
+	}
+	if result.RowsAffected() == 0 {
+		return nil, domain.ErrNotFound
+	}
+
+	return r.GetByID(ctx, id)
+}
+
 func (r *programRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	result, err := r.pool.Exec(ctx, `DELETE FROM programs WHERE id = $1`, id)
 	if err != nil {

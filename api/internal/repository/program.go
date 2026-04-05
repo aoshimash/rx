@@ -29,6 +29,10 @@ type ProgramRepository interface {
 	// Returns: programs, next cursor (empty string if no more), has_more flag
 	List(ctx context.Context, limit int, after string) ([]*domain.Program, string, bool, error)
 
+	// UpdateStatus updates only the status of an existing Program.
+	// Returns domain.ErrNotFound if not found.
+	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ProgramStatus) (*domain.Program, error)
+
 	// ExistsByName checks if a Program with the given name already exists.
 	ExistsByName(ctx context.Context, name string) (bool, error)
 }

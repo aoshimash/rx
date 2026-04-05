@@ -19,11 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ProgramService_CreateProgram_FullMethodName = "/rx.api.v1.ProgramService/CreateProgram"
-	ProgramService_GetProgram_FullMethodName    = "/rx.api.v1.ProgramService/GetProgram"
-	ProgramService_ListPrograms_FullMethodName  = "/rx.api.v1.ProgramService/ListPrograms"
-	ProgramService_UpdateProgram_FullMethodName = "/rx.api.v1.ProgramService/UpdateProgram"
-	ProgramService_DeleteProgram_FullMethodName = "/rx.api.v1.ProgramService/DeleteProgram"
+	ProgramService_CreateProgram_FullMethodName       = "/rx.api.v1.ProgramService/CreateProgram"
+	ProgramService_GetProgram_FullMethodName          = "/rx.api.v1.ProgramService/GetProgram"
+	ProgramService_ListPrograms_FullMethodName        = "/rx.api.v1.ProgramService/ListPrograms"
+	ProgramService_UpdateProgram_FullMethodName       = "/rx.api.v1.ProgramService/UpdateProgram"
+	ProgramService_UpdateProgramStatus_FullMethodName = "/rx.api.v1.ProgramService/UpdateProgramStatus"
+	ProgramService_DeleteProgram_FullMethodName       = "/rx.api.v1.ProgramService/DeleteProgram"
 )
 
 // ProgramServiceClient is the client API for ProgramService service.
@@ -34,6 +35,7 @@ type ProgramServiceClient interface {
 	GetProgram(ctx context.Context, in *GetProgramRequest, opts ...grpc.CallOption) (*GetProgramResponse, error)
 	ListPrograms(ctx context.Context, in *ListProgramsRequest, opts ...grpc.CallOption) (*ListProgramsResponse, error)
 	UpdateProgram(ctx context.Context, in *UpdateProgramRequest, opts ...grpc.CallOption) (*UpdateProgramResponse, error)
+	UpdateProgramStatus(ctx context.Context, in *UpdateProgramStatusRequest, opts ...grpc.CallOption) (*UpdateProgramStatusResponse, error)
 	DeleteProgram(ctx context.Context, in *DeleteProgramRequest, opts ...grpc.CallOption) (*DeleteProgramResponse, error)
 }
 
@@ -85,6 +87,16 @@ func (c *programServiceClient) UpdateProgram(ctx context.Context, in *UpdateProg
 	return out, nil
 }
 
+func (c *programServiceClient) UpdateProgramStatus(ctx context.Context, in *UpdateProgramStatusRequest, opts ...grpc.CallOption) (*UpdateProgramStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateProgramStatusResponse)
+	err := c.cc.Invoke(ctx, ProgramService_UpdateProgramStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *programServiceClient) DeleteProgram(ctx context.Context, in *DeleteProgramRequest, opts ...grpc.CallOption) (*DeleteProgramResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteProgramResponse)
@@ -103,6 +115,7 @@ type ProgramServiceServer interface {
 	GetProgram(context.Context, *GetProgramRequest) (*GetProgramResponse, error)
 	ListPrograms(context.Context, *ListProgramsRequest) (*ListProgramsResponse, error)
 	UpdateProgram(context.Context, *UpdateProgramRequest) (*UpdateProgramResponse, error)
+	UpdateProgramStatus(context.Context, *UpdateProgramStatusRequest) (*UpdateProgramStatusResponse, error)
 	DeleteProgram(context.Context, *DeleteProgramRequest) (*DeleteProgramResponse, error)
 	mustEmbedUnimplementedProgramServiceServer()
 }
@@ -125,6 +138,9 @@ func (UnimplementedProgramServiceServer) ListPrograms(context.Context, *ListProg
 }
 func (UnimplementedProgramServiceServer) UpdateProgram(context.Context, *UpdateProgramRequest) (*UpdateProgramResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateProgram not implemented")
+}
+func (UnimplementedProgramServiceServer) UpdateProgramStatus(context.Context, *UpdateProgramStatusRequest) (*UpdateProgramStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateProgramStatus not implemented")
 }
 func (UnimplementedProgramServiceServer) DeleteProgram(context.Context, *DeleteProgramRequest) (*DeleteProgramResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteProgram not implemented")
@@ -222,6 +238,24 @@ func _ProgramService_UpdateProgram_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProgramService_UpdateProgramStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateProgramStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProgramServiceServer).UpdateProgramStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProgramService_UpdateProgramStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProgramServiceServer).UpdateProgramStatus(ctx, req.(*UpdateProgramStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ProgramService_DeleteProgram_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteProgramRequest)
 	if err := dec(in); err != nil {
@@ -262,6 +296,10 @@ var ProgramService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateProgram",
 			Handler:    _ProgramService_UpdateProgram_Handler,
+		},
+		{
+			MethodName: "UpdateProgramStatus",
+			Handler:    _ProgramService_UpdateProgramStatus_Handler,
 		},
 		{
 			MethodName: "DeleteProgram",

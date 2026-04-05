@@ -143,6 +143,20 @@ func (s *programStore) Update(ctx context.Context, program *domain.Program) erro
 	return nil
 }
 
+func (s *programStore) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ProgramStatus) (*domain.Program, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	program, exists := s.programs[id]
+	if !exists {
+		return nil, domain.ErrNotFound
+	}
+
+	program.Status = status
+	program.UpdatedAt = time.Now()
+	return s.copyProgram(program), nil
+}
+
 func (s *programStore) Delete(ctx context.Context, id uuid.UUID) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()

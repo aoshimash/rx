@@ -1,4 +1,10 @@
-import type { Program, ProgramCreate, ProgramListResponse, ProgramUpdate } from '@/types/api';
+import type {
+  Program,
+  ProgramCreate,
+  ProgramListResponse,
+  ProgramStatus,
+  ProgramUpdate,
+} from '@/types/api';
 import { api } from './client';
 
 interface ProgramListParams {
@@ -27,6 +33,13 @@ export const programsApi = {
 
   async update(id: string, data: ProgramUpdate): Promise<Program> {
     const res = await api.put(`programs/${id}`, { json: data }).json<{ program: Program }>();
+    return res.program;
+  },
+
+  async updateStatus(id: string, status: ProgramStatus): Promise<Program> {
+    const res = await api
+      .put(`programs/${id}/status`, { json: { status } })
+      .json<{ program: Program }>();
     return res.program;
   },
 

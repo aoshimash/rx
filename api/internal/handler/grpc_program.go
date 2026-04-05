@@ -250,6 +250,31 @@ func (s *ProgramServer) UpdateProgram(ctx context.Context, req *pb.UpdateProgram
 	return &pb.UpdateProgramResponse{Program: programToProto(program)}, nil
 }
 
+func (s *ProgramServer) UpdateProgramStatus(ctx context.Context, req *pb.UpdateProgramStatusRequest) (*pb.UpdateProgramStatusResponse, error) {
+	id, err := parseUUID(req.GetId(), "id")
+	if err != nil {
+		return nil, err
+	}
+
+	newStatus := programStatusFromProto(req.GetStatus())
+	switch newStatus {
+	case domain.ProgramStatusDraft, domain.ProgramStatusPublished:
+		// valid
+	default:
+		return nil, status.Error(codes.InvalidArgument, "status must be draft or published")
+	}
+
+	program, err := s.repo.UpdateStatus(ctx, id, newStatus)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil, status.Error(codes.NotFound, "program not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to update program status")
+	}
+
+	return &pb.UpdateProgramStatusResponse{Program: programToProto(program)}, nil
+}
+
 func (s *ProgramServer) DeleteProgram(ctx context.Context, req *pb.DeleteProgramRequest) (*pb.DeleteProgramResponse, error) {
 	id, err := parseUUID(req.GetId(), "id")
 	if err != nil {
