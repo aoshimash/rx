@@ -1,5 +1,6 @@
 'use client';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePrograms } from '@/lib/hooks/usePrograms';
@@ -39,7 +40,14 @@ export function ProgramSidebar() {
               href={`/programs/${program.id}`}
               className="block rounded-md border p-2.5 text-sm hover:border-primary transition-colors"
             >
-              <div className="font-medium truncate">{program.name}</div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-medium truncate">{program.name}</span>
+                {program.status === 'draft' && (
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                    Draft
+                  </Badge>
+                )}
+              </div>
               <div className="text-xs text-muted-foreground mt-0.5">
                 {program.sessions.length} session{program.sessions.length !== 1 ? 's' : ''}
               </div>

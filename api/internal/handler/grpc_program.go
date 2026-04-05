@@ -130,6 +130,7 @@ func (s *ProgramServer) CreateProgram(ctx context.Context, req *pb.CreateProgram
 	program := &domain.Program{
 		Name:     req.GetName(),
 		Notes:    optionalString(req.GetNotes()),
+		Status:   programStatusFromProto(req.GetStatus()),
 		Groups:   groups,
 		Sessions: sessions,
 	}
@@ -219,10 +220,18 @@ func (s *ProgramServer) UpdateProgram(ctx context.Context, req *pb.UpdateProgram
 		return nil, domainErrToStatus(err)
 	}
 
+	var reqStatus domain.ProgramStatus
+	if req.GetStatus() == pb.ProgramStatus_PROGRAM_STATUS_UNSPECIFIED {
+		reqStatus = existing.Status
+	} else {
+		reqStatus = programStatusFromProto(req.GetStatus())
+	}
+
 	program := &domain.Program{
 		ID:       existing.ID,
 		Name:     req.GetName(),
 		Notes:    optionalString(req.GetNotes()),
+		Status:   reqStatus,
 		Groups:   groups,
 		Sessions: sessions,
 	}

@@ -1,6 +1,7 @@
 'use client';
 
 import { SessionSelector } from '@/components/programs/SessionSelector';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -11,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAddPlanSessions } from '@/lib/hooks/usePlans';
-import { useDeleteProgram, useProgram } from '@/lib/hooks/usePrograms';
+import { useDeleteProgram, useProgram, useUpdateProgram } from '@/lib/hooks/usePrograms';
 import type { PlanSessionCreate, Program, ProgramSession, ProgramSessionEntry } from '@/types/api';
 import { CalendarDays, ClipboardPen, Copy, Download, Pencil, Share2, Trash2 } from 'lucide-react';
 import Link from 'next/link';
@@ -154,6 +155,7 @@ export default function ProgramDetailPage() {
   const programId = params.id as string;
   const { data: program, isLoading } = useProgram(programId);
   const deleteProgram = useDeleteProgram();
+  const updateProgram = useUpdateProgram();
   const addPlanSessions = useAddPlanSessions();
   const [copied, setCopied] = useState(false);
   const [selectorOpen, setSelectorOpen] = useState(false);
@@ -174,6 +176,32 @@ export default function ProgramDetailPage() {
       </main>
     );
   }
+
+  const isDraft = program.status === 'draft';
+
+  const handleToggleStatus = () => {
+    const newStatus = isDraft ? 'published' : 'draft';
+    updateProgram.mutate({
+      id: programId,
+      data: {
+        name: program.name,
+        notes: program.notes,
+        status: newStatus,
+        sessions: program.sessions.map((s) => ({
+          session_name: s.session_name,
+          order: s.order,
+          ...(s.field_group_id ? { field_group_id: s.field_group_id } : {}),
+          ...(s.date ? { date: s.date } : {}),
+          entries: s.entries.map((e) => ({
+            exercise_name: e.exercise_name,
+            order: e.order,
+            ...(e.fields ? { fields: e.fields } : {}),
+            ...(e.notes ? { notes: e.notes } : {}),
+          })),
+        })),
+      },
+    });
+  };
 
   const handleDelete = async () => {
     await deleteProgram.mutateAsync(programId);
@@ -209,11 +237,26 @@ export default function ProgramDetailPage() {
     <main className="container mx-auto p-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">{program.name}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold">{program.name}</h1>
+            <Badge variant={isDraft ? 'secondary' : 'default'}>
+              {isDraft ? 'Draft' : 'Published'}
+            </Badge>
+          </div>
           {program.notes && <p className="text-muted-foreground mt-1">{program.notes}</p>}
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => setSelectorOpen(true)}>Add to Plan</Button>
+          <Button onClick={() => setSelectorOpen(true)} disabled={isDraft}>
+            Add to Plan
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleToggleStatus}
+            disabled={updateProgram.isPending}
+          >
+            {isDraft ? 'Publish' : 'Unpublish'}
+          </Button>
           <Button variant="outline" size="sm" asChild>
             <Link href={`/programs/${programId}/edit`}>
               <Pencil className="h-4 w-4 mr-2" />

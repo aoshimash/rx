@@ -67,7 +67,7 @@ export default function NewProgramPage() {
   const handleSave = (entries: ProgramFormEntry[]) => {
     const sessions = entriesToSessions(entries);
     createProgram.mutate(
-      { name, notes: notes || undefined, sessions },
+      { name, notes: notes || undefined, status: 'draft', sessions },
       {
         onSuccess: () => {
           router.push('/');

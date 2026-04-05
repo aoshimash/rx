@@ -61,8 +61,8 @@ func (r *programRepository) Create(ctx context.Context, program *domain.Program)
 	}
 
 	query := `
-		INSERT INTO programs (id, name, notes, created_at, updated_at)
-		VALUES ($1, $2, $3, NOW(), NOW())
+		INSERT INTO programs (id, name, notes, status, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, NOW(), NOW())
 		RETURNING created_at, updated_at
 	`
 
@@ -70,6 +70,7 @@ func (r *programRepository) Create(ctx context.Context, program *domain.Program)
 		id,
 		program.Name,
 		program.Notes,
+		string(program.Status),
 	).Scan(&program.CreatedAt, &program.UpdatedAt)
 	if err != nil {
 		slog.Error("Failed to create program", "error", err)
@@ -164,7 +165,7 @@ func (r *programRepository) Create(ctx context.Context, program *domain.Program)
 
 func (r *programRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Program, error) {
 	query := `
-		SELECT id, name, notes, created_at, updated_at
+		SELECT id, name, notes, status, created_at, updated_at
 		FROM programs
 		WHERE id = $1
 	`
@@ -174,6 +175,7 @@ func (r *programRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.
 		&program.ID,
 		&program.Name,
 		&program.Notes,
+		&program.Status,
 		&program.CreatedAt,
 		&program.UpdatedAt,
 	)
@@ -333,9 +335,9 @@ func (r *programRepository) Update(ctx context.Context, program *domain.Program)
 
 	// Update the program row
 	result, err := tx.Exec(ctx, `
-		UPDATE programs SET name = $2, notes = $3, updated_at = NOW()
+		UPDATE programs SET name = $2, notes = $3, status = $4, updated_at = NOW()
 		WHERE id = $1
-	`, program.ID, program.Name, program.Notes)
+	`, program.ID, program.Name, program.Notes, string(program.Status))
 	if err != nil {
 		slog.Error("Failed to update program", "id", program.ID, "error", err)
 		return err
@@ -464,7 +466,7 @@ func (r *programRepository) List(ctx context.Context, limit int, after string) (
 	}
 
 	query := `
-		SELECT id, name, notes, created_at, updated_at
+		SELECT id, name, notes, status, created_at, updated_at
 		FROM programs
 		WHERE ($1::uuid IS NULL OR id > $1)
 		ORDER BY id ASC
@@ -485,6 +487,7 @@ func (r *programRepository) List(ctx context.Context, limit int, after string) (
 			&program.ID,
 			&program.Name,
 			&program.Notes,
+			&program.Status,
 			&program.CreatedAt,
 			&program.UpdatedAt,
 		)

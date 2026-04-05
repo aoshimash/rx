@@ -201,6 +201,9 @@
             "type": "object",
             "$ref": "#/definitions/v1ProgramSessionCreate"
           }
+        },
+        "status": {
+          "$ref": "#/definitions/v1ProgramStatus"
         }
       }
     },
@@ -262,6 +265,9 @@
             "type": "object",
             "$ref": "#/definitions/v1ProgramSessionCreate"
           }
+        },
+        "status": {
+          "$ref": "#/definitions/v1ProgramStatus"
         }
       }
     },
@@ -335,6 +341,9 @@
         "updatedAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "status": {
+          "$ref": "#/definitions/v1ProgramStatus"
         }
       },
       "description": "Program is a training template with sessions and entries."
@@ -489,6 +498,15 @@
           "type": "string"
         }
       }
+    },
+    "v1ProgramStatus": {
+      "type": "string",
+      "enum": [
+        "PROGRAM_STATUS_UNSPECIFIED",
+        "PROGRAM_STATUS_DRAFT",
+        "PROGRAM_STATUS_PUBLISHED"
+      ],
+      "default": "PROGRAM_STATUS_UNSPECIFIED"
     },
     "v1UpdateProgramResponse": {
       "type": "object",

@@ -25,8 +25,9 @@ func mustFormatDate(d DateOnly) string {
 func TestValidateProgram(t *testing.T) {
 	validProgram := func() *Program {
 		return &Program{
-			ID:   uuid.New(),
-			Name: "Test Program",
+			ID:     uuid.New(),
+			Name:   "Test Program",
+			Status: ProgramStatusDraft,
 			Sessions: []ProgramSession{
 				{
 					ID:          uuid.New(),
@@ -64,10 +65,18 @@ func TestValidateProgram(t *testing.T) {
 		assert.Error(t, err)
 	})
 
+	t.Run("invalid status", func(t *testing.T) {
+		p := validProgram()
+		p.Status = "invalid"
+		err := ValidateProgram(p)
+		assert.Error(t, err)
+	})
+
 	t.Run("program with no sessions is invalid", func(t *testing.T) {
 		p := &Program{
-			ID:   uuid.New(),
-			Name: "Empty Program",
+			ID:     uuid.New(),
+			Name:   "Empty Program",
+			Status: ProgramStatusDraft,
 		}
 		err := ValidateProgram(p)
 		assert.Error(t, err)

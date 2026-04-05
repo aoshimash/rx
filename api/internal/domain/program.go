@@ -36,11 +36,20 @@ type ProgramSession struct {
 	Entries      []ProgramSessionEntry `json:"entries,omitempty"`
 }
 
+// ProgramStatus represents the publication state of a program.
+type ProgramStatus string
+
+const (
+	ProgramStatusDraft     ProgramStatus = "draft"
+	ProgramStatusPublished ProgramStatus = "published"
+)
+
 // Program represents a reusable training program template with embedded sessions.
 type Program struct {
 	ID        uuid.UUID        `json:"id"`
 	Name      string           `json:"name"`
 	Notes     *string          `json:"notes,omitempty"`
+	Status    ProgramStatus    `json:"status"`
 	Groups    []ProgramGroup   `json:"groups,omitempty"`
 	Sessions  []ProgramSession `json:"sessions,omitempty"`
 	CreatedAt time.Time        `json:"created_at"`

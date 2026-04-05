@@ -331,10 +331,31 @@ func programToProto(p *domain.Program) *pb.Program {
 		Id:        uuidToString(p.ID),
 		Name:      p.Name,
 		Notes:     derefString(p.Notes),
+		Status:    programStatusToProto(p.Status),
 		Groups:    groups,
 		Sessions:  sessions,
 		CreatedAt: timeToTimestamp(p.CreatedAt),
 		UpdatedAt: timeToTimestamp(p.UpdatedAt),
+	}
+}
+
+func programStatusToProto(s domain.ProgramStatus) pb.ProgramStatus {
+	switch s {
+	case domain.ProgramStatusDraft:
+		return pb.ProgramStatus_PROGRAM_STATUS_DRAFT
+	case domain.ProgramStatusPublished:
+		return pb.ProgramStatus_PROGRAM_STATUS_PUBLISHED
+	default:
+		return pb.ProgramStatus_PROGRAM_STATUS_UNSPECIFIED
+	}
+}
+
+func programStatusFromProto(s pb.ProgramStatus) domain.ProgramStatus {
+	switch s {
+	case pb.ProgramStatus_PROGRAM_STATUS_PUBLISHED:
+		return domain.ProgramStatusPublished
+	default:
+		return domain.ProgramStatusDraft
 	}
 }
 

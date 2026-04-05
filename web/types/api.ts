@@ -124,10 +124,13 @@ export interface LogSetCreate {
 // Program
 // ============================================================================
 
+export type ProgramStatus = 'draft' | 'published';
+
 export interface Program {
   id: string;
   name: string;
   notes?: string;
+  status: ProgramStatus;
   metadata?: Record<string, unknown>;
   sessions: ProgramSession[];
   created_at: string;
@@ -137,6 +140,7 @@ export interface Program {
 export interface ProgramCreate {
   name: string;
   notes?: string;
+  status?: ProgramStatus;
   metadata?: Record<string, unknown>;
   sessions?: ProgramSessionCreate[];
 }
@@ -144,6 +148,7 @@ export interface ProgramCreate {
 export interface ProgramUpdate {
   name: string;
   notes?: string;
+  status?: ProgramStatus;
   metadata?: Record<string, unknown>;
   sessions: ProgramSessionCreate[];
 }
