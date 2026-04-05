@@ -1,6 +1,15 @@
 'use client';
 
-import { SessionSelector } from '@/components/programs/SessionSelector';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -12,7 +21,13 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAddPlanSessions } from '@/lib/hooks/usePlans';
 import { useDeleteProgram, useProgram } from '@/lib/hooks/usePrograms';
-import type { PlanSessionCreate, Program, ProgramSession, ProgramSessionEntry } from '@/types/api';
+import type {
+  PlanSessionCreate,
+  PlanSessionEntryCreate,
+  Program,
+  ProgramSession,
+  ProgramSessionEntry,
+} from '@/types/api';
 import { CalendarDays, ClipboardPen, Copy, Download, Pencil, Share2, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -156,7 +171,7 @@ export default function ProgramDetailPage() {
   const deleteProgram = useDeleteProgram();
   const addPlanSessions = useAddPlanSessions();
   const [copied, setCopied] = useState(false);
-  const [selectorOpen, setSelectorOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -180,9 +195,25 @@ export default function ProgramDetailPage() {
     router.push('/');
   };
 
-  const handleAddToPlan = async (sessions: PlanSessionCreate[]) => {
-    await addPlanSessions.mutateAsync(sessions);
-    setSelectorOpen(false);
+  const handleAddToPlan = async () => {
+    const sortedProgramSessions = [...program.sessions].sort((a, b) => a.order - b.order);
+    const planSessions: PlanSessionCreate[] = sortedProgramSessions.map((s, i) => ({
+      session_name: s.session_name,
+      order: i,
+      date: s.date || undefined,
+      source_program_id: programId,
+      source_session_id: s.id,
+      entries: s.entries.map(
+        (e, j): PlanSessionEntryCreate => ({
+          exercise_name: e.exercise_name,
+          order: j,
+          fields: e.fields || undefined,
+          notes: e.notes || undefined,
+        })
+      ),
+    }));
+    await addPlanSessions.mutateAsync(planSessions);
+    setConfirmOpen(false);
     router.push('/');
   };
 
@@ -213,7 +244,7 @@ export default function ProgramDetailPage() {
           {program.notes && <p className="text-muted-foreground mt-1">{program.notes}</p>}
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => setSelectorOpen(true)}>Add to Plan</Button>
+          <Button onClick={() => setConfirmOpen(true)}>Add to Plan</Button>
           <Button variant="outline" size="sm" asChild>
             <Link href={`/programs/${programId}/edit`}>
               <Pencil className="h-4 w-4 mr-2" />
@@ -255,14 +286,23 @@ export default function ProgramDetailPage() {
         </div>
       )}
 
-      <SessionSelector
-        open={selectorOpen}
-        onOpenChange={setSelectorOpen}
-        sessions={program.sessions}
-        programId={programId}
-        onConfirm={handleAddToPlan}
-        isPending={addPlanSessions.isPending}
-      />
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Add to Plan</AlertDialogTitle>
+            <AlertDialogDescription>
+              Add all {program.sessions.length} session{program.sessions.length !== 1 ? 's' : ''}{' '}
+              from this program to your Plan?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleAddToPlan} disabled={addPlanSessions.isPending}>
+              {addPlanSessions.isPending ? 'Adding...' : 'Add to Plan'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
