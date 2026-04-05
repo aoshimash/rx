@@ -21,15 +21,31 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAddPlanSessions } from '@/lib/hooks/usePlans';
-import { useDeleteProgram, useProgram, useUpdateProgramStatus } from '@/lib/hooks/usePrograms';
+import {
+  useCreateProgram,
+  useDeleteProgram,
+  useProgram,
+  useUpdateProgramStatus,
+} from '@/lib/hooks/usePrograms';
 import type {
   PlanSessionCreate,
   PlanSessionEntryCreate,
   Program,
   ProgramSession,
+  ProgramSessionCreate,
   ProgramSessionEntry,
+  ProgramSessionEntryCreate,
 } from '@/types/api';
-import { CalendarDays, ClipboardPen, Copy, Download, Pencil, Share2, Trash2 } from 'lucide-react';
+import {
+  CalendarDays,
+  ClipboardPen,
+  Copy,
+  CopyPlus,
+  Download,
+  Pencil,
+  Share2,
+  Trash2,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -169,6 +185,7 @@ export default function ProgramDetailPage() {
   const router = useRouter();
   const programId = params.id as string;
   const { data: program, isLoading } = useProgram(programId);
+  const createProgram = useCreateProgram();
   const deleteProgram = useDeleteProgram();
   const updateStatus = useUpdateProgramStatus();
   const addPlanSessions = useAddPlanSessions();
@@ -197,6 +214,33 @@ export default function ProgramDetailPage() {
   const handleToggleStatus = () => {
     const newStatus = isDraft ? 'published' : 'draft';
     updateStatus.mutate({ id: programId, status: newStatus });
+  };
+
+  const handleDuplicate = async () => {
+    const sessions: ProgramSessionCreate[] = [...program.sessions]
+      .sort((a, b) => a.order - b.order)
+      .map((s, i) => ({
+        session_name: s.session_name,
+        order: i,
+        field_group_id: s.field_group_id || undefined,
+        date: s.date || undefined,
+        entries: s.entries.map(
+          (e, j): ProgramSessionEntryCreate => ({
+            exercise_name: e.exercise_name,
+            order: j,
+            fields: e.fields || undefined,
+            notes: e.notes || undefined,
+          })
+        ),
+      }));
+    const newProgram = await createProgram.mutateAsync({
+      name: `Copy of ${program.name}`,
+      notes: program.notes || undefined,
+      status: 'draft',
+      metadata: program.metadata || undefined,
+      sessions,
+    });
+    router.push(`/programs/${newProgram.id}/edit`);
   };
 
   const handleDelete = async () => {
@@ -274,6 +318,15 @@ export default function ProgramDetailPage() {
               <Pencil className="h-4 w-4 mr-2" />
               Edit
             </Link>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDuplicate}
+            disabled={createProgram.isPending}
+          >
+            <CopyPlus className="h-4 w-4 mr-2" />
+            Duplicate
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
