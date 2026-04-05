@@ -10,6 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -20,7 +21,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAddPlanSessions } from '@/lib/hooks/usePlans';
-import { useDeleteProgram, useProgram } from '@/lib/hooks/usePrograms';
+import { useDeleteProgram, useProgram, useUpdateProgramStatus } from '@/lib/hooks/usePrograms';
 import type {
   PlanSessionCreate,
   PlanSessionEntryCreate,
@@ -169,6 +170,7 @@ export default function ProgramDetailPage() {
   const programId = params.id as string;
   const { data: program, isLoading } = useProgram(programId);
   const deleteProgram = useDeleteProgram();
+  const updateStatus = useUpdateProgramStatus();
   const addPlanSessions = useAddPlanSessions();
   const [copied, setCopied] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -189,6 +191,13 @@ export default function ProgramDetailPage() {
       </main>
     );
   }
+
+  const isDraft = program.status === 'draft';
+
+  const handleToggleStatus = () => {
+    const newStatus = isDraft ? 'published' : 'draft';
+    updateStatus.mutate({ id: programId, status: newStatus });
+  };
 
   const handleDelete = async () => {
     await deleteProgram.mutateAsync(programId);
@@ -240,11 +249,26 @@ export default function ProgramDetailPage() {
     <main className="container mx-auto p-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">{program.name}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold">{program.name}</h1>
+            <Badge variant={isDraft ? 'secondary' : 'default'}>
+              {isDraft ? 'Draft' : 'Published'}
+            </Badge>
+          </div>
           {program.notes && <p className="text-muted-foreground mt-1">{program.notes}</p>}
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => setConfirmOpen(true)}>Add to Plan</Button>
+          <Button onClick={() => setConfirmOpen(true)} disabled={isDraft}>
+            Add to Plan
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleToggleStatus}
+            disabled={updateStatus.isPending}
+          >
+            {isDraft ? 'Publish' : 'Unpublish'}
+          </Button>
           <Button variant="outline" size="sm" asChild>
             <Link href={`/programs/${programId}/edit`}>
               <Pencil className="h-4 w-4 mr-2" />

@@ -130,6 +130,7 @@ func (s *ProgramServer) CreateProgram(ctx context.Context, req *pb.CreateProgram
 	program := &domain.Program{
 		Name:     req.GetName(),
 		Notes:    optionalString(req.GetNotes()),
+		Status:   programStatusFromProto(req.GetStatus()),
 		Groups:   groups,
 		Sessions: sessions,
 	}
@@ -219,10 +220,18 @@ func (s *ProgramServer) UpdateProgram(ctx context.Context, req *pb.UpdateProgram
 		return nil, domainErrToStatus(err)
 	}
 
+	var reqStatus domain.ProgramStatus
+	if req.GetStatus() == pb.ProgramStatus_PROGRAM_STATUS_UNSPECIFIED {
+		reqStatus = existing.Status
+	} else {
+		reqStatus = programStatusFromProto(req.GetStatus())
+	}
+
 	program := &domain.Program{
 		ID:       existing.ID,
 		Name:     req.GetName(),
 		Notes:    optionalString(req.GetNotes()),
+		Status:   reqStatus,
 		Groups:   groups,
 		Sessions: sessions,
 	}
@@ -239,6 +248,29 @@ func (s *ProgramServer) UpdateProgram(ctx context.Context, req *pb.UpdateProgram
 	}
 
 	return &pb.UpdateProgramResponse{Program: programToProto(program)}, nil
+}
+
+func (s *ProgramServer) UpdateProgramStatus(ctx context.Context, req *pb.UpdateProgramStatusRequest) (*pb.UpdateProgramStatusResponse, error) {
+	id, err := parseUUID(req.GetId(), "id")
+	if err != nil {
+		return nil, err
+	}
+
+	if req.GetStatus() == pb.ProgramStatus_PROGRAM_STATUS_UNSPECIFIED {
+		return nil, status.Error(codes.InvalidArgument, "status is required")
+	}
+
+	newStatus := programStatusFromProto(req.GetStatus())
+
+	program, err := s.repo.UpdateStatus(ctx, id, newStatus)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil, status.Error(codes.NotFound, "program not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to update program status")
+	}
+
+	return &pb.UpdateProgramStatusResponse{Program: programToProto(program)}, nil
 }
 
 func (s *ProgramServer) DeleteProgram(ctx context.Context, req *pb.DeleteProgramRequest) (*pb.DeleteProgramResponse, error) {

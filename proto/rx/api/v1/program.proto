@@ -31,9 +31,22 @@ service ProgramService {
     };
   }
 
+  rpc UpdateProgramStatus(UpdateProgramStatusRequest) returns (UpdateProgramStatusResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/programs/{id}/status"
+      body: "*"
+    };
+  }
+
   rpc DeleteProgram(DeleteProgramRequest) returns (DeleteProgramResponse) {
     option (google.api.http) = {delete: "/api/v1/programs/{id}"};
   }
+}
+
+enum ProgramStatus {
+  PROGRAM_STATUS_UNSPECIFIED = 0;
+  PROGRAM_STATUS_DRAFT = 1;
+  PROGRAM_STATUS_PUBLISHED = 2;
 }
 
 // Program is a training template with sessions and entries.
@@ -45,6 +58,7 @@ message Program {
   repeated ProgramSession sessions = 5;
   google.protobuf.Timestamp created_at = 6;
   google.protobuf.Timestamp updated_at = 7;
+  ProgramStatus status = 8;
 }
 
 message ProgramGroup {
@@ -105,6 +119,7 @@ message CreateProgramRequest {
   string notes = 2;
   repeated ProgramGroupCreate groups = 3;
   repeated ProgramSessionCreate sessions = 4;
+  ProgramStatus status = 5;
 }
 
 message CreateProgramResponse {
@@ -136,9 +151,19 @@ message UpdateProgramRequest {
   string notes = 3;
   repeated ProgramGroupCreate groups = 4;
   repeated ProgramSessionCreate sessions = 5;
+  ProgramStatus status = 6;
 }
 
 message UpdateProgramResponse {
+  Program program = 1;
+}
+
+message UpdateProgramStatusRequest {
+  string id = 1;
+  ProgramStatus status = 2;
+}
+
+message UpdateProgramStatusResponse {
   Program program = 1;
 }
 

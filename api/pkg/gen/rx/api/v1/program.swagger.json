@@ -176,6 +176,44 @@
           "ProgramService"
         ]
       }
+    },
+    "/api/v1/programs/{id}/status": {
+      "put": {
+        "operationId": "ProgramService_UpdateProgramStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateProgramStatusResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ProgramServiceUpdateProgramStatusBody"
+            }
+          }
+        ],
+        "tags": [
+          "ProgramService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -201,6 +239,17 @@
             "type": "object",
             "$ref": "#/definitions/v1ProgramSessionCreate"
           }
+        },
+        "status": {
+          "$ref": "#/definitions/v1ProgramStatus"
+        }
+      }
+    },
+    "ProgramServiceUpdateProgramStatusBody": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "$ref": "#/definitions/v1ProgramStatus"
         }
       }
     },
@@ -262,6 +311,9 @@
             "type": "object",
             "$ref": "#/definitions/v1ProgramSessionCreate"
           }
+        },
+        "status": {
+          "$ref": "#/definitions/v1ProgramStatus"
         }
       }
     },
@@ -335,6 +387,9 @@
         "updatedAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "status": {
+          "$ref": "#/definitions/v1ProgramStatus"
         }
       },
       "description": "Program is a training template with sessions and entries."
@@ -490,7 +545,24 @@
         }
       }
     },
+    "v1ProgramStatus": {
+      "type": "string",
+      "enum": [
+        "PROGRAM_STATUS_UNSPECIFIED",
+        "PROGRAM_STATUS_DRAFT",
+        "PROGRAM_STATUS_PUBLISHED"
+      ],
+      "default": "PROGRAM_STATUS_UNSPECIFIED"
+    },
     "v1UpdateProgramResponse": {
+      "type": "object",
+      "properties": {
+        "program": {
+          "$ref": "#/definitions/v1Program"
+        }
+      }
+    },
+    "v1UpdateProgramStatusResponse": {
       "type": "object",
       "properties": {
         "program": {

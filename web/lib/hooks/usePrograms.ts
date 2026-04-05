@@ -1,5 +1,5 @@
 import { programsApi } from '@/lib/api/programs';
-import type { ProgramCreate, ProgramUpdate } from '@/types/api';
+import type { ProgramCreate, ProgramStatus, ProgramUpdate } from '@/types/api';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export function usePrograms() {
@@ -33,6 +33,18 @@ export function useUpdateProgram() {
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: ProgramUpdate }) => programsApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['programs'] });
+    },
+  });
+}
+
+export function useUpdateProgramStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: ProgramStatus }) =>
+      programsApi.updateStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['programs'] });
     },

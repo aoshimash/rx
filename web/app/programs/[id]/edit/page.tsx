@@ -133,6 +133,7 @@ export default function EditProgramPage() {
     const programName = name ?? program.name;
     const programNotes = notes ?? program.notes ?? '';
     const data = entriesToProgramUpdate(programName, programNotes, entries);
+    data.status = program.status;
 
     updateProgram.mutate(
       { id: programId, data },

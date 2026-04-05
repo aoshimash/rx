@@ -354,6 +354,16 @@ func ValidateProgram(p *Program) error {
 		}
 	}
 
+	switch p.Status {
+	case ProgramStatusDraft, ProgramStatusPublished:
+		// valid
+	default:
+		return &ValidationError{
+			Field:   "status",
+			Message: "status must be 'draft' or 'published'",
+		}
+	}
+
 	for i := range p.Groups {
 		if err := ValidateProgramGroup(&p.Groups[i]); err != nil {
 			return &ValidationError{

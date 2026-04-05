@@ -90,9 +90,10 @@ func sbdPeaking() *domain.Program {
 	s1ID, s2ID, s3ID, s4ID := uuid.New(), uuid.New(), uuid.New(), uuid.New()
 
 	return &domain.Program{
-		ID:    progID,
-		Name:  "SBD Peaking — Jan 2026",
-		Notes: stringPtr("4-session peaking block focusing on competition lifts"),
+		ID:     progID,
+		Name:   "SBD Peaking — Jan 2026",
+		Notes:  stringPtr("4-session peaking block focusing on competition lifts"),
+		Status: domain.ProgramStatusPublished,
 		Sessions: []domain.ProgramSession{
 			{
 				ID: s1ID, ProgramID: progID, SessionName: "Heavy Squat", Order: 1,
@@ -135,9 +136,10 @@ func upperLowerSplit() *domain.Program {
 	s1ID, s2ID, s3ID, s4ID := uuid.New(), uuid.New(), uuid.New(), uuid.New()
 
 	return &domain.Program{
-		ID:    progID,
-		Name:  "Upper/Lower Split — Feb 2026",
-		Notes: stringPtr("Hypertrophy-focused upper/lower split"),
+		ID:     progID,
+		Name:   "Upper/Lower Split — Feb 2026",
+		Notes:  stringPtr("Hypertrophy-focused upper/lower split"),
+		Status: domain.ProgramStatusPublished,
 		Sessions: []domain.ProgramSession{
 			{
 				ID: s1ID, ProgramID: progID, SessionName: "Upper A", Order: 1,
@@ -187,9 +189,10 @@ func blockPeriodization() *domain.Program {
 	}
 
 	return &domain.Program{
-		ID:    progID,
-		Name:  "Block Periodization — Mar 2026",
-		Notes: stringPtr("Accumulation → Transmutation → Realization"),
+		ID:     progID,
+		Name:   "Block Periodization — Mar 2026",
+		Notes:  stringPtr("Accumulation → Transmutation → Realization"),
+		Status: domain.ProgramStatusPublished,
 		Sessions: []domain.ProgramSession{
 			{
 				ID: sIDs[0], ProgramID: progID, SessionName: "Week 1 — SBD", Order: 1,
@@ -248,9 +251,10 @@ func competitionPrep() *domain.Program {
 	s1ID, s2ID, s3ID := uuid.New(), uuid.New(), uuid.New()
 
 	return &domain.Program{
-		ID:    progID,
-		Name:  "Competition Prep — Apr 2026",
-		Notes: stringPtr("Final peaking block before April competition"),
+		ID:     progID,
+		Name:   "Competition Prep — Apr 2026",
+		Notes:  stringPtr("Final peaking block before April competition"),
+		Status: domain.ProgramStatusPublished,
 		Sessions: []domain.ProgramSession{
 			{
 				ID: s1ID, ProgramID: progID, SessionName: "Opener Rehearsal", Order: 1,
