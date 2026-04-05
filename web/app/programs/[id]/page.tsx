@@ -297,9 +297,7 @@ export default function ProgramDetailPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleAddToPlan} disabled={addPlanSessions.isPending}>
-              {addPlanSessions.isPending ? 'Adding...' : 'Add to Plan'}
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleAddToPlan}>Add to Plan</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
