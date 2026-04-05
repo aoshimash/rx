@@ -99,6 +99,16 @@ All list endpoints use cursor-based pagination: `limit` (1–100) + `after` (bas
 
 `STORAGE_TYPE=memory` (default) or `postgres`. Videos use pre-signed URLs — the server never handles file bytes, only issues upload/download URLs to S3/R2.
 
+## Design Process
+
+When adding a new feature or modifying user-facing behavior:
+
+1. Read [docs/WEB_UI_DESIGN.md](docs/WEB_UI_DESIGN.md) — especially the User Journeys and Decisions sections
+2. Identify which User Journey is affected by the change
+3. If no existing journey covers the change, define one (who, when, where, scenario) before implementing
+4. Verify the change is consistent with the journey's context (e.g., don't optimize a PC screen for gym use)
+5. Check the "What We Do NOT Build" table — if your feature is listed there, confirm with the user before proceeding
+
 ## Documentation
 
 - [Philosophy](docs/PHILOSOPHY.md) - Core principles and constraints
