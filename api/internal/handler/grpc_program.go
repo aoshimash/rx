@@ -256,13 +256,11 @@ func (s *ProgramServer) UpdateProgramStatus(ctx context.Context, req *pb.UpdateP
 		return nil, err
 	}
 
-	newStatus := programStatusFromProto(req.GetStatus())
-	switch newStatus {
-	case domain.ProgramStatusDraft, domain.ProgramStatusPublished:
-		// valid
-	default:
-		return nil, status.Error(codes.InvalidArgument, "status must be draft or published")
+	if req.GetStatus() == pb.ProgramStatus_PROGRAM_STATUS_UNSPECIFIED {
+		return nil, status.Error(codes.InvalidArgument, "status is required")
 	}
+
+	newStatus := programStatusFromProto(req.GetStatus())
 
 	program, err := s.repo.UpdateStatus(ctx, id, newStatus)
 	if err != nil {
