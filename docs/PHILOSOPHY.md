@@ -1,5 +1,31 @@
 # Rx Philosophy
 
+## Why Rx Exists
+
+### Why Spreadsheets?
+
+Many serious lifters — especially powerlifters — track their training in spreadsheets. This is not because they lack better tools; it is because spreadsheets are the best tool available. Existing training apps force a fixed schema: sets × reps × weight. But real training programs need fields those apps do not offer — tempo prescriptions (3-1-2-0), RPE/RIR targets, band/chain accommodations, pause lengths, breathing cues, and whatever else a coach or methodology demands. Spreadsheets let each lifter define their own schema. That freedom is the killer feature.
+
+### Why Not Spreadsheets?
+
+Spreadsheets are accessible — Google Sheets has an API, sharing a link is trivial. The problem is not access but **interoperability**:
+
+- **No shared schema** — Every lifter's spreadsheet has a different column layout, naming convention, and unit format. A tool that works with one person's sheet cannot work with another's without custom adaptation.
+- **Implicit semantics** — "Column D is RPE" is knowledge that lives in the user's head, not in the data. No external tool can reliably interpret the data without being told what each column means.
+- **No separation of plan and execution** — Prescribed weights and actual weights live in the same cells or adjacent columns. Comparing intent vs. outcome across weeks requires manual effort.
+
+The fundamental tension: **flexibility demands less structure, but external utility demands more.**
+
+### Rx's Approach: Minimal Viable Structure
+
+Rx resolves this tension by imposing the minimum structure required for interoperability while preserving maximum field flexibility:
+
+1. **Structured core** — A small set of fields that nearly every lifter shares (exercise, sets, reps, load) are first-class, typed, and queryable. This is what makes the data useful to external tools.
+2. **Flexible metadata** — Everything else lives in open-ended metadata fields that each user defines for their own methodology. Rx stores it, serves it, but does not interpret it.
+3. **API as the contract** — Both humans (via Web/Mobile) and machines (via API/CLI) interact through the same structured interface. Unlike spreadsheets, the schema is explicit and consistent across all users.
+
+The result: a system where a powerlifter's custom tracking fields are preserved exactly as they want them, while an AI agent can still query "show me all squat sessions where RPE exceeded the plan" — something a spreadsheet cannot support without per-user custom integration.
+
 ## Plan Driven Training
 
 Rx follows **Plan Driven Training** — a philosophy where training is guided by a pre-defined plan, not ad-hoc decisions at the gym. Just as Test Driven Development starts with tests and Domain Driven Design starts with domain models, Plan Driven Training starts with a Program that defines the training structure before any weight is lifted.
