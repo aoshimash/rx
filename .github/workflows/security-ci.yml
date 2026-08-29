@@ -18,10 +18,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Cache Trivy DB
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/trivy
           key: ${{ runner.os }}-trivy-db-${{ github.run_id }}
@@ -40,7 +40,7 @@ jobs:
           exit-code: '1'
 
       - name: Upload Go scan results to GitHub Security
-        uses: github/codeql-action/upload-sarif@3b1a19a80ab047f35cbb237b5bd9bdc1e14f166c # v3
+        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
         if: '!cancelled()'
         continue-on-error: true  # May fail if GitHub Advanced Security is not enabled
         with:
@@ -60,7 +60,7 @@ jobs:
           exit-code: '1'
 
       - name: Upload Node.js scan results to GitHub Security
-        uses: github/codeql-action/upload-sarif@3b1a19a80ab047f35cbb237b5bd9bdc1e14f166c # v3
+        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
         if: '!cancelled()'
         continue-on-error: true
         with:
@@ -74,12 +74,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0  # Full history for secret scanning
 
       - name: Cache Trivy DB
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/trivy
           key: ${{ runner.os }}-trivy-db-${{ github.run_id }}
@@ -97,7 +97,7 @@ jobs:
           exit-code: '1'
 
       - name: Upload misconfig results to GitHub Security
-        uses: github/codeql-action/upload-sarif@3b1a19a80ab047f35cbb237b5bd9bdc1e14f166c # v3
+        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
         if: '!cancelled()'
         continue-on-error: true
         with:
@@ -117,7 +117,7 @@ jobs:
           exit-code: '1'
 
       - name: Upload secret results to GitHub Security
-        uses: github/codeql-action/upload-sarif@3b1a19a80ab047f35cbb237b5bd9bdc1e14f166c # v3
+        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
         if: '!cancelled()'
         continue-on-error: true
         with:
@@ -131,10 +131,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Cache Trivy DB
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/trivy
           key: ${{ runner.os }}-trivy-db-${{ github.run_id }}
@@ -174,7 +174,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
@@ -191,7 +191,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=api-${{ matrix.arch }}
 
       - name: Cache Trivy DB
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/trivy
           key: ${{ runner.os }}-trivy-db-${{ github.run_id }}
@@ -208,7 +208,7 @@ jobs:
           exit-code: '1'
 
       - name: Upload container scan results to GitHub Security
-        uses: github/codeql-action/upload-sarif@3b1a19a80ab047f35cbb237b5bd9bdc1e14f166c # v3
+        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
         if: '!cancelled()'
         continue-on-error: true
         with:
