@@ -25,7 +25,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -a -installsuffix cgo
     -o bin/server cmd/server/main.go
 
 # Runtime stage (distroless - no shell, no package manager, minimal attack surface)
-FROM gcr.io/distroless/static-debian11:nonroot
+FROM gcr.io/distroless/static-debian11:nonroot@sha256:63ebe035fbdd056ed682e6a87b286d07d3f05f12cb46f26b2b44fc10fc4a59ed
 
 # Copy CA certificates for HTTPS (distroless includes them)
 # Copy binary from builder
